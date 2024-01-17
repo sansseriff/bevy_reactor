@@ -1,7 +1,4 @@
-use std::{
-    marker::PhantomData,
-    sync::{atomic::Ordering, Arc},
-};
+use std::{marker::PhantomData, sync::atomic::Ordering};
 
 use bevy::{
     ecs::component::{ComponentId, Tick},
@@ -9,7 +6,7 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableValue, Cx};
+use crate::{mutable::MutableValue, Cx, ViewContext, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -74,21 +71,9 @@ impl TrackingScope {
             .or_insert_with(|| Box::new(TrackedResource::<T>::new()));
     }
 
-    /// Reset all reactive dependencies, in preparation for a new reaction.
-    fn reset(&mut self) {
-        self.component_deps.clear();
-        self.resource_deps.clear();
-        self.mutable_deps.clear();
-    }
-
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     fn dependencies_changed(&self, world: &World) -> bool {
-        println!(
-            "Changes: num_mutables={}, num_resources={}",
-            self.mutable_deps.len(),
-            self.resource_deps.len()
-        );
         self.mutable_deps.iter().any(|m| {
             world
                 .entity(*m)
@@ -125,17 +110,17 @@ where
     }
 }
 
-#[derive(Component)]
-#[allow(clippy::type_complexity)]
-pub struct ReactionFn {
-    /// Effect function
-    inner: Arc<dyn Fn(&mut Cx) + Send + Sync>,
-}
+// #[derive(Component)]
+// #[allow(clippy::type_complexity)]
+// pub struct ReactionFn {
+//     /// Effect function
+//     inner: Arc<dyn Fn(&mut Cx) + Send + Sync>,
+// }
 
 pub fn run_reactions(world: &mut World) {
-    let mut scopes = world.query::<(Entity, &mut TrackingScope, Option<&mut ReactionFn>)>();
+    let mut scopes = world.query::<(Entity, &mut TrackingScope)>();
     let mut changed = HashSet::<Entity>::default();
-    for (entity, scope, _) in scopes.iter(world) {
+    for (entity, scope) in scopes.iter(world) {
         if scope.dependencies_changed(world) {
             changed.insert(entity);
         }
@@ -143,19 +128,30 @@ pub fn run_reactions(world: &mut World) {
 
     let tick = world.change_tick();
     for scope_entity in changed.iter() {
-        println!("Running reaction for {:?}", scope_entity);
         let mut next_scope = TrackingScope::new(tick);
-        if let Ok((_, _, Some(reaction))) = scopes.get_mut(world, *scope_entity) {
-            let inner = reaction.inner.clone();
-            let mut cx = Cx::new(&(), world, &mut next_scope);
-            (inner)(&mut cx);
+        // if let Ok((_, _, Some(reaction), _)) = scopes.get_mut(world, *scope_entity) {
+        //     let inner = reaction.inner.clone();
+        //     let mut cx = Cx::new(&(), world, &mut next_scope);
+        //     (inner)(&mut cx);
+        // }
+        let mut entt = world.entity_mut(*scope_entity);
+        if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
+            let inner = view_handle.view.clone();
+            let mut vc = ViewContext {
+                world,
+                owner: Some(*scope_entity),
+            };
+            inner
+                .lock()
+                .unwrap()
+                .react(*scope_entity, &mut vc, &mut next_scope);
         }
-        if let Ok((_, mut scope, _)) = scopes.get_mut(world, *scope_entity) {
-            // TODO: Find a way to swap rather than clone.
-            scope.mutable_deps.clone_from(&next_scope.mutable_deps);
-            scope.component_deps.clone_from(&next_scope.component_deps);
+        if let Ok((_, mut scope)) = scopes.get_mut(world, *scope_entity) {
+            // Swap the scopes so that the next scope becomes the current scope.
+            // The old scopes will be dropped at the end of the loop block.
+            std::mem::swap(&mut scope.mutable_deps, &mut next_scope.mutable_deps);
+            std::mem::swap(&mut scope.component_deps, &mut next_scope.component_deps);
             std::mem::swap(&mut scope.resource_deps, &mut next_scope.resource_deps);
-            // scope.resource_deps.clone_from(&next_scope.resource_deps);
         }
     }
 }

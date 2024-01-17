@@ -10,7 +10,7 @@ pub enum SignalKind {
     Mutable,
 
     /// A readonly value that is computed from other signals.
-    DerivedSignal,
+    Derived,
 
     /// A memoized value that is computed from other signals.
     Memo,
@@ -30,7 +30,7 @@ where
     pub fn get<P>(&self, cx: &Cx<P>) -> T {
         match self.kind {
             SignalKind::Mutable => cx.read_mutable(self.id),
-            SignalKind::DerivedSignal => unimplemented!(),
+            SignalKind::Derived => unimplemented!(),
             SignalKind::Memo => unimplemented!(),
         }
     }
@@ -50,7 +50,7 @@ where
     pub fn get<P>(&self, cx: &Cx<P>) -> T {
         match self.kind {
             SignalKind::Mutable => cx.read_mutable_clone(self.id),
-            SignalKind::DerivedSignal => unimplemented!(),
+            SignalKind::Derived => unimplemented!(),
             SignalKind::Memo => unimplemented!(),
         }
     }

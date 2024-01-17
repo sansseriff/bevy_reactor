@@ -31,18 +31,15 @@ fn setup_view_root(mut commands: Commands) {
         Element::new(),
         // |cx: &mut Cx| Element::new(),
         "Hello",
-        // DynTextView::new(|cx: &mut Cx| {
-        //     let counter = cx.use_resource::<Counter>();
-        //     format!("{}", counter.count)
-        // }),
         |cx: &mut Cx| {
             let counter = cx.use_resource::<Counter>();
             format!("{}", counter.count)
         },
+        // root_presenter,
     ))));
 }
 
-fn root_presenter(cx: Cx) -> impl View {
+fn root_presenter(cx: &mut Cx) -> impl View {
     DynTextView::new(|cx: &mut Cx| {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)

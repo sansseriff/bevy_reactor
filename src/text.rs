@@ -4,7 +4,7 @@ use crate::{
     node_span::NodeSpan,
     scope::TrackingScope,
     view::{View, ViewContext},
-    Cx, IntoView, ViewHandle,
+    Cx,
 };
 
 /// A UI element that displays text
@@ -27,7 +27,7 @@ impl View for TextView {
         NodeSpan::Node(self.node.unwrap())
     }
 
-    fn build(&mut self, vc: &mut ViewContext) {
+    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
         if self.node.is_none() {
             self.node = Some(
                 vc.world
@@ -38,16 +38,6 @@ impl View for TextView {
                     .id(),
             );
         }
-    }
-}
-
-impl IntoView for TextView {
-    fn into_view(self) -> Box<dyn View + Send + Sync> {
-        Box::new(self)
-    }
-
-    fn into_handle(self, world: &mut World) -> Entity {
-        world.spawn(ViewHandle::new(self)).id()
     }
 }
 
@@ -71,7 +61,7 @@ impl<F: Fn(&mut Cx) -> String> View for DynTextView<F> {
         NodeSpan::Node(self.node.unwrap())
     }
 
-    fn build(&mut self, vc: &mut ViewContext) {
+    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
         if self.node.is_none() {
             let mut tracking = TrackingScope::new(vc.world.change_tick());
             let mut cx = Cx::new(&(), vc.world, &mut tracking);
@@ -84,11 +74,19 @@ impl<F: Fn(&mut Cx) -> String> View for DynTextView<F> {
                     },))
                     .id(),
             );
-            // let reaction: Arc::new(|_| self.nodes());
-            // vc.world
-            //     .entity_mut(node.unwrap())
-            //     .insert(Reaction { inner: |_| {} });
             self.node = node;
+            vc.world.entity_mut(view_entity).insert(tracking);
         }
+    }
+
+    fn react(&mut self, _view_entity: Entity, vc: &mut ViewContext, tracking: &mut TrackingScope) {
+        let mut cx = Cx::new(&(), vc.world, tracking);
+        let text = (self.text)(&mut cx);
+        vc.world
+            .entity_mut(self.node.unwrap())
+            .get_mut::<Text>()
+            .unwrap()
+            .sections[0]
+            .value = text;
     }
 }
