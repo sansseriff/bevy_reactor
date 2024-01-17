@@ -34,18 +34,18 @@ impl NodeSpan {
         }
     }
 
-    /// Despawn all entities held.
-    pub(crate) fn despawn(&self, world: &mut World) {
-        match self {
-            Self::Empty => {}
-            Self::Node(entity) => {
-                let mut entt = world.entity_mut(*entity);
-                entt.remove_parent();
-                entt.despawn();
-            }
-            Self::Fragment(nodes) => nodes.iter().for_each(|node| node.despawn(world)),
-        }
-    }
+    // Despawn all entities held.
+    // pub(crate) fn despawn(&self, world: &mut World) {
+    //     match self {
+    //         Self::Empty => {}
+    //         Self::Node(entity) => {
+    //             let mut entt = world.entity_mut(*entity);
+    //             entt.remove_parent();
+    //             entt.despawn();
+    //         }
+    //         Self::Fragment(nodes) => nodes.iter().for_each(|node| node.despawn(world)),
+    //     }
+    // }
 }
 
 impl PartialEq for NodeSpan {

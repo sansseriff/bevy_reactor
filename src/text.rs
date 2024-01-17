@@ -28,16 +28,25 @@ impl View for TextView {
     }
 
     fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
-        if self.node.is_none() {
-            self.node = Some(
-                vc.world
-                    .spawn((TextBundle {
-                        text: Text::from_section(self.text.clone(), TextStyle { ..default() }),
-                        ..default()
-                    },))
-                    .id(),
-            );
-        }
+        assert!(self.node.is_none());
+        self.node = Some(
+            vc.world
+                .spawn((TextBundle {
+                    text: Text::from_section(self.text.clone(), TextStyle { ..default() }),
+                    ..default()
+                },))
+                .id(),
+        );
+    }
+
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        // Delete the tracking scope.
+        world.entity_mut(view_entity).remove::<TrackingScope>();
+
+        // Delete the display node.
+        world
+            .entity_mut(self.node.expect("Razing unbuilt TextNode"))
+            .despawn();
     }
 }
 
@@ -62,21 +71,20 @@ impl<F: Fn(&mut Cx) -> String> View for DynTextView<F> {
     }
 
     fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
-        if self.node.is_none() {
-            let mut tracking = TrackingScope::new(vc.world.change_tick());
-            let mut cx = Cx::new(&(), vc.world, &mut tracking);
-            let text = (self.text)(&mut cx);
-            let node = Some(
-                vc.world
-                    .spawn((TextBundle {
-                        text: Text::from_section(text, TextStyle { ..default() }),
-                        ..default()
-                    },))
-                    .id(),
-            );
-            self.node = node;
-            vc.world.entity_mut(view_entity).insert(tracking);
-        }
+        assert!(self.node.is_none());
+        let mut tracking = TrackingScope::new(vc.world.change_tick());
+        let mut cx = Cx::new(&(), vc.world, &mut tracking);
+        let text = (self.text)(&mut cx);
+        let node = Some(
+            vc.world
+                .spawn((TextBundle {
+                    text: Text::from_section(text, TextStyle { ..default() }),
+                    ..default()
+                },))
+                .id(),
+        );
+        self.node = node;
+        vc.world.entity_mut(view_entity).insert(tracking);
     }
 
     fn react(&mut self, _view_entity: Entity, vc: &mut ViewContext, tracking: &mut TrackingScope) {
@@ -88,5 +96,11 @@ impl<F: Fn(&mut Cx) -> String> View for DynTextView<F> {
             .unwrap()
             .sections[0]
             .value = text;
+    }
+
+    fn raze(&mut self, _view_entity: Entity, world: &mut World) {
+        world
+            .entity_mut(self.node.expect("Razing unbuilt DynTextNode"))
+            .despawn();
     }
 }

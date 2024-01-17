@@ -1,31 +1,31 @@
-use crate::{IntoViewHandle, ViewHandle};
+use crate::{IntoView, ViewRef};
 use impl_trait_for_tuples::*;
 
 // ViewTuple
 
 #[doc(hidden)]
 pub trait ViewTuple {
-    fn get_handles(self, out: &mut Vec<ViewHandle>);
+    fn get_handles(self, out: &mut Vec<ViewRef>);
 }
 
-impl<I: IntoViewHandle> ViewTuple for I {
-    fn get_handles(self, out: &mut Vec<ViewHandle>) {
-        out.push(self.into_view_handle());
+impl<I: IntoView> ViewTuple for I {
+    fn get_handles(self, out: &mut Vec<ViewRef>) {
+        out.push(self.into_view());
     }
 }
 
-impl<I: IntoViewHandle> ViewTuple for Option<I> {
-    fn get_handles(self, out: &mut Vec<ViewHandle>) {
+impl<I: IntoView> ViewTuple for Option<I> {
+    fn get_handles(self, out: &mut Vec<ViewRef>) {
         if let Some(view) = self {
-            out.push(view.into_view_handle());
+            out.push(view.into_view());
         }
     }
 }
 
 #[impl_for_tuples(1, 15)]
-#[tuple_types_custom_trait_bound(IntoViewHandle)]
+#[tuple_types_custom_trait_bound(IntoView)]
 impl ViewTuple for Tuple {
-    fn get_handles(self, out: &mut Vec<ViewHandle>) {
-        for_tuples!(#( out.push(self.Tuple.into_view_handle()); )*)
+    fn get_handles(self, out: &mut Vec<ViewRef>) {
+        for_tuples!(#( out.push(self.Tuple.into_view()); )*)
     }
 }

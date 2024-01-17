@@ -24,34 +24,40 @@ pub trait View {
         _tracking: &mut TrackingScope,
     ) {
     }
+
+    /// Destroy the view, including the display nodes, and all descendant views.
+    fn raze(&mut self, view_entity: Entity, world: &mut World);
 }
+
+// A reference to a view.
+pub type ViewRef = Arc<Mutex<dyn View + Sync + Send + 'static>>;
 
 /// Trait that allows a type to be converted into a `ViewHandle`.
-pub trait IntoViewHandle {
-    fn into_view_handle(self) -> ViewHandle;
+pub trait IntoView {
+    fn into_view(self) -> ViewRef;
 }
 
-impl IntoViewHandle for () {
-    fn into_view_handle(self) -> ViewHandle {
+impl IntoView for () {
+    fn into_view(self) -> ViewRef {
         todo!();
     }
 }
 
-impl IntoViewHandle for &str {
-    fn into_view_handle(self) -> ViewHandle {
-        ViewHandle::new(TextView::new(self.to_string()))
+impl IntoView for &str {
+    fn into_view(self) -> ViewRef {
+        Arc::new(Mutex::new(TextView::new(self.to_string())))
     }
 }
 
-impl IntoViewHandle for String {
-    fn into_view_handle(self) -> ViewHandle {
-        ViewHandle::new(TextView::new(self))
+impl IntoView for String {
+    fn into_view(self) -> ViewRef {
+        Arc::new(Mutex::new(TextView::new(self)))
     }
 }
 
-impl<F: Send + Sync + 'static + Fn(&mut Cx) -> String> IntoViewHandle for F {
-    fn into_view_handle(self) -> ViewHandle {
-        ViewHandle::new(DynTextView::new(self))
+impl<F: Send + Sync + 'static + Fn(&mut Cx) -> String> IntoView for F {
+    fn into_view(self) -> ViewRef {
+        Arc::new(Mutex::new(DynTextView::new(self)))
     }
 }
 
@@ -73,7 +79,7 @@ pub struct ViewContext<'p> {
 
 #[derive(Component)]
 pub struct ViewHandle {
-    pub(crate) view: Arc<Mutex<dyn View + Sync + Send + 'static>>,
+    pub(crate) view: ViewRef,
 }
 
 impl ViewHandle {
