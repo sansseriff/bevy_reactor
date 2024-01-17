@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use bevy_reactor::{Cx, Element, SignalsPlugin, View, ViewHandle};
+use bevy_reactor::{Cx, DynTextView, Element, SignalsPlugin, View, ViewHandle};
 
 fn main() {
     App::new()
@@ -28,15 +28,34 @@ const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewHandle::new(Element::new().children((
-        Element::new,
         Element::new(),
-        || Element::new(),
+        // |cx: &mut Cx| Element::new(),
+        "Hello",
+        // DynTextView::new(|cx: &mut Cx| {
+        //     let counter = cx.use_resource::<Counter>();
+        //     format!("{}", counter.count)
+        // }),
+        |cx: &mut Cx| {
+            let counter = cx.use_resource::<Counter>();
+            format!("{}", counter.count)
+        },
     ))));
 }
 
-fn root_presenter(cx: Cx<u8>) -> impl View {
-    let counter = cx.use_resource::<Counter>();
-    Element::new().children((Element::new(), Element::new(), Element::new()))
+fn root_presenter(cx: Cx) -> impl View {
+    DynTextView::new(|cx: &mut Cx| {
+        let counter = cx.use_resource::<Counter>();
+        format!("{}", counter.count)
+    })
+    // Element::new().children((
+    //         Element::new(),
+    //         Element::new(),
+    //         Element::new(),
+    //         |cx: &mut Cx| {
+    //             let counter = cx.use_resource::<Counter>();
+    //             format!("{}", counter.count)
+    //         },
+    //     ))
 
     // .children((
     //     "Root Presenter: ",

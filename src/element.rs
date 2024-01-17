@@ -4,7 +4,7 @@ use crate::{
     node_span::NodeSpan,
     view::{View, ViewContext},
     view_tuple::ViewTuple,
-    IntoView,
+    IntoView, ViewHandle,
 };
 
 /// A basic UI element
@@ -116,5 +116,9 @@ impl View for Element {
 impl IntoView for Element {
     fn into_view(self) -> Box<dyn View + Send + Sync> {
         Box::new(self)
+    }
+
+    fn into_handle(self, world: &mut World) -> Entity {
+        world.spawn(ViewHandle::new(self)).id()
     }
 }

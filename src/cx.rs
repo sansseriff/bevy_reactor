@@ -114,7 +114,7 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
     pub fn use_resource<T: Resource>(&self) -> &T {
-        self.tracking.borrow_mut().add_resource(
+        self.tracking.borrow_mut().add_resource::<T>(
             self.world
                 .components()
                 .get_resource_id(TypeId::of::<T>())
