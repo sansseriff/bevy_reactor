@@ -1,6 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::{component::Component, entity::Entity, query::Added, world::World};
+use bevy::{
+    ecs::{component::Component, entity::Entity, query::Added, world::World},
+    prelude::default,
+};
 
 use crate::{
     node_span::NodeSpan,
@@ -39,7 +42,7 @@ pub trait IntoView {
 
 impl IntoView for () {
     fn into_view(self) -> ViewRef {
-        todo!();
+        Arc::new(Mutex::new(EmptyView))
     }
 }
 
@@ -105,6 +108,17 @@ impl ViewHandle {
     pub(crate) fn nodes(&self) -> NodeSpan {
         self.view.lock().unwrap().nodes()
     }
+}
+
+pub struct EmptyView;
+
+impl View for EmptyView {
+    fn nodes(&self) -> NodeSpan {
+        NodeSpan::Empty
+    }
+
+    fn build(&mut self, _view_entity: Entity, _vc: &mut ViewContext) {}
+    fn raze(&mut self, _view_entity: Entity, _world: &mut World) {}
 }
 
 /// System that initializes any views that have been added.

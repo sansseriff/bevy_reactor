@@ -1,8 +1,8 @@
 # Things we need to demonstrate:
 
 * Dynamic insertion (BundleProducer)
-* Assembly
-* Presenters
+* Dynamic Assembly
+* Ownership of View entities.
 * Razing / Despawning
 * If
 * For
