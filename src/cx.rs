@@ -18,9 +18,6 @@ pub struct Cx<'p, 'w, Props = ()> {
     /// Bevy World
     pub(crate) world: &'w mut World,
 
-    /// Entity representing the current owning scope.
-    pub(crate) owner: Option<Entity>,
-
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
@@ -34,7 +31,6 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         Self {
             props,
             world,
-            owner: None,
             tracking: RefCell::new(tracking),
         }
     }

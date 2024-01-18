@@ -55,15 +55,15 @@ impl IntoView for String {
     }
 }
 
-impl<F: Send + Sync + 'static + Fn(&mut Cx) -> String> IntoView for F {
+impl<F: Send + Sync + 'static + FnMut(&mut Cx) -> String> IntoView for F {
     fn into_view(self) -> ViewRef {
         Arc::new(Mutex::new(DynTextView::new(self)))
     }
 }
 
-// impl<V: View, F: Send + Sync + 'static + Fn(&mut Cx) -> V> IntoViewHandle for F {
-//     fn into_view_handle(self) -> ViewHandle {
-//         ViewHandle::new(DynTextView::new(self))
+// impl<F: Send + Sync + 'static + Fn(&mut Cx) -> ViewRef> IntoView for F {
+//     fn into_view(self) -> ViewRef {
+//         todo!
 //     }
 // }
 
@@ -75,6 +75,19 @@ pub struct ViewContext<'p> {
     pub(crate) owner: Option<Entity>,
     // Set of reactive resources referenced by the presenter.
     // pub(crate) tracking: RefCell<&'p mut TrackingScope>,
+}
+
+#[derive(Component)]
+pub struct ViewRoot {
+    pub(crate) view: ViewRef,
+}
+
+impl ViewRoot {
+    pub fn new(view: impl View + Sync + Send + 'static) -> Self {
+        Self {
+            view: Arc::new(Mutex::new(view)),
+        }
+    }
 }
 
 #[derive(Component)]
@@ -97,7 +110,7 @@ impl ViewHandle {
 /// System that initializes any views that have been added.
 pub(crate) fn build_added_views(world: &mut World) {
     // Need to copy query result to avoid double-borrow of world.
-    let mut view_handles = world.query_filtered::<(Entity, &mut ViewHandle), Added<ViewHandle>>();
+    let mut view_handles = world.query_filtered::<(Entity, &mut ViewRoot), Added<ViewRoot>>();
     let view_entities: Vec<Entity> = view_handles.iter(world).map(|(e, _)| e).collect();
     for view_entity in view_entities.iter() {
         let Ok((_, view_handle)) = view_handles.get(world, *view_entity) else {

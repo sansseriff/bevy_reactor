@@ -51,7 +51,7 @@ impl View for TextView {
 }
 
 /// A UI element that displays text that is dynamically computed.
-pub struct DynTextView<F: Fn(&mut Cx) -> String> {
+pub struct DynTextView<F: FnMut(&mut Cx) -> String> {
     /// The visible UI node for this element.
     node: Option<Entity>,
 
@@ -59,13 +59,13 @@ pub struct DynTextView<F: Fn(&mut Cx) -> String> {
     text: F,
 }
 
-impl<F: Fn(&mut Cx) -> String> DynTextView<F> {
+impl<F: FnMut(&mut Cx) -> String> DynTextView<F> {
     pub fn new(text: F) -> Self {
         Self { node: None, text }
     }
 }
 
-impl<F: Fn(&mut Cx) -> String> View for DynTextView<F> {
+impl<F: FnMut(&mut Cx) -> String> View for DynTextView<F> {
     fn nodes(&self) -> NodeSpan {
         NodeSpan::Node(self.node.unwrap())
     }

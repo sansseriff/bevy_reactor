@@ -75,7 +75,10 @@ impl Element {
 
 impl View for Element {
     fn nodes(&self) -> NodeSpan {
-        NodeSpan::Node(self.display.unwrap())
+        match self.display {
+            None => NodeSpan::Empty,
+            Some(node) => NodeSpan::Node(node),
+        }
     }
 
     fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
@@ -116,6 +119,7 @@ impl View for Element {
     }
 
     fn raze(&mut self, _view_entity: Entity, world: &mut World) {
+        assert!(self.display.is_some());
         // Raze all child views
         for child_ent in self.child_entities.drain(..) {
             let child = world.entity_mut(child_ent);
@@ -124,9 +128,8 @@ impl View for Element {
             inner.lock().unwrap().raze(child_ent, world);
         }
         // Delete the display node.
-        world
-            .entity_mut(self.display.expect("Razing unbuilt Element"))
-            .despawn();
+        world.entity_mut(self.display.unwrap()).despawn();
+        self.display = None;
     }
 }
 

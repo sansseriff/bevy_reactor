@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use bevy_reactor::{Cx, DynTextView, Element, SignalsPlugin, View, ViewHandle};
+use bevy_reactor::{Cx, DynTextView, Element, PresenterFn, SignalsPlugin, View, ViewRoot};
 
 fn main() {
     App::new()
@@ -27,7 +27,7 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewHandle::new(Element::new().children((
+    commands.spawn(ViewRoot::new(Element::new().children((
         Element::new(),
         // |cx: &mut Cx| Element::new(),
         "Hello",
@@ -35,11 +35,13 @@ fn setup_view_root(mut commands: Commands) {
             let counter = cx.use_resource::<Counter>();
             format!("{}", counter.count)
         },
-        // root_presenter,
+        "-",
+        root_presenter.bind(()),
+        "!",
     ))));
 }
 
-fn root_presenter(cx: &mut Cx) -> impl View {
+fn root_presenter(_: &mut Cx) -> impl View {
     DynTextView::new(|cx: &mut Cx| {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)

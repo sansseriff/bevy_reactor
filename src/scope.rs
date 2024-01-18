@@ -6,7 +6,7 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableValue, Cx, ViewContext, ViewHandle};
+use crate::{mutable::MutableValue, ViewContext, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -152,6 +152,7 @@ pub fn run_reactions(world: &mut World) {
             std::mem::swap(&mut scope.mutable_deps, &mut next_scope.mutable_deps);
             std::mem::swap(&mut scope.component_deps, &mut next_scope.component_deps);
             std::mem::swap(&mut scope.resource_deps, &mut next_scope.resource_deps);
+            scope.tick = tick;
         }
     }
 }
