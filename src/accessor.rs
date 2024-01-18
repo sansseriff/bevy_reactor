@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::Cx;
+use crate::{Cx, ReactiveContext};
 
 /// What type of reactive node underlies this signal. "Signals" in this framework represent
 /// any kind of reactive data source, including mutable variables, derived signals, and memoized
@@ -27,9 +27,9 @@ impl<T> Getter<T>
 where
     T: Copy + Send + Sync + 'static,
 {
-    pub fn get<P>(&self, cx: &Cx<P>) -> T {
+    pub fn get<'p, R: ReactiveContext<'p>>(&self, rc: &R) -> T {
         match self.kind {
-            SignalKind::Mutable => cx.read_mutable(self.id),
+            SignalKind::Mutable => rc.read_mutable(self.id),
             SignalKind::Derived => unimplemented!(),
             SignalKind::Memo => unimplemented!(),
         }
@@ -47,9 +47,9 @@ impl<T> CloneGetter<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    pub fn get<P>(&self, cx: &Cx<P>) -> T {
+    pub fn get<'p, R: ReactiveContext<'p>>(&self, rc: &R) -> T {
         match self.kind {
-            SignalKind::Mutable => cx.read_mutable_clone(self.id),
+            SignalKind::Mutable => rc.read_mutable_clone(self.id),
             SignalKind::Derived => unimplemented!(),
             SignalKind::Memo => unimplemented!(),
         }

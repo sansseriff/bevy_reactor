@@ -42,6 +42,7 @@ where
     }
 }
 
+/// A binding between a presenter function the parameters passed to it.
 pub struct Bind<F: 'static, P: PresenterFn<F>> {
     /// Reference to presenter function.
     presenter: P,

@@ -6,15 +6,16 @@ use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
-use bevy_reactor::{Cx, DynTextView, Element, PresenterFn, SignalsPlugin, View, ViewRoot};
+use bevy_reactor::{
+    text, text_computed, Cx, Element, PresenterFn, ReactiveContext, ReactorPlugin, View, ViewRoot,
+};
 
 fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        // .add_plugins(QuillPlugin)
-        .add_plugins(SignalsPlugin)
+        .add_plugins(ReactorPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (bevy::window::close_on_esc, rotate, update_counter))
         .run();
@@ -27,37 +28,48 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewRoot::new(Element::new().children((
-        Element::new(),
-        // |cx: &mut Cx| Element::new(),
-        "Hello",
-        |cx: &mut Cx| {
-            let counter = cx.use_resource::<Counter>();
-            format!("{}", counter.count)
-        },
-        "-",
-        root_presenter.bind(()),
-        "!",
-    ))));
+    commands.spawn(ViewRoot::new(
+        Element::<NodeBundle>::new()
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    border: UiRect::all(Val::Px(3.)),
+                    padding: UiRect::all(Val::Px(3.)),
+                    ..Default::default()
+                },
+                border_color: BorderColor(Color::LIME_GREEN),
+                ..Default::default()
+            })
+            .insert_computed(|cx| {
+                let counter = cx.use_resource::<Counter>();
+                BackgroundColor(if counter.count & 1 == 0 {
+                    Color::DARK_GRAY
+                } else {
+                    Color::MAROON
+                })
+            })
+            .children((
+                Element::<NodeBundle>::new(),
+                text("Count: "),
+                text_computed(|cx| {
+                    let counter = cx.use_resource::<Counter>();
+                    format!("{}", counter.count)
+                }),
+                ", ",
+                nested_presenter.bind(()),
+            )),
+    ));
 }
 
-fn root_presenter(_: &mut Cx) -> impl View {
-    DynTextView::new(|cx: &mut Cx| {
+fn nested_presenter(_: &mut Cx) -> impl View {
+    text_computed(|cx| {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)
     })
-    // Element::new().children((
-    //         Element::new(),
-    //         Element::new(),
-    //         Element::new(),
-    //         |cx: &mut Cx| {
-    //             let counter = cx.use_resource::<Counter>();
-    //             format!("{}", counter.count)
-    //         },
-    //     ))
-
     // .children((
     //     "Root Presenter: ",
+    // |cx: &mut Cx| Element::new(),
     //     format!("{}", counter.count),
     //     If::new(counter.count & 1 == 0, " [even]", " [odd]"),
     // ))

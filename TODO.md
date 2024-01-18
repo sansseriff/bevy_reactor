@@ -7,13 +7,11 @@
 * If
 * For
 * Reacting to signals
+* Setting signals in event handlers
 
 # Other stuff
 
-* Empty view
 * Derived Signals
 * Memo
 * Effect
 * Cleanup
-* Cx doesn't need props (after nested presenters)
-* Change ViewHandle to ViewRoot for top level.

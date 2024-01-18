@@ -1,17 +1,11 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::{
-    ecs::{component::Component, entity::Entity, query::Added, world::World},
-    prelude::default,
-};
+use bevy::ecs::{component::Component, entity::Entity, query::Added, world::World};
 
-use crate::{
-    node_span::NodeSpan,
-    scope::TrackingScope,
-    text::{DynTextView, TextView},
-    Cx,
-};
+use crate::{node_span::NodeSpan, scope::TrackingScope, text::TextStatic};
 
+/// Trait that defines a view, which is a template that constructs a hierarchy of
+/// entities and components.
 pub trait View {
     /// Returns the display nodes produced by this `View`.
     fn nodes(&self) -> NodeSpan;
@@ -32,11 +26,12 @@ pub trait View {
     fn raze(&mut self, view_entity: Entity, world: &mut World);
 }
 
-// A reference to a view.
+/// A reference to a view.
 pub type ViewRef = Arc<Mutex<dyn View + Sync + Send + 'static>>;
 
 /// Trait that allows a type to be converted into a `ViewHandle`.
 pub trait IntoView {
+    /// Convert the type into a `ViewRef`.
     fn into_view(self) -> ViewRef;
 }
 
@@ -48,57 +43,54 @@ impl IntoView for () {
 
 impl IntoView for &str {
     fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(TextView::new(self.to_string())))
+        Arc::new(Mutex::new(TextStatic::new(self.to_string())))
     }
 }
 
 impl IntoView for String {
     fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(TextView::new(self)))
+        Arc::new(Mutex::new(TextStatic::new(self)))
     }
 }
 
-impl<F: Send + Sync + 'static + FnMut(&mut Cx) -> String> IntoView for F {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(DynTextView::new(self)))
-    }
-}
-
-// impl<F: Send + Sync + 'static + Fn(&mut Cx) -> ViewRef> IntoView for F {
-//     fn into_view(self) -> ViewRef {
-//         todo!
-//     }
-// }
-
+/// Context object that is passed to views during construction and update.
 pub struct ViewContext<'p> {
     /// Bevy World
     pub(crate) world: &'p mut World,
 
     /// Entity representing the current owning scope.
     pub(crate) owner: Option<Entity>,
-    // Set of reactive resources referenced by the presenter.
-    // pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
 
 #[derive(Component)]
+/// Component which holds the top level of the view hierarchy.
 pub struct ViewRoot {
     pub(crate) view: ViewRef,
 }
 
 impl ViewRoot {
+    /// Construct a new [`ViewRoot`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
         Self {
             view: Arc::new(Mutex::new(view)),
         }
     }
+
+    /// Despawn the view, including the display nodes, and all descendant views.
+    pub fn despawn(&mut self, root: Entity, world: &mut World) {
+        self.view.lock().unwrap().raze(root, world);
+        world.entity_mut(root).despawn();
+    }
 }
 
+/// Component used to hold a reference to a child view.
 #[derive(Component)]
 pub struct ViewHandle {
     pub(crate) view: ViewRef,
 }
 
 impl ViewHandle {
+    /// Construct a new [`ViewHandle`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
         Self {
             view: Arc::new(Mutex::new(view)),
@@ -110,6 +102,7 @@ impl ViewHandle {
     }
 }
 
+/// A `[View]` which displays nothing - can be used as a placeholder.
 pub struct EmptyView;
 
 impl View for EmptyView {
@@ -124,17 +117,17 @@ impl View for EmptyView {
 /// System that initializes any views that have been added.
 pub(crate) fn build_added_views(world: &mut World) {
     // Need to copy query result to avoid double-borrow of world.
-    let mut view_handles = world.query_filtered::<(Entity, &mut ViewRoot), Added<ViewRoot>>();
-    let view_entities: Vec<Entity> = view_handles.iter(world).map(|(e, _)| e).collect();
-    for view_entity in view_entities.iter() {
-        let Ok((_, view_handle)) = view_handles.get(world, *view_entity) else {
+    let mut roots = world.query_filtered::<(Entity, &mut ViewRoot), Added<ViewRoot>>();
+    let roots_copy: Vec<Entity> = roots.iter(world).map(|(e, _)| e).collect();
+    for root_entity in roots_copy.iter() {
+        let Ok((_, root)) = roots.get(world, *root_entity) else {
             continue;
         };
-        let inner = view_handle.view.clone();
+        let inner = root.view.clone();
         let mut vc = ViewContext {
             world,
-            owner: Some(*view_entity),
+            owner: Some(*root_entity),
         };
-        inner.lock().unwrap().build(*view_entity, &mut vc);
+        inner.lock().unwrap().build(*root_entity, &mut vc);
     }
 }

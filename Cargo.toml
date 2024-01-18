@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = "0.12.1"
 impl-trait-for-tuples = "0.2.2"
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3

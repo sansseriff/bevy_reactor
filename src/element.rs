@@ -1,17 +1,24 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 
-use bevy::{core::Name, prelude::*, render::view::Visibility, ui::node_bundles::NodeBundle};
+use bevy::{core::Name, prelude::*};
 
 use crate::{
+    bundle::{BundleComputed, BundleProducer, BundleStatic},
     node_span::NodeSpan,
     view::{View, ViewContext},
     view_tuple::ViewTuple,
-    IntoView, ViewHandle, ViewRef,
+    IntoView, Re, ViewHandle, ViewRef,
 };
 
 /// A basic UI element
 #[derive(Default)]
-pub struct Element {
+pub struct Element<B: Bundle + Default> {
+    /// Debug name for this element.
+    debug_name: String,
+
     /// The visible UI node for this element.
     display: Option<Entity>,
 
@@ -20,25 +27,42 @@ pub struct Element {
 
     /// Children after they have been spawned as entities.
     child_entities: Vec<Entity>,
+
+    /// List of producers for components to be added to the element.
+    producers: Vec<Box<dyn BundleProducer>>,
+
+    marker: PhantomData<B>,
 }
 
-impl Element {
+impl<B: Bundle + Default> Element<B> {
     /// Construct a new `Element`.
     pub fn new() -> Self {
         Self {
+            debug_name: String::new(),
             display: None,
             children: Vec::new(),
             child_entities: Vec::new(),
+            producers: Vec::new(),
+            marker: PhantomData,
         }
     }
 
     /// Construct a new `Element` with a given entity id.
     pub fn for_entity(node: Entity) -> Self {
         Self {
+            debug_name: String::new(),
             display: Some(node),
             children: Vec::new(),
             child_entities: Vec::new(),
+            producers: Vec::new(),
+            marker: PhantomData,
         }
+    }
+
+    /// Set the debug name for this element.
+    pub fn named(mut self, name: &str) -> Self {
+        self.debug_name = name.to_string();
+        self
     }
 
     /// Set the child views for this element.
@@ -49,6 +73,42 @@ impl Element {
         views.get_handles(&mut self.children);
         self
     }
+
+    /// Add a static bundle to the element.
+    pub fn insert<T: Bundle>(mut self, bundle: T) -> Self {
+        self.producers.push(Box::new(BundleStatic {
+            bundle: Some(bundle),
+        }));
+        self
+    }
+
+    /// Add a computed bundle to the element.
+    pub fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Re) -> T>(
+        mut self,
+        factory: F,
+    ) -> Self {
+        self.producers.push(Box::new(BundleComputed::new(factory)));
+        self
+    }
+
+    // pub fn insert_update<
+    //     T: Component,
+    //     F1: Send + Sync + 'static + FnMut() -> T,
+    //     F2: Send + Sync + 'static + FnMut(&mut Re, &mut T),
+    // >(
+    //     mut self,
+    //     init: F1,
+    //     update: F2,
+    // ) -> Self {
+    //     self.producers.push(Arc::new(Mutex::new(BundleComputedRef {
+    //         target: None,
+    //         init,
+    //         update,
+    //         tracker: None,
+    //         marker: PhantomData,
+    //     })));
+    //     self
+    // }
 
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
@@ -73,7 +133,7 @@ impl Element {
     }
 }
 
-impl View for Element {
+impl<B: Bundle + Default> View for Element<B> {
     fn nodes(&self) -> NodeSpan {
         match self.display {
             None => NodeSpan::Empty,
@@ -81,28 +141,20 @@ impl View for Element {
         }
     }
 
-    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
         // Build element node
         assert!(self.display.is_none());
-        self.display = Some(
-            vc.world
-                .spawn((
-                    NodeBundle {
-                        visibility: Visibility::Visible,
-                        style: Style {
-                            display: Display::Flex,
-                            width: Val::Px(10.0),
-                            height: Val::Px(10.0),
-                            border: UiRect::all(Val::Px(1.0)),
-                            ..default()
-                        },
-                        border_color: BorderColor(Color::RED),
-                        ..default()
-                    },
-                    Name::new("element"),
-                ))
-                .id(),
-        );
+        let display = vc
+            .world
+            .spawn((B::default(), Name::new(self.debug_name.clone())))
+            .id();
+
+        // Insert components
+        for producer in self.producers.iter_mut() {
+            producer.start(view_entity, display, vc.world);
+        }
+
+        self.display = Some(display);
 
         // Build child nodes.
         for child in self.children.iter() {
@@ -118,7 +170,7 @@ impl View for Element {
         self.attach_children(vc.world);
     }
 
-    fn raze(&mut self, _view_entity: Entity, world: &mut World) {
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.display.is_some());
         // Raze all child views
         for child_ent in self.child_entities.drain(..) {
@@ -126,14 +178,19 @@ impl View for Element {
             let handle = child.get::<ViewHandle>().unwrap();
             let inner = handle.view.clone();
             inner.lock().unwrap().raze(child_ent, world);
+            world.entity_mut(child_ent).despawn();
         }
+
+        // Delete all reactions.
+        world.entity_mut(view_entity).despawn_recursive();
+
         // Delete the display node.
         world.entity_mut(self.display.unwrap()).despawn();
         self.display = None;
     }
 }
 
-impl IntoView for Element {
+impl<B: Bundle + Default> IntoView for Element<B> {
     fn into_view(self) -> ViewRef {
         Arc::new(Mutex::new(self))
     }

@@ -26,6 +26,7 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Copy + Send + Sync + 'static,
 {
+    /// Returns a getter and setter for this [`Mutable`] with Copy semantics.
     pub fn signal(&self) -> (Getter<T>, Setter<T>) {
         (
             Getter {
@@ -45,6 +46,7 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Clone + Send + Sync + 'static,
 {
+    /// Returns a getter and setter for this [`Mutable`] with Clone semantics.
     pub fn signal_clone(&self) -> (CloneGetter<T>, CloneSetter<T>) {
         (
             CloneGetter {
@@ -95,7 +97,7 @@ pub(crate) fn commit_mutables(world: &mut World) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cx::Cx, scope::TrackingScope};
+    use crate::{cx::Cx, scope::TrackingScope, ReactiveContextMut};
 
     use super::*;
 

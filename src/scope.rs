@@ -6,14 +6,11 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableValue, ViewContext, ViewHandle};
+use crate::{mutable::MutableValue, reaction::ReactionHandle, ViewContext, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
 pub struct TrackingScope {
-    /// Scope that owns this scope. This scope will be dropped when the owner is dropped.
-    owner: Option<Entity>,
-
     /// List of scopes that are owned by this scope.
     owned: Vec<Entity>,
 
@@ -37,18 +34,6 @@ pub struct TrackingScope {
 impl TrackingScope {
     pub fn new(tick: Tick) -> Self {
         Self {
-            owner: None,
-            owned: Vec::new(),
-            mutable_deps: HashSet::default(),
-            component_deps: HashSet::default(),
-            resource_deps: HashMap::default(),
-            tick,
-        }
-    }
-
-    pub fn for_owner(tick: Tick, owner: Entity) -> Self {
-        Self {
-            owner: Some(owner),
             owned: Vec::new(),
             mutable_deps: HashSet::default(),
             component_deps: HashSet::default(),
@@ -82,6 +67,14 @@ impl TrackingScope {
                 .unwrap_or(false)
         }) || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
     }
+
+    /// Swap the dependencies with another scope. Typically the other scope is a temporary
+    /// scope that is used to compute the next set of dependencies.
+    pub(crate) fn swap_deps(&mut self, other: &mut Self) {
+        std::mem::swap(&mut self.mutable_deps, &mut other.mutable_deps);
+        std::mem::swap(&mut self.component_deps, &mut other.component_deps);
+        std::mem::swap(&mut self.resource_deps, &mut other.resource_deps);
+    }
 }
 
 pub trait AnyResource: Send + Sync {
@@ -110,13 +103,7 @@ where
     }
 }
 
-// #[derive(Component)]
-// #[allow(clippy::type_complexity)]
-// pub struct ReactionFn {
-//     /// Effect function
-//     inner: Arc<dyn Fn(&mut Cx) + Send + Sync>,
-// }
-
+/// Run reactions whose dependencies have changed.
 pub fn run_reactions(world: &mut World) {
     let mut scopes = world.query::<(Entity, &mut TrackingScope)>();
     let mut changed = HashSet::<Entity>::default();
@@ -129,11 +116,6 @@ pub fn run_reactions(world: &mut World) {
     let tick = world.change_tick();
     for scope_entity in changed.iter() {
         let mut next_scope = TrackingScope::new(tick);
-        // if let Ok((_, _, Some(reaction), _)) = scopes.get_mut(world, *scope_entity) {
-        //     let inner = reaction.inner.clone();
-        //     let mut cx = Cx::new(&(), world, &mut next_scope);
-        //     (inner)(&mut cx);
-        // }
         let mut entt = world.entity_mut(*scope_entity);
         if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
             let inner = view_handle.view.clone();
@@ -145,13 +127,17 @@ pub fn run_reactions(world: &mut World) {
                 .lock()
                 .unwrap()
                 .react(*scope_entity, &mut vc, &mut next_scope);
+        } else if let Some(reaction) = entt.get_mut::<ReactionHandle>() {
+            let inner = reaction.0.clone();
+            inner
+                .lock()
+                .unwrap()
+                .react(*scope_entity, world, &mut next_scope);
         }
         if let Ok((_, mut scope)) = scopes.get_mut(world, *scope_entity) {
             // Swap the scopes so that the next scope becomes the current scope.
             // The old scopes will be dropped at the end of the loop block.
-            std::mem::swap(&mut scope.mutable_deps, &mut next_scope.mutable_deps);
-            std::mem::swap(&mut scope.component_deps, &mut next_scope.component_deps);
-            std::mem::swap(&mut scope.resource_deps, &mut next_scope.resource_deps);
+            scope.swap_deps(&mut next_scope);
             scope.tick = tick;
         }
     }
