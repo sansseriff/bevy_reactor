@@ -3,14 +3,14 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use bevy::{core::Name, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     bundle::{BundleComputed, BundleProducer, BundleStatic},
     node_span::NodeSpan,
     view::{View, ViewContext},
     view_tuple::ViewTuple,
-    DespawnScopes, IntoView, Re, TrackingScope, ViewHandle, ViewRef,
+    DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef,
 };
 
 /// A basic UI element
@@ -83,7 +83,7 @@ impl<B: Bundle + Default> Element<B> {
     }
 
     /// Add a computed bundle to the element.
-    pub fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Re) -> T>(
+    pub fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Rcx) -> T>(
         mut self,
         factory: F,
     ) -> Self {
@@ -112,9 +112,9 @@ impl<B: Bundle + Default> Element<B> {
 
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
-    fn attach_children(&mut self, world: &mut World) {
+    fn attach_children(&self, world: &mut World) {
         let mut count: usize = 0;
-        for child_ent in self.child_entities.iter_mut() {
+        for child_ent in self.child_entities.iter() {
             let child = world.entity_mut(*child_ent);
             let handle = child.get::<ViewHandle>().unwrap();
             count += handle.nodes().count();
@@ -141,7 +141,10 @@ impl<B: Bundle + Default> View for Element<B> {
         }
     }
 
-    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
+        vc.world
+            .entity_mut(view_entity)
+            .insert(Name::new("Element"));
         // Build element node
         assert!(self.display.is_none());
         let display = vc
@@ -155,16 +158,17 @@ impl<B: Bundle + Default> View for Element<B> {
             for producer in self.producers.iter_mut() {
                 producer.start(&mut tracking, display, vc.world);
             }
-            vc.world.entity_mut(display).insert(tracking);
+            vc.world.entity_mut(view_entity).insert(tracking);
         }
 
         self.display = Some(display);
 
         // Build child nodes.
         for child in self.children.iter() {
-            let child_ent = vc.world.spawn(ViewHandle {
+            let mut child_ent = vc.world.spawn(ViewHandle {
                 view: child.clone(),
             });
+            child_ent.set_parent(view_entity);
             self.child_entities.push(child_ent.id());
             let child_view = child_ent.get::<ViewHandle>().unwrap();
             let child_inner = child_view.view.clone();
@@ -186,6 +190,7 @@ impl<B: Bundle + Default> View for Element<B> {
         }
 
         // Delete the display node.
+        world.entity_mut(self.display.unwrap()).remove_parent();
         world.entity_mut(self.display.unwrap()).despawn();
         self.display = None;
 
@@ -195,6 +200,12 @@ impl<B: Bundle + Default> View for Element<B> {
         // - Views
         // - Reactions
         world.despawn_owned_recursive(view_entity);
+    }
+
+    fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {
+        // info!("children_changed handled");
+        self.attach_children(world);
+        true
     }
 }
 

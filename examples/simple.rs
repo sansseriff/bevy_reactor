@@ -7,7 +7,8 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bevy_reactor::{
-    text, text_computed, Cx, Element, PresenterFn, ReactiveContext, ReactorPlugin, View, ViewRoot,
+    text, text_computed, Cond, Cx, Element, PresenterFn, ReactiveContext, ReactorPlugin, View,
+    ViewRoot,
 };
 
 fn main() {
@@ -58,6 +59,15 @@ fn setup_view_root(mut commands: Commands) {
                 }),
                 ", ",
                 nested_presenter.bind(()),
+                ": ",
+                Cond::new(
+                    |cx| {
+                        let counter = cx.use_resource::<Counter>();
+                        counter.count & 1 == 0
+                    },
+                    || "[Even]",
+                    || "[Odd]",
+                ),
             )),
     ));
 }

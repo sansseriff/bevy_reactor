@@ -24,12 +24,10 @@ pub trait PresenterFn<F: 'static>: Sized + Send + Sync + Copy + 'static {
 }
 
 impl<
-        V: View + Sync + Send,
+        V: View + Sync + Send + 'static,
         P: Send + Sync + 'static,
         F: FnMut(&mut Cx<P>) -> V + Copy + Send + Sync + 'static,
     > PresenterFn<fn(&mut Cx<P>) -> V> for F
-where
-    V: 'static,
 {
     type Props = P;
     type View = V;

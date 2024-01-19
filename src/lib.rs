@@ -4,6 +4,7 @@
 
 mod accessor;
 mod bundle;
+mod cond;
 mod cx;
 mod element;
 mod mutable;
@@ -16,8 +17,10 @@ mod text;
 mod view;
 mod view_tuple;
 
+pub use cond::cond;
+pub use cond::Cond;
 pub use cx::Cx;
-pub use cx::Re;
+pub use cx::Rcx;
 pub use cx::ReactiveContext;
 pub use cx::ReactiveContextMut;
 pub use element::Element;

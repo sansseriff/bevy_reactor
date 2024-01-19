@@ -1,6 +1,16 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::{component::Component, entity::Entity, query::Added, world::World};
+use bevy::{
+    core::Name,
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{Added, With},
+        world::World,
+    },
+    hierarchy::Parent,
+    log::warn,
+};
 
 use crate::{node_span::NodeSpan, scope::TrackingScope, text::TextStatic};
 
@@ -24,6 +34,20 @@ pub trait View {
 
     /// Destroy the view, including the display nodes, and all descendant views.
     fn raze(&mut self, view_entity: Entity, world: &mut World);
+
+    /// Notification from child views that the child views have changed and need
+    /// to be re-attached to the parent.
+    fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
+        // warn!(
+        //     "children_changed not handled {:?} {}",
+        //     view_entity,
+        //     world
+        //         .entity(view_entity)
+        //         .get::<Name>()
+        //         .map_or("-".to_string(), |d| d.to_string())
+        // );
+        false
+    }
 }
 
 /// A reference to a view.
@@ -57,9 +81,8 @@ impl IntoView for String {
 pub struct ViewContext<'p> {
     /// Bevy World
     pub(crate) world: &'p mut World,
-
-    /// Entity representing the current owning scope.
-    pub(crate) owner: Option<Entity>,
+    // Entity representing the current owning scope.
+    // pub(crate) owner: Option<Entity>,
 }
 
 #[derive(Component)]
@@ -102,6 +125,10 @@ impl ViewHandle {
     }
 }
 
+#[derive(Component)]
+/// Marker component used to signal that a view's output nodes have changed.
+pub struct DisplayNodeChanged;
+
 /// A `[View]` which displays nothing - can be used as a placeholder.
 pub struct EmptyView;
 
@@ -126,8 +153,41 @@ pub(crate) fn build_added_view_roots(world: &mut World) {
         let inner = root.view.clone();
         let mut vc = ViewContext {
             world,
-            owner: Some(*root_entity),
+            // owner: Some(*root_entity),
         };
         inner.lock().unwrap().build(*root_entity, &mut vc);
+    }
+}
+
+/// System that looks for changed child views and replaces the parent's child nodes.
+pub(crate) fn attach_child_views(world: &mut World) {
+    let mut query = world.query_filtered::<Entity, With<DisplayNodeChanged>>();
+    let query_copy = query.iter(world).collect::<Vec<Entity>>();
+    for entity in query_copy {
+        world.entity_mut(entity).remove::<DisplayNodeChanged>();
+        let mut e = entity;
+        loop {
+            if let Some(handle) = world.entity(e).get::<ViewHandle>() {
+                let inner = handle.view.clone();
+                if inner.lock().unwrap().children_changed(e, world) {
+                    break;
+                }
+            }
+
+            if let Some(handle) = world.entity(e).get::<ViewRoot>() {
+                let inner = handle.view.clone();
+                if inner.lock().unwrap().children_changed(e, world) {
+                    break;
+                }
+            }
+
+            e = match world.entity(e).get::<Parent>() {
+                Some(parent) => parent.get(),
+                None => {
+                    warn!("DisplayNodeChanged not handled.");
+                    break;
+                }
+            };
+        }
     }
 }

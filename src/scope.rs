@@ -139,7 +139,7 @@ pub fn run_reactions(world: &mut World) {
             let inner = view_handle.view.clone();
             let mut vc = ViewContext {
                 world,
-                owner: Some(*scope_entity),
+                // owner: Some(*scope_entity),
             };
             inner
                 .lock()

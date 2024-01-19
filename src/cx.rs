@@ -306,7 +306,9 @@ impl<'p, 'w, Props> ReactiveContextMut<'p> for Cx<'p, 'w, Props> {
 }
 
 /// Immutable reactive context, used for reactive closures such as derived signals.
-pub struct Re<'p, 'w> {
+/// This is a stripped down version of [`Cx`] that does not allow creating new reactions,
+/// and which has no parameters.
+pub struct Rcx<'p, 'w> {
     /// Bevy World
     pub(crate) world: &'w World,
 
@@ -314,7 +316,7 @@ pub struct Re<'p, 'w> {
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
 
-impl<'p, 'w> Re<'p, 'w> {
+impl<'p, 'w> Rcx<'p, 'w> {
     pub(crate) fn new(world: &'w World, tracking: &'p mut TrackingScope) -> Self {
         Self {
             world,
@@ -323,7 +325,7 @@ impl<'p, 'w> Re<'p, 'w> {
     }
 }
 
-impl<'p, 'w> ReactiveContext<'p> for Re<'p, 'w> {
+impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
     fn world(&self) -> &World {
         self.world
     }

@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
 
-use crate::{scope::TrackingScope, Re, Reaction, ReactionHandle};
+use crate::{scope::TrackingScope, Rcx, Reaction, ReactionHandle};
 
 /// Trait that produces a bundle and inserts it into the target entity.
 pub trait BundleProducer: Sync + Send {
@@ -29,11 +29,11 @@ impl<B: Bundle> BundleProducer for BundleStatic<B> {
 }
 
 /// Produces a bundle reactively, returns the bundle as a result.
-pub struct BundleComputed<B: Bundle, F: FnMut(&mut Re) -> B> {
+pub struct BundleComputed<B: Bundle, F: FnMut(&mut Rcx) -> B> {
     reaction: Arc<Mutex<BundleComputedReaction<B, F>>>,
 }
 
-impl<B: Bundle, F: FnMut(&mut Re) -> B> BundleComputed<B, F> {
+impl<B: Bundle, F: FnMut(&mut Rcx) -> B> BundleComputed<B, F> {
     pub(crate) fn new(factory: F) -> Self {
         Self {
             reaction: Arc::new(Mutex::new(BundleComputedReaction {
@@ -45,21 +45,21 @@ impl<B: Bundle, F: FnMut(&mut Re) -> B> BundleComputed<B, F> {
 }
 
 /// Produces a bundle reactively, returns the bundle as a result.
-pub struct BundleComputedReaction<B: Bundle, F: FnMut(&mut Re) -> B> {
+pub struct BundleComputedReaction<B: Bundle, F: FnMut(&mut Rcx) -> B> {
     pub(crate) target: Option<Entity>,
     pub(crate) factory: F,
 }
 
-impl<B: Bundle, F: Sync + Send + FnMut(&mut Re) -> B> Reaction for BundleComputedReaction<B, F> {
+impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for BundleComputedReaction<B, F> {
     fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let mut re = Re::new(world, tracking);
+        let mut re = Rcx::new(world, tracking);
         let b = (self.factory)(&mut re);
         let mut entt = world.entity_mut(self.target.unwrap());
         entt.insert(b);
     }
 }
 
-impl<B: Bundle, F: Sync + Send + 'static + FnMut(&mut Re) -> B> BundleProducer
+impl<B: Bundle, F: Sync + Send + 'static + FnMut(&mut Rcx) -> B> BundleProducer
     for BundleComputed<B, F>
 {
     // Start a reaction which updates the bundle.
