@@ -90,9 +90,11 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         let mut entt = world.entity_mut(self.inner.unwrap());
         if let Some(handle) = entt.get_mut::<ViewHandle>() {
             let inner = handle.view.clone();
+            // Despawn the inner view.
             inner.lock().unwrap().raze(entt.id(), world);
         };
         self.inner = None;
+        // Parent will despawn the view entity.
     }
 }
 

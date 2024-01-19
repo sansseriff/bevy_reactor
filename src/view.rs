@@ -115,7 +115,7 @@ impl View for EmptyView {
 }
 
 /// System that initializes any views that have been added.
-pub(crate) fn build_added_views(world: &mut World) {
+pub(crate) fn build_added_view_roots(world: &mut World) {
     // Need to copy query result to avoid double-borrow of world.
     let mut roots = world.query_filtered::<(Entity, &mut ViewRoot), Added<ViewRoot>>();
     let roots_copy: Vec<Entity> = roots.iter(world).map(|(e, _)| e).collect();

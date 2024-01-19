@@ -181,12 +181,16 @@ impl<B: Bundle + Default> View for Element<B> {
             world.entity_mut(child_ent).despawn();
         }
 
-        // Delete all reactions.
-        world.entity_mut(view_entity).despawn_recursive();
-
         // Delete the display node.
         world.entity_mut(self.display.unwrap()).despawn();
         self.display = None;
+
+        // Delete all reactions.
+        // I think we might need to do this more carefully, as 'parent' is kind of overloaded.
+        // Things that are children:
+        // - Views
+        // - Reactions
+        world.entity_mut(view_entity).despawn_recursive();
     }
 }
 
