@@ -91,6 +91,53 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
             marker: PhantomData,
         }
     }
+
+    /// Write the value of a mutable variable using Copy semantics. Does nothing if
+    /// the value being set matches the existing value.
+    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Copy + PartialEq + 'static,
+    {
+        let mut mutable_entity = self.world_mut().entity_mut(mutable);
+        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
+            *next.0.downcast_mut::<T>().unwrap() = value;
+        } else if let Some(current_value) = mutable_entity.get_mut::<MutableValue>() {
+            if *current_value.value.downcast_ref::<T>().unwrap() != value {
+                mutable_entity.insert(MutableValueNext(Box::new(value)));
+            }
+        }
+    }
+
+    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
+    /// value being set matches the existing value.
+    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static,
+    {
+        let mut mutable_entity = self.world_mut().entity_mut(mutable);
+        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
+            *next.0.downcast_mut::<T>().unwrap() = value;
+        } else if let Some(current_value) = mutable_entity.get_mut::<MutableValue>() {
+            if *current_value.value.downcast_ref::<T>().unwrap() != value {
+                mutable_entity.insert(MutableValueNext(Box::new(value.clone())));
+            }
+        }
+    }
+
+    /// Write the value of a mutable variable by modifying in place. Note that unlike the
+    /// other versions, this function does not check for equality before updating the value,
+    /// and always triggers change detection / reactions.
+    fn write_mutable_ref<T, F: FnMut(&T)>(&mut self, mutable: Entity, mut mutator: F)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static,
+    {
+        let mut mutable_entity = self.world_mut().entity_mut(mutable);
+        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
+            mutator(next.0.downcast_mut::<T>().unwrap());
+        } else if let Some(mut current_value) = mutable_entity.get_mut::<MutableValue>() {
+            mutator(current_value.value.downcast_mut::<T>().unwrap());
+        }
+    }
 }
 
 /// Cx is a context parameter that is passed to presenters. It contains the presenter's
@@ -120,34 +167,6 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         }
     }
 
-    pub(crate) fn write_mutable<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Copy + PartialEq + 'static,
-    {
-        let mut mutable_entity = self.world.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
-            *next.0.downcast_mut::<T>().unwrap() = value;
-        } else if let Some(current_value) = mutable_entity.get_mut::<MutableValue>() {
-            if *current_value.value.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableValueNext(Box::new(value)));
-            }
-        }
-    }
-
-    pub(crate) fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static,
-    {
-        let mut mutable_entity = self.world.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
-            *next.0.downcast_mut::<T>().unwrap() = value;
-        } else if let Some(current_value) = mutable_entity.get_mut::<MutableValue>() {
-            if *current_value.value.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableValueNext(Box::new(value.clone())));
-            }
-        }
-    }
-
     // /// Return a reference to the Component `C` on the given entity.
     // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
     //     match self.bc.world.get_entity(entity) {
@@ -174,29 +193,6 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     // pub fn use_view_component<C: Component>(&self) -> Option<&C> {
     //     self.add_tracked_component::<C>(self.bc.entity);
     //     self.bc.world.entity(self.bc.entity).get::<C>()
-    // }
-
-    // /// Run a function on the view entity. Will only re-run when [`deps`] changes.
-    // pub fn use_effect<F: FnOnce(EntityWorldMut), D: Clone + PartialEq + Send + Sync + 'static>(
-    //     &mut self,
-    //     effect: F,
-    //     deps: D,
-    // ) {
-    //     let handle = self.create_atom_handle::<D>();
-    //     let mut entt = self.bc.world.entity_mut(handle.id);
-    //     match entt.get_mut::<AtomCell>() {
-    //         Some(mut cell) => {
-    //             let deps_old = cell.0.downcast_mut::<D>().expect("Atom is incorrect type");
-    //             if *deps_old != deps {
-    //                 *deps_old = deps;
-    //                 (effect)(self.bc.world.entity_mut(self.bc.entity));
-    //             }
-    //         }
-    //         None => {
-    //             entt.insert(AtomCell(Box::new(deps)));
-    //             (effect)(self.bc.world.entity_mut(self.bc.entity));
-    //         }
-    //     }
     // }
 
     // /// Return a reference to the entity that holds the current presenter invocation.

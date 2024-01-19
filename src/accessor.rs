@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{Cx, ReactiveContext};
+use crate::{ReactiveContext, ReactiveContextMut};
 
 /// What type of reactive node underlies this signal. "Signals" in this framework represent
 /// any kind of reactive data source, including mutable variables, derived signals, and memoized
@@ -10,9 +10,11 @@ pub enum SignalKind {
     Mutable,
 
     /// A readonly value that is computed from other signals.
+    #[allow(dead_code)] // Not implemented yet.
     Derived,
 
     /// A memoized value that is computed from other signals.
+    #[allow(dead_code)] // Not implemented yet.
     Memo,
 }
 
@@ -70,8 +72,8 @@ pub struct Setter<T> {
 }
 
 impl<T: Send + Sync + Copy + PartialEq + 'static> Setter<T> {
-    pub fn set<P>(&mut self, cx: &mut Cx<P>, value: T) {
-        cx.write_mutable(self.id, value)
+    pub fn set<'p, R: ReactiveContextMut<'p>>(&mut self, rc: &mut R, value: T) {
+        rc.write_mutable(self.id, value)
     }
 }
 
@@ -82,8 +84,8 @@ pub struct CloneSetter<T> {
 }
 
 impl<T: Send + Sync + Clone + PartialEq + 'static> CloneSetter<T> {
-    pub fn set<P>(&mut self, cx: &mut Cx<P>, value: T) {
-        cx.write_mutable_clone(self.id, value)
+    pub fn set<'p, R: ReactiveContextMut<'p>>(&mut self, rc: &mut R, value: T) {
+        rc.write_mutable_clone(self.id, value)
     }
 }
 

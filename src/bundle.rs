@@ -1,10 +1,7 @@
-use std::{
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use bevy::{
-    ecs::{bundle::Bundle, component::Component, entity::Entity, world::World},
+    ecs::{bundle::Bundle, entity::Entity, world::World},
     hierarchy::BuildWorldChildren,
 };
 

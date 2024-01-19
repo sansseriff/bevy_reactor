@@ -1,9 +1,8 @@
 # Things we need to demonstrate:
 
-* Dynamic insertion (BundleProducer)
-* Dynamic Assembly
+* Dynamic Node Assembly (child nodes changing)
 * Ownership of View entities.
-* Razing / Despawning
+* Verify Razing / Despawning doesn't leak
 * If
 * For
 * Reacting to signals
@@ -15,3 +14,6 @@
 * Memo
 * Effect
 * Cleanup
+* Scoped values
+* Access to components
+* Access to owner
