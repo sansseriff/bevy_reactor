@@ -10,7 +10,7 @@ use crate::{
     node_span::NodeSpan,
     view::{View, ViewContext},
     view_tuple::ViewTuple,
-    IntoView, Re, ViewHandle, ViewRef,
+    DespawnScopes, IntoView, Re, TrackingScope, ViewHandle, ViewRef,
 };
 
 /// A basic UI element
@@ -141,7 +141,7 @@ impl<B: Bundle + Default> View for Element<B> {
         }
     }
 
-    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
         // Build element node
         assert!(self.display.is_none());
         let display = vc
@@ -150,8 +150,12 @@ impl<B: Bundle + Default> View for Element<B> {
             .id();
 
         // Insert components
-        for producer in self.producers.iter_mut() {
-            producer.start(view_entity, display, vc.world);
+        if !self.producers.is_empty() {
+            let mut tracking = TrackingScope::new(vc.world.change_tick());
+            for producer in self.producers.iter_mut() {
+                producer.start(&mut tracking, display, vc.world);
+            }
+            vc.world.entity_mut(display).insert(tracking);
         }
 
         self.display = Some(display);
@@ -178,7 +182,7 @@ impl<B: Bundle + Default> View for Element<B> {
             let handle = child.get::<ViewHandle>().unwrap();
             let inner = handle.view.clone();
             inner.lock().unwrap().raze(child_ent, world);
-            world.entity_mut(child_ent).despawn();
+            // Child raze will despawn itself.
         }
 
         // Delete the display node.
@@ -190,7 +194,7 @@ impl<B: Bundle + Default> View for Element<B> {
         // Things that are children:
         // - Views
         // - Reactions
-        world.entity_mut(view_entity).despawn_recursive();
+        world.despawn_owned_recursive(view_entity);
     }
 }
 

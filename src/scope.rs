@@ -68,12 +68,30 @@ impl TrackingScope {
         }) || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
     }
 
-    /// Swap the dependencies with another scope. Typically the other scope is a temporary
+    /// Take the dependencies from another scope. Typically the other scope is a temporary
     /// scope that is used to compute the next set of dependencies.
-    pub(crate) fn swap_deps(&mut self, other: &mut Self) {
-        std::mem::swap(&mut self.mutable_deps, &mut other.mutable_deps);
-        std::mem::swap(&mut self.component_deps, &mut other.component_deps);
-        std::mem::swap(&mut self.resource_deps, &mut other.resource_deps);
+    pub(crate) fn take_deps(&mut self, other: &mut Self) {
+        self.mutable_deps = std::mem::take(&mut other.mutable_deps);
+        self.component_deps = std::mem::take(&mut other.component_deps);
+        self.resource_deps = std::mem::take(&mut other.resource_deps);
+    }
+}
+
+pub(crate) trait DespawnScopes {
+    fn despawn_owned_recursive(&mut self, scope_entity: Entity);
+}
+
+impl DespawnScopes for World {
+    fn despawn_owned_recursive(&mut self, scope_entity: Entity) {
+        let mut entt = self.entity_mut(scope_entity);
+        let Some(mut scope) = entt.get_mut::<TrackingScope>() else {
+            return;
+        };
+        let owned_list = std::mem::take(&mut scope.owned);
+        entt.despawn();
+        for owned in owned_list {
+            self.despawn_owned_recursive(owned);
+        }
     }
 }
 
@@ -137,7 +155,7 @@ pub fn run_reactions(world: &mut World) {
         if let Ok((_, mut scope)) = scopes.get_mut(world, *scope_entity) {
             // Swap the scopes so that the next scope becomes the current scope.
             // The old scopes will be dropped at the end of the loop block.
-            scope.swap_deps(&mut next_scope);
+            scope.take_deps(&mut next_scope);
             scope.tick = tick;
         }
     }

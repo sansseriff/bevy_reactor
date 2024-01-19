@@ -25,5 +25,7 @@ pub use mutable::Mutable;
 pub use plugin::ReactorPlugin;
 pub use presenter::*;
 pub use reaction::*;
+pub(crate) use scope::DespawnScopes;
+pub(crate) use scope::TrackingScope;
 pub use text::*;
 pub use view::*;

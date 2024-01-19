@@ -1,9 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::{
-    ecs::{bundle::Bundle, entity::Entity, world::World},
-    hierarchy::BuildWorldChildren,
-};
+use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
 
 use crate::{scope::TrackingScope, Re, Reaction, ReactionHandle};
 
@@ -16,7 +13,7 @@ pub trait BundleProducer: Sync + Send {
     ///     will be deleted when the owner is deleted.
     /// - `target`: The entity that the bundle will be inserted into.
     /// - `world`: The Bevy world.
-    fn start(&mut self, owner: Entity, target: Entity, world: &mut World);
+    fn start(&mut self, tracking: &mut TrackingScope, target: Entity, world: &mut World);
 }
 
 /// Inserts a static, pre-constructed bundle into the target entity. No reactivity.
@@ -26,7 +23,7 @@ pub struct BundleStatic<B: Bundle> {
 
 impl<B: Bundle> BundleProducer for BundleStatic<B> {
     // For a static bundle, we can just insert it once.
-    fn start(&mut self, _owner: Entity, target: Entity, world: &mut World) {
+    fn start(&mut self, _tracking: &mut TrackingScope, target: Entity, world: &mut World) {
         world.entity_mut(target).insert(self.bundle.take().unwrap());
     }
 }
@@ -65,19 +62,27 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Re) -> B> Reaction for BundleCompute
 impl<B: Bundle, F: Sync + Send + 'static + FnMut(&mut Re) -> B> BundleProducer
     for BundleComputed<B, F>
 {
-    // For a static bundle, we can just insert it once.
-    fn start(&mut self, owner: Entity, target: Entity, world: &mut World) {
+    // Start a reaction which updates the bundle.
+    fn start(&mut self, parent_scope: &mut TrackingScope, target: Entity, world: &mut World) {
+        // Create a tracking scope for the reaction.
         let mut scope = TrackingScope::new(world.change_tick());
-        let reaction = self.reaction.clone();
-        let mut inner = reaction.lock().unwrap();
-        inner.target = Some(target);
-        let handle = ReactionHandle(self.reaction.clone());
-        let reaction_id = world.spawn(handle).id();
-        inner.react(reaction_id, world, &mut scope);
-        world
-            .entity_mut(reaction_id)
-            .insert(scope)
-            .set_parent(owner);
+
+        // Unwrap the reaction and update the target entity, since this was not known at
+        // the time the reaction was constucted.
+        let mut reaction = self.reaction.lock().unwrap();
+        reaction.target = Some(target);
+
+        // Store the reaction in a handle and add it to the world.
+        let reaction_id = world.spawn(ReactionHandle(self.reaction.clone())).id();
+
+        // Call `react` the first time, update the scope with initial deps.
+        reaction.react(reaction_id, world, &mut scope);
+
+        // Store the scope in the reaction entity.
+        world.entity_mut(reaction_id).insert(scope);
+
+        // Add the reaction id to the parent scope so that it can be despawned later.
+        parent_scope.add_owned(reaction_id);
     }
 }
 

@@ -3,7 +3,8 @@ use std::sync::{Arc, Mutex};
 use bevy::ecs::{entity::Entity, world::World};
 
 use crate::{
-    node_span::NodeSpan, scope::TrackingScope, Cx, IntoView, View, ViewContext, ViewHandle, ViewRef,
+    node_span::NodeSpan, Cx, DespawnScopes, IntoView, TrackingScope, View, ViewContext, ViewHandle,
+    ViewRef,
 };
 
 /// A trait that allows methods to be added to presenter function references.
@@ -85,7 +86,7 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         self.inner = Some(inner);
     }
 
-    fn raze(&mut self, _view_entity: Entity, world: &mut World) {
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_some());
         let mut entt = world.entity_mut(self.inner.unwrap());
         if let Some(handle) = entt.get_mut::<ViewHandle>() {
@@ -94,7 +95,7 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
             inner.lock().unwrap().raze(entt.id(), world);
         };
         self.inner = None;
-        // Parent will despawn the view entity.
+        world.despawn_owned_recursive(view_entity);
     }
 }
 

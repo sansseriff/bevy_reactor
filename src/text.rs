@@ -6,7 +6,7 @@ use crate::{
     node_span::NodeSpan,
     scope::TrackingScope,
     view::{View, ViewContext},
-    IntoView, Re, ViewRef,
+    DespawnScopes, IntoView, Re, ViewRef,
 };
 
 /// A UI element that displays text
@@ -111,12 +111,10 @@ impl<F: FnMut(&Re) -> String> View for TextComputed<F> {
     }
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
-        // Delete the tracking scope.
-        world.entity_mut(view_entity).remove::<TrackingScope>();
-
         world
             .entity_mut(self.node.expect("Razing unbuilt DynTextNode"))
             .despawn();
+        world.despawn_owned_recursive(view_entity);
     }
 }
 

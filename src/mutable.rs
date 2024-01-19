@@ -5,7 +5,7 @@ use std::{any::Any, sync::atomic::AtomicBool};
 /// Contains a mutable reactive value.
 #[derive(Component)]
 pub(crate) struct MutableValue {
-    // TODO: Use this to allow multiple changes per frame.
+    // TODO: Currently unused. Use this to allow multiple changes per frame.
     pub(crate) changed: AtomicBool,
     pub(crate) value: Box<dyn Any + Send + Sync + 'static>,
 }
@@ -97,7 +97,7 @@ pub(crate) fn commit_mutables(world: &mut World) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cx::Cx, scope::TrackingScope, ReactiveContextMut};
+    use crate::{cx::Cx, ReactiveContextMut, TrackingScope};
 
     use super::*;
 
