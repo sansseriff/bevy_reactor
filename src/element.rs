@@ -187,10 +187,6 @@ impl<B: Bundle + Default> View for Element<B> {
         self.display = None;
 
         // Delete all reactions.
-        // I think we might need to do this more carefully, as 'parent' is kind of overloaded.
-        // Things that are children:
-        // - Views
-        // - Reactions
         world.despawn_owned_recursive(view_entity);
     }
 
