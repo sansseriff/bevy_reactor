@@ -5,7 +5,7 @@ use bevy::prelude::*;
 
 use crate::node_span::NodeSpan;
 use crate::{
-    DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewContext, ViewRef,
+    DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewHandle, ViewRef,
 };
 
 // Cond
@@ -47,13 +47,11 @@ impl<
         &self,
         branch: &Factory,
         parent: Entity,
-        vc: &mut ViewContext,
+        world: &mut World,
     ) -> (ViewRef, Entity) {
-        let state_entity = vc.world.spawn_empty().id();
         let state_view = (branch)().into_view();
-        vc.world.entity_mut(state_entity).set_parent(parent);
-        state_view.lock().unwrap().build(state_entity, vc);
-        vc.world.entity_mut(parent).insert(DisplayNodeChanged);
+        let state_entity = ViewHandle::spawn(&state_view, parent, world);
+        world.entity_mut(parent).insert(DisplayNodeChanged);
         (state_view, state_entity)
     }
 }
@@ -74,18 +72,18 @@ impl<
         }
     }
 
-    fn build(&mut self, view_entity: Entity, vc: &mut crate::ViewContext) {
-        let mut tracking = TrackingScope::new(vc.world.change_tick());
-        self.react(view_entity, vc, &mut tracking);
-        vc.world.entity_mut(view_entity).insert(tracking);
+    fn build(&mut self, view_entity: Entity, world: &mut World) {
+        let mut tracking = TrackingScope::new(world.change_tick());
+        self.react(view_entity, world, &mut tracking);
+        world.entity_mut(view_entity).insert(tracking);
         assert!(
-            vc.world.entity_mut(view_entity).get::<Parent>().is_some(),
+            world.entity_mut(view_entity).get::<Parent>().is_some(),
             "Cond should have a parent view"
         );
     }
 
-    fn react(&mut self, view_entity: Entity, vc: &mut ViewContext, tracking: &mut TrackingScope) {
-        let re = Rcx::new(vc.world, tracking);
+    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let re = Rcx::new(world, tracking);
         let cond = (self.test)(&re);
         if cond {
             match self.state {
@@ -93,18 +91,18 @@ impl<
                     // Already true, do nothing.
                 }
                 CondState::False((ref mut false_state, entity)) => {
-                    false_state.lock().unwrap().raze(entity, vc.world);
+                    false_state.lock().unwrap().raze(entity, world);
                     self.state = CondState::True(self.build_branch_state::<Pos, PosFn>(
                         &self.pos,
                         view_entity,
-                        vc,
+                        world,
                     ));
                 }
                 CondState::Unset => {
                     self.state = CondState::True(self.build_branch_state::<Pos, PosFn>(
                         &self.pos,
                         view_entity,
-                        vc,
+                        world,
                     ));
                 }
             }
@@ -114,18 +112,18 @@ impl<
                     // Already false, do nothing.
                 }
                 CondState::True((ref mut true_state, entity)) => {
-                    true_state.lock().unwrap().raze(entity, vc.world);
+                    true_state.lock().unwrap().raze(entity, world);
                     self.state = CondState::False(self.build_branch_state::<Neg, NegFn>(
                         &self.neg,
                         view_entity,
-                        vc,
+                        world,
                     ));
                 }
                 CondState::Unset => {
                     self.state = CondState::False(self.build_branch_state::<Neg, NegFn>(
                         &self.neg,
                         view_entity,
-                        vc,
+                        world,
                     ));
                 }
             }

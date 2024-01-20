@@ -1,14 +1,13 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::{
-    core::Name,
     ecs::{
         component::Component,
         entity::Entity,
         query::{Added, With},
         world::World,
     },
-    hierarchy::Parent,
+    hierarchy::{BuildWorldChildren, Parent},
     log::warn,
 };
 
@@ -16,36 +15,32 @@ use crate::{node_span::NodeSpan, scope::TrackingScope, text::TextStatic};
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.
+///
+/// Lifecycle: To create a view, use [`ViewHandle::spawn`]. This creates an entity to hold the view,
+/// and which drives the reaction system. When the view is no longer needed, call [`View::raze`].
+/// This will destroy the view entity, and all of its children and display nodes.
 pub trait View {
     /// Returns the display nodes produced by this `View`.
     fn nodes(&self) -> NodeSpan;
 
     /// Initialize the view, creating any entities needed.
-    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext);
+    ///
+    /// Arguments:
+    /// * `view_entity`: The entity that owns this view.
+    /// * `world`: The Bevy world.
+    fn build(&mut self, view_entity: Entity, world: &mut World);
 
-    /// Update the view, reacting to changes in dependencies.
-    fn react(
-        &mut self,
-        _view_entity: Entity,
-        _vc: &mut ViewContext,
-        _tracking: &mut TrackingScope,
-    ) {
-    }
+    /// Update the view, reacting to changes in dependencies. This is optional, and need only
+    /// be implemented for views that are reactive.
+    fn react(&mut self, _view_entity: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 
     /// Destroy the view, including the display nodes, and all descendant views.
     fn raze(&mut self, view_entity: Entity, world: &mut World);
 
-    /// Notification from child views that the child views have changed and need
-    /// to be re-attached to the parent.
+    /// Notification from child views that the child display nodes have changed and need
+    /// to be re-attached to the parent. This is optional, and need only be implemented for
+    /// views which have display nodes that have child display nodes (like [`Element`]).
     fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
-        // warn!(
-        //     "children_changed not handled {:?} {}",
-        //     view_entity,
-        //     world
-        //         .entity(view_entity)
-        //         .get::<Name>()
-        //         .map_or("-".to_string(), |d| d.to_string())
-        // );
         false
     }
 }
@@ -77,14 +72,6 @@ impl IntoView for String {
     }
 }
 
-/// Context object that is passed to views during construction and update.
-pub struct ViewContext<'p> {
-    /// Bevy World
-    pub(crate) world: &'p mut World,
-    // Entity representing the current owning scope.
-    // pub(crate) owner: Option<Entity>,
-}
-
 #[derive(Component)]
 /// Component which holds the top level of the view hierarchy.
 pub struct ViewRoot {
@@ -113,15 +100,27 @@ pub struct ViewHandle {
 }
 
 impl ViewHandle {
-    /// Construct a new [`ViewHandle`].
+    /// Construct a new [`ViewHandle`] from a [`View`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
         Self {
             view: Arc::new(Mutex::new(view)),
         }
     }
 
-    pub(crate) fn nodes(&self) -> NodeSpan {
-        self.view.lock().unwrap().nodes()
+    /// Construct a new [`ViewHandle`] from a [`ViewRef`].
+    pub fn from_ref(view: ViewRef) -> Self {
+        Self { view }
+    }
+
+    /// Given a view template, construct a new view. This creates an entity to hold the view
+    /// and the view handle, and then calls [`View::build`] on the view. The resuling entity
+    /// is part of the template invocation hierarchy, it is not a display node.
+    pub fn spawn(view: &ViewRef, parent: Entity, world: &mut World) -> Entity {
+        let mut child_ent = world.spawn(ViewHandle::from_ref(view.clone()));
+        child_ent.set_parent(parent);
+        let id = child_ent.id();
+        view.lock().unwrap().build(child_ent.id(), world);
+        id
     }
 }
 
@@ -137,7 +136,7 @@ impl View for EmptyView {
         NodeSpan::Empty
     }
 
-    fn build(&mut self, _view_entity: Entity, _vc: &mut ViewContext) {}
+    fn build(&mut self, _view_entity: Entity, _world: &mut World) {}
     fn raze(&mut self, _view_entity: Entity, _world: &mut World) {}
 }
 
@@ -151,11 +150,7 @@ pub(crate) fn build_added_view_roots(world: &mut World) {
             continue;
         };
         let inner = root.view.clone();
-        let mut vc = ViewContext {
-            world,
-            // owner: Some(*root_entity),
-        };
-        inner.lock().unwrap().build(*root_entity, &mut vc);
+        inner.lock().unwrap().build(*root_entity, world);
     }
 }
 

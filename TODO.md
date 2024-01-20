@@ -3,7 +3,6 @@
 * Dynamic Node Assembly (child nodes changing)
 * Ownership of View entities.
 * Verify Razing / Despawning doesn't leak
-* If
 * For
 * Reacting to signals
 * Setting signals in event handlers
@@ -13,10 +12,13 @@
 * Derived Signals
 * Memo
 * Effect
-* Cleanup
+* Cleanup Handlers
+* Fragment
 * Scoped values
-* Access to components
-* Access to owner
+* Access to ECS components
+* Access to owner entity
+* use_element_rect hook
+* transition hooks
 
 ## Notes on fine-grained
 
@@ -45,9 +47,13 @@ DOM construction:
             ),
             || if signal { Some(el) } else { None }
             For::keyed(
-                || items,
-                || key,
-                || child
+                |rc| items,
+                |item| key,
+                |item| child
+            ),
+            For::index(
+                |rc| items,
+                |item, index| child
             ),
             button.bind(ButtonProps {
                 visible, // Note this is a closure

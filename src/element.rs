@@ -8,10 +8,15 @@ use bevy::prelude::*;
 use crate::{
     bundle::{BundleComputed, BundleProducer, BundleStatic},
     node_span::NodeSpan,
-    view::{View, ViewContext},
+    view::View,
     view_tuple::ViewTuple,
     DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef,
 };
+
+struct ElementChild {
+    view: ViewRef,
+    entity: Option<Entity>,
+}
 
 /// A basic UI element
 #[derive(Default)]
@@ -23,10 +28,7 @@ pub struct Element<B: Bundle + Default> {
     display: Option<Entity>,
 
     /// Children of this element.
-    children: Vec<ViewRef>,
-
-    /// Children after they have been spawned as entities.
-    child_entities: Vec<Entity>,
+    children: Vec<ElementChild>,
 
     /// List of producers for components to be added to the element.
     producers: Vec<Box<dyn BundleProducer>>,
@@ -41,7 +43,6 @@ impl<B: Bundle + Default> Element<B> {
             debug_name: String::new(),
             display: None,
             children: Vec::new(),
-            child_entities: Vec::new(),
             producers: Vec::new(),
             marker: PhantomData,
         }
@@ -53,7 +54,6 @@ impl<B: Bundle + Default> Element<B> {
             debug_name: String::new(),
             display: Some(node),
             children: Vec::new(),
-            child_entities: Vec::new(),
             producers: Vec::new(),
             marker: PhantomData,
         }
@@ -70,7 +70,15 @@ impl<B: Bundle + Default> Element<B> {
         if !self.children.is_empty() {
             panic!("Children already set");
         }
-        views.get_handles(&mut self.children);
+        let mut child_views: Vec<ViewRef> = Vec::new();
+        views.get_handles(&mut child_views);
+        self.children = child_views
+            .iter()
+            .map(|v| ElementChild {
+                view: v.clone(),
+                entity: None,
+            })
+            .collect();
         self
     }
 
@@ -114,17 +122,13 @@ impl<B: Bundle + Default> Element<B> {
     /// or none.
     fn attach_children(&self, world: &mut World) {
         let mut count: usize = 0;
-        for child_ent in self.child_entities.iter() {
-            let child = world.entity_mut(*child_ent);
-            let handle = child.get::<ViewHandle>().unwrap();
-            count += handle.nodes().count();
+        for child in self.children.iter() {
+            count += child.view.lock().unwrap().nodes().count();
         }
 
         let mut flat: Vec<Entity> = Vec::with_capacity(count);
-        for child_ent in self.child_entities.iter() {
-            let child = world.entity_mut(*child_ent);
-            let handle = child.get::<ViewHandle>().unwrap();
-            handle.nodes().flatten(&mut flat);
+        for child in self.children.iter() {
+            child.view.lock().unwrap().nodes().flatten(&mut flat);
         }
 
         world
@@ -141,52 +145,40 @@ impl<B: Bundle + Default> View for Element<B> {
         }
     }
 
-    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
-        vc.world
-            .entity_mut(view_entity)
-            .insert(Name::new("Element"));
+    fn build(&mut self, view_entity: Entity, world: &mut World) {
+        world.entity_mut(view_entity).insert(Name::new("Element"));
         // Build element node
         assert!(self.display.is_none());
-        let display = vc
-            .world
+        let display = world
             .spawn((B::default(), Name::new(self.debug_name.clone())))
             .id();
 
         // Insert components
         if !self.producers.is_empty() {
-            let mut tracking = TrackingScope::new(vc.world.change_tick());
+            let mut tracking = TrackingScope::new(world.change_tick());
             for producer in self.producers.iter_mut() {
-                producer.start(&mut tracking, display, vc.world);
+                producer.start(&mut tracking, display, world);
             }
-            vc.world.entity_mut(view_entity).insert(tracking);
+            world.entity_mut(view_entity).insert(tracking);
         }
 
         self.display = Some(display);
 
         // Build child nodes.
-        for child in self.children.iter() {
-            let mut child_ent = vc.world.spawn(ViewHandle {
-                view: child.clone(),
-            });
-            child_ent.set_parent(view_entity);
-            self.child_entities.push(child_ent.id());
-            let child_view = child_ent.get::<ViewHandle>().unwrap();
-            let child_inner = child_view.view.clone();
-            child_inner.lock().unwrap().build(child_ent.id(), vc);
+        for child in self.children.iter_mut() {
+            child.entity = Some(ViewHandle::spawn(&child.view, view_entity, world));
         }
 
-        self.attach_children(vc.world);
+        self.attach_children(world);
     }
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.display.is_some());
         // Raze all child views
-        for child_ent in self.child_entities.drain(..) {
-            let child = world.entity_mut(child_ent);
-            let handle = child.get::<ViewHandle>().unwrap();
-            let inner = handle.view.clone();
-            inner.lock().unwrap().raze(child_ent, world);
-            // Child raze will despawn itself.
+        for child in self.children.drain(..) {
+            let inner = child.view.clone();
+            inner.lock().unwrap().raze(child.entity.unwrap(), world);
+            // Child raze() will despawn itself.
         }
 
         // Delete the display node.

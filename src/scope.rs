@@ -6,7 +6,7 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableValue, reaction::ReactionHandle, ViewContext, ViewHandle};
+use crate::{mutable::MutableValue, reaction::ReactionHandle, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -137,14 +137,10 @@ pub fn run_reactions(world: &mut World) {
         let mut entt = world.entity_mut(*scope_entity);
         if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
             let inner = view_handle.view.clone();
-            let mut vc = ViewContext {
-                world,
-                // owner: Some(*scope_entity),
-            };
             inner
                 .lock()
                 .unwrap()
-                .react(*scope_entity, &mut vc, &mut next_scope);
+                .react(*scope_entity, world, &mut next_scope);
         } else if let Some(reaction) = entt.get_mut::<ReactionHandle>() {
             let inner = reaction.0.clone();
             inner

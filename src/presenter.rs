@@ -3,8 +3,7 @@ use std::sync::{Arc, Mutex};
 use bevy::ecs::{entity::Entity, world::World};
 
 use crate::{
-    node_span::NodeSpan, Cx, DespawnScopes, IntoView, TrackingScope, View, ViewContext, ViewHandle,
-    ViewRef,
+    node_span::NodeSpan, Cx, DespawnScopes, IntoView, TrackingScope, View, ViewHandle, ViewRef,
 };
 
 /// A trait that allows methods to be added to presenter function references.
@@ -72,15 +71,15 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         self.nodes.clone()
     }
 
-    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, _view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_none());
-        let mut tracking = TrackingScope::new(vc.world.change_tick());
-        let mut cx = Cx::new(&self.props, vc.world, &mut tracking);
+        let mut tracking = TrackingScope::new(world.change_tick());
+        let mut cx = Cx::new(&self.props, world, &mut tracking);
         let mut view = self.presenter.call(&mut cx);
-        let inner = vc.world.spawn(tracking).id();
-        view.build(inner, vc);
+        let inner = world.spawn(tracking).id();
+        view.build(inner, world);
         self.nodes = view.nodes();
-        vc.world.entity_mut(inner).insert(ViewHandle::new(view));
+        world.entity_mut(inner).insert(ViewHandle::new(view));
         self.inner = Some(inner);
     }
 

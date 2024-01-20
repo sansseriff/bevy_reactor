@@ -3,10 +3,7 @@ use std::sync::{Arc, Mutex};
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan,
-    scope::TrackingScope,
-    view::{View, ViewContext},
-    DespawnScopes, IntoView, Rcx, ViewRef,
+    node_span::NodeSpan, scope::TrackingScope, view::View, DespawnScopes, IntoView, Rcx, ViewRef,
 };
 
 /// A UI element that displays text
@@ -30,10 +27,10 @@ impl View for TextStatic {
         NodeSpan::Node(self.node.unwrap())
     }
 
-    fn build(&mut self, _view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, _view_entity: Entity, world: &mut World) {
         assert!(self.node.is_none());
         self.node = Some(
-            vc.world
+            world
                 .spawn((TextBundle {
                     text: Text::from_section(self.text.clone(), TextStyle { ..default() }),
                     ..default()
@@ -82,13 +79,13 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
         NodeSpan::Node(self.node.unwrap())
     }
 
-    fn build(&mut self, view_entity: Entity, vc: &mut ViewContext) {
+    fn build(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.node.is_none());
-        let mut tracking = TrackingScope::new(vc.world.change_tick());
-        let re = Rcx::new(vc.world, &mut tracking);
+        let mut tracking = TrackingScope::new(world.change_tick());
+        let re = Rcx::new(world, &mut tracking);
         let text = (self.text)(&re);
         let node = Some(
-            vc.world
+            world
                 .spawn((TextBundle {
                     text: Text::from_section(text, TextStyle { ..default() }),
                     ..default()
@@ -96,13 +93,13 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
                 .id(),
         );
         self.node = node;
-        vc.world.entity_mut(view_entity).insert(tracking);
+        world.entity_mut(view_entity).insert(tracking);
     }
 
-    fn react(&mut self, _view_entity: Entity, vc: &mut ViewContext, tracking: &mut TrackingScope) {
-        let re = Rcx::new(vc.world, tracking);
+    fn react(&mut self, _view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let re = Rcx::new(world, tracking);
         let text = (self.text)(&re);
-        vc.world
+        world
             .entity_mut(self.node.unwrap())
             .get_mut::<Text>()
             .unwrap()
