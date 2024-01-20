@@ -7,8 +7,8 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, ForIndex, PresenterFn, ReactiveContext, ReactorPlugin,
-    View, ViewRoot,
+    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin, View,
+    ViewRoot,
 };
 
 fn main() {
@@ -68,12 +68,12 @@ fn setup_view_root(mut commands: Commands) {
                     || "[Even]",
                     || "[Odd]",
                 ),
-                ForIndex::new(
+                For::each(
                     |cx| {
                         let counter = cx.use_resource::<Counter>();
                         [counter.count, counter.count + 1, counter.count + 2].into_iter()
                     },
-                    |item, _index| format!("item: {}", item),
+                    |item| format!("item: {}", item),
                 ),
             )),
     ));

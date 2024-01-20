@@ -1,7 +1,7 @@
 /// Longest common substring
-pub fn lcs<T, F>(arr1: &[T], arr2: &[T], mut comparator: F) -> (usize, usize, usize)
+pub fn lcs<T1, T2, F>(arr1: &[T1], arr2: &[T2], comparator: F) -> (usize, usize, usize)
 where
-    F: FnMut(&T, &T) -> bool,
+    F: Fn(&T1, &T2) -> bool,
 {
     let mut longest = 0;
     let mut arr1_offset = 0;

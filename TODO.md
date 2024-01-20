@@ -46,15 +46,6 @@ DOM construction:
                 || ()
             ),
             || if signal { Some(el) } else { None }
-            For::keyed(
-                |rc| items,
-                |item| key,
-                |item| child
-            ),
-            For::index(
-                |rc| items,
-                |item, index| child
-            ),
             button.bind(ButtonProps {
                 visible, // Note this is a closure
                 primary: || ButtonVariant::PRIMARY,

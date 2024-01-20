@@ -51,6 +51,7 @@ impl<
         }
     }
 
+    /// Allow specifying a fallback view to render if there are no items.
     pub fn with_fallback<FB: IntoView>(mut self, fallback: FB) -> Self {
         self.fallback = Some(fallback.into_view());
         self
@@ -80,7 +81,7 @@ impl<
         world.entity_mut(view_entity).insert(tracking);
         assert!(
             world.entity_mut(view_entity).get::<Parent>().is_some(),
-            "Cond should have a parent view"
+            "ForIndex should have a parent view"
         );
     }
 
