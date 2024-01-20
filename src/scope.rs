@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::atomic::Ordering};
+use std::sync::atomic::Ordering;
 
 use bevy::{
     ecs::component::{ComponentId, Tick},
@@ -21,7 +21,7 @@ pub struct TrackingScope {
     component_deps: HashSet<(Entity, ComponentId)>,
 
     /// Set of resources that we are currently subscribed to.
-    resource_deps: HashMap<ComponentId, Box<dyn AnyResource>>,
+    resource_deps: HashMap<ComponentId, TrackedResource>,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -53,7 +53,7 @@ impl TrackingScope {
     pub(crate) fn add_resource<T: Resource>(&mut self, resource_id: ComponentId) {
         self.resource_deps
             .entry(resource_id)
-            .or_insert_with(|| Box::new(TrackedResource::<T>::new()));
+            .or_insert_with(|| TrackedResource::new::<T>());
     }
 
     /// Returns true if any of the dependencies of this scope have been updated since
@@ -95,29 +95,19 @@ impl DespawnScopes for World {
     }
 }
 
-pub trait AnyResource: Send + Sync {
-    fn is_changed(&self, world: &World) -> bool;
+pub struct TrackedResource {
+    fn_is_changed: fn(&World) -> bool,
 }
 
-#[derive(PartialEq, Eq)]
-pub struct TrackedResource<T> {
-    pub marker: PhantomData<T>,
-}
-
-impl<T> TrackedResource<T> {
-    pub(crate) fn new() -> Self {
+impl TrackedResource {
+    pub(crate) fn new<T: Resource>() -> Self {
         Self {
-            marker: PhantomData,
+            fn_is_changed: |world| world.is_resource_changed::<T>(),
         }
     }
-}
 
-impl<T> AnyResource for TrackedResource<T>
-where
-    T: Resource,
-{
-    fn is_changed(&self, world: &World) -> bool {
-        world.is_resource_changed::<T>()
+    pub fn is_changed(&self, world: &World) -> bool {
+        (self.fn_is_changed)(world)
     }
 }
 
