@@ -1,9 +1,6 @@
-use std::{
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use bevy::ecs::{bundle::Bundle, component::Component, entity::Entity, world::World};
+use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
 
 use crate::{scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle};
 
@@ -106,21 +103,21 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Targetable for ComputedBu
 }
 
 /// Produces a bundle reactively, returns the bundle as a result.
-pub struct BundleComputedRefReaction<C: Component, F: FnMut(&mut Rcx, &mut C)> {
-    target: Option<Entity>,
-    updater: F,
-    marker: PhantomData<C>,
-}
+// pub struct BundleComputedRefReaction<C: Component, F: FnMut(&mut Rcx, &mut C)> {
+//     target: Option<Entity>,
+//     updater: F,
+//     marker: PhantomData<C>,
+// }
 
-impl<C: Component, F: FnMut(&mut Rcx, &mut C)> Reaction for BundleComputedRefReaction<C, F> {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let mut entt = world.entity_mut(self.target.unwrap());
-        let mut _cmp = entt.get_mut::<C>().unwrap();
-        let mut _re = Rcx::new(entt.world(), tracking);
-        // (self.updater)(&mut re, &mut cmp);
-        todo!("BundleUpdateReaction::react - needs to borrow world while mutating component");
-    }
-}
+// impl<C: Component, F: FnMut(&mut Rcx, &mut C)> Reaction for BundleComputedRefReaction<C, F> {
+//     fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+//         let mut entt = world.entity_mut(self.target.unwrap());
+//         let mut _cmp = entt.get_mut::<C>().unwrap();
+//         let mut _re = Rcx::new(entt.world(), tracking);
+//         // (self.updater)(&mut re, &mut cmp);
+//         todo!("BundleUpdateReaction::react - needs to borrow world while mutating component");
+//     }
+// }
 
 // /// Allows reactively mutating a single component. Allows specifying the initial component value,
 // /// as well as an update function the mutates the component in place.

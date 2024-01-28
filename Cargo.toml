@@ -1,3 +1,4 @@
+workspace = { members = ["crates/obsidian_ui"] }
 [package]
 name = "bevy_reactor"
 version = "0.1.0"
@@ -6,6 +7,7 @@ edition = "2021"
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
 impl-trait-for-tuples = "0.2.2"
+static_init = "1.0.3"
 # bevy = "0.12.1"
 
 # Enable max optimizations for dependencies, but not for our code:

@@ -1,0 +1,8 @@
+[package]
+name = "obsidian_ui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
+bevy_reactor = { path = "../../../bevy_reactor" }

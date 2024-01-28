@@ -4,9 +4,12 @@
 * Verify Razing / Despawning doesn't leak
 * Reacting to signals
 * Setting signals in event handlers
+* Reactive hover hook
+* Reactive focus hook
 
 # Other stuff
 
+* No-arg .bind().
 * Derived Signals
 * Memo
 * Effect
@@ -16,6 +19,13 @@
 * Access to owner entity
 * use_element_rect hook
 * transition hooks
+
+# Obsidian
+
+* Button
+* Slider
+* Flex
+* etc...
 
 ## Notes on fine-grained
 

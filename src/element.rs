@@ -85,9 +85,25 @@ impl<B: Bundle + Default> Element<B> {
         self
     }
 
+    /// Add a reactive effct to the element.
+    pub fn add_effect(&mut self, effect: Box<dyn ElementEffect>) {
+        self.effects.push(effect);
+    }
+
+    /// Create a reactive effect which is attached to the element.
+    pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
+        mut self,
+        effect: F,
+    ) -> Self {
+        self.add_effect(Box::new(RunReactionEffect::new(UpdateReaction::new(
+            effect,
+        ))));
+        self
+    }
+
     /// Add a static bundle to the element.
     pub fn insert<T: Bundle>(mut self, bundle: T) -> Self {
-        self.effects.push(Box::new(InsertBundleEffect {
+        self.add_effect(Box::new(InsertBundleEffect {
             bundle: Some(bundle),
         }));
         self
@@ -98,13 +114,13 @@ impl<B: Bundle + Default> Element<B> {
         mut self,
         factory: F,
     ) -> Self {
-        self.effects.push(Box::new(RunReactionEffect::new(
+        self.add_effect(Box::new(RunReactionEffect::new(
             ComputedBundleReaction::new(factory),
         )));
         self
     }
 
-    // pub fn insert_update<
+    // pub fn insert_computed_ref<
     //     T: Component,
     //     F1: Send + Sync + 'static + FnMut() -> T,
     //     F2: Send + Sync + 'static + FnMut(&mut Re, &mut T),
@@ -122,18 +138,6 @@ impl<B: Bundle + Default> Element<B> {
     //     })));
     //     self
     // }
-
-    /// Create a reactive effect which is attached to the element.
-    pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
-        mut self,
-        effect: F,
-    ) -> Self {
-        self.effects
-            .push(Box::new(RunReactionEffect::new(UpdateReaction::new(
-                effect,
-            ))));
-        self
-    }
 
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.

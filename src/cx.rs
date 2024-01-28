@@ -8,7 +8,7 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    callback::{CallbackFn, CallbackFnValue},
+    callback::{CallbackFn, CallbackFnMutValue, CallbackFnValue},
     mutable::{MutableValue, MutableValueNext},
     scope::TrackingScope,
     Mutable,
@@ -143,57 +143,73 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
         }
     }
 
-    /// Create a new [`CallbackFn`] in this context.
-    fn create_callback<I: 'static, M, S: IntoSystem<I, (), M> + 'static>(
+    /// Create a new [`CallbackFn`] in this context. This holds a `Fn` within an entity.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback function to invoke. This will be called with a single
+    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
+    fn create_callback<P, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
         &mut self,
-        callback: S,
-    ) -> CallbackFn<I> {
-        let _callback = self.world_mut().register_system(callback);
-        // self.tracking().add_owned(callback);
-        // CallbackFn {
-        //     id: callback,
-        //     marker: PhantomData,
-        // }
-        todo!()
+        callback: F,
+    ) -> CallbackFn<F> {
+        let callback = self
+            .world_mut()
+            .spawn(CallbackFnValue {
+                inner: Some(Box::new(callback)),
+            })
+            .id();
+        self.tracking().add_owned(callback);
+        CallbackFn {
+            id: callback,
+            marker: PhantomData,
+        }
     }
 
-    /// Create a new [`CallbackFnMut`] in this context.
-    fn create_callback_mut<P, F: FnMut(P)>(&mut self, _callback: F) -> CallbackFn<F>
+    /// Create a new [`CallbackFnMut`] in this context. This holds a `FnMut` within an entity.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback function to invoke. This will be called with a single
+    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
+    fn create_callback_mut<P, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> CallbackFn<F>
     where
         F: Send + Sync + 'static,
     {
-        // let callback = self
-        //     .world_mut()
-        //     .register_system(callback)
-        //     .spawn((CallbackFnValue {
-        //         inner: Some(Box::new(callback)),
-        //     },))
-        //     .id();
-        // self.tracking().add_owned(callback);
-        // CallbackFn {
-        //     id: callback,
-        //     marker: PhantomData,
-        // }
-        todo!()
+        let callback = self
+            .world_mut()
+            .spawn(CallbackFnMutValue {
+                inner: Some(Box::new(callback)),
+            })
+            .id();
+        self.tracking().add_owned(callback);
+        CallbackFn {
+            id: callback,
+            marker: PhantomData,
+        }
     }
 
-    /// Invoke a callback with the given parameters.
-    fn run_callback<P>(&mut self, callback: CallbackFn<P>, props: P) {
+    /// Invoke a callback with the given props.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback to invoke.
+    /// * `props` - The props to pass to the callback.
+    fn run_callback<P: 'static>(&mut self, callback: CallbackFn<P>, props: P) {
         let world = self.world_mut();
         let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
         let mut cx = Cx::new(&props, world, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
-        let callback = callback_entity.get::<CallbackFnValue>().unwrap();
-        // let callback_fn = callback.inner.take();
-        // let mut callback_fn_inner = callback_fn
-        //     .expect("CallbackFn is not present")
-        //     .downcast_ref::<FnMut(&Cx<P>)>()
-        //     .expect("CallbackFn is not the expected type");
-        // // .downcast_ref::<FnMut(&Cx<P>) + 'static>()
-        // // .expect("CallbackFn is not the expected type");
-        // (callback_fn_inner)(&cx);
-        // let callback = callback_entity.get::<CallbackFnValue>().unwrap().inner = callback_fn;
+        if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnValue>() {
+            let mut callback_fn = callback_cmp.inner.take();
+            let callback_box = callback_fn.as_ref().expect("CallbackFn is not present");
+            let callback_inner = callback_box
+                .downcast_ref::<Box<dyn Fn(&mut Cx<P>)>>()
+                .expect("CallbackFn is not the expected type");
+            (callback_inner)(&mut cx);
+            let mut callback_entity = cx.world.entity_mut(callback.id);
+            callback_entity.get_mut::<CallbackFnValue>().unwrap().inner = callback_fn.take();
+        } else {
+            warn!("No callback found for {:?}", callback.id);
+        }
     }
 }
 

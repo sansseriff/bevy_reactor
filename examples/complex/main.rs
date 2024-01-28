@@ -16,7 +16,7 @@ use bevy_reactor::{
 use static_init::dynamic;
 
 #[dynamic]
-static STYLE_TEST: StyleBuilder = StyleBuilder::new(|b| {
+static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|b| {
     b.display(Display::Flex)
         .flex_direction(FlexDirection::Row)
         .border(3)
@@ -43,7 +43,7 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .with_styles(STYLE_TEST.clone())
+            .with_styles(STYLE_MAIN.clone())
             .insert(BorderColor(Color::LIME_GREEN))
             .insert_computed(|cx| {
                 let counter = cx.use_resource::<Counter>();
