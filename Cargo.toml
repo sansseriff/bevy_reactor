@@ -3,11 +3,10 @@ name = "bevy_reactor"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bevy = "0.12.1"
+bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
 impl-trait-for-tuples = "0.2.2"
+# bevy = "0.12.1"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]

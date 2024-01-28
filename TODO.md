@@ -1,7 +1,6 @@
 # Things we need to demonstrate:
 
-* Dynamic Node Assembly (child nodes changing)
-* Ownership of View entities.
+* Callbacks
 * Verify Razing / Despawning doesn't leak
 * Reacting to signals
 * Setting signals in event handlers
@@ -20,10 +19,6 @@
 
 ## Notes on fine-grained
 
-* Need root component as before.
-* Root holds handle to template invocation hierarchy, node hierarchy.
-* Children tuples as before.
-
 Tracking contexts. Start with create_memo:
 
     -- creates a tracking scope that is owned by the current context, like Solid
@@ -35,20 +30,6 @@ DOM construction:
     let visible = create_memo(|| {
 
     });
-
-    el()
-        .children((
-            If::new(
-                || signal,
-                || el(),
-                || ()
-            ),
-            || if signal { Some(el) } else { None }
-            button.bind(ButtonProps {
-                visible, // Note this is a closure
-                primary: || ButtonVariant::PRIMARY,
-            }),
-        ));
 
 #[derive(Component)]
 struct Memo {

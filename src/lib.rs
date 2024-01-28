@@ -3,10 +3,11 @@
 #![warn(missing_docs)]
 
 mod accessor;
-mod bundle;
+mod callback;
 mod cond;
 mod cx;
 mod element;
+mod element_effect;
 mod r#for;
 mod for_each;
 mod for_index;

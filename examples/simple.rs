@@ -4,11 +4,14 @@ use std::f32::consts::PI;
 
 use bevy::{
     prelude::*,
-    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+    render::{
+        render_asset::RenderAssetPersistencePolicy,
+        render_resource::{Extent3d, TextureDimension, TextureFormat},
+    },
 };
 use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin, View,
-    ViewRoot,
+    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactiveContextMut,
+    ReactorPlugin, View, ViewRoot,
 };
 
 fn main() {
@@ -31,17 +34,16 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .insert(NodeBundle {
-                style: Style {
+            .insert((
+                Style {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
                     border: UiRect::all(Val::Px(3.)),
                     padding: UiRect::all(Val::Px(3.)),
                     ..Default::default()
                 },
-                border_color: BorderColor(Color::LIME_GREEN),
-                ..Default::default()
-            })
+                BorderColor(Color::LIME_GREEN),
+            ))
             .insert_computed(|cx| {
                 let counter = cx.use_resource::<Counter>();
                 BackgroundColor(if counter.count & 1 == 0 {
@@ -49,6 +51,15 @@ fn setup_view_root(mut commands: Commands) {
                 } else {
                     Color::MAROON
                 })
+            })
+            .create_effect(|cx: &mut Cx, ent: Entity| {
+                let count = cx.use_resource::<Counter>().count;
+                let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
+                border.0 = if count & 1 == 0 {
+                    Color::LIME_GREEN
+                } else {
+                    Color::RED
+                };
             })
             .children((
                 Element::<NodeBundle>::new(),
@@ -98,7 +109,7 @@ pub struct Counter {
     pub foo: usize,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
+fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
     if key.pressed(KeyCode::Space) {
         counter.count += 1;
     }
@@ -117,13 +128,13 @@ fn setup(
     });
 
     let shapes = [
-        meshes.add(shape::Cube::default().into()),
-        meshes.add(shape::Box::default().into()),
-        meshes.add(shape::Capsule::default().into()),
-        meshes.add(shape::Torus::default().into()),
-        meshes.add(shape::Cylinder::default().into()),
-        meshes.add(shape::Icosphere::default().try_into().unwrap()),
-        meshes.add(shape::UVSphere::default().into()),
+        meshes.add(shape::Cube::default()),
+        meshes.add(shape::Box::default()),
+        meshes.add(shape::Capsule::default()),
+        meshes.add(shape::Torus::default()),
+        meshes.add(shape::Cylinder::default()),
+        meshes.add(Mesh::try_from(shape::Icosphere::default()).unwrap()),
+        meshes.add(shape::UVSphere::default()),
     ];
 
     let num_shapes = shapes.len();
@@ -147,7 +158,7 @@ fn setup(
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 9000.0,
+            intensity: 1500000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
@@ -158,8 +169,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
-        material: materials.add(Color::SILVER.into()),
+        mesh: meshes.add(shape::Plane::from_size(50.0)),
+        material: materials.add(Color::SILVER),
         ..default()
     });
 
@@ -200,5 +211,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
+        RenderAssetPersistencePolicy::Unload,
     )
 }

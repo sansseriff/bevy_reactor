@@ -6,11 +6,14 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
-    bundle::{BundleComputed, BundleProducer, BundleStatic},
+    element_effect::{
+        ComputedBundleReaction, ElementEffect, InsertBundleEffect, RunReactionEffect,
+        UpdateReaction,
+    },
     node_span::NodeSpan,
     view::View,
     view_tuple::ViewTuple,
-    DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef,
+    Cx, DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef,
 };
 
 struct ElementChild {
@@ -30,8 +33,8 @@ pub struct Element<B: Bundle + Default> {
     /// Children of this element.
     children: Vec<ElementChild>,
 
-    /// List of producers for components to be added to the element.
-    producers: Vec<Box<dyn BundleProducer>>,
+    /// List of effects for components to be added to the element.
+    effects: Vec<Box<dyn ElementEffect>>,
 
     marker: PhantomData<B>,
 }
@@ -43,7 +46,7 @@ impl<B: Bundle + Default> Element<B> {
             debug_name: String::new(),
             display: None,
             children: Vec::new(),
-            producers: Vec::new(),
+            effects: Vec::new(),
             marker: PhantomData,
         }
     }
@@ -54,7 +57,7 @@ impl<B: Bundle + Default> Element<B> {
             debug_name: String::new(),
             display: Some(node),
             children: Vec::new(),
-            producers: Vec::new(),
+            effects: Vec::new(),
             marker: PhantomData,
         }
     }
@@ -84,7 +87,7 @@ impl<B: Bundle + Default> Element<B> {
 
     /// Add a static bundle to the element.
     pub fn insert<T: Bundle>(mut self, bundle: T) -> Self {
-        self.producers.push(Box::new(BundleStatic {
+        self.effects.push(Box::new(InsertBundleEffect {
             bundle: Some(bundle),
         }));
         self
@@ -95,7 +98,9 @@ impl<B: Bundle + Default> Element<B> {
         mut self,
         factory: F,
     ) -> Self {
-        self.producers.push(Box::new(BundleComputed::new(factory)));
+        self.effects.push(Box::new(RunReactionEffect::new(
+            ComputedBundleReaction::new(factory),
+        )));
         self
     }
 
@@ -117,6 +122,18 @@ impl<B: Bundle + Default> Element<B> {
     //     })));
     //     self
     // }
+
+    /// Create a reactive effect which is attached to the element.
+    pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
+        mut self,
+        effect: F,
+    ) -> Self {
+        self.effects
+            .push(Box::new(RunReactionEffect::new(UpdateReaction::new(
+                effect,
+            ))));
+        self
+    }
 
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
@@ -154,9 +171,9 @@ impl<B: Bundle + Default> View for Element<B> {
             .id();
 
         // Insert components
-        if !self.producers.is_empty() {
+        if !self.effects.is_empty() || !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.change_tick());
-            for producer in self.producers.iter_mut() {
+            for producer in self.effects.iter_mut() {
                 producer.start(&mut tracking, display, world);
             }
             world.entity_mut(view_entity).insert(tracking);

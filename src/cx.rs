@@ -8,6 +8,7 @@ use std::{
 use bevy::prelude::*;
 
 use crate::{
+    callback::{CallbackFn, CallbackFnValue},
     mutable::{MutableValue, MutableValueNext},
     scope::TrackingScope,
     Mutable,
@@ -20,6 +21,9 @@ pub trait ReactiveContext<'p> {
 
     /// Set of reactive resources referenced by the presenter.
     fn tracking(&self) -> RefMut<&'p mut TrackingScope>;
+
+    /// Reference to tracking scope which can be borrowed.
+    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope>;
 
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
@@ -138,11 +142,64 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
             mutator(current_value.value.downcast_mut::<T>().unwrap());
         }
     }
+
+    /// Create a new [`CallbackFn`] in this context.
+    fn create_callback<I: 'static, M, S: IntoSystem<I, (), M> + 'static>(
+        &mut self,
+        callback: S,
+    ) -> CallbackFn<I> {
+        let _callback = self.world_mut().register_system(callback);
+        // self.tracking().add_owned(callback);
+        // CallbackFn {
+        //     id: callback,
+        //     marker: PhantomData,
+        // }
+        todo!()
+    }
+
+    /// Create a new [`CallbackFnMut`] in this context.
+    fn create_callback_mut<P, F: FnMut(P)>(&mut self, _callback: F) -> CallbackFn<F>
+    where
+        F: Send + Sync + 'static,
+    {
+        // let callback = self
+        //     .world_mut()
+        //     .register_system(callback)
+        //     .spawn((CallbackFnValue {
+        //         inner: Some(Box::new(callback)),
+        //     },))
+        //     .id();
+        // self.tracking().add_owned(callback);
+        // CallbackFn {
+        //     id: callback,
+        //     marker: PhantomData,
+        // }
+        todo!()
+    }
+
+    /// Invoke a callback with the given parameters.
+    fn run_callback<P>(&mut self, callback: CallbackFn<P>, props: P) {
+        let world = self.world_mut();
+        let tick = world.change_tick();
+        let mut tracking = TrackingScope::new(tick);
+        let mut cx = Cx::new(&props, world, &mut tracking);
+        let mut callback_entity = cx.world.entity_mut(callback.id);
+        let callback = callback_entity.get::<CallbackFnValue>().unwrap();
+        // let callback_fn = callback.inner.take();
+        // let mut callback_fn_inner = callback_fn
+        //     .expect("CallbackFn is not present")
+        //     .downcast_ref::<FnMut(&Cx<P>)>()
+        //     .expect("CallbackFn is not the expected type");
+        // // .downcast_ref::<FnMut(&Cx<P>) + 'static>()
+        // // .expect("CallbackFn is not the expected type");
+        // (callback_fn_inner)(&cx);
+        // let callback = callback_entity.get::<CallbackFnValue>().unwrap().inner = callback_fn;
+    }
 }
 
-/// Cx is a context parameter that is passed to presenters. It contains the presenter's
-/// properties (passed from the parent presenter), plus a reactive scope and access to
-/// reactive data sources in the world.
+/// Cx is a context parameter that is passed to presenters and callbacks. It contains the
+/// presenter's properties (passed from the parent presenter), plus a reactive scope and
+/// access to reactive data sources in the world.
 pub struct Cx<'p, 'w, Props = ()> {
     /// The properties that were passed to the presenter from it's parent.
     pub props: &'p Props,
@@ -297,6 +354,10 @@ impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
     fn tracking(&self) -> RefMut<&'p mut TrackingScope> {
         self.tracking.borrow_mut()
     }
+
+    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope> {
+        &self.tracking
+    }
 }
 
 impl<'p, 'w, Props> ReactiveContextMut<'p> for Cx<'p, 'w, Props> {
@@ -332,5 +393,9 @@ impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
 
     fn tracking(&self) -> RefMut<&'p mut TrackingScope> {
         self.tracking.borrow_mut()
+    }
+
+    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope> {
+        &self.tracking
     }
 }
