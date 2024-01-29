@@ -1,4 +1,4 @@
-use std::{any::TypeId, cell::RefCell, marker::PhantomData, sync::atomic::AtomicBool};
+use std::{any::TypeId, cell::RefCell, marker::PhantomData};
 
 use bevy::prelude::*;
 
@@ -129,7 +129,6 @@ pub trait SetupContext<'p> {
         let mutable = self
             .world_mut()
             .spawn((MutableValue {
-                changed: AtomicBool::new(false),
                 value: Box::new(init),
             },))
             .id();

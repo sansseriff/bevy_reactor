@@ -10,8 +10,8 @@ use bevy::{
     },
 };
 use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactiveContextMut,
-    ReactorPlugin, StyleBuilder, View, ViewRoot, WithStyles,
+    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin,
+    StyleBuilder, View, ViewRoot, WithStyles,
 };
 use static_init::dynamic;
 

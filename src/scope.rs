@@ -1,5 +1,3 @@
-use std::sync::atomic::Ordering;
-
 use bevy::{
     ecs::component::{ComponentId, Tick},
     prelude::*,

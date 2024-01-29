@@ -3,13 +3,11 @@ use crate::{
     ReactiveContext, ReactiveContextMut,
 };
 use bevy::prelude::*;
-use std::{any::Any, sync::atomic::AtomicBool};
+use std::any::Any;
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
 pub(crate) struct MutableValue {
-    // TODO: Currently unused. Use this to allow multiple changes per frame.
-    pub(crate) changed: AtomicBool,
     pub(crate) value: Box<dyn Any + Send + Sync + 'static>,
 }
 
