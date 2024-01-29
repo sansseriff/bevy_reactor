@@ -675,7 +675,7 @@ pub trait StyleTuple: Sync + Send + Clone {
 
 /// Empty tuple.
 impl StyleTuple for () {
-    fn apply(&self, ctx: &mut BuilderContext) {}
+    fn apply(&self, _ctx: &mut BuilderContext) {}
 }
 
 impl StyleTuple for StyleBuilder {

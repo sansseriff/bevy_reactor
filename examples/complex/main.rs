@@ -1,4 +1,8 @@
 //! Example of a simple UI layout
+use obsidian_ui::{
+    colors,
+    viewport::{self},
+};
 
 use std::f32::consts::PI;
 
@@ -10,10 +14,7 @@ use bevy::{
     },
     ui,
 };
-use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin,
-    StyleBuilder, View, ViewRoot, WithStyles,
-};
+use bevy_reactor::{Element, ReactorPlugin, StyleBuilder, ViewRoot, WithStyles};
 use static_init::dynamic;
 
 #[dynamic]
@@ -24,13 +25,14 @@ static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|ss| {
         .bottom(10)
         .right(10.)
         .border(1)
-        .border_color("#888")
+        .border_color(colors::SURFACE_250)
         .display(ui::Display::Flex);
 });
 
 #[dynamic]
 static STYLE_ASIDE: StyleBuilder = StyleBuilder::new(|ss| {
     ss.display(ui::Display::Flex)
+        .background_color(colors::BACKGROUND)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
@@ -101,11 +103,21 @@ static STYLE_LOG_ENTRY: StyleBuilder = StyleBuilder::new(|ss| {
 fn main() {
     App::new()
         .init_resource::<Counter>()
+        .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(ReactorPlugin)
-        .add_systems(Startup, (setup, setup_view_root))
-        .add_systems(Update, (bevy::window::close_on_esc, rotate, update_counter))
+        .add_systems(Startup, setup.pipe(setup_view_root))
+        .add_systems(
+            Update,
+            (
+                bevy::window::close_on_esc,
+                rotate,
+                update_counter,
+                viewport::update_viewport_inset,
+                viewport::update_camera_viewport,
+            ),
+        )
         .run();
 }
 
@@ -115,11 +127,12 @@ struct Shape;
 
 const X_EXTENT: f32 = 14.5;
 
-fn setup_view_root(mut commands: Commands) {
+fn setup_view_root(c2d: In<Entity>, mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
             .with_styles(STYLE_MAIN.clone())
-            .insert(BorderColor(Color::LIME_GREEN))
+            .insert(TargetCamera(c2d.0))
+            // .insert(BorderColor(Color::LIME_GREEN))
             // .insert_computed(|cx| {
             //     let counter = cx.use_resource::<Counter>();
             //     BackgroundColor(if counter.count & 1 == 0 {
@@ -138,47 +151,17 @@ fn setup_view_root(mut commands: Commands) {
             //     };
             // })
             .children((
-                Element::<NodeBundle>::new().with_styles(STYLE_ASIDE.clone()),
-                Element::<NodeBundle>::new().with_styles(STYLE_VIEWPORT.clone()),
-                Element::<NodeBundle>::new(),
-                text("Count: "),
-                text_computed(|cx| {
-                    let counter = cx.use_resource::<Counter>();
-                    format!("{}", counter.count)
-                }),
-                ", ",
-                nested_presenter.bind(()),
-                ": ",
-                Cond::new(
-                    |cx| {
-                        let counter = cx.use_resource::<Counter>();
-                        counter.count & 1 == 0
-                    },
-                    || "[Even]",
-                    || "[Odd]",
-                ),
-                For::each(
-                    |cx| {
-                        let counter = cx.use_resource::<Counter>();
-                        [counter.count, counter.count + 1, counter.count + 2].into_iter()
-                    },
-                    |item| format!("item: {}", item),
-                ),
+                Element::<NodeBundle>::new()
+                    .with_styles(STYLE_ASIDE.clone())
+                    .children((
+                        Element::<NodeBundle>::new().with_styles(STYLE_BUTTON_ROW.clone()),
+                        Element::<NodeBundle>::new().with_styles(STYLE_BUTTON_ROW.clone()),
+                    )),
+                Element::<NodeBundle>::new()
+                    .with_styles(STYLE_VIEWPORT.clone())
+                    .insert(viewport::ViewportInsetElement),
             )),
     ));
-}
-
-fn nested_presenter(_: &mut Cx) -> impl View {
-    text_computed(|cx| {
-        let counter = cx.use_resource::<Counter>();
-        format!("{}", counter.count)
-    })
-    // .children((
-    //     "Root Presenter: ",
-    // |cx: &mut Cx| Element::new(),
-    //     format!("{}", counter.count),
-    //     If::new(counter.count & 1 == 0, " [even]", " [odd]"),
-    // ))
 }
 
 #[derive(Resource, Default)]
@@ -199,7 +182,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-) {
+) -> Entity {
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
         ..default()
@@ -252,10 +235,28 @@ fn setup(
         ..default()
     });
 
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 6., 12.0).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
-        ..default()
-    });
+    let c2d = commands
+        .spawn((Camera2dBundle {
+            camera: Camera {
+                // HUD goes on top of 3D
+                order: 1,
+                clear_color: ClearColorConfig::None,
+                ..default()
+            },
+            ..default()
+        },))
+        .id();
+
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 6., 12.0)
+                .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+            ..default()
+        },
+        viewport::ViewportCamera,
+    ));
+
+    c2d
 }
 
 fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
