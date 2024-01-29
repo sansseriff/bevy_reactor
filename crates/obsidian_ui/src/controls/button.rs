@@ -9,7 +9,6 @@ use bevy::{
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
-use static_init::dynamic;
 
 use crate::size::Size;
 
@@ -43,8 +42,7 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
     pub children: V,
 }
 
-#[dynamic]
-static STYLE_BUTTON: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button(ss: &mut StyleBuilderContext) {
     ss.border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
@@ -53,49 +51,35 @@ static STYLE_BUTTON: StyleBuilder = StyleBuilder::new(|ss| {
         .padding_right(12)
         .border(1)
         .border_color(Color::WHITE);
-    // .selector(".size-xxxs", |ss| ss.min_height(Size::Xxxs.height()))
-    // .selector(".size-xxs", |ss| ss.min_height(Size::Xxs.height()))
-    // .selector(".size-xs", |ss| ss.min_height(Size::Xs.height()))
-    // .selector(".size-sm", |ss| ss.min_height(Size::Sm.height()))
-    // .selector(".size-md", |ss| ss.min_height(Size::Md.height()))
-    // .selector(".size-lg", |ss| ss.min_height(Size::Lg.height()))
-    // .selector(".size-xl", |ss| ss.min_height(Size::Xl.height()))
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_XXXS: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_xxxs(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Xxxs.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_XXS: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_xxs(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Xxs.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_XS: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_xs(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Xs.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_SM: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_sm(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Sm.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_MD: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_md(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Md.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_LG: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_lg(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Lg.height());
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_XL: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_xl(ss: &mut StyleBuilderContext) {
     ss.min_height(Size::Xl.height());
-});
+}
 
 /// Construct a button widget.
 pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<NodeBundle> {
@@ -107,15 +91,15 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
     Element::<NodeBundle>::new()
         .named("button")
         .with_styles((
-            STYLE_BUTTON.clone(),
+            style_button,
             match cx.props.size {
-                Size::Xxxs => STYLE_BUTTON_XXXS.clone(),
-                Size::Xxs => STYLE_BUTTON_XXS.clone(),
-                Size::Xs => STYLE_BUTTON_XS.clone(),
-                Size::Sm => STYLE_BUTTON_SM.clone(),
-                Size::Md => STYLE_BUTTON_MD.clone(),
-                Size::Lg => STYLE_BUTTON_LG.clone(),
-                Size::Xl => STYLE_BUTTON_XL.clone(),
+                Size::Xxxs => style_button_xxxs,
+                Size::Xxs => style_button_xxs,
+                Size::Xs => style_button_xs,
+                Size::Sm => style_button_sm,
+                Size::Md => style_button_md,
+                Size::Lg => style_button_lg,
+                Size::Xl => style_button_xl,
             },
         ))
         .create_effect(move |cx, ent| {

@@ -22,10 +22,8 @@ use bevy::{
     ui,
 };
 use bevy_reactor::*;
-use static_init::dynamic;
 
-#[dynamic]
-static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_main(ss: &mut StyleBuilderContext) {
     ss.position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -34,10 +32,9 @@ static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|ss| {
         .border(1)
         .border_color(colors::SURFACE_250)
         .display(ui::Display::Flex);
-});
+}
 
-#[dynamic]
-static STYLE_ASIDE: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_aside(ss: &mut StyleBuilderContext) {
     ss.display(ui::Display::Flex)
         .background_color(colors::BACKGROUND)
         .padding(8)
@@ -45,50 +42,43 @@ static STYLE_ASIDE: StyleBuilder = StyleBuilder::new(|ss| {
         .flex_direction(ui::FlexDirection::Column)
         .width(200)
         .border(1);
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_ROW: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_row(ss: &mut StyleBuilderContext) {
     ss.gap(8);
-});
+}
 
-#[dynamic]
-static STYLE_BUTTON_FLEX: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_button_flex(ss: &mut StyleBuilderContext) {
     ss.flex_grow(1.);
-});
+}
 
-#[dynamic]
-static STYLE_SLIDER: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_slider(ss: &mut StyleBuilderContext) {
     ss.align_self(ui::AlignSelf::Stretch);
-});
+}
 
-#[dynamic]
-static STYLE_COLOR_EDIT: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_color_edit(ss: &mut StyleBuilderContext) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .gap(8);
-});
+}
 
-#[dynamic]
-static STYLE_VIEWPORT: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_viewport(ss: &mut StyleBuilderContext) {
     ss.flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd);
-});
+}
 
-#[dynamic]
-static STYLE_LOG: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_log(ss: &mut StyleBuilderContext) {
     ss.background_color("#0008")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_self(ui::AlignSelf::Stretch)
         .height(ui::Val::Percent(30.))
         .margin(8);
-});
+}
 
-#[dynamic]
-static STYLE_LOG_INNER: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_log_inner(ss: &mut StyleBuilderContext) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd)
@@ -98,14 +88,13 @@ static STYLE_LOG_INNER: StyleBuilder = StyleBuilder::new(|ss| {
         .overflow(ui::OverflowAxis::Clip)
         .gap(3)
         .margin(8);
-});
+}
 
-#[dynamic]
-static STYLE_LOG_ENTRY: StyleBuilder = StyleBuilder::new(|ss| {
+fn style_log_entry(ss: &mut StyleBuilderContext) {
     ss.display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
         .align_self(ui::AlignSelf::Stretch);
-});
+}
 
 fn main() {
     App::new()
@@ -137,14 +126,14 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .with_styles(STYLE_MAIN.clone())
+            .with_styles(style_main)
             // .insert(TargetCamera(c2d.0))
             .children((
                 Element::<NodeBundle>::new()
-                    .with_styles(STYLE_ASIDE.clone())
+                    .with_styles(style_aside)
                     .children((
                         Element::<NodeBundle>::new()
-                            .with_styles(STYLE_BUTTON_ROW.clone())
+                            .with_styles(style_button_row)
                             .children((
                                 button.bind(ButtonProps {
                                     children: "Increment",
@@ -155,17 +144,15 @@ fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
                                     ..default()
                                 }),
                             )),
-                        Element::<NodeBundle>::new().with_styles(STYLE_COLOR_EDIT.clone()),
+                        Element::<NodeBundle>::new().with_styles(style_color_edit),
                     )),
                 Element::<NodeBundle>::new()
-                    .with_styles(STYLE_VIEWPORT.clone())
+                    .with_styles(style_viewport)
                     .insert(viewport::ViewportInsetElement)
                     .children(
                         Element::<NodeBundle>::new()
-                            .with_styles(STYLE_LOG.clone())
-                            .children(
-                                Element::<NodeBundle>::new().with_styles(STYLE_LOG_INNER.clone()),
-                            ),
+                            .with_styles(style_log)
+                            .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
                     ),
             )),
     ));

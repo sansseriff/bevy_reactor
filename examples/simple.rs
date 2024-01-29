@@ -11,17 +11,15 @@ use bevy::{
 };
 use bevy_reactor::{
     text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin,
-    StyleBuilder, View, ViewRoot, WithStyles,
+    StyleBuilderContext, View, ViewRoot, WithStyles,
 };
-use static_init::dynamic;
 
-#[dynamic]
-static STYLE_TEST: StyleBuilder = StyleBuilder::new(|b| {
-    b.display(Display::Flex)
+fn style_test(ss: &mut StyleBuilderContext) {
+    ss.display(Display::Flex)
         .flex_direction(FlexDirection::Row)
         .border(3)
         .padding(3);
-});
+}
 
 fn main() {
     App::new()
@@ -43,7 +41,7 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .with_styles(STYLE_TEST.clone())
+            .with_styles(style_test)
             .insert(BorderColor(Color::LIME_GREEN))
             .insert_computed(|cx| {
                 let counter = cx.use_resource::<Counter>();

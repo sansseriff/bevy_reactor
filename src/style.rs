@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 //! Defines fluent builder for styles.
-use std::sync::Arc;
+// use std::sync::Arc;
 
 use bevy::{
     asset::AssetPath,
@@ -12,32 +12,34 @@ use impl_trait_for_tuples::*;
 use crate::element_effect::ElementEffect;
 use crate::{Element, TrackingScope};
 
-pub struct StyleBuilder {
-    builder: Arc<dyn Send + Sync + Fn(&mut StyleBuilderContext)>,
-}
+// pub struct StyleBuilder {
+//     builder: Arc<dyn Send + Sync + Fn(&mut StyleBuilderContext)>,
+// }
 
-impl StyleBuilder {
-    pub fn new<F: 'static + Send + Sync + Fn(&mut StyleBuilderContext)>(builder: F) -> Self {
-        Self {
-            builder: Arc::new(builder),
-        }
-    }
-}
+// impl StyleBuilder {
+//     pub fn new<F: 'static + Send + Sync + Fn(&mut StyleBuilderContext)>(builder: F) -> Self {
+//         Self {
+//             builder: Arc::new(builder),
+//         }
+//     }
+// }
 
-impl Clone for StyleBuilder {
-    fn clone(&self) -> Self {
-        Self {
-            builder: self.builder.clone(),
-        }
-    }
-}
+// impl Clone for StyleBuilder {
+//     fn clone(&self) -> Self {
+//         Self {
+//             builder: self.builder.clone(),
+//         }
+//     }
+// }
 
-impl StyleBuilder {
-    /// Apply the styles to the element.
-    pub fn apply(&self, ctx: &mut StyleBuilderContext) {
-        (self.builder)(ctx);
-    }
-}
+// impl StyleBuilder {
+//     /// Apply the styles to the element.
+//     pub fn apply(&self, ctx: &mut StyleBuilderContext) {
+//         (self.builder)(ctx);
+//     }
+// }
+
+pub type StyleBuilderFn = dyn Fn(&mut StyleBuilderContext) + Send + Sync + 'static;
 
 pub struct StyleBuilderContext<'a, 'w> {
     target: &'a mut EntityWorldMut<'w>,
@@ -669,7 +671,7 @@ impl<'a, 'w> StyleBuilderContext<'a, 'w> {
 }
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
-pub trait StyleTuple: Sync + Send + Clone {
+pub trait StyleTuple: Sync + Send {
     fn apply(&self, ctx: &mut StyleBuilderContext);
 }
 
@@ -678,17 +680,17 @@ impl StyleTuple for () {
     fn apply(&self, _ctx: &mut StyleBuilderContext) {}
 }
 
-impl StyleTuple for StyleBuilder {
+impl<F: Fn(&mut StyleBuilderContext) + Send + Sync + 'static> StyleTuple for F {
     fn apply(&self, ctx: &mut StyleBuilderContext) {
-        self.apply(ctx);
+        (self)(ctx);
     }
 }
 
-impl StyleTuple for &StyleBuilder {
-    fn apply(&self, ctx: &mut StyleBuilderContext) {
-        (*self).apply(ctx);
-    }
-}
+// impl StyleTuple for &StyleBuilderFn {
+//     fn apply(&self, ctx: &mut StyleBuilderContext) {
+//         (*self).apply(ctx);
+//     }
+// }
 
 #[impl_for_tuples(1, 16)]
 impl StyleTuple for Tuple {
