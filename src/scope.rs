@@ -11,7 +11,7 @@ use crate::{mutable::MutableValue, reaction::ReactionHandle, ViewHandle};
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
 pub struct TrackingScope {
-    /// List of scopes that are owned by this scope.
+    /// List of entities that are owned by this scope.
     owned: Vec<Entity>,
 
     /// The set of mutables that this scope is subscribed to.
@@ -62,8 +62,8 @@ impl TrackingScope {
         self.mutable_deps.iter().any(|m| {
             world
                 .entity(*m)
-                .get::<MutableValue>()
-                .map(|m| m.changed.load(Ordering::Relaxed))
+                .get_ref::<MutableValue>()
+                .map(|m| m.is_changed())
                 .unwrap_or(false)
         }) || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
     }

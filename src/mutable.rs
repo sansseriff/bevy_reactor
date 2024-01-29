@@ -1,6 +1,6 @@
 use crate::{
     accessor::{CloneGetter, Signal, SignalKind},
-    ReactiveContextMut,
+    ReactiveContext, ReactiveContextMut,
 };
 use bevy::prelude::*;
 use std::{any::Any, sync::atomic::AtomicBool};
@@ -39,6 +39,14 @@ where
         }
     }
 
+    /// Get the value of this [`Mutable`] with Copy semantics.
+    ///
+    /// Arguments:
+    /// * `cx`: The reactive context.
+    pub fn get<'p, R: ReactiveContext<'p>>(&self, cx: &mut R) -> T {
+        cx.read_mutable(self.id)
+    }
+
     /// Set the value of this [`Mutable`] with Copy semantics.
     ///
     /// Arguments:
@@ -60,6 +68,14 @@ where
             kind: SignalKind::Mutable,
             marker: std::marker::PhantomData,
         }
+    }
+
+    /// Get the value of this [`Mutable`] with Clone semantics.
+    ///
+    /// Arguments:
+    /// * `cx`: The reactive context.
+    pub fn get_clone<'p, R: ReactiveContext<'p>>(&self, cx: &mut R) -> T {
+        cx.read_mutable_clone(self.id)
     }
 
     /// Set the value of this [`Mutable`] with Clone semantics.

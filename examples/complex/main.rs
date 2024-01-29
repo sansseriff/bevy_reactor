@@ -1,6 +1,12 @@
 //! Example of a simple UI layout
+use bevy_mod_picking::{
+    backends::bevy_ui::BevyUiBackend,
+    input::InputPlugin,
+    picking_core::{CorePlugin, InteractionPlugin},
+};
 use obsidian_ui::{
     colors,
+    controls::{button, ButtonProps},
     viewport::{self},
 };
 
@@ -15,7 +21,7 @@ use bevy::{
     },
     ui,
 };
-use bevy_reactor::{Element, ReactorPlugin, StyleBuilder, ViewRoot, WithStyles};
+use bevy_reactor::*;
 use static_init::dynamic;
 
 #[dynamic]
@@ -106,7 +112,7 @@ fn main() {
         .init_resource::<Counter>()
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
+        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(ReactorPlugin)
         .add_systems(Startup, setup.pipe(setup_view_root))
         .add_systems(
@@ -137,7 +143,18 @@ fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
                 Element::<NodeBundle>::new()
                     .with_styles(STYLE_ASIDE.clone())
                     .children((
-                        Element::<NodeBundle>::new().with_styles(STYLE_BUTTON_ROW.clone()),
+                        Element::<NodeBundle>::new()
+                            .with_styles(STYLE_BUTTON_ROW.clone())
+                            .children((
+                                button.bind(ButtonProps {
+                                    children: "Increment",
+                                    ..default()
+                                }),
+                                button.bind(ButtonProps {
+                                    children: "Decrement",
+                                    ..default()
+                                }),
+                            )),
                         Element::<NodeBundle>::new().with_styles(STYLE_COLOR_EDIT.clone()),
                     )),
                 Element::<NodeBundle>::new()

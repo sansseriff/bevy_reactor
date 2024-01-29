@@ -212,6 +212,11 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         }
     }
 
+    /// Access to mutable world from reactive context.
+    pub fn world_mut(&mut self) -> &mut World {
+        self.world
+    }
+
     // /// Return a reference to the Component `C` on the given entity.
     // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
     //     match self.bc.world.get_entity(entity) {

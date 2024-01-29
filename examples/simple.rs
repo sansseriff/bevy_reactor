@@ -53,7 +53,7 @@ fn setup_view_root(mut commands: Commands) {
                     Color::MAROON
                 })
             })
-            .create_effect(|cx: &mut Cx, ent: Entity| {
+            .create_effect(|cx, ent| {
                 let count = cx.use_resource::<Counter>().count;
                 let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
                 border.0 = if count & 1 == 0 {
