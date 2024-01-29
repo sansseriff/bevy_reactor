@@ -4,5 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
+bevy = "0.12.1"
+# bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
+bevy_mod_picking = "0.17.0"
 bevy_reactor = { path = "../../../bevy_reactor" }
+static_init = "1.0.3"
+
+# [patch.crates-io]
+# bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main"}

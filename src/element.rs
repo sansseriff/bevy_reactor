@@ -175,7 +175,7 @@ impl<B: Bundle + Default> View for Element<B> {
             .id();
 
         // Insert components
-        if !self.effects.is_empty() || !self.effects.is_empty() {
+        if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.change_tick());
             for producer in self.effects.iter_mut() {
                 producer.start(&mut tracking, display, world);

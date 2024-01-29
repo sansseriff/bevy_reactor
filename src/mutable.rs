@@ -1,4 +1,7 @@
-use crate::accessor::{CloneGetter, CloneSetter, Getter, Setter, SignalKind};
+use crate::{
+    accessor::{CloneGetter, Signal, SignalKind},
+    ReactiveContextMut,
+};
 use bevy::prelude::*;
 use std::{any::Any, sync::atomic::AtomicBool};
 
@@ -17,6 +20,7 @@ pub(crate) struct MutableValue {
 pub(crate) struct MutableValueNext(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 
 /// Contains a reference to a reactive mutable variable.
+#[derive(Copy, Clone)]
 pub struct Mutable<T> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<T>,
@@ -27,18 +31,21 @@ where
     T: PartialEq + Copy + Send + Sync + 'static,
 {
     /// Returns a getter and setter for this [`Mutable`] with Copy semantics.
-    pub fn signal(&self) -> (Getter<T>, Setter<T>) {
-        (
-            Getter {
-                id: self.id,
-                kind: SignalKind::Mutable,
-                marker: std::marker::PhantomData,
-            },
-            Setter {
-                id: self.id,
-                marker: std::marker::PhantomData,
-            },
-        )
+    pub fn signal(&self) -> Signal<T> {
+        Signal {
+            id: self.id,
+            kind: SignalKind::Mutable,
+            marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Set the value of this [`Mutable`] with Copy semantics.
+    ///
+    /// Arguments:
+    /// * `cx`: The reactive context.
+    /// * `value`: The new value.
+    pub fn set<'p, R: ReactiveContextMut<'p>>(&self, cx: &mut R, value: T) {
+        cx.write_mutable(self.id, value);
     }
 }
 
@@ -47,26 +54,23 @@ where
     T: PartialEq + Clone + Send + Sync + 'static,
 {
     /// Returns a getter and setter for this [`Mutable`] with Clone semantics.
-    pub fn signal_clone(&self) -> (CloneGetter<T>, CloneSetter<T>) {
-        (
-            CloneGetter {
-                id: self.id,
-                kind: SignalKind::Mutable,
-                marker: std::marker::PhantomData,
-            },
-            CloneSetter {
-                id: self.id,
-                marker: std::marker::PhantomData,
-            },
-        )
+    pub fn signal_clone(&self) -> CloneGetter<T> {
+        CloneGetter {
+            id: self.id,
+            kind: SignalKind::Mutable,
+            marker: std::marker::PhantomData,
+        }
+    }
+
+    /// Set the value of this [`Mutable`] with Clone semantics.
+    ///
+    /// Arguments:
+    /// * `cx`: The reactive context.
+    /// * `value`: The new value.
+    pub fn set_clone<'p, R: ReactiveContextMut<'p>>(&self, cx: &mut R, value: T) {
+        cx.write_mutable_clone(self.id, value);
     }
 }
-
-/// Trait that allows writing the value to a signal, using Clone semantics.
-// pub struct WriteSignalClone<T: Clone> {
-//     state: Entity,
-//     marker: std::marker::PhantomData<T>,
-// }
 
 /// Trait that allows access to a mutable reference to the signal.
 // trait WriteSignalRef<T> {
@@ -97,7 +101,7 @@ pub(crate) fn commit_mutables(world: &mut World) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cx::Cx, ReactiveContextMut, TrackingScope};
+    use crate::{cx::Cx, SetupContext, TrackingScope};
 
     use super::*;
 
@@ -107,15 +111,16 @@ mod tests {
         let mut scope = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
-        let (reader, mut writer) = cx.create_mutable::<i32>(0).signal();
-        let (reader2, mut _writer2) = cx.create_mutable::<i32>(0).signal();
+        let mutable = cx.create_mutable::<i32>(0);
+        let reader = mutable.signal();
+        let reader2 = cx.create_mutable::<i32>(0).signal();
 
         // Check initial values
         assert_eq!(reader.get(&cx), 0);
         assert_eq!(reader2.get(&cx), 0);
 
         // Update signals
-        writer.set(&mut cx, 1);
+        mutable.set(&mut cx, 1);
 
         // Values should not have changed yet
         assert_eq!(reader.get(&cx), 0);
@@ -136,15 +141,16 @@ mod tests {
         let mut scope = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
-        let (reader, mut writer) = cx.create_mutable("Hello".to_string()).signal_clone();
-        let (reader2, mut _writer2) = cx.create_mutable::<i32>(0).signal_clone();
+        let mutable = cx.create_mutable("Hello".to_string());
+        let reader = mutable.signal_clone();
+        let reader2 = cx.create_mutable::<i32>(0).signal_clone();
 
         // Check initial values
         assert_eq!(reader.get(&cx), "Hello".to_string());
         assert_eq!(reader2.get(&cx), 0);
 
         // Update signals
-        writer.set(&mut cx, "Goodbye".to_string());
+        mutable.set_clone(&mut cx, "Goodbye".to_string());
 
         // Values should not have changed yet
         assert_eq!(reader.get(&cx), "Hello".to_string());

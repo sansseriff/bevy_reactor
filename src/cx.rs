@@ -1,9 +1,4 @@
-use std::{
-    any::TypeId,
-    cell::{RefCell, RefMut},
-    marker::PhantomData,
-    sync::atomic::AtomicBool,
-};
+use std::{any::TypeId, cell::RefCell, marker::PhantomData, sync::atomic::AtomicBool};
 
 use bevy::prelude::*;
 
@@ -19,82 +14,27 @@ pub trait ReactiveContext<'p> {
     /// The current Bevy [`World`].
     fn world(&self) -> &World;
 
-    /// Set of reactive resources referenced by the presenter.
-    fn tracking(&self) -> RefMut<&'p mut TrackingScope>;
-
-    /// Reference to tracking scope which can be borrowed.
-    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope>;
-
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
-        T: Send + Sync + Copy + 'static,
-    {
-        let mutable_entity = self.world().entity(mutable);
-        self.tracking().add_mutable(mutable);
-        *mutable_entity
-            .get::<MutableValue>()
-            .unwrap()
-            .value
-            .downcast_ref::<T>()
-            .unwrap()
-    }
+        T: Send + Sync + Copy + 'static;
 
     /// Read the value of a mutable variable using Clone semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable_clone<T>(&self, mutable: Entity) -> T
     where
-        T: Send + Sync + Clone + 'static,
-    {
-        let mutable_entity = self.world().entity(mutable);
-        self.tracking().add_mutable(mutable);
-        mutable_entity
-            .get::<MutableValue>()
-            .unwrap()
-            .value
-            .downcast_ref::<T>()
-            .unwrap()
-            .clone()
-    }
+        T: Send + Sync + Clone + 'static;
 
     /// Return a reference to the resource of the given type. Calling this function
     /// adds the resource as a dependency of the current presenter invocation.
-    fn use_resource<T: Resource>(&self) -> &T {
-        self.tracking().add_resource::<T>(
-            self.world()
-                .components()
-                .get_resource_id(TypeId::of::<T>())
-                .expect("Unknown resource type"),
-        );
-        self.world().resource::<T>()
-    }
+    fn use_resource<T: Resource>(&self) -> &T;
 }
 
-/// A mutable reactive context. This allows access to reactive data sources, and can also
-/// be used to create new reactions such as mutable variables and effects.
+/// A mutable reactive context. This allows write access to reactive data sources.
 pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
     /// The current Bevy [`World`].
     fn world_mut(&mut self) -> &mut World;
-
-    /// Create a new [`Mutable`] in this context.
-    fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
-    where
-        T: Send + Sync + 'static,
-    {
-        let mutable = self
-            .world_mut()
-            .spawn((MutableValue {
-                changed: AtomicBool::new(false),
-                value: Box::new(init),
-            },))
-            .id();
-        self.tracking().add_owned(mutable);
-        Mutable {
-            id: mutable,
-            marker: PhantomData,
-        }
-    }
 
     /// Write the value of a mutable variable using Copy semantics. Does nothing if
     /// the value being set matches the existing value.
@@ -143,50 +83,6 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
         }
     }
 
-    /// Create a new [`CallbackFn`] in this context. This holds a `Fn` within an entity.
-    ///
-    /// Arguments:
-    /// * `callback` - The callback function to invoke. This will be called with a single
-    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback<P, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
-        &mut self,
-        callback: F,
-    ) -> CallbackFn<F> {
-        let callback = self
-            .world_mut()
-            .spawn(CallbackFnValue {
-                inner: Some(Box::new(callback)),
-            })
-            .id();
-        self.tracking().add_owned(callback);
-        CallbackFn {
-            id: callback,
-            marker: PhantomData,
-        }
-    }
-
-    /// Create a new [`CallbackFnMut`] in this context. This holds a `FnMut` within an entity.
-    ///
-    /// Arguments:
-    /// * `callback` - The callback function to invoke. This will be called with a single
-    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> CallbackFn<F>
-    where
-        F: Send + Sync + 'static,
-    {
-        let callback = self
-            .world_mut()
-            .spawn(CallbackFnMutValue {
-                inner: Some(Box::new(callback)),
-            })
-            .id();
-        self.tracking().add_owned(callback);
-        CallbackFn {
-            id: callback,
-            marker: PhantomData,
-        }
-    }
-
     /// Invoke a callback with the given props.
     ///
     /// Arguments:
@@ -212,6 +108,79 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
             todo!("Mutable callbacks");
         } else {
             warn!("No callback found for {:?}", callback.id);
+        }
+    }
+}
+
+/// A "setup context" is similar to a reactive context, but can also be used to create
+/// reactive data sources such as mutables and effects.
+pub trait SetupContext<'p> {
+    /// The current Bevy [`World`].
+    fn world_mut(&mut self) -> &mut World;
+
+    /// Add an owned entity to this tracking scope.
+    fn add_owned(&self, mutable: Entity);
+
+    /// Create a new [`Mutable`] in this context.
+    fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static,
+    {
+        let mutable = self
+            .world_mut()
+            .spawn((MutableValue {
+                changed: AtomicBool::new(false),
+                value: Box::new(init),
+            },))
+            .id();
+        self.add_owned(mutable);
+        Mutable {
+            id: mutable,
+            marker: PhantomData,
+        }
+    }
+
+    /// Create a new [`CallbackFn`] in this context. This holds a `Fn` within an entity.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback function to invoke. This will be called with a single
+    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
+    fn create_callback<P, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
+        &mut self,
+        callback: F,
+    ) -> CallbackFn<F> {
+        let callback = self
+            .world_mut()
+            .spawn(CallbackFnValue {
+                inner: Some(Box::new(callback)),
+            })
+            .id();
+        self.add_owned(callback);
+        CallbackFn {
+            id: callback,
+            marker: PhantomData,
+        }
+    }
+
+    /// Create a new [`CallbackFnMut`] in this context. This holds a `FnMut` within an entity.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback function to invoke. This will be called with a single
+    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
+    fn create_callback_mut<P, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> CallbackFn<F>
+    where
+        F: Send + Sync + 'static,
+    {
+        let callback = self
+            .world_mut()
+            .spawn(CallbackFnMutValue {
+                inner: Some(Box::new(callback)),
+            })
+            .id();
+        self.add_owned(callback);
+        CallbackFn {
+            id: callback,
+            marker: PhantomData,
         }
     }
 }
@@ -370,18 +339,46 @@ impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
         self.world
     }
 
-    fn tracking(&self) -> RefMut<&'p mut TrackingScope> {
-        self.tracking.borrow_mut()
+    fn read_mutable<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        self.tracking.borrow_mut().add_mutable(mutable);
+        self.world().read_mutable(mutable)
     }
 
-    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope> {
-        &self.tracking
+    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        self.tracking.borrow_mut().add_mutable(mutable);
+        self.world().read_mutable_clone(mutable)
+    }
+
+    fn use_resource<T: Resource>(&self) -> &T {
+        self.tracking.borrow_mut().add_resource::<T>(
+            self.world()
+                .components()
+                .get_resource_id(TypeId::of::<T>())
+                .expect("Unknown resource type"),
+        );
+        self.world().resource::<T>()
     }
 }
 
 impl<'p, 'w, Props> ReactiveContextMut<'p> for Cx<'p, 'w, Props> {
     fn world_mut(&mut self) -> &mut World {
         self.world
+    }
+}
+
+impl<'p, 'w, Props> SetupContext<'p> for Cx<'p, 'w, Props> {
+    fn world_mut(&mut self) -> &mut World {
+        self.world
+    }
+
+    fn add_owned(&self, entity: Entity) {
+        self.tracking.borrow_mut().add_owned(entity);
     }
 }
 
@@ -410,11 +407,76 @@ impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
         self.world
     }
 
-    fn tracking(&self) -> RefMut<&'p mut TrackingScope> {
-        self.tracking.borrow_mut()
+    fn read_mutable<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        self.tracking.borrow_mut().add_mutable(mutable);
+        self.world().read_mutable(mutable)
     }
 
-    fn tracking_ref(&'p self) -> &'p RefCell<&'p mut TrackingScope> {
-        &self.tracking
+    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        self.tracking.borrow_mut().add_mutable(mutable);
+        self.world().read_mutable_clone(mutable)
+    }
+
+    fn use_resource<T: Resource>(&self) -> &T {
+        self.tracking.borrow_mut().add_resource::<T>(
+            self.world()
+                .components()
+                .get_resource_id(TypeId::of::<T>())
+                .expect("Unknown resource type"),
+        );
+        self.world().resource::<T>()
+    }
+}
+
+impl<'p> ReactiveContext<'p> for World {
+    fn world(&self) -> &World {
+        self
+    }
+
+    /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
+    /// mutable to the current tracking scope.
+    fn read_mutable<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        let mutable_entity = self.world().entity(mutable);
+        *mutable_entity
+            .get::<MutableValue>()
+            .unwrap()
+            .value
+            .downcast_ref::<T>()
+            .unwrap()
+    }
+
+    /// Read the value of a mutable variable using Clone semantics. Calling this function adds the
+    /// mutable to the current tracking scope.
+    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        let mutable_entity = self.world().entity(mutable);
+        mutable_entity
+            .get::<MutableValue>()
+            .unwrap()
+            .value
+            .downcast_ref::<T>()
+            .unwrap()
+            .clone()
+    }
+
+    fn use_resource<T: Resource>(&self) -> &T {
+        self.world().resource::<T>()
+    }
+}
+
+impl<'p> ReactiveContextMut<'p> for World {
+    fn world_mut(&mut self) -> &mut World {
+        self
     }
 }

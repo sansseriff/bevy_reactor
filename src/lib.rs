@@ -30,6 +30,7 @@ pub use cx::Cx;
 pub use cx::Rcx;
 pub use cx::ReactiveContext;
 pub use cx::ReactiveContextMut;
+pub use cx::SetupContext;
 pub use element::Element;
 pub use for_each::ForEach;
 pub use for_index::ForIndex;

@@ -24,6 +24,7 @@
 
 * Button
 * Slider
+* Splitter
 * Flex
 * etc...
 

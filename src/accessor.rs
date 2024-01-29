@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{ReactiveContext, ReactiveContextMut};
+use crate::ReactiveContext;
 
 /// What type of reactive node underlies this signal. "Signals" in this framework represent
 /// any kind of reactive data source, including mutable variables, derived signals, and memoized
@@ -18,14 +18,14 @@ pub enum SignalKind {
     Memo,
 }
 
-/// Object that allows reading a signal using Copy semantics.
-pub struct Getter<T> {
+/// Object that allows reading a signal source using Copy semantics.
+pub struct Signal<T> {
     pub(crate) id: Entity,
     pub(crate) kind: SignalKind,
     pub(crate) marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Getter<T>
+impl<T> Signal<T>
 where
     T: Copy + Send + Sync + 'static,
 {
@@ -57,39 +57,3 @@ where
         }
     }
 }
-
-/// Trait that allows reading the value from a signal via an immutable reference.
-// trait ReadSignalRef<T: Copy> {
-//     fn as_ref(&self) -> &T;
-
-//     // fn try_get(&mut self) -> Option<Self::Value>;
-// }
-
-/// Object that allows writing the value to a mutable, using Copy semantics.
-pub struct Setter<T> {
-    pub(crate) id: Entity,
-    pub(crate) marker: std::marker::PhantomData<T>,
-}
-
-impl<T: Send + Sync + Copy + PartialEq + 'static> Setter<T> {
-    pub fn set<'p, R: ReactiveContextMut<'p>>(&mut self, rc: &mut R, value: T) {
-        rc.write_mutable(self.id, value)
-    }
-}
-
-/// Object that allows writing the value to a mutable, using Clone semantics.
-pub struct CloneSetter<T> {
-    pub(crate) id: Entity,
-    pub(crate) marker: std::marker::PhantomData<T>,
-}
-
-impl<T: Send + Sync + Clone + PartialEq + 'static> CloneSetter<T> {
-    pub fn set<'p, R: ReactiveContextMut<'p>>(&mut self, rc: &mut R, value: T) {
-        rc.write_mutable_clone(self.id, value)
-    }
-}
-
-// Trait that allows access to a mutable reference to the signal.
-// trait WriteSignalRef<T> {
-//     fn write_ref<F: FnMut(&mut T)>(&mut self, f: F);
-// }

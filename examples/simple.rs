@@ -5,7 +5,7 @@ use std::f32::consts::PI;
 use bevy::{
     prelude::*,
     render::{
-        render_asset::RenderAssetPersistencePolicy,
+        // render_asset::RenderAssetPersistencePolicy,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
@@ -110,7 +110,7 @@ pub struct Counter {
     pub foo: usize,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
+fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
     if key.pressed(KeyCode::Space) {
         counter.count += 1;
     }
@@ -129,13 +129,13 @@ fn setup(
     });
 
     let shapes = [
-        meshes.add(shape::Cube::default()),
-        meshes.add(shape::Box::default()),
-        meshes.add(shape::Capsule::default()),
-        meshes.add(shape::Torus::default()),
-        meshes.add(shape::Cylinder::default()),
+        meshes.add(shape::Cube::default().into()),
+        meshes.add(shape::Box::default().into()),
+        meshes.add(shape::Capsule::default().into()),
+        meshes.add(shape::Torus::default().into()),
+        meshes.add(shape::Cylinder::default().into()),
         meshes.add(Mesh::try_from(shape::Icosphere::default()).unwrap()),
-        meshes.add(shape::UVSphere::default()),
+        meshes.add(shape::UVSphere::default().into()),
     ];
 
     let num_shapes = shapes.len();
@@ -159,7 +159,8 @@ fn setup(
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 1500000.0,
+            intensity: 9000.0,
+            // intensity: 1500000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
@@ -170,8 +171,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0)),
-        material: materials.add(Color::SILVER),
+        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
+        material: materials.add(Color::SILVER.into()),
         ..default()
     });
 
@@ -212,6 +213,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
-        RenderAssetPersistencePolicy::Unload,
+        // RenderAssetPersistencePolicy::Unload,
     )
 }

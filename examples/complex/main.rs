@@ -7,9 +7,10 @@ use obsidian_ui::{
 use std::f32::consts::PI;
 
 use bevy::{
+    core_pipeline::clear_color::ClearColorConfig,
     prelude::*,
     render::{
-        render_asset::RenderAssetPersistencePolicy,
+        // render_asset::RenderAssetPersistencePolicy,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
     ui,
@@ -56,7 +57,7 @@ static STYLE_SLIDER: StyleBuilder = StyleBuilder::new(|ss| {
 });
 
 #[dynamic]
-static COLOR_EDIT: StyleBuilder = StyleBuilder::new(|ss| {
+static STYLE_COLOR_EDIT: StyleBuilder = StyleBuilder::new(|ss| {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .gap(8);
@@ -127,39 +128,28 @@ struct Shape;
 
 const X_EXTENT: f32 = 14.5;
 
-fn setup_view_root(c2d: In<Entity>, mut commands: Commands) {
+fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
             .with_styles(STYLE_MAIN.clone())
-            .insert(TargetCamera(c2d.0))
-            // .insert(BorderColor(Color::LIME_GREEN))
-            // .insert_computed(|cx| {
-            //     let counter = cx.use_resource::<Counter>();
-            //     BackgroundColor(if counter.count & 1 == 0 {
-            //         Color::DARK_GRAY
-            //     } else {
-            //         Color::MAROON
-            //     })
-            // })
-            // .create_effect(|cx: &mut Cx, ent: Entity| {
-            //     let count = cx.use_resource::<Counter>().count;
-            //     let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-            //     border.0 = if count & 1 == 0 {
-            //         Color::LIME_GREEN
-            //     } else {
-            //         Color::RED
-            //     };
-            // })
+            // .insert(TargetCamera(c2d.0))
             .children((
                 Element::<NodeBundle>::new()
                     .with_styles(STYLE_ASIDE.clone())
                     .children((
                         Element::<NodeBundle>::new().with_styles(STYLE_BUTTON_ROW.clone()),
-                        Element::<NodeBundle>::new().with_styles(STYLE_BUTTON_ROW.clone()),
+                        Element::<NodeBundle>::new().with_styles(STYLE_COLOR_EDIT.clone()),
                     )),
                 Element::<NodeBundle>::new()
                     .with_styles(STYLE_VIEWPORT.clone())
-                    .insert(viewport::ViewportInsetElement),
+                    .insert(viewport::ViewportInsetElement)
+                    .children(
+                        Element::<NodeBundle>::new()
+                            .with_styles(STYLE_LOG.clone())
+                            .children(
+                                Element::<NodeBundle>::new().with_styles(STYLE_LOG_INNER.clone()),
+                            ),
+                    ),
             )),
     ));
 }
@@ -170,7 +160,7 @@ pub struct Counter {
     pub foo: usize,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
+fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
     if key.pressed(KeyCode::Space) {
         counter.count += 1;
     }
@@ -189,13 +179,13 @@ fn setup(
     });
 
     let shapes = [
-        meshes.add(shape::Cube::default()),
-        meshes.add(shape::Box::default()),
-        meshes.add(shape::Capsule::default()),
-        meshes.add(shape::Torus::default()),
-        meshes.add(shape::Cylinder::default()),
+        meshes.add(shape::Cube::default().into()),
+        meshes.add(shape::Box::default().into()),
+        meshes.add(shape::Capsule::default().into()),
+        meshes.add(shape::Torus::default().into()),
+        meshes.add(shape::Cylinder::default().into()),
         meshes.add(Mesh::try_from(shape::Icosphere::default()).unwrap()),
-        meshes.add(shape::UVSphere::default()),
+        meshes.add(shape::UVSphere::default().into()),
     ];
 
     let num_shapes = shapes.len();
@@ -219,7 +209,8 @@ fn setup(
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 1500000.0,
+            intensity: 9000.0,
+            // intensity: 1500000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
@@ -230,21 +221,27 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0)),
-        material: materials.add(Color::SILVER),
+        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
+        material: materials.add(Color::SILVER.into()),
         ..default()
     });
 
     let c2d = commands
-        .spawn((Camera2dBundle {
-            camera: Camera {
-                // HUD goes on top of 3D
-                order: 1,
-                clear_color: ClearColorConfig::None,
+        .spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    // HUD goes on top of 3D
+                    order: 1,
+                    // clear_color: ClearColorConfig::None,
+                    ..default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
                 ..default()
             },
-            ..default()
-        },))
+            UiCameraConfig { show_ui: true },
+        ))
         .id();
 
     commands.spawn((
@@ -254,6 +251,7 @@ fn setup(
             ..default()
         },
         viewport::ViewportCamera,
+        UiCameraConfig { show_ui: false },
     ));
 
     c2d
@@ -290,6 +288,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
-        RenderAssetPersistencePolicy::Unload,
+        // RenderAssetPersistencePolicy::Unload,
     )
 }
