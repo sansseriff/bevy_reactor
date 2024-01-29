@@ -8,19 +8,94 @@ use bevy::{
         render_asset::RenderAssetPersistencePolicy,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
+    ui,
 };
 use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactiveContextMut,
-    ReactorPlugin, StyleBuilder, View, ViewRoot, WithStyles,
+    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin,
+    StyleBuilder, View, ViewRoot, WithStyles,
 };
 use static_init::dynamic;
 
 #[dynamic]
-static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|b| {
-    b.display(Display::Flex)
-        .flex_direction(FlexDirection::Row)
-        .border(3)
-        .padding(3);
+static STYLE_MAIN: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.position(ui::PositionType::Absolute)
+        .left(10.)
+        .top(10.)
+        .bottom(10)
+        .right(10.)
+        .border(1)
+        .border_color("#888")
+        .display(ui::Display::Flex);
+});
+
+#[dynamic]
+static STYLE_ASIDE: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.display(ui::Display::Flex)
+        .padding(8)
+        .gap(8)
+        .flex_direction(ui::FlexDirection::Column)
+        .width(200)
+        .border(1);
+});
+
+#[dynamic]
+static STYLE_BUTTON_ROW: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.gap(8);
+});
+
+#[dynamic]
+static STYLE_BUTTON_FLEX: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.flex_grow(1.);
+});
+
+#[dynamic]
+static STYLE_SLIDER: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.align_self(ui::AlignSelf::Stretch);
+});
+
+#[dynamic]
+static COLOR_EDIT: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .gap(8);
+});
+
+#[dynamic]
+static STYLE_VIEWPORT: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.flex_grow(1.)
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .justify_content(ui::JustifyContent::FlexEnd);
+});
+
+#[dynamic]
+static STYLE_LOG: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.background_color("#0008")
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_self(ui::AlignSelf::Stretch)
+        .height(ui::Val::Percent(30.))
+        .margin(8);
+});
+
+#[dynamic]
+static STYLE_LOG_INNER: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .justify_content(ui::JustifyContent::FlexEnd)
+        .align_self(ui::AlignSelf::Stretch)
+        .flex_grow(1.)
+        .flex_basis(0)
+        .overflow(ui::OverflowAxis::Clip)
+        .gap(3)
+        .margin(8);
+});
+
+#[dynamic]
+static STYLE_LOG_ENTRY: StyleBuilder = StyleBuilder::new(|ss| {
+    ss.display(ui::Display::Flex)
+        .justify_content(ui::JustifyContent::SpaceBetween)
+        .align_self(ui::AlignSelf::Stretch);
 });
 
 fn main() {
@@ -45,24 +120,26 @@ fn setup_view_root(mut commands: Commands) {
         Element::<NodeBundle>::new()
             .with_styles(STYLE_MAIN.clone())
             .insert(BorderColor(Color::LIME_GREEN))
-            .insert_computed(|cx| {
-                let counter = cx.use_resource::<Counter>();
-                BackgroundColor(if counter.count & 1 == 0 {
-                    Color::DARK_GRAY
-                } else {
-                    Color::MAROON
-                })
-            })
-            .create_effect(|cx: &mut Cx, ent: Entity| {
-                let count = cx.use_resource::<Counter>().count;
-                let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-                border.0 = if count & 1 == 0 {
-                    Color::LIME_GREEN
-                } else {
-                    Color::RED
-                };
-            })
+            // .insert_computed(|cx| {
+            //     let counter = cx.use_resource::<Counter>();
+            //     BackgroundColor(if counter.count & 1 == 0 {
+            //         Color::DARK_GRAY
+            //     } else {
+            //         Color::MAROON
+            //     })
+            // })
+            // .create_effect(|cx: &mut Cx, ent: Entity| {
+            //     let count = cx.use_resource::<Counter>().count;
+            //     let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
+            //     border.0 = if count & 1 == 0 {
+            //         Color::LIME_GREEN
+            //     } else {
+            //         Color::RED
+            //     };
+            // })
             .children((
+                Element::<NodeBundle>::new().with_styles(STYLE_ASIDE.clone()),
+                Element::<NodeBundle>::new().with_styles(STYLE_VIEWPORT.clone()),
                 Element::<NodeBundle>::new(),
                 text("Count: "),
                 text_computed(|cx| {

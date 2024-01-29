@@ -207,6 +207,9 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
             (callback_inner)(&mut cx);
             let mut callback_entity = cx.world.entity_mut(callback.id);
             callback_entity.get_mut::<CallbackFnValue>().unwrap().inner = callback_fn.take();
+        } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutValue>() {
+            let mut _callback_fn = callback_cmp.inner.take();
+            todo!("Mutable callbacks");
         } else {
             warn!("No callback found for {:?}", callback.id);
         }
