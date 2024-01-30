@@ -1,6 +1,6 @@
 use crate::{
     signal::{CloneGetter, Signal, SignalKind},
-    ReactiveContext, ReactiveContextMut,
+    RunContextRead, RunContextWrite,
 };
 use bevy::prelude::*;
 use std::any::Any;
@@ -52,7 +52,7 @@ where
     ///
     /// Arguments:
     /// * `cx`: The reactive context.
-    pub fn get<'p, R: ReactiveContext<'p>>(&self, cx: &mut R) -> T {
+    pub fn get<'p, R: RunContextRead<'p>>(&self, cx: &mut R) -> T {
         cx.read_mutable(self.id)
     }
 
@@ -61,7 +61,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
-    pub fn set<'p, R: ReactiveContextMut<'p>>(&self, cx: &mut R, value: T) {
+    pub fn set<'p, R: RunContextWrite<'p>>(&self, cx: &mut R, value: T) {
         cx.write_mutable(self.id, value);
     }
 }
@@ -83,7 +83,7 @@ where
     ///
     /// Arguments:
     /// * `cx`: The reactive context.
-    pub fn get_clone<'p, R: ReactiveContext<'p>>(&self, cx: &mut R) -> T {
+    pub fn get_clone<'p, R: RunContextRead<'p>>(&self, cx: &mut R) -> T {
         cx.read_mutable_clone(self.id)
     }
 
@@ -92,7 +92,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
-    pub fn set_clone<'p, R: ReactiveContextMut<'p>>(&self, cx: &mut R, value: T) {
+    pub fn set_clone<'p, R: RunContextWrite<'p>>(&self, cx: &mut R, value: T) {
         cx.write_mutable_clone(self.id, value);
     }
 }
@@ -126,7 +126,7 @@ pub(crate) fn commit_mutables(world: &mut World) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{cx::Cx, SetupContext, TrackingScope};
+    use crate::{cx::Cx, RunContextSetup, TrackingScope};
 
     use super::*;
 

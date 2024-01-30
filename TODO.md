@@ -15,6 +15,7 @@
 * Access to owner entity
 * use_element_rect hook
 * transition hooks
+* Inherited text styles
 
 # Obsidian
 

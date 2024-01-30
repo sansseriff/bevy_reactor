@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
-pub trait ReactiveContext<'p> {
+pub trait RunContextRead<'p> {
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable<T>(&self, mutable: Entity) -> T
@@ -29,7 +29,7 @@ pub trait ReactiveContext<'p> {
 }
 
 /// A mutable reactive context. This allows write access to reactive data sources.
-pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
+pub trait RunContextWrite<'p>: RunContextRead<'p> {
     /// The current Bevy [`World`].
     fn world_mut(&mut self) -> &mut World;
 
@@ -117,7 +117,7 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
 
 /// A "setup context" is similar to a reactive context, but can also be used to create
 /// reactive data sources such as mutables and effects.
-pub trait SetupContext<'p> {
+pub trait RunContextSetup<'p> {
     /// The current Bevy [`World`].
     fn world_mut(&mut self) -> &mut World;
 
@@ -324,7 +324,7 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     // }
 }
 
-impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
+impl<'p, 'w, Props> RunContextRead<'p> for Cx<'p, 'w, Props> {
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Copy + 'static,
@@ -352,13 +352,13 @@ impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> ReactiveContextMut<'p> for Cx<'p, 'w, Props> {
+impl<'p, 'w, Props> RunContextWrite<'p> for Cx<'p, 'w, Props> {
     fn world_mut(&mut self) -> &mut World {
         self.world
     }
 }
 
-impl<'p, 'w, Props> SetupContext<'p> for Cx<'p, 'w, Props> {
+impl<'p, 'w, Props> RunContextSetup<'p> for Cx<'p, 'w, Props> {
     fn world_mut(&mut self) -> &mut World {
         self.world
     }
@@ -388,7 +388,7 @@ impl<'p, 'w> Rcx<'p, 'w> {
     }
 }
 
-impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
+impl<'p, 'w> RunContextRead<'p> for Rcx<'p, 'w> {
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Copy + 'static,
@@ -416,7 +416,7 @@ impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
     }
 }
 
-impl<'p> ReactiveContext<'p> for World {
+impl<'p> RunContextRead<'p> for World {
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable<T>(&self, mutable: Entity) -> T
@@ -453,7 +453,7 @@ impl<'p> ReactiveContext<'p> for World {
     }
 }
 
-impl<'p> ReactiveContextMut<'p> for World {
+impl<'p> RunContextWrite<'p> for World {
     fn world_mut(&mut self) -> &mut World {
         self
     }

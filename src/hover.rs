@@ -5,7 +5,7 @@ use bevy::{
 use bevy_mod_picking::{focus::HoverMap, pointer::PointerId};
 
 use crate::{
-    signal::Signal, Cx, Reaction, ReactionHandle, ReactiveContextMut, SetupContext, TrackingScope,
+    signal::Signal, Cx, Reaction, ReactionHandle, RunContextSetup, RunContextWrite, TrackingScope,
 };
 
 pub(crate) struct HoverReaction {
