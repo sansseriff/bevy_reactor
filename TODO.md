@@ -1,7 +1,6 @@
 # Things we need to demonstrate:
 
 * Verify Razing / Despawning doesn't leak
-* Reactive hover hook
 * Reactive focus hook
 
 # Other stuff
