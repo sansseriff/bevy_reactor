@@ -42,7 +42,7 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
     pub children: V,
 
     /// Callback called when clicked
-    pub on_click: Option<CallbackFn>,
+    pub on_click: Option<Callback>,
 }
 
 fn style_button(ss: &mut StyleBuilder) {
