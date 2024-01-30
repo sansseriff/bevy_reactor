@@ -30,7 +30,7 @@ fn style_main(ss: &mut StyleBuilder) {
         .bottom(10)
         .right(10.)
         .border(1)
-        .border_color(colors::SURFACE_250)
+        .border_color(colors::GRAY_250)
         .display(ui::Display::Flex);
 }
 
@@ -152,11 +152,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             button.bind(ButtonProps {
                                 children: "Increment",
                                 on_click: Some(clicked_increment),
+                                styles: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                             button.bind(ButtonProps {
                                 children: "Decrement",
                                 on_click: Some(clicked_decrement),
+                                styles: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                         )),

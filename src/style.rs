@@ -1,6 +1,8 @@
 #![allow(missing_docs)]
 //! Defines fluent builder for styles.
 
+use std::sync::Arc;
+
 use bevy::{
     asset::AssetPath,
     prelude::*,
@@ -658,6 +660,14 @@ impl<F: Fn(&mut StyleBuilder) + Send + Sync + 'static> StyleTuple for F {
     }
 }
 
+impl StyleTuple for StyleHandle {
+    fn apply(&self, ctx: &mut StyleBuilder) {
+        if let Some(s) = self.style.as_ref() {
+            s.apply(ctx);
+        }
+    }
+}
+
 #[impl_for_tuples(1, 16)]
 impl StyleTuple for Tuple {
     for_tuples!( where #( Tuple: StyleTuple )* );
@@ -701,5 +711,22 @@ impl<B: Bundle + Default> WithStyles for Element<B> {
     fn with_styles<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
         self.add_effect(Box::new(ApplyStylesEffect { styles }));
         self
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct StyleHandle {
+    pub style: Option<Arc<dyn StyleTuple>>,
+}
+
+impl StyleHandle {
+    pub fn new<S: StyleTuple + 'static>(style: S) -> Self {
+        Self {
+            style: Some(Arc::new(style)),
+        }
+    }
+
+    pub fn none() -> Self {
+        Self { style: None }
     }
 }

@@ -1,10 +1,10 @@
-# Things we need to demonstrate:
+# TODO
+
+* Asset styles
+* Inherited text styles
 
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
-
-# Other stuff
-
 * No-arg .bind().
 * Derived Signals
 * Memo
@@ -15,7 +15,6 @@
 * Access to owner entity
 * use_element_rect hook
 * transition hooks
-* Inherited text styles
 
 # Obsidian
 

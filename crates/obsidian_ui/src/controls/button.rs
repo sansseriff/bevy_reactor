@@ -10,7 +10,7 @@ use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
 
-use crate::size::Size;
+use crate::{colors, size::Size};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, PartialEq, Default, Debug)]
@@ -41,6 +41,9 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
     /// The content to display inside the button.
     pub children: V,
 
+    /// Additional styles to be applied to the button.
+    pub styles: StyleHandle,
+
     /// Callback called when clicked
     pub on_click: Option<Callback>,
 }
@@ -53,7 +56,7 @@ fn style_button(ss: &mut StyleBuilder) {
         .padding_left(12)
         .padding_right(12)
         .border(1)
-        .border_color(Color::WHITE);
+        .border_color(colors::GRAY_050);
 }
 
 fn style_button_xxxs(ss: &mut StyleBuilder) {
@@ -105,15 +108,16 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                 Size::Lg => style_button_lg,
                 Size::Xl => style_button_xl,
             },
+            cx.props.styles.clone(),
         ))
         .create_effect(move |cx, ent| {
             let is_pressed = pressed.get(cx);
             let is_hovering = hovering.get(cx);
-            let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-            border.0 = match (is_pressed, is_hovering) {
-                (true, _) => Color::WHITE,
-                (false, true) => Color::LIME_GREEN,
-                (false, false) => Color::RED,
+            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+            bg.0 = match (is_pressed, is_hovering) {
+                (true, _) => colors::GRAY_300,
+                (false, true) => colors::GRAY_250,
+                (false, false) => colors::GRAY_200,
             };
         })
         .insert((
