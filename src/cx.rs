@@ -3,7 +3,7 @@ use std::{any::TypeId, cell::RefCell, marker::PhantomData};
 use bevy::prelude::*;
 
 use crate::{
-    callback::{CallbackFn, CallbackFnMutValue, CallbackFnValue},
+    callback::{Callback, CallbackFnMutValue, CallbackFnValue},
     mutable::{MutableValue, MutableValueNext},
     scope::TrackingScope,
     Mutable,
@@ -88,7 +88,7 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
     /// Arguments:
     /// * `callback` - The callback to invoke.
     /// * `props` - The props to pass to the callback.
-    fn run_callback<P: 'static>(&mut self, callback: CallbackFn<P>, props: P) {
+    fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
         let world = self.world_mut();
         let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
@@ -104,8 +104,14 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
                 .unwrap()
                 .inner = callback_fn.take();
         } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutValue<P>>() {
-            let mut _callback_fn = callback_cmp.inner.take();
-            todo!("Mutable callbacks");
+            let mut callback_fn = callback_cmp.inner.take();
+            let callback_box = callback_fn.as_mut().expect("CallbackFn is not present");
+            callback_box.call(&mut cx);
+            let mut callback_entity = cx.world.entity_mut(callback.id);
+            callback_entity
+                .get_mut::<CallbackFnMutValue<P>>()
+                .unwrap()
+                .inner = callback_fn.take();
         } else {
             warn!("No callback found for {:?}", callback.id);
         }
@@ -147,7 +153,7 @@ pub trait SetupContext<'p> {
     fn create_callback<P: 'static, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
         &mut self,
         callback: F,
-    ) -> CallbackFn<P> {
+    ) -> Callback<P> {
         let callback = self
             .world_mut()
             .spawn(CallbackFnValue::<P> {
@@ -155,7 +161,7 @@ pub trait SetupContext<'p> {
             })
             .id();
         self.add_owned(callback);
-        CallbackFn {
+        Callback {
             id: callback,
             marker: PhantomData,
         }
@@ -166,10 +172,7 @@ pub trait SetupContext<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx<P>)>(
-        &mut self,
-        callback: F,
-    ) -> CallbackFn<P>
+    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> Callback<P>
     where
         F: Send + Sync + 'static,
     {
@@ -180,7 +183,7 @@ pub trait SetupContext<'p> {
             })
             .id();
         self.add_owned(callback);
-        CallbackFn {
+        Callback {
             id: callback,
             marker: PhantomData,
         }

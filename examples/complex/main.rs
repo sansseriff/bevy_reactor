@@ -128,11 +128,15 @@ fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
 }
 
 fn ui_main(cx: &mut Cx) -> impl View {
-    let clicked_increment = cx.create_callback(|_cx| {
-        println!("Clicked Increment!");
+    let mut inc_count = 0;
+    let mut dec_count = 0;
+    let clicked_increment = cx.create_callback_mut(move |_cx| {
+        inc_count += 1;
+        println!("Increment clicked: {} times", inc_count);
     });
-    let clicked_decrement = cx.create_callback(|_cx| {
-        println!("Clicked Decrement!");
+    let clicked_decrement = cx.create_callback_mut(move |_cx| {
+        dec_count += 1;
+        println!("Decrement clicked: {} times", dec_count);
     });
 
     Element::<NodeBundle>::new()

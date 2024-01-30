@@ -35,7 +35,7 @@ pub(crate) struct CallbackFnMutValue<P> {
 
 /// Contains a reference to a callback. `P` is the type of the props.
 #[derive(Copy, Clone, PartialEq)]
-pub struct CallbackFn<P = ()> {
+pub struct Callback<P = ()> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<P>,
 }

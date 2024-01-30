@@ -24,7 +24,7 @@ mod text;
 mod view;
 mod view_tuple;
 
-pub use callback::CallbackFn;
+pub use callback::Callback;
 pub use cond::cond;
 pub use cond::Cond;
 pub use cx::Cx;
