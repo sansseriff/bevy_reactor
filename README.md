@@ -33,7 +33,7 @@ plugins: `(CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend)`.
 
 ## Fine-Grained Reactivity
 
-`bevy_reactor` implements `fine-grained` reactivity, which means that reactions can update
+`bevy_reactor` implements "fine-grained" reactivity, which means that reactions can update
 individual components or attributes, not just whole entities. In this respect, it is more like
 [Leptos](https://www.leptos.dev/) or [Solid.js](https://www.solidjs.com/). There is no diffing or
 VDOM as in [React.js](https://react.dev/), because the ability to do fine-grained updates makes a
@@ -67,14 +67,14 @@ element.insert_computed(|cx| {
 })
 ```
 
-The `Cx` context type is the most general and powerful. It's actually an amalgam of several traits,
+The `Cx` parameter type is the most general and powerful. It's actually an amalgam of several traits,
 which includes:
 
-* `RunContextRead` - a trait that defines methods for reading mutables, resources, and other
+* `RunContextRead` - a trait that defines methods for *reading* mutables, resources, and other
   reactive data sources and tracking their use.
-* `RunContextWrite` - a trait that defines methods for writing to mutables, running callbacks
+* `RunContextWrite` - a trait that defines methods for *writing* to mutables, running callbacks
   and doing other actions which may mutate the world but which don't cause structural changes.
-* `RunContextSetup` - a trait that defines methods for creating new mutables, callbacks,
+* `RunContextSetup` - a trait that defines methods for *creating* new mutables, callbacks,
   memos and effects.
 
 The `Cx` type also has a `props` attribute which allows properties to be passed to the function
@@ -86,7 +86,7 @@ reading of reactive signals but does not allow writing or creating.
 
 In addition, the Bevy `World` implements these same traits, but non-reactively. This means you
 can access mutables and callbacks even if you are not in a reactive context. Writing to a mutable
-this way will still trigger reactions, but reading a mutable won't create a dependency.
+this way will still trigger reactions, but reading a mutable won't create a tracking dependency.
 
 ## Mutables and Signals
 
@@ -119,9 +119,12 @@ what kind of data is being stored.
 The call `mutable.signal()` returns a reactive signal object. What makes this this different from
 the `get()` method is that the receiver is type-erased, in other words, you can pass around a
 `Signal` object without revealing the fact that the signal came from a `Mutable`. This is handy
-because there are other kinds of reactive objects (like memos and deriveds) which can also
+because there are other kinds of reactive objects (like memos and derivations) which can also
 produce signals. The function that reads the signal can work regardless of where the signal
 came from.
+
+Mutables are transactional: when you write to a mutable, the change does not take effect until
+the next frame. There's an ECS system that "commits" the pending changes.
 
 The three methods given above assume that the data in the mutable implements `Copy`. There is
 another set of methods for data that implements `Clone`:
@@ -146,6 +149,8 @@ which is another type of component that contains an action function and a cleanu
 The action function is run whenever the tracking scope indicates that one or more dependencies
 have changed. When this happens, the tracking scope is first cleared; the reaction is expected
 to re-subscribe to any dependencies that are needed.
+
+The cleanup function is called when the scope is despawned.
 
 Tracking scopes, reactions and mutables form the basis of more advanced reactive constructs
 like memos and derivations.
@@ -174,6 +179,14 @@ let button_clicked = cx.create_callback_mut(move |cx| {
     click_count += 1;
     println!("Button clicked: {} times", click_count);
 });
+```
+
+To call the callback, you need to call `.run_callback()`:
+
+```rust
+cx.run_callback(button_click, ());
+// Or
+world.run_callback(button_click, ());
 ```
 
 ## Views and Elements
@@ -215,6 +228,21 @@ The `Element` object has a method `.children()` which accepts either a single ch
 a variable-length tuple of children. Any object that implements the `IntoView` trait can
 be passed as a child view, so for example text strings implement `IntoView` and automatically
 generate a text node.
+
+```rust
+Element::<NodeBundle>::new()
+    .children((
+        Element::<NodeBundle>::new(),
+        text("Count: "),
+        text_computed(|cx| {
+            let counter = cx.use_resource::<Counter>();
+            format!("{}", counter.count)
+        }),
+        ", ",
+        nested_presenter.bind(()),
+        ": ",
+    )),
+```
 
 ## Element Effects
 
