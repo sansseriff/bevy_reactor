@@ -27,7 +27,7 @@ pub enum ButtonVariant {
 }
 
 /// Button properties
-#[derive(Clone, PartialEq, Default)]
+#[derive(Default)]
 pub struct ButtonProps<V: ViewTuple + Clone> {
     /// Color variant - default, primary or danger.
     pub variant: ButtonVariant,
@@ -40,9 +40,12 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
 
     /// The content to display inside the button.
     pub children: V,
+
+    /// Callback called when clicked
+    pub on_click: Option<CallbackFn>,
 }
 
-fn style_button(ss: &mut StyleBuilderContext) {
+fn style_button(ss: &mut StyleBuilder) {
     ss.border(1)
         .display(ui::Display::Flex)
         .justify_content(JustifyContent::Center)
@@ -53,31 +56,31 @@ fn style_button(ss: &mut StyleBuilderContext) {
         .border_color(Color::WHITE);
 }
 
-fn style_button_xxxs(ss: &mut StyleBuilderContext) {
+fn style_button_xxxs(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xxxs.height());
 }
 
-fn style_button_xxs(ss: &mut StyleBuilderContext) {
+fn style_button_xxs(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xxs.height());
 }
 
-fn style_button_xs(ss: &mut StyleBuilderContext) {
+fn style_button_xs(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xs.height());
 }
 
-fn style_button_sm(ss: &mut StyleBuilderContext) {
+fn style_button_sm(ss: &mut StyleBuilder) {
     ss.min_height(Size::Sm.height());
 }
 
-fn style_button_md(ss: &mut StyleBuilderContext) {
+fn style_button_md(ss: &mut StyleBuilder) {
     ss.min_height(Size::Md.height());
 }
 
-fn style_button_lg(ss: &mut StyleBuilderContext) {
+fn style_button_lg(ss: &mut StyleBuilder) {
     ss.min_height(Size::Lg.height());
 }
 
-fn style_button_xl(ss: &mut StyleBuilderContext) {
+fn style_button_xl(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xl.height());
 }
 
@@ -114,15 +117,16 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
         .insert((
             // TabIndex(0),
             AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-            On::<Pointer<Click>>::run(move |world: &mut World| {
-                // pressed.set(world, true);
-                // if !disabled {
-                //     writer.send(Clicked {
-                //         target: ev.target,
-                //         id,
-                //     });
-                // }
-            }),
+            {
+                let on_click = cx.props.on_click;
+                On::<Pointer<Click>>::run(move |world: &mut World| {
+                    if !disabled {
+                        if let Some(on_click) = on_click {
+                            world.run_callback(on_click, ());
+                        }
+                    }
+                })
+            },
             On::<Pointer<DragStart>>::run(move |world: &mut World| {
                 if !disabled {
                     pressed.set(world, true);

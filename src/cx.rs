@@ -94,16 +94,16 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
         let mut tracking = TrackingScope::new(tick);
         let mut cx = Cx::new(&props, world, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
-        if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnValue>() {
+        if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnValue<P>>() {
             let mut callback_fn = callback_cmp.inner.take();
             let callback_box = callback_fn.as_ref().expect("CallbackFn is not present");
-            let callback_inner = callback_box
-                .downcast_ref::<Box<dyn Fn(&mut Cx<P>)>>()
-                .expect("CallbackFn is not the expected type");
-            (callback_inner)(&mut cx);
+            callback_box.call(&mut cx);
             let mut callback_entity = cx.world.entity_mut(callback.id);
-            callback_entity.get_mut::<CallbackFnValue>().unwrap().inner = callback_fn.take();
-        } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutValue>() {
+            callback_entity
+                .get_mut::<CallbackFnValue<P>>()
+                .unwrap()
+                .inner = callback_fn.take();
+        } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutValue<P>>() {
             let mut _callback_fn = callback_cmp.inner.take();
             todo!("Mutable callbacks");
         } else {
@@ -144,13 +144,13 @@ pub trait SetupContext<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback<P, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
+    fn create_callback<P: 'static, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
         &mut self,
         callback: F,
-    ) -> CallbackFn<F> {
+    ) -> CallbackFn<P> {
         let callback = self
             .world_mut()
-            .spawn(CallbackFnValue {
+            .spawn(CallbackFnValue::<P> {
                 inner: Some(Box::new(callback)),
             })
             .id();
@@ -166,7 +166,10 @@ pub trait SetupContext<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> CallbackFn<F>
+    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx<P>)>(
+        &mut self,
+        callback: F,
+    ) -> CallbackFn<P>
     where
         F: Send + Sync + 'static,
     {

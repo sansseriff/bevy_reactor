@@ -23,7 +23,7 @@ use bevy::{
 };
 use bevy_reactor::*;
 
-fn style_main(ss: &mut StyleBuilderContext) {
+fn style_main(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
         .left(10.)
         .top(10.)
@@ -34,7 +34,7 @@ fn style_main(ss: &mut StyleBuilderContext) {
         .display(ui::Display::Flex);
 }
 
-fn style_aside(ss: &mut StyleBuilderContext) {
+fn style_aside(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .background_color(colors::BACKGROUND)
         .padding(8)
@@ -44,32 +44,32 @@ fn style_aside(ss: &mut StyleBuilderContext) {
         .border(1);
 }
 
-fn style_button_row(ss: &mut StyleBuilderContext) {
+fn style_button_row(ss: &mut StyleBuilder) {
     ss.gap(8);
 }
 
-fn style_button_flex(ss: &mut StyleBuilderContext) {
+fn style_button_flex(ss: &mut StyleBuilder) {
     ss.flex_grow(1.);
 }
 
-fn style_slider(ss: &mut StyleBuilderContext) {
+fn style_slider(ss: &mut StyleBuilder) {
     ss.align_self(ui::AlignSelf::Stretch);
 }
 
-fn style_color_edit(ss: &mut StyleBuilderContext) {
+fn style_color_edit(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .gap(8);
 }
 
-fn style_viewport(ss: &mut StyleBuilderContext) {
+fn style_viewport(ss: &mut StyleBuilder) {
     ss.flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd);
 }
 
-fn style_log(ss: &mut StyleBuilderContext) {
+fn style_log(ss: &mut StyleBuilder) {
     ss.background_color("#0008")
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
@@ -78,7 +78,7 @@ fn style_log(ss: &mut StyleBuilderContext) {
         .margin(8);
 }
 
-fn style_log_inner(ss: &mut StyleBuilderContext) {
+fn style_log_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd)
@@ -90,7 +90,7 @@ fn style_log_inner(ss: &mut StyleBuilderContext) {
         .margin(8);
 }
 
-fn style_log_entry(ss: &mut StyleBuilderContext) {
+fn style_log_entry(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::SpaceBetween)
         .align_self(ui::AlignSelf::Stretch);
@@ -124,38 +124,49 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
-    commands.spawn(ViewRoot::new(
-        Element::<NodeBundle>::new()
-            .with_styles(style_main)
-            // .insert(TargetCamera(c2d.0))
-            .children((
-                Element::<NodeBundle>::new()
-                    .with_styles(style_aside)
-                    .children((
-                        Element::<NodeBundle>::new()
-                            .with_styles(style_button_row)
-                            .children((
-                                button.bind(ButtonProps {
-                                    children: "Increment",
-                                    ..default()
-                                }),
-                                button.bind(ButtonProps {
-                                    children: "Decrement",
-                                    ..default()
-                                }),
-                            )),
-                        Element::<NodeBundle>::new().with_styles(style_color_edit),
-                    )),
-                Element::<NodeBundle>::new()
-                    .with_styles(style_viewport)
-                    .insert(viewport::ViewportInsetElement)
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .with_styles(style_log)
-                            .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
-                    ),
-            )),
-    ));
+    commands.spawn(ViewRoot::new(ui_main.bind(())));
+}
+
+fn ui_main(cx: &mut Cx) -> impl View {
+    let clicked_increment = cx.create_callback(|_cx| {
+        println!("Clicked Increment!");
+    });
+    let clicked_decrement = cx.create_callback(|_cx| {
+        println!("Clicked Decrement!");
+    });
+
+    Element::<NodeBundle>::new()
+        .with_styles(style_main)
+        // .insert(TargetCamera(c2d.0))
+        .children((
+            Element::<NodeBundle>::new()
+                .with_styles(style_aside)
+                .children((
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_button_row)
+                        .children((
+                            button.bind(ButtonProps {
+                                children: "Increment",
+                                on_click: Some(clicked_increment),
+                                ..default()
+                            }),
+                            button.bind(ButtonProps {
+                                children: "Decrement",
+                                on_click: Some(clicked_decrement),
+                                ..default()
+                            }),
+                        )),
+                    Element::<NodeBundle>::new().with_styles(style_color_edit),
+                )),
+            Element::<NodeBundle>::new()
+                .with_styles(style_viewport)
+                .insert(viewport::ViewportInsetElement)
+                .children(
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_log)
+                        .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
+                ),
+        ))
 }
 
 #[derive(Resource, Default)]

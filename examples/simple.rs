@@ -11,10 +11,10 @@ use bevy::{
 };
 use bevy_reactor::{
     text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactiveContext, ReactorPlugin,
-    StyleBuilderContext, View, ViewRoot, WithStyles,
+    StyleBuilder, View, ViewRoot, WithStyles,
 };
 
-fn style_test(ss: &mut StyleBuilderContext) {
+fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
         .flex_direction(FlexDirection::Row)
         .border(3)

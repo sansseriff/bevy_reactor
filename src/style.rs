@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 //! Defines fluent builder for styles.
-// use std::sync::Arc;
 
 use bevy::{
     asset::AssetPath,
@@ -12,36 +11,9 @@ use impl_trait_for_tuples::*;
 use crate::element_effect::ElementEffect;
 use crate::{Element, TrackingScope};
 
-// pub struct StyleBuilder {
-//     builder: Arc<dyn Send + Sync + Fn(&mut StyleBuilderContext)>,
-// }
+pub type StyleBuilderFn = dyn Fn(&mut StyleBuilder) + Send + Sync + 'static;
 
-// impl StyleBuilder {
-//     pub fn new<F: 'static + Send + Sync + Fn(&mut StyleBuilderContext)>(builder: F) -> Self {
-//         Self {
-//             builder: Arc::new(builder),
-//         }
-//     }
-// }
-
-// impl Clone for StyleBuilder {
-//     fn clone(&self) -> Self {
-//         Self {
-//             builder: self.builder.clone(),
-//         }
-//     }
-// }
-
-// impl StyleBuilder {
-//     /// Apply the styles to the element.
-//     pub fn apply(&self, ctx: &mut StyleBuilderContext) {
-//         (self.builder)(ctx);
-//     }
-// }
-
-pub type StyleBuilderFn = dyn Fn(&mut StyleBuilderContext) + Send + Sync + 'static;
-
-pub struct StyleBuilderContext<'a, 'w> {
+pub struct StyleBuilder<'a, 'w> {
     target: &'a mut EntityWorldMut<'w>,
     style: ui::Style,
     style_changed: bool,
@@ -168,7 +140,7 @@ impl OptFloatParam for i32 {
     }
 }
 
-impl<'a, 'w> StyleBuilderContext<'a, 'w> {
+impl<'a, 'w> StyleBuilder<'a, 'w> {
     pub fn background_image(&mut self, _img: Option<AssetPath<'static>>) -> &mut Self {
         // TODO: Need to load the asset path from the asset server.
         // Will need a helper component for this.
@@ -672,31 +644,25 @@ impl<'a, 'w> StyleBuilderContext<'a, 'w> {
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.
 pub trait StyleTuple: Sync + Send {
-    fn apply(&self, ctx: &mut StyleBuilderContext);
+    fn apply(&self, ctx: &mut StyleBuilder);
 }
 
 /// Empty tuple.
 impl StyleTuple for () {
-    fn apply(&self, _ctx: &mut StyleBuilderContext) {}
+    fn apply(&self, _ctx: &mut StyleBuilder) {}
 }
 
-impl<F: Fn(&mut StyleBuilderContext) + Send + Sync + 'static> StyleTuple for F {
-    fn apply(&self, ctx: &mut StyleBuilderContext) {
+impl<F: Fn(&mut StyleBuilder) + Send + Sync + 'static> StyleTuple for F {
+    fn apply(&self, ctx: &mut StyleBuilder) {
         (self)(ctx);
     }
 }
-
-// impl StyleTuple for &StyleBuilderFn {
-//     fn apply(&self, ctx: &mut StyleBuilderContext) {
-//         (*self).apply(ctx);
-//     }
-// }
 
 #[impl_for_tuples(1, 16)]
 impl StyleTuple for Tuple {
     for_tuples!( where #( Tuple: StyleTuple )* );
 
-    fn apply(&self, ctx: &mut StyleBuilderContext) {
+    fn apply(&self, ctx: &mut StyleBuilder) {
         for_tuples!( #( self.Tuple.apply(ctx); )* );
     }
 }
@@ -714,7 +680,7 @@ impl<S: StyleTuple> ElementEffect for ApplyStylesEffect<S> {
         if let Some(s) = target.get::<ui::Style>() {
             style.clone_from(s);
         }
-        let mut ctx = StyleBuilderContext {
+        let mut ctx = StyleBuilder {
             target: &mut target,
             style,
             style_changed: false,

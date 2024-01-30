@@ -1,5 +1,5 @@
 use crate::{
-    accessor::{CloneGetter, Signal, SignalKind},
+    signal::{CloneGetter, Signal, SignalKind},
     ReactiveContext, ReactiveContextMut,
 };
 use bevy::prelude::*;

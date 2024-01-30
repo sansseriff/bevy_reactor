@@ -2,7 +2,6 @@
 
 #![warn(missing_docs)]
 
-mod accessor;
 mod callback;
 mod cond;
 mod cx;
@@ -19,11 +18,13 @@ mod plugin;
 mod presenter;
 mod reaction;
 mod scope;
+mod signal;
 mod style;
 mod text;
 mod view;
 mod view_tuple;
 
+pub use callback::CallbackFn;
 pub use cond::cond;
 pub use cond::Cond;
 pub use cx::Cx;
