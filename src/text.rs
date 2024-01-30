@@ -3,7 +3,8 @@ use std::sync::{Arc, Mutex};
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, scope::TrackingScope, view::View, DespawnScopes, IntoView, Rcx, ViewRef,
+    node_span::NodeSpan, tracking_scope::TrackingScope, view::View, DespawnScopes, IntoView, Rcx,
+    ViewRef,
 };
 
 /// A UI element that displays text

@@ -1,3 +1,5 @@
+use std::any::TypeId;
+
 use bevy::{
     ecs::component::{ComponentId, Tick},
     prelude::*,
@@ -52,6 +54,16 @@ impl TrackingScope {
         self.resource_deps
             .entry(resource_id)
             .or_insert_with(|| TrackedResource::new::<T>());
+    }
+
+    /// Convenience method for adding a resource dependency.
+    pub(crate) fn track_resource<T: Resource>(&mut self, world: &World) {
+        self.add_resource::<T>(
+            world
+                .components()
+                .get_resource_id(TypeId::of::<T>())
+                .expect("Unknown resource type"),
+        );
     }
 
     /// Returns true if any of the dependencies of this scope have been updated since

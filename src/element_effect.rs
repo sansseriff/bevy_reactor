@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
 
-use crate::{scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle};
+use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle};
 
 /// A reactive effect that modifies a target entity.
 pub trait ElementEffect: Sync + Send {

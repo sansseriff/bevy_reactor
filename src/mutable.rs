@@ -5,6 +5,17 @@ use crate::{
 use bevy::prelude::*;
 use std::any::Any;
 
+// TODO: We could make this component generic over the type of the value. This would mean:
+//
+// * We would have to use a different component for each type of mutable.
+// * No need to box the value.
+// * No need to use Any.
+// * We'd need to store the component id in the Mutable so that the tracking scope can know
+//   which component to access.
+// * TrackingScope could treat it just like any other component.
+// * We would not be able to migrate to using atomic bools for change flags. (This is contemplated
+//   as a means of doing converging reactions in a single update).
+
 /// Contains a mutable reactive value.
 #[derive(Component)]
 pub(crate) struct MutableValue {

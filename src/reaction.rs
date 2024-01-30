@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::{component::Component, entity::Entity, world::World};
 
-use crate::scope::TrackingScope;
+use crate::tracking_scope::TrackingScope;
 
 /// Trait representing a reaction to changes in dependencies. The trait's [`react`] method
 /// is called when the dependencies change (dependencies are tracked in a separate

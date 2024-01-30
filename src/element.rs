@@ -168,11 +168,23 @@ impl<B: Bundle + Default> View for Element<B> {
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         world.entity_mut(view_entity).insert(Name::new("Element"));
-        // Build element node
-        assert!(self.display.is_none());
-        let display = world
-            .spawn((B::default(), Name::new(self.debug_name.clone())))
-            .id();
+
+        // Build display entity if it doesn't already exist.
+        let display = match self.display {
+            Some(display) => {
+                world
+                    .entity_mut(display)
+                    .insert((B::default(), Name::new(self.debug_name.clone())));
+                display
+            }
+            None => {
+                let entity = world
+                    .spawn((B::default(), Name::new(self.debug_name.clone())))
+                    .id();
+                self.display = Some(entity);
+                entity
+            }
+        };
 
         // Insert components
         if !self.effects.is_empty() {
@@ -182,8 +194,6 @@ impl<B: Bundle + Default> View for Element<B> {
             }
             world.entity_mut(view_entity).insert(tracking);
         }
-
-        self.display = Some(display);
 
         // Build child nodes.
         for child in self.children.iter_mut() {

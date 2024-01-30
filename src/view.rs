@@ -11,7 +11,7 @@ use bevy::{
     log::warn,
 };
 
-use crate::{node_span::NodeSpan, scope::TrackingScope, text::TextStatic};
+use crate::{node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope};
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.

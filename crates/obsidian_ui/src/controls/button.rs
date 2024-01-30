@@ -86,12 +86,13 @@ fn style_button_xl(ss: &mut StyleBuilder) {
 
 /// Construct a button widget.
 pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<NodeBundle> {
+    let id = cx.create_entity();
     let pressed = cx.create_mutable::<bool>(false);
-    let _hover = cx.create_mutable::<bool>(false);
+    let hovering = cx.create_hover_signal(id);
 
     // Needs to be a local variable so that it can be captured in the event handler.
     let disabled = cx.props.disabled;
-    Element::<NodeBundle>::new()
+    Element::<NodeBundle>::for_entity(id)
         .named("button")
         .with_styles((
             style_button,
@@ -107,11 +108,12 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
         ))
         .create_effect(move |cx, ent| {
             let is_pressed = pressed.get(cx);
+            let is_hovering = hovering.get(cx);
             let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-            border.0 = if is_pressed {
-                Color::LIME_GREEN
-            } else {
-                Color::RED
+            border.0 = match (is_pressed, is_hovering) {
+                (true, _) => Color::WHITE,
+                (false, true) => Color::LIME_GREEN,
+                (false, false) => Color::RED,
             };
         })
         .insert((

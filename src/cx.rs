@@ -5,15 +5,12 @@ use bevy::prelude::*;
 use crate::{
     callback::{Callback, CallbackFnMutValue, CallbackFnValue},
     mutable::{MutableValue, MutableValueNext},
-    scope::TrackingScope,
+    tracking_scope::TrackingScope,
     Mutable,
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
 pub trait ReactiveContext<'p> {
-    /// The current Bevy [`World`].
-    fn world(&self) -> &World;
-
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable<T>(&self, mutable: Entity) -> T
@@ -96,7 +93,7 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
         let mut callback_entity = cx.world.entity_mut(callback.id);
         if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnValue<P>>() {
             let mut callback_fn = callback_cmp.inner.take();
-            let callback_box = callback_fn.as_ref().expect("CallbackFn is not present");
+            let callback_box = callback_fn.as_ref().expect("Callback is not present");
             callback_box.call(&mut cx);
             let mut callback_entity = cx.world.entity_mut(callback.id);
             callback_entity
@@ -105,7 +102,7 @@ pub trait ReactiveContextMut<'p>: ReactiveContext<'p> {
                 .inner = callback_fn.take();
         } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutValue<P>>() {
             let mut callback_fn = callback_cmp.inner.take();
-            let callback_box = callback_fn.as_mut().expect("CallbackFn is not present");
+            let callback_box = callback_fn.as_mut().expect("Callback is not present");
             callback_box.call(&mut cx);
             let mut callback_entity = cx.world.entity_mut(callback.id);
             callback_entity
@@ -145,7 +142,7 @@ pub trait SetupContext<'p> {
         }
     }
 
-    /// Create a new [`CallbackFn`] in this context. This holds a `Fn` within an entity.
+    /// Create a new [`Callback`] in this context. This holds a `Fn` within an entity.
     ///
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
@@ -222,6 +219,11 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         self.world
     }
 
+    /// Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
+    pub fn create_entity(&mut self) -> Entity {
+        self.world_mut().spawn_empty().id()
+    }
+
     // /// Return a reference to the Component `C` on the given entity.
     // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
     //     match self.bc.world.get_entity(entity) {
@@ -258,23 +260,6 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     // /// Return a mutable reference to the entity that holds the current presenter invocation.
     // pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
     //     self.bc.world.entity_mut(self.bc.entity)
-    // }
-
-    // /// Spawn an empty [`Entity`] which is owned by this presenter. The entity will be
-    // /// despawned when the presenter state is razed.
-    // pub fn create_entity(&mut self) -> Entity {
-    //     let mut tracking = self.tracking.borrow_mut();
-    //     let index = tracking.next_entity_index;
-    //     tracking.next_entity_index = index + 1;
-    //     match index.cmp(&tracking.owned_entities.len()) {
-    //         Ordering::Less => tracking.owned_entities[index],
-    //         Ordering::Equal => {
-    //             let id = self.bc.world.spawn_empty().id();
-    //             tracking.owned_entities.push(id);
-    //             id
-    //         }
-    //         Ordering::Greater => panic!("Invalid presenter entity index"),
-    //     }
     // }
 
     // /// Create a scoped value. This can be used to pass data to child presenters.
@@ -329,11 +314,6 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     //     }
     // }
 
-    // // / Return an object which can be used to send a message to the current presenter.
-    // // pub fn use_callback<In, Marker>(&mut self, sys: impl IntoSystem<In, (), Marker>) {
-    // //     todo!()
-    // // }
-
     // fn add_tracked_component<C: Component>(&self, entity: Entity) {
     //     let cid = self
     //         .bc
@@ -345,16 +325,12 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
 }
 
 impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
-    fn world(&self) -> &World {
-        self.world
-    }
-
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
         self.tracking.borrow_mut().add_mutable(mutable);
-        self.world().read_mutable(mutable)
+        self.world.read_mutable(mutable)
     }
 
     fn read_mutable_clone<T>(&self, mutable: Entity) -> T
@@ -362,17 +338,17 @@ impl<'p, 'w, Props> ReactiveContext<'p> for Cx<'p, 'w, Props> {
         T: Send + Sync + Clone + 'static,
     {
         self.tracking.borrow_mut().add_mutable(mutable);
-        self.world().read_mutable_clone(mutable)
+        self.world.read_mutable_clone(mutable)
     }
 
     fn use_resource<T: Resource>(&self) -> &T {
         self.tracking.borrow_mut().add_resource::<T>(
-            self.world()
+            self.world
                 .components()
                 .get_resource_id(TypeId::of::<T>())
                 .expect("Unknown resource type"),
         );
-        self.world().resource::<T>()
+        self.world.resource::<T>()
     }
 }
 
@@ -413,16 +389,12 @@ impl<'p, 'w> Rcx<'p, 'w> {
 }
 
 impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
-    fn world(&self) -> &World {
-        self.world
-    }
-
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
         self.tracking.borrow_mut().add_mutable(mutable);
-        self.world().read_mutable(mutable)
+        self.world.read_mutable(mutable)
     }
 
     fn read_mutable_clone<T>(&self, mutable: Entity) -> T
@@ -430,32 +402,28 @@ impl<'p, 'w> ReactiveContext<'p> for Rcx<'p, 'w> {
         T: Send + Sync + Clone + 'static,
     {
         self.tracking.borrow_mut().add_mutable(mutable);
-        self.world().read_mutable_clone(mutable)
+        self.world.read_mutable_clone(mutable)
     }
 
     fn use_resource<T: Resource>(&self) -> &T {
         self.tracking.borrow_mut().add_resource::<T>(
-            self.world()
+            self.world
                 .components()
                 .get_resource_id(TypeId::of::<T>())
                 .expect("Unknown resource type"),
         );
-        self.world().resource::<T>()
+        self.world.resource::<T>()
     }
 }
 
 impl<'p> ReactiveContext<'p> for World {
-    fn world(&self) -> &World {
-        self
-    }
-
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
     fn read_mutable<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
-        let mutable_entity = self.world().entity(mutable);
+        let mutable_entity = self.entity(mutable);
         *mutable_entity
             .get::<MutableValue>()
             .unwrap()
@@ -470,7 +438,7 @@ impl<'p> ReactiveContext<'p> for World {
     where
         T: Send + Sync + Clone + 'static,
     {
-        let mutable_entity = self.world().entity(mutable);
+        let mutable_entity = self.entity(mutable);
         mutable_entity
             .get::<MutableValue>()
             .unwrap()
@@ -481,7 +449,7 @@ impl<'p> ReactiveContext<'p> for World {
     }
 
     fn use_resource<T: Resource>(&self) -> &T {
-        self.world().resource::<T>()
+        self.resource::<T>()
     }
 }
 
