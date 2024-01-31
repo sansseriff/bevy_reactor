@@ -23,9 +23,9 @@ impl<I: IntoView> ViewTuple for Option<I> {
 }
 
 #[impl_for_tuples(1, 15)]
-#[tuple_types_custom_trait_bound(IntoView)]
+#[tuple_types_custom_trait_bound(ViewTuple)]
 impl ViewTuple for Tuple {
     fn get_handles(self, out: &mut Vec<ViewRef>) {
-        for_tuples!(#( out.push(self.Tuple.into_view()); )*)
+        for_tuples!(#( self.Tuple.get_handles(out); )*)
     }
 }

@@ -16,11 +16,18 @@
 * use_element_rect hook
 * enter/exit transition hooks
 
+# StyleBuilder
+
+* pointer-events (mod picking)
+* cursors
+* line break
+* texture atlases
+
 # Obsidian
 
 * Button
-* Slider
 * Splitter
+* Slider
 * Flex
 * NinePatchButton
 * Multi-layered nine-patch button.
@@ -60,8 +67,23 @@ create_effect:
     runs the code
     restores the context
 
-# Hover:
+## Nine-patch
 
-  Inputs: element id - which needs create entity.
+struct NinePatchProps {
+    texture_atlas: Handle<TextureAtlas>,
+}
 
-HoveringReaction
+nine_patch_image() -> Element<NodeBundle> {
+    Element::<NodeBundle>::new()
+        .children((
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+            Element::<NodeBundle>::new(),
+        ))
+}

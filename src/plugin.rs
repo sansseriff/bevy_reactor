@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     attach_child_views, build_added_view_roots, mutable::commit_mutables,
-    tracking_scope::run_reactions, update_text_styles,
+    style::TextureAtlasLoader, tracking_scope::run_reactions, update_text_styles,
 };
 
 /// Plugin that adds the reactive UI system to the app.
@@ -10,7 +10,7 @@ pub struct ReactorPlugin;
 
 impl Plugin for ReactorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.register_asset_loader(TextureAtlasLoader).add_systems(
             Update,
             (
                 commit_mutables,

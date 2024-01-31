@@ -56,11 +56,69 @@ fn style_button(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .align_content(ui::AlignContent::Center)
         .padding((12, 0))
-        // .padding_bottom(4)
-        .border(1)
-        .color(colors::FOREGROUND)
-        .border_color(colors::GRAY_50);
-    // .background_image("obsidian_ui://textures/button.png");
+        .border(0)
+        .color(colors::FOREGROUND);
+}
+
+fn style_button_bg(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Grid)
+        .position(ui::PositionType::Absolute)
+        .left(0)
+        .right(0)
+        .top(0)
+        .bottom(0)
+        .grid_template_columns(vec![
+            ui::GridTrack::px(12.),
+            ui::GridTrack::fr(1.),
+            ui::GridTrack::px(12.),
+        ])
+        .grid_template_rows(vec![
+            ui::GridTrack::px(12.),
+            ui::GridTrack::fr(1.),
+            ui::GridTrack::px(12.),
+        ])
+        .gap(0);
+}
+
+fn style_button_bg_tile(ss: &mut StyleBuilder) {
+    ss.texture_atlas("obsidian_ui://textures/button.atlas.grid.ron")
+        .background_color(colors::GRAY_250);
+}
+
+fn style_button_bg_tile_0(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(0);
+}
+
+fn style_button_bg_tile_1(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(1);
+}
+
+fn style_button_bg_tile_2(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(2);
+}
+
+fn style_button_bg_tile_3(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(3);
+}
+
+fn style_button_bg_tile_4(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(4);
+}
+
+fn style_button_bg_tile_5(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(5);
+}
+
+fn style_button_bg_tile_6(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(6);
+}
+
+fn style_button_bg_tile_7(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(7);
+}
+
+fn style_button_bg_tile_8(ss: &mut StyleBuilder) {
+    ss.texture_atlas_tile(8);
 }
 
 fn style_button_xxxs(ss: &mut StyleBuilder) {
@@ -114,16 +172,16 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
             },
             cx.props.styles.clone(),
         ))
-        .create_effect(move |cx, ent| {
-            let is_pressed = pressed.get(cx);
-            let is_hovering = hovering.get(cx);
-            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-            bg.0 = match (is_pressed, is_hovering) {
-                (true, _) => colors::GRAY_350,
-                (false, true) => colors::GRAY_300,
-                (false, false) => colors::GRAY_250,
-            };
-        })
+        // .create_effect(move |cx, ent| {
+        //     let is_pressed = pressed.get(cx);
+        //     let is_hovering = hovering.get(cx);
+        //     let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+        //     bg.0 = match (is_pressed, is_hovering) {
+        //         (true, _) => colors::GRAY_350,
+        //         (false, true) => colors::GRAY_300,
+        //         (false, false) => colors::GRAY_250,
+        //     };
+        // })
         .insert((
             // TabIndex(0),
             AccessibilityNode::from(NodeBuilder::new(Role::Button)),
@@ -164,5 +222,45 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                 }
             }),
         ))
-        .children(cx.props.children.clone())
+        .children((
+            Element::<NodeBundle>::new()
+                .with_styles(style_button_bg)
+                .children((
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_0)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_1)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_2)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_3)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_4)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_5)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_6)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_7)),
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_button_bg_tile, style_button_bg_tile_8)),
+                ))
+                .create_effect(move |cx, ent| {
+                    let is_pressed = pressed.get(cx);
+                    let is_hovering = hovering.get(cx);
+                    let color = match (is_pressed, is_hovering) {
+                        (true, _) => colors::GRAY_350,
+                        (false, true) => colors::GRAY_300,
+                        (false, false) => colors::GRAY_250,
+                    };
+                    if let Some(children) = cx.world_mut().entity(ent).get::<Children>() {
+                        let child_entities = children.iter().copied().collect::<Vec<_>>();
+                        for child in child_entities.iter() {
+                            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(*child).unwrap();
+                            bg.0 = color;
+                        }
+                    }
+                }),
+            cx.props.children.clone(),
+        ))
 }

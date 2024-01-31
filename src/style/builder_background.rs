@@ -24,7 +24,6 @@ pub trait StyleBuilderBackground {
 }
 
 impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
-    /// Set the background image of the target entity.
     fn background_image<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
         let texture = path.to_path().map(|p| self.load_asset::<Image>(p));
         match (texture, self.target.get_mut::<UiImage>()) {
@@ -45,8 +44,6 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
         self
     }
 
-    /// Set the background image of the target entity, and also explicitly configure the
-    /// horizontal and vertical flip.
     fn background_image_flipped<'p>(
         &mut self,
         path: impl AssetPathParam<'p>,

@@ -51,6 +51,7 @@ pub use style::StyleBuilderBorderColor;
 pub use style::StyleBuilderFont;
 pub use style::StyleBuilderLayout;
 pub use style::StyleBuilderOutline;
+pub use style::StyleBuilderTextureAtlas;
 pub use style::StyleBuilderZIndex;
 pub use style::StyleHandle;
 pub use style::StyleTuple;
