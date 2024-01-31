@@ -157,13 +157,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         .with_styles(style_button_row)
                         .children((
                             button.bind(ButtonProps {
-                                children: "Increment",
+                                children: "Open…",
                                 on_click: Some(clicked_increment),
                                 styles: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                             button.bind(ButtonProps {
-                                children: "Decrement",
+                                children: "Save",
                                 on_click: Some(clicked_decrement),
                                 styles: StyleHandle::new(style_button_flex),
                                 ..default()

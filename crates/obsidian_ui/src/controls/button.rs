@@ -68,14 +68,14 @@ fn style_button_bg(ss: &mut StyleBuilder) {
         .top(0)
         .bottom(0)
         .grid_template_columns(vec![
-            ui::GridTrack::px(12.),
+            ui::GridTrack::px(4.),
             ui::GridTrack::fr(1.),
-            ui::GridTrack::px(12.),
+            ui::GridTrack::px(4.),
         ])
         .grid_template_rows(vec![
-            ui::GridTrack::px(12.),
+            ui::GridTrack::px(4.),
             ui::GridTrack::fr(1.),
-            ui::GridTrack::px(12.),
+            ui::GridTrack::px(4.),
         ])
         .gap(0);
 }
@@ -172,16 +172,6 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
             },
             cx.props.styles.clone(),
         ))
-        // .create_effect(move |cx, ent| {
-        //     let is_pressed = pressed.get(cx);
-        //     let is_hovering = hovering.get(cx);
-        //     let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-        //     bg.0 = match (is_pressed, is_hovering) {
-        //         (true, _) => colors::GRAY_350,
-        //         (false, true) => colors::GRAY_300,
-        //         (false, false) => colors::GRAY_250,
-        //     };
-        // })
         .insert((
             // TabIndex(0),
             AccessibilityNode::from(NodeBuilder::new(Role::Button)),
