@@ -3,8 +3,11 @@ use std::sync::{Arc, Mutex};
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, tracking_scope::TrackingScope, view::View, DespawnScopes,
-    InheritableTextStyles, IntoView, Rcx, TextStyleChanged, ViewRef,
+    node_span::NodeSpan,
+    style::{InheritableFontStyles, TextStyleChanged},
+    tracking_scope::TrackingScope,
+    view::View,
+    DespawnScopes, IntoView, Rcx, ViewRef,
 };
 
 /// A UI element that displays text
@@ -137,12 +140,12 @@ impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> IntoView for TextComputed
 pub(crate) fn update_text_styles(
     mut commands: Commands,
     mut query: Query<(Entity, &mut Text), With<TextStyleChanged>>,
-    inherited: Query<&InheritableTextStyles>,
+    inherited: Query<&InheritableFontStyles>,
     parents: Query<&Parent>,
     server: Res<AssetServer>,
 ) {
     for (entity, mut text) in query.iter_mut() {
-        let mut styles = InheritableTextStyles::default();
+        let mut styles = InheritableFontStyles::default();
 
         // Search parenrs for inherited styles.
         let mut ancestor = entity;

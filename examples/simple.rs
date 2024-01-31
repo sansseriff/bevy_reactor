@@ -11,7 +11,7 @@ use bevy::{
 };
 use bevy_reactor::{
     text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactorPlugin, RunContextRead,
-    StyleBuilder, View, ViewRoot, WithStyles,
+    StyleBuilder, StyleBuilderLayout, View, ViewRoot, WithStyles,
 };
 
 fn style_test(ss: &mut StyleBuilder) {

@@ -1,17 +1,15 @@
 # TODO
 
-* Background Image styles
-* Inherited text styles
 * TextureAtlas styles
-* Mutable update in place.
+* Mutable: update in place API.
 
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().
 * Derived Signals
-* Memo
-* Effect
-* Cleanup Handlers
+* Memo Signals
+* create_effect()
+* Cleanup Handlers - on_cleanup();
 * Scoped values
 * Access to ECS components
 * Access to owner entity
@@ -24,6 +22,8 @@
 * Slider
 * Splitter
 * Flex
+* NinePatchButton
+* Multi-layered nine-patch button.
 * etc...
 
 ## Notes on fine-grained
