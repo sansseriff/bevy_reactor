@@ -7,12 +7,14 @@ use bevy_mod_picking::{
 use obsidian_ui::{
     colors,
     controls::{button, ButtonProps},
+    typography,
     viewport::{self},
 };
 
 use std::f32::consts::PI;
 
 use bevy::{
+    asset::io::{file::FileAssetReader, AssetSource},
     core_pipeline::clear_color::ClearColorConfig,
     prelude::*,
     render::{
@@ -30,7 +32,7 @@ fn style_main(ss: &mut StyleBuilder) {
         .bottom(10)
         .right(10.)
         .border(1)
-        .border_color(colors::GRAY_250)
+        .border_color(colors::GRAY_300)
         .display(ui::Display::Flex);
 }
 
@@ -98,6 +100,11 @@ fn style_log_entry(ss: &mut StyleBuilder) {
 
 fn main() {
     App::new()
+        .register_asset_source(
+            "obsidian_ui",
+            AssetSource::build()
+                .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
+        )
         .init_resource::<Counter>()
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
@@ -140,7 +147,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
     });
 
     Element::<NodeBundle>::new()
-        .with_styles(style_main)
+        .with_styles((typography::text_default, style_main))
         // .insert(TargetCamera(c2d.0))
         .children((
             Element::<NodeBundle>::new()

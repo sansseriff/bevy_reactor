@@ -21,6 +21,15 @@ pub struct StyleBuilder<'a, 'w> {
     style_changed: bool,
 }
 
+impl<'a, 'w> StyleBuilder<'a, 'w> {
+    pub fn load_asset<A: Asset>(&mut self, path: AssetPath<'_>) -> Handle<A> {
+        self.target.world_scope(|world| {
+            let server = world.get_resource::<AssetServer>().unwrap();
+            server.load(path)
+        })
+    }
+}
+
 /// Trait that represents a CSS color
 pub trait ColorParam {
     fn to_val(self) -> Option<Color>;
@@ -142,11 +151,78 @@ impl OptFloatParam for i32 {
     }
 }
 
+/// Trait that represents an optional float
+pub trait AssetPathParam<'a> {
+    fn to_path(self) -> Option<AssetPath<'a>>;
+}
+
+impl<'a> AssetPathParam<'a> for Option<AssetPath<'a>> {
+    fn to_path(self) -> Option<AssetPath<'a>> {
+        self
+    }
+}
+
+impl<'a> AssetPathParam<'a> for AssetPath<'a> {
+    fn to_path(self) -> Option<AssetPath<'a>> {
+        Some(self)
+    }
+}
+
+impl<'a> AssetPathParam<'a> for &'a str {
+    fn to_path(self) -> Option<AssetPath<'a>> {
+        Some(AssetPath::parse(self))
+    }
+}
+
 impl<'a, 'w> StyleBuilder<'a, 'w> {
-    pub fn background_image(&mut self, _img: Option<AssetPath<'static>>) -> &mut Self {
-        // TODO: Need to load the asset path from the asset server.
-        // Will need a helper component for this.
-        // self.props.push(StyleProp::BackgroundImage(img));
+    /// Set the background image of the target entity.
+    pub fn background_image<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
+        let texture = path.to_path().map(|p| self.load_asset::<Image>(p));
+        match (texture, self.target.get_mut::<UiImage>()) {
+            (Some(texture), Some(mut uii)) => {
+                uii.texture = texture;
+            }
+            (Some(texture), None) => {
+                self.target.insert(UiImage {
+                    texture,
+                    ..Default::default()
+                });
+            }
+            (None, Some(_)) => {
+                self.target.remove::<UiImage>();
+            }
+            _ => (),
+        };
+        self
+    }
+
+    /// Set the background image of the target entity, and also explicitly configure the
+    /// horizontal and vertical flip.
+    pub fn background_image_flipped<'p>(
+        &mut self,
+        path: impl AssetPathParam<'p>,
+        flip_x: bool,
+        flip_y: bool,
+    ) -> &mut Self {
+        let texture = path.to_path().map(|p| self.load_asset::<Image>(p));
+        match (texture, self.target.get_mut::<UiImage>()) {
+            (Some(texture), Some(mut uii)) => {
+                uii.texture = texture;
+                uii.flip_x = flip_x;
+                uii.flip_y = flip_y;
+            }
+            (Some(texture), None) => {
+                self.target.insert(UiImage {
+                    texture,
+                    flip_x,
+                    flip_y,
+                });
+            }
+            (None, Some(_)) => {
+                self.target.remove::<UiImage>();
+            }
+            _ => (),
+        };
         self
     }
 
@@ -168,11 +244,18 @@ impl<'a, 'w> StyleBuilder<'a, 'w> {
         self
     }
 
-    // pub fn color(&mut self, color: impl ColorParam) -> &mut Self {
-    // Will need a helper component for this.
-    //     self.props.push(StyleProp::Color(color.to_val()));
-    //     self
-    // }
+    pub fn color(&mut self, color: impl ColorParam) -> &mut Self {
+        match self.target.get_mut::<InheritableTextStyles>() {
+            Some(mut text_style) => text_style.color = color.to_val(),
+            None => {
+                self.target.insert(InheritableTextStyles {
+                    color: color.to_val(),
+                    ..Default::default()
+                });
+            }
+        };
+        self
+    }
 
     pub fn z_index(&mut self, index: impl ZIndexParam) -> &mut Self {
         match index.to_val() {
@@ -602,15 +685,36 @@ impl<'a, 'w> StyleBuilder<'a, 'w> {
     //     self
     // }
 
-    // pub fn font(&mut self, path: Option<AssetPath<'static>>) -> &mut Self {
-    //     self.props.push(StyleProp::Font(path));
-    //     self
-    // }
+    pub fn font<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
+        let font = path.to_path().map(|p| self.load_asset::<Font>(p));
+        match self.target.get_mut::<InheritableTextStyles>() {
+            Some(mut text_style) => {
+                text_style.font = font;
+            }
+            None => {
+                self.target.insert(InheritableTextStyles {
+                    font,
+                    ..Default::default()
+                });
+            }
+        };
+        self
+    }
 
-    // pub fn font_size(&mut self, val: f32) -> &mut Self {
-    //     self.props.push(StyleProp::FontSize(val));
-    //     self
-    // }
+    pub fn font_size(&mut self, val: impl OptFloatParam) -> &mut Self {
+        match self.target.get_mut::<InheritableTextStyles>() {
+            Some(mut text_style) => {
+                text_style.font_size = val.to_val();
+            }
+            None => {
+                self.target.insert(InheritableTextStyles {
+                    font_size: val.to_val(),
+                    ..Default::default()
+                });
+            }
+        };
+        self
+    }
 
     // pub fn scale_x(&mut self, scale: f32) -> &mut Self {
     //     self.props.push(StyleProp::ScaleX(scale));
@@ -730,3 +834,46 @@ impl StyleHandle {
         Self { style: None }
     }
 }
+
+/// Struct that holds the properties for text rendering, which can be inherited. This allows
+/// setting for font face, size and color to be established at a parent level and inherited by
+/// child text elements.
+///
+/// This will be applied to any text nodes that are children of the target entity, unless
+/// those nodes explicitly override the properties.
+#[derive(Component, Default, Clone)]
+pub(crate) struct InheritableTextStyles {
+    /// Path to the font asset.
+    pub(crate) font: Option<Handle<Font>>,
+
+    /// Inherited size of the font.
+    pub(crate) font_size: Option<f32>,
+
+    /// Inherited text color.
+    pub(crate) color: Option<Color>,
+}
+
+impl InheritableTextStyles {
+    /// True if all text style properties are set.
+    pub(crate) fn is_final(&self) -> bool {
+        self.font.is_some() && self.font_size.is_some() && self.color.is_some()
+    }
+
+    /// Merge the properties from another `InheritableTextStyles` into this one.
+    pub(crate) fn merge(&mut self, other: &InheritableTextStyles) {
+        if other.font.is_some() {
+            self.font = other.font.clone();
+        }
+        if other.font_size.is_some() {
+            self.font_size = other.font_size;
+        }
+        if other.color.is_some() {
+            self.color = other.color;
+        }
+    }
+}
+
+/// A marker component that is used to indicate that the text element needs to recompute the
+/// inherited text styles.
+#[derive(Component)]
+pub(crate) struct TextStyleChanged;

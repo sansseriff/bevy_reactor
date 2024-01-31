@@ -51,12 +51,16 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
 fn style_button(ss: &mut StyleBuilder) {
     ss.border(1)
         .display(ui::Display::Flex)
-        .justify_content(JustifyContent::Center)
-        .align_items(AlignItems::Center)
-        .padding_left(12)
-        .padding_right(12)
+        .flex_direction(ui::FlexDirection::Row)
+        .justify_content(ui::JustifyContent::Center)
+        .align_items(ui::AlignItems::Center)
+        .align_content(ui::AlignContent::Center)
+        .padding((12, 0))
+        // .padding_bottom(4)
         .border(1)
-        .border_color(colors::GRAY_050);
+        .color(colors::FOREGROUND)
+        .border_color(colors::GRAY_50);
+    // .background_image("obsidian_ui://textures/button.png");
 }
 
 fn style_button_xxxs(ss: &mut StyleBuilder) {
@@ -115,9 +119,9 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
             let is_hovering = hovering.get(cx);
             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
             bg.0 = match (is_pressed, is_hovering) {
-                (true, _) => colors::GRAY_300,
-                (false, true) => colors::GRAY_250,
-                (false, false) => colors::GRAY_200,
+                (true, _) => colors::GRAY_350,
+                (false, true) => colors::GRAY_300,
+                (false, false) => colors::GRAY_250,
             };
         })
         .insert((

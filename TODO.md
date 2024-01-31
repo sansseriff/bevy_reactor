@@ -1,7 +1,9 @@
 # TODO
 
-* Asset styles
+* Background Image styles
 * Inherited text styles
+* TextureAtlas styles
+* Mutable update in place.
 
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
@@ -14,7 +16,7 @@
 * Access to ECS components
 * Access to owner entity
 * use_element_rect hook
-* transition hooks
+* enter/exit transition hooks
 
 # Obsidian
 
