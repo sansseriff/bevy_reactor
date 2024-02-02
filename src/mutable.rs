@@ -1,6 +1,6 @@
 use crate::{
-    signal::{CloneGetter, Signal, SignalKind},
-    RunContextRead, RunContextWrite,
+    signal::{Signal, SignalClone, SignalKind},
+    RunContextWrite,
 };
 use bevy::prelude::*;
 use std::any::Any;
@@ -13,14 +13,11 @@ use std::any::Any;
 // * We'd need to store the component id in the Mutable so that the tracking scope can know
 //   which component to access.
 // * TrackingScope could treat it just like any other component.
-// * We would not be able to migrate to using atomic bools for change flags. (This is contemplated
-//   as a means of doing converging reactions in a single update).
+// * The hard part is handling MutableValueNext, because that is processed via a query.
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
-pub(crate) struct MutableValue {
-    pub(crate) value: Box<dyn Any + Send + Sync + 'static>,
-}
+pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 
 /// Contains the value which will be written to the signal on the next update.
 /// This is used to avoid writing to the signal multiple times in a single frame, and also
@@ -37,9 +34,22 @@ pub struct Mutable<T> {
 
 impl<T> Mutable<T>
 where
+    T: PartialEq + Send + Sync + 'static,
+{
+    /// Update a mutable value in place using a callback. The callback is passed a
+    /// `Mut<T>` which can be used to modify the value.
+    pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&mut self, cx: &mut R, updater: F) {
+        let value = cx.world_mut().get_mut::<MutableCell>(self.id).unwrap();
+        let inner = value.map_unchanged(|v| v.0.downcast_mut::<T>().unwrap());
+        (updater)(inner);
+    }
+}
+
+impl<T> Mutable<T>
+where
     T: PartialEq + Copy + Send + Sync + 'static,
 {
-    /// Returns a getter and setter for this [`Mutable`] with Copy semantics.
+    /// Returns a getter for this [`Mutable`] with Copy semantics.
     pub fn signal(&self) -> Signal<T> {
         Signal {
             id: self.id,
@@ -52,7 +62,7 @@ where
     ///
     /// Arguments:
     /// * `cx`: The reactive context.
-    pub fn get<'p, R: RunContextRead<'p>>(&self, cx: &mut R) -> T {
+    pub fn get<R: ReadMutable>(&self, cx: &mut R) -> T {
         cx.read_mutable(self.id)
     }
 
@@ -61,7 +71,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
-    pub fn set<'p, R: RunContextWrite<'p>>(&self, cx: &mut R, value: T) {
+    pub fn set<R: WriteMutable>(&self, cx: &mut R, value: T) {
         cx.write_mutable(self.id, value);
     }
 }
@@ -70,9 +80,9 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Clone + Send + Sync + 'static,
 {
-    /// Returns a getter and setter for this [`Mutable`] with Clone semantics.
-    pub fn signal_clone(&self) -> CloneGetter<T> {
-        CloneGetter {
+    /// Returns a getter for this [`Mutable`] with Clone semantics.
+    pub fn signal_clone(&self) -> SignalClone<T> {
+        SignalClone {
             id: self.id,
             kind: SignalKind::Mutable,
             marker: std::marker::PhantomData,
@@ -83,7 +93,7 @@ where
     ///
     /// Arguments:
     /// * `cx`: The reactive context.
-    pub fn get_clone<'p, R: RunContextRead<'p>>(&self, cx: &mut R) -> T {
+    pub fn get_clone<R: ReadMutable>(&self, cx: &mut R) -> T {
         cx.read_mutable_clone(self.id)
     }
 
@@ -92,9 +102,39 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
-    pub fn set_clone<'p, R: RunContextWrite<'p>>(&self, cx: &mut R, value: T) {
+    pub fn set_clone<R: WriteMutable>(&self, cx: &mut R, value: T) {
         cx.write_mutable_clone(self.id, value);
     }
+}
+
+/// Trait for low-level read-access to mutables given an entity id.
+pub trait ReadMutable {
+    /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
+    /// mutable to the current tracking scope.
+    fn read_mutable<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Copy + 'static;
+
+    /// Read the value of a mutable variable using Clone semantics. Calling this function adds the
+    /// mutable to the current tracking scope.
+    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    where
+        T: Send + Sync + Clone + 'static;
+}
+
+/// Trait for low-level write-access to mutables given an entity id.
+pub trait WriteMutable {
+    /// Write the value of a mutable variable using Copy semantics. Does nothing if
+    /// the value being set matches the existing value.
+    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Copy + PartialEq + 'static;
+
+    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
+    /// value being set matches the existing value.
+    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static;
 }
 
 /// Trait that allows access to a mutable reference to the signal.
@@ -104,11 +144,11 @@ where
 
 pub(crate) fn commit_mutables(world: &mut World) {
     for (mut sig_val, mut sig_next) in world
-        .query::<(&mut MutableValue, &mut MutableValueNext)>()
+        .query::<(&mut MutableCell, &mut MutableValueNext)>()
         .iter_mut(world)
     {
         // Transfer mutable data from next to current.
-        std::mem::swap(&mut sig_val.value, &mut sig_next.0);
+        std::mem::swap(&mut sig_val.0, &mut sig_next.0);
         // sig_val
         //     .changed
         //     .store(true, std::sync::atomic::Ordering::Relaxed);
@@ -133,7 +173,7 @@ mod tests {
     #[test]
     fn test_mutable_copy() {
         let mut world = World::default();
-        let mut scope = TrackingScope::new(world.change_tick());
+        let mut scope = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
         let mutable = cx.create_mutable::<i32>(0);
@@ -163,7 +203,7 @@ mod tests {
     #[test]
     fn test_mutable_clone() {
         let mut world = World::default();
-        let mut scope = TrackingScope::new(world.change_tick());
+        let mut scope = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
         let mutable = cx.create_mutable("Hello".to_string());

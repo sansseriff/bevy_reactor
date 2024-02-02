@@ -50,7 +50,7 @@ impl<R: Targetable + Reaction + Send + Sync + 'static> ElementEffect for RunReac
     // Start a reaction which updates the bundle.
     fn start(&mut self, parent_scope: &mut TrackingScope, target: Entity, world: &mut World) {
         // Create a tracking scope for the reaction.
-        let mut scope = TrackingScope::new(world.change_tick());
+        let mut scope = TrackingScope::new(world.read_change_tick());
 
         // Unwrap the reaction and update the target entity, since this was not known at
         // the time the reaction was constucted.
@@ -135,7 +135,7 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Targetable for ComputedBu
 //     // Insert the bundle on build, then update.
 //     fn init(&mut self, target: Entity, world: &mut World) {
 //         assert!(self.tracker.is_none());
-//         let mut scope = TrackingScope::new(world.change_tick());
+//         let mut scope = TrackingScope::new(world.read_change_tick());
 //         let b = (self.init)();
 //         let mut entt = world.entity_mut(target);
 //         entt.insert(b);

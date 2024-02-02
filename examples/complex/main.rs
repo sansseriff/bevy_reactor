@@ -6,7 +6,7 @@ use bevy_mod_picking::{
 };
 use obsidian_ui::{
     colors,
-    controls::{button, ButtonProps},
+    controls::{button, splitter, ButtonProps, SplitterDirection, SplitterProps},
     typography,
     viewport::{self},
 };
@@ -98,6 +98,9 @@ fn style_log_entry(ss: &mut StyleBuilder) {
         .align_self(ui::AlignSelf::Stretch);
 }
 
+#[derive(Resource)]
+pub struct PanelWidth(f32);
+
 fn main() {
     App::new()
         .register_asset_source(
@@ -106,6 +109,7 @@ fn main() {
                 .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
         )
         .init_resource::<Counter>()
+        .insert_resource(PanelWidth(200.))
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
@@ -146,12 +150,24 @@ fn ui_main(cx: &mut Cx) -> impl View {
         println!("Decrement clicked: {} times", dec_count);
     });
 
+    let panel_width = cx
+        .create_derived(|cx| {
+            let res = cx.use_resource::<PanelWidth>();
+            res.0
+        })
+        .signal();
+
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
         // .insert(TargetCamera(c2d.0))
         .children((
             Element::<NodeBundle>::new()
                 .with_styles(style_aside)
+                .create_effect(move |cx, ent| {
+                    let width = panel_width.get(cx);
+                    let mut style = cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
+                    style.width = ui::Val::Px(width);
+                })
                 .children((
                     Element::<NodeBundle>::new()
                         .with_styles(style_button_row)
@@ -171,6 +187,15 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         )),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
+            splitter.bind(SplitterProps {
+                direction: SplitterDirection::Vertical,
+                value: panel_width,
+                on_change: cx.create_callback(|cx: &mut Cx<f32>| {
+                    let value = *cx.props;
+                    let mut panel_width = cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
+                    panel_width.0 = value.max(200.);
+                }),
+            }),
             Element::<NodeBundle>::new()
                 .with_styles(style_viewport)
                 .insert(viewport::ViewportInsetElement)

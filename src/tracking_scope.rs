@@ -6,7 +6,7 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableValue, reaction::ReactionHandle, ViewHandle};
+use crate::{mutable::MutableCell, reaction::ReactionHandle, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -72,7 +72,7 @@ impl TrackingScope {
         self.mutable_deps.iter().any(|m| {
             world
                 .entity(*m)
-                .get_ref::<MutableValue>()
+                .get_ref::<MutableCell>()
                 .map(|m| m.is_changed())
                 .unwrap_or(false)
         }) || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
@@ -131,7 +131,7 @@ pub fn run_reactions(world: &mut World) {
         }
     }
 
-    let tick = world.change_tick();
+    let tick = world.read_change_tick();
     for scope_entity in changed.iter() {
         let mut next_scope = TrackingScope::new(tick);
         let mut entt = world.entity_mut(*scope_entity);

@@ -73,7 +73,7 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
 
     fn build(&mut self, _view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_none());
-        let mut tracking = TrackingScope::new(world.change_tick());
+        let mut tracking = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new(&self.props, world, &mut tracking);
         let mut view = self.presenter.call(&mut cx);
         let inner = world.spawn(tracking).id();
