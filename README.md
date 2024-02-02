@@ -135,6 +135,20 @@ another set of methods for data that implements `Clone`:
 
 Other than the fact that they work with clones, the methods behave identically.
 
+## Derived Signals
+
+A derived signal is a signal resulting from a computation that depends on other signals.
+
+```rust
+/// A signal derived from a resource.
+let panel_width = cx
+    .create_derived(|cx| {
+        let res = cx.use_resource::<PanelWidth>();
+        res.0
+    })
+    .signal();
+```
+
 ## Tracking Scopes and Reactions
 
 This section talks about some internal aspects of the framework which are not visible to the

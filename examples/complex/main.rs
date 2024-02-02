@@ -6,7 +6,9 @@ use bevy_mod_picking::{
 };
 use obsidian_ui::{
     colors,
-    controls::{button, splitter, ButtonProps, SplitterDirection, SplitterProps},
+    controls::{
+        button, checkbox, splitter, ButtonProps, CheckboxProps, SplitterDirection, SplitterProps,
+    },
     typography,
     viewport::{self},
 };
@@ -27,10 +29,10 @@ use bevy_reactor::*;
 
 fn style_main(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
-        .left(10.)
-        .top(10.)
-        .bottom(10)
-        .right(10.)
+        .left(0)
+        .top(0)
+        .bottom(0)
+        .right(0)
         .border(1)
         .border_color(colors::GRAY_300)
         .display(ui::Display::Flex);
@@ -61,6 +63,7 @@ fn style_slider(ss: &mut StyleBuilder) {
 fn style_color_edit(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
+        .align_items(ui::AlignItems::FlexStart)
         .gap(8);
 }
 
@@ -68,7 +71,9 @@ fn style_viewport(ss: &mut StyleBuilder) {
     ss.flex_grow(1.)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
-        .justify_content(ui::JustifyContent::FlexEnd);
+        .justify_content(ui::JustifyContent::FlexEnd)
+        .border_left(1)
+        .border_color(Color::BLACK);
 }
 
 fn style_log(ss: &mut StyleBuilder) {
@@ -150,6 +155,9 @@ fn ui_main(cx: &mut Cx) -> impl View {
         println!("Decrement clicked: {} times", dec_count);
     });
 
+    let checked_1 = cx.create_mutable(false);
+    let checked_2 = cx.create_mutable(false);
+
     let panel_width = cx
         .create_derived(|cx| {
             let res = cx.use_resource::<PanelWidth>();
@@ -182,6 +190,30 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 children: "Save",
                                 on_click: Some(clicked_decrement),
                                 styles: StyleHandle::new(style_button_flex),
+                                ..default()
+                            }),
+                        )),
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_color_edit)
+                        .children((
+                            checkbox.bind(CheckboxProps {
+                                label: "Include Author Name",
+                                checked: Some(checked_1.signal()),
+                                on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
+                                    let checked = *cx.props;
+                                    println!("Include Author Name: {}", checked);
+                                    checked_1.set(cx, checked);
+                                })),
+                                ..default()
+                            }),
+                            checkbox.bind(CheckboxProps {
+                                label: "Include Metadata",
+                                checked: Some(checked_2.signal()),
+                                on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
+                                    let checked = *cx.props;
+                                    println!("Include Metadata: {}", checked);
+                                    checked_2.set(cx, checked);
+                                })),
                                 ..default()
                             }),
                         )),

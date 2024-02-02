@@ -14,6 +14,7 @@ use std::any::Any;
 //   which component to access.
 // * TrackingScope could treat it just like any other component.
 // * The hard part is handling MutableValueNext, because that is processed via a query.
+// * We would need to register a system for each specialization.
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
@@ -137,11 +138,6 @@ pub trait WriteMutable {
         T: Send + Sync + Clone + PartialEq + 'static;
 }
 
-/// Trait that allows access to a mutable reference to the signal.
-// trait WriteSignalRef<T> {
-//     fn write_ref<F: FnMut(&mut T)>(&mut self, f: F);
-// }
-
 pub(crate) fn commit_mutables(world: &mut World) {
     for (mut sig_val, mut sig_next) in world
         .query::<(&mut MutableCell, &mut MutableValueNext)>()
@@ -149,9 +145,6 @@ pub(crate) fn commit_mutables(world: &mut World) {
     {
         // Transfer mutable data from next to current.
         std::mem::swap(&mut sig_val.0, &mut sig_next.0);
-        // sig_val
-        //     .changed
-        //     .store(true, std::sync::atomic::Ordering::Relaxed);
     }
 
     // Remove all the MutableNext components.
@@ -162,6 +155,37 @@ pub(crate) fn commit_mutables(world: &mut World) {
     mutables.iter().for_each(|mutable| {
         world.entity_mut(*mutable).remove::<MutableValueNext>();
     });
+}
+
+struct MutablePlugin<T: Send + Sync + 'static> {
+    _marker: std::marker::PhantomData<T>,
+}
+
+impl<T: Send + Sync + 'static> MutablePlugin<T> {
+    pub(crate) fn commit_mutables(world: &mut World) {
+        for (mut sig_val, mut sig_next) in world
+            .query::<(&mut MutableCell, &mut MutableValueNext)>()
+            .iter_mut(world)
+        {
+            // Transfer mutable data from next to current.
+            std::mem::swap(&mut sig_val.0, &mut sig_next.0);
+        }
+
+        // Remove all the MutableNext components.
+        let mutables: Vec<Entity> = world
+            .query_filtered::<Entity, With<MutableValueNext>>()
+            .iter(world)
+            .collect();
+        mutables.iter().for_each(|mutable| {
+            world.entity_mut(*mutable).remove::<MutableValueNext>();
+        });
+    }
+}
+
+impl<T: Send + Sync + 'static> Plugin for MutablePlugin<T> {
+    fn build(&self, app: &mut App) {
+        todo!()
+    }
 }
 
 #[cfg(test)]

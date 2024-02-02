@@ -36,7 +36,7 @@ pub struct ButtonProps<V: ViewTuple + Clone> {
     pub size: Size,
 
     /// Whether the button is disabled.
-    pub disabled: bool,
+    pub disabled: Option<Signal<bool>>,
 
     /// The content to display inside the button.
     pub children: V,
@@ -155,8 +155,9 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
 
-    // Needs to be a local variable so that it can be captured in the event handler.
     let disabled = cx.props.disabled;
+    let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
+
     Element::<NodeBundle>::for_entity(id)
         .named("button")
         .with_styles((
@@ -178,7 +179,7 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
             {
                 let on_click = cx.props.on_click;
                 On::<Pointer<Click>>::run(move |world: &mut World| {
-                    if !disabled {
+                    if !disabled.get(world) {
                         if let Some(on_click) = on_click {
                             world.run_callback(on_click, ());
                         }
@@ -186,28 +187,28 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                 })
             },
             On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                if !disabled {
+                if !disabled.get(world) {
                     pressed.set(world, true);
                 }
             }),
             On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                if !disabled {
+                if !disabled.get(world) {
                     pressed.set(world, false);
                 }
             }),
             On::<Pointer<DragEnter>>::run(move |world: &mut World| {
-                if !disabled {
+                if !disabled.get(world) {
                     pressed.set(world, true);
                 }
             }),
             On::<Pointer<DragLeave>>::run(move |world: &mut World| {
-                if !disabled {
+                if !disabled.get(world) {
                     pressed.set(world, false);
                 }
             }),
             On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
                 println!("PointerCancel");
-                if !disabled {
+                if !disabled.get(world) {
                     pressed.set(world, false);
                 }
             }),

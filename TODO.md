@@ -1,12 +1,8 @@
 # TODO
 
-* TextureAtlas styles
-* Mutable: update in place API.
-
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().
-* Derived Signals
 * Memo Signals
 * create_effect()
 * Cleanup Handlers - on_cleanup();
@@ -15,21 +11,20 @@
 * Access to owner entity
 * use_element_rect hook
 * enter/exit transition hooks
+* Animated transitions / spring
 
 # StyleBuilder
 
 * pointer-events (mod picking)
 * cursors
 * line break
-* texture atlases
 
 # Obsidian
 
-* Button
-* Splitter
+* Checkbox
+* Radio
 * Slider
 * Flex
-* NinePatchButton
 * Multi-layered nine-patch button.
 * etc...
 
@@ -66,24 +61,3 @@ create_effect:
     attaches the closure as that entity's action
     runs the code
     restores the context
-
-## Nine-patch
-
-struct NinePatchProps {
-    texture_atlas: Handle<TextureAtlas>,
-}
-
-nine_patch_image() -> Element<NodeBundle> {
-    Element::<NodeBundle>::new()
-        .children((
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-            Element::<NodeBundle>::new(),
-        ))
-}
