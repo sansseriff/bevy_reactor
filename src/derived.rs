@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy::prelude::*;
 
 use crate::{
-    signal::{Signal, SignalClone, SignalKind},
+    signal::{Signal, SignalClone},
     Rcx, TrackingScope,
 };
 
@@ -23,7 +23,7 @@ pub(crate) struct DerivedCell<R>(pub(crate) Arc<dyn DerivedFnRef<R> + Send + Syn
 
 /// A [`Derived`] is a readonly value that is computed from other signals.
 #[derive(Copy, Clone, PartialEq)]
-pub struct Derived<R = ()> {
+pub struct Derived<R> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<R>,
 }
@@ -34,11 +34,7 @@ where
 {
     /// Returns a getter for this [`Derived`] with Copy semantics.
     pub fn signal(&self) -> Signal<R> {
-        Signal {
-            id: self.id,
-            kind: SignalKind::Derived,
-            marker: std::marker::PhantomData,
-        }
+        Signal::Derived(*self)
     }
 
     /// Get the value of this [`Derived`] with Copy semantics.
@@ -55,12 +51,8 @@ where
     R: PartialEq + Clone + Send + Sync + 'static,
 {
     /// Returns a getter for this [`Derived`] with Clone semantics.
-    pub fn signal_clone(&self) -> SignalClone<R> {
-        SignalClone {
-            id: self.id,
-            kind: SignalKind::Derived,
-            marker: std::marker::PhantomData,
-        }
+    pub fn signal_clone(self) -> SignalClone<R> {
+        SignalClone::Derived(self)
     }
 
     /// Get the value of this [`Derived`] with Clone semantics.

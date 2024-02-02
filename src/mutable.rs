@@ -1,5 +1,5 @@
 use crate::{
-    signal::{Signal, SignalClone, SignalKind},
+    signal::{Signal, SignalClone},
     RunContextWrite,
 };
 use bevy::prelude::*;
@@ -52,11 +52,7 @@ where
 {
     /// Returns a getter for this [`Mutable`] with Copy semantics.
     pub fn signal(&self) -> Signal<T> {
-        Signal {
-            id: self.id,
-            kind: SignalKind::Mutable,
-            marker: std::marker::PhantomData,
-        }
+        Signal::Mutable(*self)
     }
 
     /// Get the value of this [`Mutable`] with Copy semantics.
@@ -83,11 +79,7 @@ where
 {
     /// Returns a getter for this [`Mutable`] with Clone semantics.
     pub fn signal_clone(&self) -> SignalClone<T> {
-        SignalClone {
-            id: self.id,
-            kind: SignalKind::Mutable,
-            marker: std::marker::PhantomData,
-        }
+        SignalClone::Mutable(self.clone())
     }
 
     /// Get the value of this [`Mutable`] with Clone semantics.
@@ -157,36 +149,36 @@ pub(crate) fn commit_mutables(world: &mut World) {
     });
 }
 
-struct MutablePlugin<T: Send + Sync + 'static> {
-    _marker: std::marker::PhantomData<T>,
-}
+// struct MutablePlugin<T: Send + Sync + 'static> {
+//     _marker: std::marker::PhantomData<T>,
+// }
 
-impl<T: Send + Sync + 'static> MutablePlugin<T> {
-    pub(crate) fn commit_mutables(world: &mut World) {
-        for (mut sig_val, mut sig_next) in world
-            .query::<(&mut MutableCell, &mut MutableValueNext)>()
-            .iter_mut(world)
-        {
-            // Transfer mutable data from next to current.
-            std::mem::swap(&mut sig_val.0, &mut sig_next.0);
-        }
+// impl<T: Send + Sync + 'static> MutablePlugin<T> {
+//     pub(crate) fn commit_mutables(world: &mut World) {
+//         for (mut sig_val, mut sig_next) in world
+//             .query::<(&mut MutableCell, &mut MutableValueNext)>()
+//             .iter_mut(world)
+//         {
+//             // Transfer mutable data from next to current.
+//             std::mem::swap(&mut sig_val.0, &mut sig_next.0);
+//         }
 
-        // Remove all the MutableNext components.
-        let mutables: Vec<Entity> = world
-            .query_filtered::<Entity, With<MutableValueNext>>()
-            .iter(world)
-            .collect();
-        mutables.iter().for_each(|mutable| {
-            world.entity_mut(*mutable).remove::<MutableValueNext>();
-        });
-    }
-}
+//         // Remove all the MutableNext components.
+//         let mutables: Vec<Entity> = world
+//             .query_filtered::<Entity, With<MutableValueNext>>()
+//             .iter(world)
+//             .collect();
+//         mutables.iter().for_each(|mutable| {
+//             world.entity_mut(*mutable).remove::<MutableValueNext>();
+//         });
+//     }
+// }
 
-impl<T: Send + Sync + 'static> Plugin for MutablePlugin<T> {
-    fn build(&self, app: &mut App) {
-        todo!()
-    }
-}
+// impl<T: Send + Sync + 'static> Plugin for MutablePlugin<T> {
+//     fn build(&self, app: &mut App) {
+//         todo!()
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
