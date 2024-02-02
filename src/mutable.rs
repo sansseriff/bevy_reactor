@@ -24,7 +24,7 @@ pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 /// This is used to avoid writing to the signal multiple times in a single frame, and also
 /// ensures that the signal values remain stable during a reaction.
 #[derive(Component)]
-pub(crate) struct MutableValueNext(pub(crate) Box<dyn Any + Send + Sync + 'static>);
+pub(crate) struct MutableNextCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 
 /// Contains a reference to a reactive mutable variable.
 #[derive(Copy, Clone)]
@@ -132,7 +132,7 @@ pub trait WriteMutable {
 
 pub(crate) fn commit_mutables(world: &mut World) {
     for (mut sig_val, mut sig_next) in world
-        .query::<(&mut MutableCell, &mut MutableValueNext)>()
+        .query::<(&mut MutableCell, &mut MutableNextCell)>()
         .iter_mut(world)
     {
         // Transfer mutable data from next to current.
@@ -141,11 +141,11 @@ pub(crate) fn commit_mutables(world: &mut World) {
 
     // Remove all the MutableNext components.
     let mutables: Vec<Entity> = world
-        .query_filtered::<Entity, With<MutableValueNext>>()
+        .query_filtered::<Entity, With<MutableNextCell>>()
         .iter(world)
         .collect();
     mutables.iter().for_each(|mutable| {
-        world.entity_mut(*mutable).remove::<MutableValueNext>();
+        world.entity_mut(*mutable).remove::<MutableNextCell>();
     });
 }
 

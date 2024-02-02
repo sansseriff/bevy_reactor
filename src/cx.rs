@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::{
     callback::{Callback, CallbackFnCell, CallbackFnMutCell},
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
-    mutable::{MutableCell, MutableValueNext, ReadMutable, WriteMutable},
+    mutable::{MutableCell, MutableNextCell, ReadMutable, WriteMutable},
     tracking_scope::TrackingScope,
     Mutable,
 };
@@ -466,11 +466,11 @@ impl WriteMutable for World {
         T: Send + Sync + Copy + PartialEq + 'static,
     {
         let mut mutable_entity = self.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
+        if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
             *next.0.downcast_mut::<T>().unwrap() = value;
         } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
             if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableValueNext(Box::new(value)));
+                mutable_entity.insert(MutableNextCell(Box::new(value)));
             }
         }
     }
@@ -482,11 +482,11 @@ impl WriteMutable for World {
         T: Send + Sync + Clone + PartialEq + 'static,
     {
         let mut mutable_entity = self.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableValueNext>() {
+        if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
             *next.0.downcast_mut::<T>().unwrap() = value;
         } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
             if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableValueNext(Box::new(value.clone())));
+                mutable_entity.insert(MutableNextCell(Box::new(value.clone())));
             }
         }
     }
