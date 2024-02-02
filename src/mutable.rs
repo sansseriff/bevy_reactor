@@ -24,7 +24,7 @@ pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 /// This is used to avoid writing to the signal multiple times in a single frame, and also
 /// ensures that the signal values remain stable during a reaction.
 #[derive(Component)]
-pub(crate) struct MutableNextCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
+pub(crate) struct MutableNextCell(pub(crate) Option<Box<dyn Any + Send + Sync + 'static>>);
 
 /// Contains a reference to a reactive mutable variable.
 #[derive(Copy, Clone)]
@@ -136,7 +136,7 @@ pub(crate) fn commit_mutables(world: &mut World) {
         .iter_mut(world)
     {
         // Transfer mutable data from next to current.
-        std::mem::swap(&mut sig_val.0, &mut sig_next.0);
+        sig_val.0 = sig_next.0.take().unwrap();
     }
 
     // Remove all the MutableNext components.

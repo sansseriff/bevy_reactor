@@ -71,7 +71,7 @@ pub trait RunContextSetup<'p> {
     where
         T: Send + Sync + 'static,
     {
-        let mutable = self.world_mut().spawn((MutableCell(Box::new(init)),)).id();
+        let mutable = self.world_mut().spawn(MutableCell(Box::new(init))).id();
         self.add_owned(mutable);
         Mutable {
             id: mutable,
@@ -467,10 +467,10 @@ impl WriteMutable for World {
     {
         let mut mutable_entity = self.entity_mut(mutable);
         if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
-            *next.0.downcast_mut::<T>().unwrap() = value;
+            *next.0.as_mut().unwrap().downcast_mut::<T>().unwrap() = value;
         } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
             if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableNextCell(Box::new(value)));
+                mutable_entity.insert(MutableNextCell(Some(Box::new(value))));
             }
         }
     }
@@ -483,10 +483,10 @@ impl WriteMutable for World {
     {
         let mut mutable_entity = self.entity_mut(mutable);
         if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
-            *next.0.downcast_mut::<T>().unwrap() = value;
+            *next.0.as_mut().unwrap().downcast_mut::<T>().unwrap() = value;
         } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
             if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableNextCell(Box::new(value.clone())));
+                mutable_entity.insert(MutableNextCell(Some(Box::new(value.clone()))));
             }
         }
     }

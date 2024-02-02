@@ -156,7 +156,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
     });
 
     let checked_1 = cx.create_mutable(false);
-    let checked_2 = cx.create_mutable(false);
+    let checked_2 = cx.create_mutable(true);
 
     let panel_width = cx
         .create_derived(|cx| {
@@ -198,7 +198,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         .children((
                             checkbox.bind(CheckboxProps {
                                 label: "Include Author Name",
-                                checked: Some(checked_1.signal()),
+                                checked: checked_1.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
                                     let checked = *cx.props;
                                     println!("Include Author Name: {}", checked);
@@ -208,7 +208,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             }),
                             checkbox.bind(CheckboxProps {
                                 label: "Include Metadata",
-                                checked: Some(checked_2.signal()),
+                                checked: checked_2.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
                                     let checked = *cx.props;
                                     println!("Include Metadata: {}", checked);

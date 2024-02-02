@@ -14,6 +14,9 @@ pub enum Signal<T> {
     /// A memoized value that is computed from other signals.
     #[allow(dead_code)] // Not implemented yet.
     Memo,
+
+    /// A constant value, mainly useful for establishing defaults.
+    Constant(T),
 }
 
 impl<T> Signal<T>
@@ -26,7 +29,18 @@ where
             Signal::Mutable(mutable) => rc.read_mutable(mutable.id),
             Signal::Derived(derived) => rc.read_derived(derived.id),
             Signal::Memo => unimplemented!(),
+            Signal::Constant(value) => *value,
         }
+    }
+}
+
+/// Implement default if T has a default.
+impl<T> Default for Signal<T>
+where
+    T: Default + Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self::Constant(Default::default())
     }
 }
 
@@ -42,6 +56,9 @@ pub enum SignalClone<T> {
     /// A memoized value that is computed from other signals.
     #[allow(dead_code)] // Not implemented yet.
     Memo,
+
+    /// A constant value, mainly useful for establishing defaults.
+    Constant(T),
 }
 
 impl<T> SignalClone<T>
@@ -54,6 +71,17 @@ where
             SignalClone::Mutable(mutable) => rc.read_mutable_clone(mutable.id),
             SignalClone::Derived(derived) => rc.read_derived_clone(derived.id),
             SignalClone::Memo => unimplemented!(),
+            SignalClone::Constant(value) => value.clone(),
         }
+    }
+}
+
+/// Implement default if T has a default.
+impl<T> Default for SignalClone<T>
+where
+    T: Default + Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self::Constant(Default::default())
     }
 }

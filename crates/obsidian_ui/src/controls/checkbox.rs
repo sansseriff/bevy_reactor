@@ -16,10 +16,10 @@ use crate::colors;
 #[derive(Default)]
 pub struct CheckboxProps<V: ViewTuple + Clone> {
     /// Whether the checkbox is checked.
-    pub checked: Option<Signal<bool>>,
+    pub checked: Signal<bool>,
 
     /// Whether the checkbox is disabled.
-    pub disabled: Option<Signal<bool>>,
+    pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
     pub label: V,
@@ -74,10 +74,7 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
     let hovering = cx.create_hover_signal(id);
 
     let disabled = cx.props.disabled;
-    let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
-
-    let checked = cx.props.disabled;
-    let checked = cx.create_derived(move |cc| checked.map(|s| s.get(cc)).unwrap_or(false));
+    let checked = cx.props.checked;
 
     Element::<NodeBundle>::for_entity(id)
         .named("checkbox")
