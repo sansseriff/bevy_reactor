@@ -83,10 +83,10 @@ pub fn splitter(cx: &mut Cx<SplitterProps>) -> impl View {
             On::<Pointer<Drag>>::run({
                 let on_change = cx.props.on_change;
                 move |world: &mut World| {
-                    let listener = world
+                    let event = world
                         .get_resource::<ListenerInput<Pointer<Drag>>>()
                         .unwrap();
-                    let ev = listener.distance;
+                    let ev = event.distance;
                     let ds = drag_state.get(world);
                     if ds.dragging {
                         world.run_callback(on_change, ev.x + ds.offset);

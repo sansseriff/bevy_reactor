@@ -6,6 +6,7 @@ use bevy::{
     prelude::*,
     ui::{self, ZIndex},
 };
+use bevy_color::{LinearRgba, SRgba};
 
 pub struct StyleBuilder<'a, 'w> {
     pub(crate) target: &'a mut EntityWorldMut<'w>,
@@ -74,6 +75,30 @@ impl ColorParam for Option<Color> {
 impl ColorParam for Color {
     fn to_val(self) -> Option<Color> {
         Some(self)
+    }
+}
+
+impl ColorParam for SRgba {
+    fn to_val(self) -> Option<Color> {
+        Some(self.into())
+    }
+}
+
+impl ColorParam for Option<SRgba> {
+    fn to_val(self) -> Option<Color> {
+        self.map(|c| c.into())
+    }
+}
+
+impl ColorParam for LinearRgba {
+    fn to_val(self) -> Option<Color> {
+        Some(self.to_nonlinear().into())
+    }
+}
+
+impl ColorParam for Option<LinearRgba> {
+    fn to_val(self) -> Option<Color> {
+        self.map(|c| c.into())
     }
 }
 

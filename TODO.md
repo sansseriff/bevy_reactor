@@ -1,5 +1,6 @@
 # TODO
 
+* Try making Cx props not a reference.
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().
@@ -12,6 +13,7 @@
 * use_element_rect hook
 * enter/exit transition hooks
 * Animated transitions / spring
+* Gizmo
 
 # StyleBuilder
 

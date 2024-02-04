@@ -9,6 +9,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.79"
 bevy = "0.12.1"
+bevy_color = { path = "../bevy_color" }
+# bevy_color = "0.14.0"
 # bevy = { git = "https://github.com/bevyengine/bevy.git", features = ["dynamic_linking"], branch = "main" }
 bevy_mod_picking = "0.17.0"
 impl-trait-for-tuples = "0.2.2"

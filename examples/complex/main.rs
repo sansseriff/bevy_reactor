@@ -7,10 +7,12 @@ use bevy_mod_picking::{
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, splitter, ButtonProps, CheckboxProps, SplitterDirection, SplitterProps,
+        button, checkbox, slider, splitter, ButtonProps, CheckboxProps, SliderProps,
+        SplitterDirection, SplitterProps,
     },
     typography,
     viewport::{self},
+    ObsidianUiPlugin,
 };
 
 use std::f32::consts::PI;
@@ -34,7 +36,7 @@ fn style_main(ss: &mut StyleBuilder) {
         .bottom(0)
         .right(0)
         .border(1)
-        .border_color(colors::GRAY_300)
+        .border_color(colors::U2)
         .display(ui::Display::Flex);
 }
 
@@ -118,7 +120,7 @@ fn main() {
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        .add_plugins(ReactorPlugin)
+        .add_plugins((ReactorPlugin, ObsidianUiPlugin))
         .add_systems(Startup, setup.pipe(setup_view_root))
         .add_systems(
             Update,
@@ -157,6 +159,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
 
     let checked_1 = cx.create_mutable(false);
     let checked_2 = cx.create_mutable(true);
+    let red = cx.create_mutable::<f32>(128.);
 
     let panel_width = cx
         .create_derived(|cx| {
@@ -217,6 +220,21 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                         )),
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_color_edit)
+                        .children((slider.bind(SliderProps {
+                            min: Signal::Constant(0.),
+                            max: Signal::Constant(255.),
+                            value: red.signal(),
+                            style: StyleHandle::new(style_slider),
+                            // label: "Include Metadata",
+                            on_change: Some(cx.create_callback(move |cx| {
+                                println!("Slider value: {}", *cx.props);
+                                // let checked = *cx.props;
+                                // checked_2.set(cx, checked);
+                            })),
+                            ..default()
+                        }),)),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
             splitter.bind(SplitterProps {

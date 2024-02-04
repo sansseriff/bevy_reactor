@@ -6,14 +6,15 @@ use bevy::{
     prelude::*,
     ui,
 };
+use bevy_color::ColorOps;
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
 
-use crate::{colors, size::Size};
+use crate::{colors, rounded_rect::RoundedRectMaterial, size::Size};
 
 /// The variant determines the button's color scheme
-#[derive(Clone, PartialEq, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Default, Debug)]
 pub enum ButtonVariant {
     /// The default apperance.
     #[default]
@@ -66,59 +67,7 @@ fn style_button_bg(ss: &mut StyleBuilder) {
         .left(0)
         .right(0)
         .top(0)
-        .bottom(0)
-        .grid_template_columns(vec![
-            ui::GridTrack::px(4.),
-            ui::GridTrack::fr(1.),
-            ui::GridTrack::px(4.),
-        ])
-        .grid_template_rows(vec![
-            ui::GridTrack::px(4.),
-            ui::GridTrack::fr(1.),
-            ui::GridTrack::px(4.),
-        ])
-        .gap(0);
-}
-
-fn style_button_bg_tile(ss: &mut StyleBuilder) {
-    ss.texture_atlas("obsidian_ui://textures/button.atlas.grid.ron")
-        .background_color(colors::GRAY_250);
-}
-
-fn style_button_bg_tile_0(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(0);
-}
-
-fn style_button_bg_tile_1(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(1);
-}
-
-fn style_button_bg_tile_2(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(2);
-}
-
-fn style_button_bg_tile_3(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(3);
-}
-
-fn style_button_bg_tile_4(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(4);
-}
-
-fn style_button_bg_tile_5(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(5);
-}
-
-fn style_button_bg_tile_6(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(6);
-}
-
-fn style_button_bg_tile_7(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(7);
-}
-
-fn style_button_bg_tile_8(ss: &mut StyleBuilder) {
-    ss.texture_atlas_tile(8);
+        .bottom(0);
 }
 
 fn style_button_xxxs(ss: &mut StyleBuilder) {
@@ -157,6 +106,15 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
 
     let disabled = cx.props.disabled;
     let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
+
+    let mut ui_materials = cx
+        .world_mut()
+        .get_resource_mut::<Assets<RoundedRectMaterial>>()
+        .unwrap();
+    let material = ui_materials.add(RoundedRectMaterial {
+        color: colors::U3.into(),
+        radius: Vec4::new(4., 4., 4., 4.),
+    });
 
     Element::<NodeBundle>::for_entity(id)
         .named("button")
@@ -214,43 +172,23 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
             }),
         ))
         .children((
-            Element::<NodeBundle>::new()
+            Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
+                .insert(material.clone())
                 .with_styles(style_button_bg)
-                .children((
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_0)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_1)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_2)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_3)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_4)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_5)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_6)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_7)),
-                    Element::<NodeBundle>::new()
-                        .with_styles((style_button_bg_tile, style_button_bg_tile_8)),
-                ))
-                .create_effect(move |cx, ent| {
+                .create_effect(move |cx, _| {
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
                     let color = match (is_pressed, is_hovering) {
-                        (true, _) => colors::GRAY_350,
-                        (false, true) => colors::GRAY_300,
-                        (false, false) => colors::GRAY_250,
+                        (true, _) => colors::U3.lighten(0.05),
+                        (false, true) => colors::U3.lighten(0.01),
+                        (false, false) => colors::U3,
                     };
-                    if let Some(children) = cx.world_mut().entity(ent).get::<Children>() {
-                        let child_entities = children.iter().copied().collect::<Vec<_>>();
-                        for child in child_entities.iter() {
-                            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(*child).unwrap();
-                            bg.0 = color;
-                        }
-                    }
+                    let mut ui_materials = cx
+                        .world_mut()
+                        .get_resource_mut::<Assets<RoundedRectMaterial>>()
+                        .unwrap();
+                    let material = ui_materials.get_mut(material.clone()).unwrap();
+                    material.color = color.to_linear().into();
                 }),
             cx.props.children.clone(),
         ))

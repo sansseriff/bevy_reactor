@@ -2,6 +2,9 @@
 
 #![warn(missing_docs)]
 
+use bevy::{app::*, ui::UiMaterialPlugin};
+use rounded_rect::RoundedRectMaterial;
+
 /// Module containing standard color definitions.
 #[allow(missing_docs)]
 pub mod colors;
@@ -17,3 +20,14 @@ pub mod viewport;
 
 /// Standard styles for fonts.
 pub mod typography;
+
+mod rounded_rect;
+
+/// Plugin for the Obsidian UI library.
+pub struct ObsidianUiPlugin;
+
+impl Plugin for ObsidianUiPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(UiMaterialPlugin::<RoundedRectMaterial>::default());
+    }
+}

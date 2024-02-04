@@ -1,4 +1,5 @@
 use bevy::render::color::Color;
+use bevy_color::SRgba;
 
 /// Standard colors for the Obsidian UI.
 
@@ -37,3 +38,8 @@ pub const PRIMARY: Color = Color::rgba(0.341, 0.435, 0.525, 1.0);
 pub const PRIMARY_ACC: Color = Color::rgba(0.475, 0.604, 0.733, 1.0);
 pub const DESTRUCTIVE: Color = Color::rgba(0.525, 0.341, 0.404, 1.0);
 pub const DESTRUCTIVE_ACC: Color = Color::rgba(0.733, 0.475, 0.612, 1.0);
+
+pub const U1: SRgba = SRgba::new(0.094, 0.094, 0.102, 1.0);
+pub const U2: SRgba = SRgba::new(0.137, 0.137, 0.149, 1.0);
+pub const U3: SRgba = SRgba::new(0.224, 0.224, 0.243, 1.0);
+pub const U4: SRgba = SRgba::new(0.486, 0.486, 0.529, 1.0);
