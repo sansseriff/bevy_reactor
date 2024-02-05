@@ -6,6 +6,7 @@ use bevy::{
     prelude::*,
     ui,
 };
+use bevy_color::LuminanceOps;
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
@@ -45,7 +46,7 @@ fn style_checkbox(ss: &mut StyleBuilder) {
 fn style_checkbox_border(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .border(2)
-        .border_color(colors::GRAY_700)
+        .border_color(colors::U3)
         .width(16)
         .height(16);
 }
@@ -128,13 +129,13 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
                     let color = match (is_checked, is_pressed, is_hovering) {
-                        (true, _, _) => Color::RED,
-                        (false, true, _) => colors::GRAY_350,
-                        (false, false, true) => colors::GRAY_300,
-                        (false, false, false) => colors::GRAY_250,
+                        (true, _, _) => colors::DESTRUCTIVE,
+                        (false, true, _) => colors::U3.lighter(0.05),
+                        (false, false, true) => colors::U3.lighter(0.02),
+                        (false, false, false) => colors::U3,
                     };
                     let mut bg = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-                    bg.0 = color;
+                    bg.0 = color.into();
                 })
                 .children(
                     Element::<NodeBundle>::new()
@@ -144,13 +145,13 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
                             let is_pressed = pressed.get(cx);
                             let is_hovering = hovering.get(cx);
                             let color = match (is_checked, is_pressed, is_hovering) {
-                                (true, _, _) => colors::GRAY_700,
-                                (false, true, _) => colors::GRAY_350,
-                                (false, false, true) => colors::GRAY_300,
-                                (false, false, false) => colors::GRAY_250,
+                                (true, _, _) => colors::FOREGROUND,
+                                (false, true, _) => colors::U3.lighter(0.05),
+                                (false, false, true) => colors::U3.lighter(0.02),
+                                (false, false, false) => colors::U3,
                             };
                             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                            bg.0 = color;
+                            bg.0 = color.into();
                         }),
                 ),
             Element::<NodeBundle>::new()

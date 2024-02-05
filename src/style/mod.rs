@@ -5,6 +5,7 @@ mod builder_border_color;
 mod builder_font;
 mod builder_layout;
 mod builder_outline;
+mod builder_pointer_events;
 mod builder_texture_atlas;
 mod builder_z_index;
 
@@ -19,6 +20,7 @@ pub use builder_border_color::StyleBuilderBorderColor;
 pub use builder_font::StyleBuilderFont;
 pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
+pub use builder_pointer_events::StyleBuilderPointerEvents;
 pub use builder_texture_atlas::StyleBuilderTextureAtlas;
 pub use builder_z_index::StyleBuilderZIndex;
 use impl_trait_for_tuples::*;

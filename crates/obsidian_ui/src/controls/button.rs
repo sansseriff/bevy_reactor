@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_color::ColorOps;
+use bevy_color::LuminanceOps;
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
@@ -179,8 +179,8 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
                     let color = match (is_pressed, is_hovering) {
-                        (true, _) => colors::U3.lighten(0.05),
-                        (false, true) => colors::U3.lighten(0.01),
+                        (true, _) => colors::U3.lighter(0.05),
+                        (false, true) => colors::U3.lighter(0.01),
                         (false, false) => colors::U3,
                     };
                     let mut ui_materials = cx

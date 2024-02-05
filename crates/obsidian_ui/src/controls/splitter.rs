@@ -1,4 +1,5 @@
 use bevy::{prelude::*, ui};
+use bevy_color::LuminanceOps;
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
@@ -112,12 +113,12 @@ pub fn splitter(cx: &mut Cx<SplitterProps>) -> impl View {
                     let ds = drag_state.get(cx);
                     let is_hovering = hovering.get(cx);
                     let color = match (ds.dragging, is_hovering) {
-                        (true, _) => colors::GRAY_450,
-                        (false, true) => colors::GRAY_400,
-                        (false, false) => colors::GRAY_350,
+                        (true, _) => colors::U3.lighter(0.05),
+                        (false, true) => colors::U3.lighter(0.02),
+                        (false, false) => colors::U3,
                     };
                     let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                    bg.0 = color;
+                    bg.0 = color.into();
                 }),
         )
 }

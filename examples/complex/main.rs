@@ -227,11 +227,10 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             max: Signal::Constant(255.),
                             value: red.signal(),
                             style: StyleHandle::new(style_slider),
+                            precision: 1,
                             // label: "Include Metadata",
                             on_change: Some(cx.create_callback(move |cx| {
-                                println!("Slider value: {}", *cx.props);
-                                // let checked = *cx.props;
-                                // checked_2.set(cx, checked);
+                                red.set(cx, *cx.props);
                             })),
                             ..default()
                         }),)),
