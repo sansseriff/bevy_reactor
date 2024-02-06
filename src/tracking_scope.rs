@@ -134,19 +134,20 @@ pub fn run_reactions(world: &mut World) {
     let tick = world.read_change_tick();
     for scope_entity in changed.iter() {
         let mut next_scope = TrackingScope::new(tick);
-        let mut entt = world.entity_mut(*scope_entity);
-        if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
-            let inner = view_handle.view.clone();
-            inner
-                .lock()
-                .unwrap()
-                .react(*scope_entity, world, &mut next_scope);
-        } else if let Some(reaction) = entt.get_mut::<ReactionHandle>() {
-            let inner = reaction.0.clone();
-            inner
-                .lock()
-                .unwrap()
-                .react(*scope_entity, world, &mut next_scope);
+        if let Some(mut entt) = world.get_entity_mut(*scope_entity) {
+            if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
+                let inner = view_handle.view.clone();
+                inner
+                    .lock()
+                    .unwrap()
+                    .react(*scope_entity, world, &mut next_scope);
+            } else if let Some(reaction) = entt.get_mut::<ReactionHandle>() {
+                let inner = reaction.0.clone();
+                inner
+                    .lock()
+                    .unwrap()
+                    .react(*scope_entity, world, &mut next_scope);
+            }
         }
         if let Ok((_, mut scope)) = scopes.get_mut(world, *scope_entity) {
             // Swap the scopes so that the next scope becomes the current scope.

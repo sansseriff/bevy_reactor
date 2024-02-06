@@ -33,8 +33,7 @@ pub struct CheckboxProps<V: ViewTuple + Clone> {
 }
 
 fn style_checkbox(ss: &mut StyleBuilder) {
-    ss.border(1)
-        .display(ui::Display::Flex)
+    ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .justify_content(ui::JustifyContent::Center)
         .align_items(ui::AlignItems::Center)
@@ -44,20 +43,18 @@ fn style_checkbox(ss: &mut StyleBuilder) {
 }
 
 fn style_checkbox_border(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex)
-        .border(2)
-        .border_color(colors::U3)
-        .width(16)
-        .height(16);
+    ss.display(ui::Display::Flex).width(16).height(16);
 }
 
 fn style_checkbox_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
+        .background_image("obsidian_ui://textures/checkmark.png")
+        .background_color(colors::FOREGROUND)
         .position(ui::PositionType::Absolute)
-        .left(1)
-        .top(1)
-        .width(10)
-        .height(10);
+        .left(2)
+        .top(2)
+        .width(12)
+        .height(12);
 }
 
 fn style_checkbox_label(ss: &mut StyleBuilder) {
@@ -129,31 +126,21 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
                     let color = match (is_checked, is_pressed, is_hovering) {
-                        (true, _, _) => colors::DESTRUCTIVE,
-                        (false, true, _) => colors::U3.lighter(0.05),
-                        (false, false, true) => colors::U3.lighter(0.02),
-                        (false, false, false) => colors::U3,
+                        (true, true, _) => colors::ACCENT.darker(0.1),
+                        (true, false, true) => colors::ACCENT.darker(0.15),
+                        (true, _, _) => colors::ACCENT.darker(0.2),
+                        (false, true, _) => colors::U1.lighter(0.005),
+                        (false, false, true) => colors::U1.lighter(0.002),
+                        (false, false, false) => colors::U1,
                     };
-                    let mut bg = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
+                    let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                     bg.0 = color.into();
                 })
-                .children(
-                    Element::<NodeBundle>::new()
-                        .with_styles(style_checkbox_inner)
-                        .create_effect(move |cx, ent| {
-                            let is_checked = checked.get(cx);
-                            let is_pressed = pressed.get(cx);
-                            let is_hovering = hovering.get(cx);
-                            let color = match (is_checked, is_pressed, is_hovering) {
-                                (true, _, _) => colors::FOREGROUND,
-                                (false, true, _) => colors::U3.lighter(0.05),
-                                (false, false, true) => colors::U3.lighter(0.02),
-                                (false, false, false) => colors::U3,
-                            };
-                            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                            bg.0 = color.into();
-                        }),
-                ),
+                .children(Cond::new(
+                    move |cx| checked.get(cx),
+                    move || Element::<NodeBundle>::new().with_styles(style_checkbox_inner),
+                    || (),
+                )),
             Element::<NodeBundle>::new()
                 .with_styles(style_checkbox_label)
                 .children(cx.props.label.clone()),

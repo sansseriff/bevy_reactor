@@ -25,11 +25,6 @@ impl<'a, 'w> StyleBuilder<'a, 'w> {
 
 // LineBreak(BreakLineOn),
 
-// fn pointer_events(&mut self, pe: PointerEvents) -> &mut Self {
-//     self.props.push(StyleProp::PointerEvents(pe));
-//     self
-// }
-
 // fn scale_x(&mut self, scale: f32) -> &mut Self {
 //     self.props.push(StyleProp::ScaleX(scale));
 //     self

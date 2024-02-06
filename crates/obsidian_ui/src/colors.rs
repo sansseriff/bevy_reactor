@@ -7,6 +7,7 @@ pub const U1: Srgba = Srgba::new(0.094, 0.094, 0.102, 1.0);
 pub const U2: Srgba = Srgba::new(0.137, 0.137, 0.149, 1.0);
 pub const U3: Srgba = Srgba::new(0.224, 0.224, 0.243, 1.0);
 pub const U4: Srgba = Srgba::new(0.486, 0.486, 0.529, 1.0);
+pub const U5: Srgba = Srgba::new(1.0, 1.0, 1.0, 1.0);
 pub const BACKGROUND: Srgba = Srgba::new(0.118, 0.118, 0.133, 1.0);
 pub const FOREGROUND: Srgba = Srgba::new(0.925, 0.925, 0.925, 1.0);
 pub const ACCENT: Srgba = Srgba::new(0.055, 0.647, 0.914, 1.0);

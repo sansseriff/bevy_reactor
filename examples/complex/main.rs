@@ -1,5 +1,5 @@
 //! Example of a simple UI layout
-use bevy_color::Srgba;
+use bevy_color::{Hsla, Srgba};
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
     input::InputPlugin,
@@ -43,7 +43,7 @@ fn style_main(ss: &mut StyleBuilder) {
 
 fn style_aside(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
-        .background_color(colors::BACKGROUND)
+        .background_color(colors::U2)
         .padding(8)
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
@@ -241,6 +241,56 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                     Srgba::new(0.0, 0.0, 0.0, 1.0),
                                     Srgba::new(1.0, 1.0, 0.0, 1.0),
                                     Srgba::new(1.0, 1.0, 1.0, 1.0),
+                                ]),
+                                min: Signal::Constant(0.),
+                                max: Signal::Constant(255.),
+                                value: saturation.signal(),
+                                style: StyleHandle::new(style_slider),
+                                precision: 1,
+                                on_change: Some(cx.create_callback(move |cx| {
+                                    saturation.set(cx, cx.props);
+                                })),
+                                ..default()
+                            }),
+                            gradient_slider.bind(GradientSliderProps {
+                                gradient: Signal::Constant(vec![
+                                    Srgba::new(0.5, 0.5, 0.5, 1.0),
+                                    Srgba::new(1.0, 0.0, 0.0, 1.0),
+                                ]),
+                                min: Signal::Constant(0.),
+                                max: Signal::Constant(255.),
+                                value: saturation.signal(),
+                                style: StyleHandle::new(style_slider),
+                                precision: 1,
+                                on_change: Some(cx.create_callback(move |cx| {
+                                    saturation.set(cx, cx.props);
+                                })),
+                                ..default()
+                            }),
+                            gradient_slider.bind(GradientSliderProps {
+                                gradient: Signal::Constant(vec![
+                                    Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(180.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
+                                    Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
+                                ]),
+                                min: Signal::Constant(0.),
+                                max: Signal::Constant(255.),
+                                value: saturation.signal(),
+                                style: StyleHandle::new(style_slider),
+                                precision: 1,
+                                on_change: Some(cx.create_callback(move |cx| {
+                                    saturation.set(cx, cx.props);
+                                })),
+                                ..default()
+                            }),
+                            gradient_slider.bind(GradientSliderProps {
+                                gradient: Signal::Constant(vec![
+                                    Srgba::new(0.5, 0.5, 0.5, 0.0),
+                                    Srgba::new(0.5, 0.5, 0.5, 1.5),
                                 ]),
                                 min: Signal::Constant(0.),
                                 max: Signal::Constant(255.),

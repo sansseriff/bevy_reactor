@@ -1,11 +1,11 @@
 use bevy::{prelude::*, ui};
-use bevy_color::{Luminance, Srgba};
+use bevy_color::Srgba;
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
 use crate::{colors, gradient_rect::GradientRectMaterial};
 
-const THUMB_WIDTH: f32 = 10.;
+const THUMB_WIDTH: f32 = 14.;
 
 /// Properties for slider widget.
 pub struct GradientSliderProps {
@@ -56,11 +56,19 @@ struct DragState {
 }
 
 fn style_slider(ss: &mut StyleBuilder) {
-    ss.min_width(64)
-        .height(20)
+    ss.min_width(32)
+        .height(14)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_items(ui::AlignItems::Stretch);
+}
+
+fn style_alpha(ss: &mut StyleBuilder) {
+    ss.position(ui::PositionType::Absolute)
+        .top(0)
+        .bottom(0)
+        .left(0)
+        .right(0);
 }
 
 fn style_start_cap(ss: &mut StyleBuilder) {
@@ -77,7 +85,6 @@ fn style_end_cap(ss: &mut StyleBuilder) {
 
 fn style_track(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
-        // .left(0)
         .top(0)
         .bottom(0)
         .left(0)
@@ -85,18 +92,18 @@ fn style_track(ss: &mut StyleBuilder) {
 }
 
 fn style_thumb(ss: &mut StyleBuilder) {
-    ss.background_color(colors::U3)
+    ss.border_color(colors::U1)
+        .border(2)
         .position(ui::PositionType::Absolute)
-        // .left(0)
         .top(0)
         .bottom(0)
-        .width(16);
+        .width(THUMB_WIDTH);
 }
 
 /// Horizontal slider widget that displays a gradient bar and a draggable button.
 pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> {
     let slider_id = cx.create_entity();
-    let hovering = cx.create_hover_signal(slider_id);
+    // let hovering = cx.create_hover_signal(slider_id);
     let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
     // Pain point: Need to capture all props for closures.
@@ -210,6 +217,7 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
             }),
         ))
         .children((
+            Element::<NodeBundle>::new().with_styles(style_alpha),
             Element::<NodeBundle>::new()
                 .with_styles(style_start_cap)
                 .create_effect({
@@ -246,17 +254,17 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
                 .children(
                     Element::<NodeBundle>::new()
                         .with_styles(style_thumb)
-                        .create_effect(move |cx, ent| {
-                            let ds = drag_state.get(cx);
-                            let is_hovering = hovering.get(cx);
-                            let color = match (ds.dragging, is_hovering) {
-                                (true, _) => colors::U3.lighter(0.03),
-                                (_, true) => colors::U3.lighter(0.01),
-                                (_, false) => colors::U3,
-                            };
-                            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                            bg.0 = color.into();
-                        })
+                        // .create_effect(move |cx, ent| {
+                        //     let ds = drag_state.get(cx);
+                        //     let is_hovering = hovering.get(cx);
+                        //     let color = match (ds.dragging, is_hovering) {
+                        //         (true, _) => colors::U3.lighter(0.03),
+                        //         (_, true) => colors::U3.lighter(0.01),
+                        //         (_, false) => colors::U3,
+                        //     };
+                        //     let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        //     bg.0 = color.into();
+                        // })
                         .create_effect(move |cx, ent| {
                             let min = min.get(cx);
                             let max = max.get(cx);
