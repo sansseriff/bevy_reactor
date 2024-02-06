@@ -46,7 +46,7 @@ pub struct Bind<F: 'static, P: PresenterFn<F>> {
     presenter: P,
 
     /// Props to pass to presenter function.
-    props: P::Props,
+    props: Option<P::Props>,
 
     /// The view handle for the presenter output.
     inner: Option<Entity>,
@@ -59,7 +59,7 @@ impl<F: 'static, P: PresenterFn<F>> Bind<F, P> {
     fn new(presenter: P, props: P::Props) -> Self {
         Self {
             presenter,
-            props,
+            props: Some(props),
             inner: None,
             nodes: NodeSpan::Empty,
         }
@@ -73,8 +73,9 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
 
     fn build(&mut self, _view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_none());
+        assert!(self.props.is_some());
         let mut tracking = TrackingScope::new(world.read_change_tick());
-        let mut cx = Cx::new(&self.props, world, &mut tracking);
+        let mut cx = Cx::new(self.props.take().unwrap(), world, &mut tracking);
         let mut view = self.presenter.call(&mut cx);
         let inner = world.spawn(tracking).id();
         view.build(inner, world);
@@ -101,9 +102,3 @@ impl<F: 'static, P: PresenterFn<F>> IntoView for Bind<F, P> {
         Arc::new(Mutex::new(self))
     }
 }
-
-// impl<Props: 'static, P: PresenterFn<Props = Props>> IntoView for P {
-//     fn into_view(self) -> ViewRef {
-//         todo!()
-//     }
-// }

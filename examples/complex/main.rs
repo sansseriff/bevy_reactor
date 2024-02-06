@@ -205,7 +205,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 label: "Include Author Name",
                                 checked: checked_1.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
-                                    let checked = *cx.props;
+                                    let checked = cx.props;
                                     println!("Include Author Name: {}", checked);
                                     checked_1.set(cx, checked);
                                 })),
@@ -215,7 +215,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 label: "Include Metadata",
                                 checked: checked_2.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
-                                    let checked = *cx.props;
+                                    let checked = cx.props;
                                     println!("Include Metadata: {}", checked);
                                     checked_2.set(cx, checked);
                                 })),
@@ -232,7 +232,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 style: StyleHandle::new(style_slider),
                                 precision: 1,
                                 on_change: Some(cx.create_callback(move |cx| {
-                                    red.set(cx, *cx.props);
+                                    red.set(cx, cx.props);
                                 })),
                                 ..default()
                             }),
@@ -248,7 +248,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 style: StyleHandle::new(style_slider),
                                 precision: 1,
                                 on_change: Some(cx.create_callback(move |cx| {
-                                    saturation.set(cx, *cx.props);
+                                    saturation.set(cx, cx.props);
                                 })),
                                 ..default()
                             }),
@@ -259,7 +259,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                 direction: SplitterDirection::Vertical,
                 value: panel_width,
                 on_change: cx.create_callback(|cx: &mut Cx<f32>| {
-                    let value = *cx.props;
+                    let value = cx.props;
                     let mut panel_width = cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
                     panel_width.0 = value.max(200.);
                 }),

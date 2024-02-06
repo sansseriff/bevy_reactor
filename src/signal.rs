@@ -100,7 +100,12 @@ where
             SignalClone::Constant(value) => value.clone(),
         }
     }
+}
 
+impl<T> SignalClone<T>
+where
+    T: Send + Sync + 'static,
+{
     /// Read the value of the signal using a mapping function.
     pub fn map<R: ReadMutable + ReadDerived, U, F: Fn(&T) -> U>(&self, rc: &R, f: F) -> U {
         match self {

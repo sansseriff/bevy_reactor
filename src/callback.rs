@@ -77,7 +77,7 @@ pub fn run_deferred_callbacks<P: 'static + Send + Sync>(world: &mut World) {
         if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnCell<P>>() {
             let mut callback_fn = callback_cmp.inner.take();
             let callback_box = callback_fn.as_ref().expect("Callback is not present");
-            let mut cx = Cx::new(&event.props, world, &mut tracking);
+            let mut cx = Cx::new(event.props, world, &mut tracking);
             callback_box.call(&mut cx);
             let mut callback_entity = world.entity_mut(event.receiver);
             callback_entity
@@ -87,7 +87,7 @@ pub fn run_deferred_callbacks<P: 'static + Send + Sync>(world: &mut World) {
         } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
             let mut callback_fn = callback_cmp.inner.take();
             let callback_box = callback_fn.as_mut().expect("Callback is not present");
-            let mut cx = Cx::new(&event.props, world, &mut tracking);
+            let mut cx = Cx::new(event.props, world, &mut tracking);
             callback_box.call(&mut cx);
             let mut callback_entity = world.entity_mut(event.receiver);
             callback_entity

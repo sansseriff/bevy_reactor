@@ -31,7 +31,7 @@ pub trait RunContextWrite: RunContextRead {
         let world = self.world_mut();
         let tick = world.read_change_tick();
         let mut tracking = TrackingScope::new(tick);
-        let mut cx = Cx::new(&props, world, &mut tracking);
+        let mut cx = Cx::new(props, world, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
         if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
             let mut callback_fn = cell.inner.take();
@@ -149,7 +149,7 @@ pub trait RunContextSetup<'p> {
 /// access to reactive data sources in the world.
 pub struct Cx<'p, 'w, Props = ()> {
     /// The properties that were passed to the presenter from it's parent.
-    pub props: &'p Props,
+    pub props: Props,
 
     /// Bevy World
     pub(crate) world: &'w mut World,
@@ -159,11 +159,7 @@ pub struct Cx<'p, 'w, Props = ()> {
 }
 
 impl<'p, 'w, Props> Cx<'p, 'w, Props> {
-    pub(crate) fn new(
-        props: &'p Props,
-        world: &'w mut World,
-        tracking: &'p mut TrackingScope,
-    ) -> Self {
+    pub(crate) fn new(props: Props, world: &'w mut World, tracking: &'p mut TrackingScope) -> Self {
         Self {
             props,
             world,
