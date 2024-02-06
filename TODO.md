@@ -1,5 +1,6 @@
 # TODO
 
+* Gradient slider alpha pattern.
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().

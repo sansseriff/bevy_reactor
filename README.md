@@ -5,7 +5,7 @@ concepts such as signals built on Bevy primitives such as entities and component
 
 ## Features
 
-* Mutables and Signals.
+* Reactive data sources: `Mutable`, `Derived` and `Signal`.
 * Tracked ownership.
 * Copyable callback handles.
 * Create entities that respond to reactive data sources such as mutable variables, Bevy resources
@@ -70,10 +70,11 @@ element.insert_computed(|cx| {
 The `Cx` parameter type is the most general and powerful. It's actually an amalgam of several traits,
 which includes:
 
-* `RunContextRead` - a trait that defines methods for *reading* mutables, resources, and other
-  reactive data sources and tracking their use.
-* `RunContextWrite` - a trait that defines methods for *writing* to mutables, running callbacks
-  and doing other actions which may mutate the world but which don't cause structural changes.
+* `ReadMutable` - methods for reading to instances of `Mutable`.
+* `WriteMutable` - methods for writing to instances of `Derived`.
+* `ReadDerived` - methods for reading from instances of `Derived`.
+* `RunContextWrite` - a trait that defines methods running callbacks and doing other actions
+  which may mutate the world but which don't cause structural changes.
 * `RunContextSetup` - a trait that defines methods for *creating* new mutables, callbacks,
   memos and effects.
 
@@ -105,16 +106,22 @@ tracking scope. This means that when that scope is destroyed - when the object t
 execution context is despawned - all of the mutables, memos, effects and other reactive elements
 will also be despawned.
 
-Accessing the data in a mutable can be done in one of three ways:
+Accessing the data in a mutable can be done in one of several ways:
 
 * Getting the data via `mutable.get(context)`;
 * Setting the data via `mutable.set(context, value)`;
+* Getting a reference to the data via `mutable.as_ref(context)`;
+* Transforming the data via `mutable.map(context, mapper_fn)`;
 * Accessing the data via a signal: `mutable.signal()`;
 
 The reason we need to pass in a context object (which can be `Cx`, `Rcx` or `World`) is because
 we the actual data is stored in Bevy's ECS and we need a way to retrieve it. `Mutable<T>` is just
 a handle, it doesn't contain the data itself - but it does contain a type parameter which remembers
 what kind of data is being stored.
+
+All of the functions which read the mutable value (`.get()`, `.as_ref()`, `.map()`) also create
+a dependency entry in the current tracking scope, which will cause the computation to be re-run
+when the value of the mutable changes.
 
 The call `mutable.signal()` returns a reactive signal object. What makes this this different from
 the `get()` method is that the receiver is type-erased, in other words, you can pass around a
@@ -123,15 +130,18 @@ because there are other kinds of reactive objects (like memos and derivations) w
 produce signals. The function that reads the signal can work regardless of where the signal
 came from.
 
+Signals have an API which is similar to mutables: `.get(context)`, `.map(context, mapper)` and so
+on.
+
 Mutables are transactional: when you write to a mutable, the change does not take effect until
 the next frame. There's an ECS system that "commits" the pending changes.
 
-The three methods given above assume that the data in the mutable implements `Copy`. There is
-another set of methods for data that implements `Clone`:
+The `.get()`, `.set()` and `.signal()` methods given above assume that the data in the mutable
+implements `Copy`. There is another set of methods for data that implements `Clone`:
 
 * Getting the data via `mutable.get_clone(context)`;
 * Setting the data via `mutable.set_clone(context, value)`;
-* Accessing the data via a signal: `mutable.signal_clone()`;
+* Accessing the data via a signal: `mutable.signal_clone()` which returns a `SignalClone` object;
 
 Other than the fact that they work with clones, the methods behave identically.
 
@@ -148,6 +158,13 @@ let panel_width = cx
     })
     .signal();
 ```
+
+The `.create_derived()` method returns a `Derived<T>`, which, like mutables, is just a handle
+containing an entity id. It has methods like a mutable: `.get()`, `.map()`. Reading a derived
+adds all of the derived's dependencies to the current tracking scope, so if any of those
+dependencies change, the caller of the derived will be re-run.
+
+Deriveds are not memoized, however, for that we need to use `Memo` (still to be implemented).
 
 ## Tracking Scopes and Reactions
 
