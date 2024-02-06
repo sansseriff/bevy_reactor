@@ -24,9 +24,11 @@
 
 * Checkbox (finish)
 * Radio
-* Slider
+* Button Group
 * Flex
 * Multi-layered nine-patch button.
+* Modal
+* Menu
 * etc...
 
 ## Notes on fine-grained

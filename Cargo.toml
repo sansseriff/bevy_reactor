@@ -5,6 +5,7 @@ workspace = { members = [
 name = "bevy_reactor"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 [dependencies]
 anyhow = "1.0.79"

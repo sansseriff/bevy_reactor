@@ -52,7 +52,7 @@ where
 /// Implement default if T has a default.
 impl<T> Default for Signal<T>
 where
-    T: Default + Clone + Send + Sync + 'static,
+    T: Default + Send + Sync + 'static,
 {
     fn default() -> Self {
         Self::Constant(Default::default())
@@ -120,7 +120,7 @@ where
 /// Implement default if T has a default.
 impl<T> Default for SignalClone<T>
 where
-    T: Default + Clone + Send + Sync + 'static,
+    T: Default + Send + Sync + 'static,
 {
     fn default() -> Self {
         Self::Constant(Default::default())
