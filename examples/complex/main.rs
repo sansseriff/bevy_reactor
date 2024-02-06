@@ -1,4 +1,5 @@
 //! Example of a simple UI layout
+use bevy_color::Srgba;
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
     input::InputPlugin,
@@ -7,8 +8,8 @@ use bevy_mod_picking::{
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, slider, splitter, ButtonProps, CheckboxProps, SliderProps,
-        SplitterDirection, SplitterProps,
+        button, checkbox, gradient_slider, slider, splitter, ButtonProps, CheckboxProps,
+        GradientSliderProps, SliderProps, SplitterDirection, SplitterProps,
     },
     typography,
     viewport::{self},
@@ -160,6 +161,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
     let checked_1 = cx.create_mutable(false);
     let checked_2 = cx.create_mutable(true);
     let red = cx.create_mutable::<f32>(128.);
+    let saturation = cx.create_mutable::<f32>(50.);
 
     let panel_width = cx
         .create_derived(|cx| {
@@ -222,18 +224,35 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         )),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
-                        .children((slider.bind(SliderProps {
-                            min: Signal::Constant(0.),
-                            max: Signal::Constant(255.),
-                            value: red.signal(),
-                            style: StyleHandle::new(style_slider),
-                            precision: 1,
-                            // label: "Include Metadata",
-                            on_change: Some(cx.create_callback(move |cx| {
-                                red.set(cx, *cx.props);
-                            })),
-                            ..default()
-                        }),)),
+                        .children((
+                            slider.bind(SliderProps {
+                                min: Signal::Constant(0.),
+                                max: Signal::Constant(255.),
+                                value: red.signal(),
+                                style: StyleHandle::new(style_slider),
+                                precision: 1,
+                                on_change: Some(cx.create_callback(move |cx| {
+                                    red.set(cx, *cx.props);
+                                })),
+                                ..default()
+                            }),
+                            gradient_slider.bind(GradientSliderProps {
+                                gradient: Signal::Constant(vec![
+                                    Srgba::new(0.0, 0.0, 0.0, 1.0),
+                                    Srgba::new(1.0, 1.0, 0.0, 1.0),
+                                    Srgba::new(1.0, 1.0, 1.0, 1.0),
+                                ]),
+                                min: Signal::Constant(0.),
+                                max: Signal::Constant(255.),
+                                value: saturation.signal(),
+                                style: StyleHandle::new(style_slider),
+                                precision: 1,
+                                on_change: Some(cx.create_callback(move |cx| {
+                                    saturation.set(cx, *cx.props);
+                                })),
+                                ..default()
+                            }),
+                        )),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
             splitter.bind(SplitterProps {

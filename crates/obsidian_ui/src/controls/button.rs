@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_color::LuminanceOps;
+use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
@@ -188,7 +188,7 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                         .get_resource_mut::<Assets<RoundedRectMaterial>>()
                         .unwrap();
                     let material = ui_materials.get_mut(material.clone()).unwrap();
-                    material.color = color.to_linear().into();
+                    material.color = LinearRgba::from(color).into();
                 }),
             cx.props.children.clone(),
         ))

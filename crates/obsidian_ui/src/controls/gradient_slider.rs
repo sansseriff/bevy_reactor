@@ -1,0 +1,275 @@
+use bevy::{prelude::*, ui};
+use bevy_color::{Luminance, Srgba};
+use bevy_mod_picking::prelude::*;
+use bevy_reactor::*;
+
+use crate::{colors, gradient_rect::GradientRectMaterial};
+
+const THUMB_WIDTH: f32 = 10.;
+
+/// Properties for slider widget.
+pub struct GradientSliderProps {
+    /// Gradient to display.
+    pub gradient: Signal<Vec<Srgba>>,
+
+    /// Current slider value.
+    pub value: Signal<f32>,
+
+    /// Minimum slider value.
+    pub min: Signal<f32>,
+
+    /// Maximum slider value.
+    pub max: Signal<f32>,
+
+    /// Number of decimal places to round to (0 = integer).
+    pub precision: usize,
+
+    /// Whether the slider is disabled.
+    pub disabled: Signal<bool>,
+
+    /// Style handle for slider root element.
+    pub style: StyleHandle,
+
+    /// Callback called when value changes
+    pub on_change: Option<Callback<f32>>,
+}
+
+impl Default for GradientSliderProps {
+    fn default() -> Self {
+        Self {
+            gradient: Signal::Constant(Vec::new()),
+            value: Signal::Constant(0.),
+            min: Signal::Constant(0.),
+            max: Signal::Constant(1.),
+            precision: 0,
+            disabled: Signal::Constant(false),
+            style: StyleHandle::default(),
+            on_change: None,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Default, Copy)]
+struct DragState {
+    dragging: bool,
+    offset: f32,
+}
+
+fn style_slider(ss: &mut StyleBuilder) {
+    ss.min_width(64)
+        .height(20)
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_items(ui::AlignItems::Stretch);
+}
+
+fn style_start_cap(ss: &mut StyleBuilder) {
+    ss.background_color(colors::LIGHT).width(THUMB_WIDTH * 0.5);
+}
+
+fn style_gradient(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.);
+}
+
+fn style_end_cap(ss: &mut StyleBuilder) {
+    ss.background_color(colors::X_RED).width(THUMB_WIDTH * 0.5);
+}
+
+fn style_track(ss: &mut StyleBuilder) {
+    ss.position(ui::PositionType::Absolute)
+        // .left(0)
+        .top(0)
+        .bottom(0)
+        .left(0)
+        .right(THUMB_WIDTH);
+}
+
+fn style_thumb(ss: &mut StyleBuilder) {
+    ss.background_color(colors::U3)
+        .position(ui::PositionType::Absolute)
+        // .left(0)
+        .top(0)
+        .bottom(0)
+        .width(16);
+}
+
+/// Horizontal slider widget that displays a gradient bar and a draggable button.
+pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> {
+    let slider_id = cx.create_entity();
+    let hovering = cx.create_hover_signal(slider_id);
+    let drag_state = cx.create_mutable::<DragState>(DragState::default());
+
+    // Pain point: Need to capture all props for closures.
+    let min = cx.props.min;
+    let max = cx.props.max;
+    let value = cx.props.value;
+    let precision = cx.props.precision;
+    let on_change = cx.props.on_change;
+
+    // Derived signal of first color in gradient.
+    let first_color = {
+        let gradient = cx.props.gradient.clone();
+        cx.create_derived(move |cc| {
+            gradient
+                .map(cc, |g| g.first().cloned())
+                .unwrap_or(Srgba::BLACK)
+        })
+    };
+
+    // Derived signal of last color in gradient.
+    let last_color = {
+        let gradient = cx.props.gradient.clone();
+        cx.create_derived(move |cc| {
+            gradient
+                .map(cc, |g| g.last().cloned())
+                .unwrap_or(Srgba::BLACK)
+        })
+    };
+
+    // This should really be an effect.
+    let color_stops: Derived<(usize, [Vec4; 8])> = {
+        let gradient = cx.props.gradient.clone();
+        cx.create_derived(move |cc| {
+            gradient.map(cc, |g| {
+                let mut result: [Vec4; 8] = [Vec4::default(); 8];
+                for (i, color) in g.iter().enumerate() {
+                    // Note that we do *not* convert to linear here, because interpolating
+                    // linear looks bad. That gets done in the shader.
+                    result[i] = Vec4::new(color.red, color.green, color.blue, color.alpha);
+                }
+                (g.len(), result)
+            })
+        })
+    };
+
+    let mut ui_materials = cx
+        .world_mut()
+        .get_resource_mut::<Assets<GradientRectMaterial>>()
+        .unwrap();
+    let material = ui_materials.add(GradientRectMaterial {
+        color_stops: [Srgba::ALICE_BLUE.into(); 8],
+        num_color_stops: 2,
+    });
+
+    Element::<NodeBundle>::for_entity(slider_id)
+        .with_styles((style_slider, cx.props.style.clone()))
+        .insert((
+            On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                // Save initial value to use as drag offset.
+                let mut event = world
+                    .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
+                    .unwrap();
+                event.stop_propagation();
+                drag_state.set(
+                    world,
+                    DragState {
+                        dragging: true,
+                        offset: value.get(world),
+                    },
+                );
+            }),
+            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                let ds = drag_state.get(world);
+                if ds.dragging {
+                    drag_state.set(
+                        world,
+                        DragState {
+                            dragging: false,
+                            offset: value.get(world),
+                        },
+                    );
+                }
+            }),
+            On::<Pointer<Drag>>::run(move |world: &mut World| {
+                let ds = drag_state.get(world);
+                if ds.dragging {
+                    let event = world
+                        .get_resource::<ListenerInput<Pointer<Drag>>>()
+                        .unwrap();
+                    let ent = world.entity(slider_id);
+                    let node = ent.get::<Node>();
+                    let transform = ent.get::<GlobalTransform>();
+                    if let (Some(node), Some(transform)) = (node, transform) {
+                        // Measure node width and slider value.
+                        let slider_width = node.logical_rect(transform).width();
+                        let min = min.get(world);
+                        let max = max.get(world);
+                        let range = max - min;
+                        let new_value = if range > 0. {
+                            ds.offset + (event.distance.x * range) / slider_width
+                        } else {
+                            min + range * 0.5
+                        };
+                        let rounding = f32::powi(10., precision as i32);
+                        let new_value = (new_value * rounding).round() / rounding;
+                        if let Some(on_change) = on_change {
+                            world.run_callback(on_change, new_value.clamp(min, max));
+                        }
+                    }
+                }
+            }),
+        ))
+        .children((
+            Element::<NodeBundle>::new()
+                .with_styles(style_start_cap)
+                .create_effect({
+                    move |cx, ent| {
+                        let color = first_color.get(cx);
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
+                    }
+                }),
+            Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
+                .insert(material.clone())
+                .with_styles(style_gradient)
+                .create_effect(move |cx, _| {
+                    let (num_color_stops, color_stops) = color_stops.get(cx);
+                    let mut ui_materials = cx
+                        .world_mut()
+                        .get_resource_mut::<Assets<GradientRectMaterial>>()
+                        .unwrap();
+                    let material = ui_materials.get_mut(material.clone()).unwrap();
+                    material.num_color_stops = num_color_stops as i32;
+                    material.color_stops = color_stops;
+                }),
+            Element::<NodeBundle>::new()
+                .with_styles(style_end_cap)
+                .create_effect({
+                    move |cx, ent| {
+                        let color = last_color.get(cx);
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
+                    }
+                }),
+            Element::<NodeBundle>::new()
+                .with_styles(style_track)
+                .children(
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_thumb)
+                        .create_effect(move |cx, ent| {
+                            let ds = drag_state.get(cx);
+                            let is_hovering = hovering.get(cx);
+                            let color = match (ds.dragging, is_hovering) {
+                                (true, _) => colors::U3.lighter(0.03),
+                                (_, true) => colors::U3.lighter(0.01),
+                                (_, false) => colors::U3,
+                            };
+                            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                            bg.0 = color.into();
+                        })
+                        .create_effect(move |cx, ent| {
+                            let min = min.get(cx);
+                            let max = max.get(cx);
+                            let value = value.get(cx);
+                            let percent = if max > min {
+                                (value - min) / (max - min)
+                            } else {
+                                0.
+                            };
+
+                            let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
+                            style.left = ui::Val::Percent(percent * 100.);
+                        }),
+                ),
+        ))
+}

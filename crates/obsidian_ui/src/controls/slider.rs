@@ -1,5 +1,5 @@
 use bevy::{prelude::*, ui};
-use bevy_color::LuminanceOps;
+use bevy_color::Luminance;
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
@@ -68,10 +68,7 @@ struct DragState {
 }
 
 fn style_slider(ss: &mut StyleBuilder) {
-    ss.border(1)
-        .background_color(colors::U1)
-        .min_width(64)
-        .height(20);
+    ss.background_color(colors::U1).min_width(64).height(20);
 }
 
 fn style_value_bar(ss: &mut StyleBuilder) {

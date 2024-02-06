@@ -34,6 +34,21 @@ where
     }
 }
 
+impl<T> Signal<T>
+where
+    T: Send + Sync + 'static,
+{
+    /// Read the value of the signal using a mapping function.
+    pub fn map<R: ReadMutable + ReadDerived, U, F: Fn(&T) -> U>(&self, rc: &R, f: F) -> U {
+        match self {
+            Signal::Mutable(mutable) => rc.read_mutable_map(mutable.id, f),
+            Signal::Derived(derived) => rc.read_derived_map(derived.id, f),
+            Signal::Memo => unimplemented!(),
+            Signal::Constant(value) => f(value),
+        }
+    }
+}
+
 /// Implement default if T has a default.
 impl<T> Default for Signal<T>
 where
@@ -45,7 +60,7 @@ where
 }
 
 /// Object that allows reading a signal using Clone semantics.
-#[derive(Copy, Clone)]
+#[derive(Copy)]
 pub enum SignalClone<T> {
     /// A mutable variable that can be read and written to.
     Mutable(Mutable<T>),
@@ -61,6 +76,17 @@ pub enum SignalClone<T> {
     Constant(T),
 }
 
+impl<T: Clone> Clone for SignalClone<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Mutable(mutable) => Self::Mutable(mutable.clone()),
+            Self::Derived(derived) => Self::Derived(derived.clone()),
+            Self::Memo => Self::Memo,
+            Self::Constant(value) => Self::Constant(value.clone()),
+        }
+    }
+}
+
 impl<T> SignalClone<T>
 where
     T: Clone + Send + Sync + 'static,
@@ -72,6 +98,16 @@ where
             SignalClone::Derived(derived) => rc.read_derived_clone(derived.id),
             SignalClone::Memo => unimplemented!(),
             SignalClone::Constant(value) => value.clone(),
+        }
+    }
+
+    /// Read the value of the signal using a mapping function.
+    pub fn map<R: ReadMutable + ReadDerived, U, F: Fn(&T) -> U>(&self, rc: &R, f: F) -> U {
+        match self {
+            SignalClone::Mutable(mutable) => rc.read_mutable_map(mutable.id, f),
+            SignalClone::Derived(derived) => rc.read_derived_map(derived.id, f),
+            SignalClone::Memo => unimplemented!(),
+            SignalClone::Constant(value) => f(value),
         }
     }
 }

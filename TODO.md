@@ -1,6 +1,7 @@
 # TODO
 
 * Try making Cx props not a reference.
+* Signal.map()
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().

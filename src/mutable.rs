@@ -27,10 +27,19 @@ pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 pub(crate) struct MutableNextCell(pub(crate) Option<Box<dyn Any + Send + Sync + 'static>>);
 
 /// Contains a reference to a reactive mutable variable.
-#[derive(Copy, Clone)]
+#[derive(Copy)]
 pub struct Mutable<T> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<T>,
+}
+
+impl<T> Clone for Mutable<T> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            marker: self.marker,
+        }
+    }
 }
 
 impl<T> Mutable<T>
@@ -43,6 +52,19 @@ where
         let value = cx.world_mut().get_mut::<MutableCell>(self.id).unwrap();
         let inner = value.map_unchanged(|v| v.0.downcast_mut::<T>().unwrap());
         (updater)(inner);
+    }
+}
+
+impl<T> Mutable<T>
+where
+    T: PartialEq + Send + Sync + 'static,
+{
+    /// Get a reference to the value of this [`Mutable`].
+    ///
+    /// Arguments:
+    /// * `cx`: The reactive context.
+    pub fn as_ref<'a, 'b: 'a, R: ReadMutable>(&'a self, cx: &'b mut R) -> &'a T {
+        cx.read_mutable_as_ref(self.id)
     }
 }
 
@@ -113,6 +135,16 @@ pub trait ReadMutable {
     fn read_mutable_clone<T>(&self, mutable: Entity) -> T
     where
         T: Send + Sync + Clone + 'static;
+
+    /// Return an immutable reference to the mutable variable.
+    fn read_mutable_as_ref<T>(&self, mutable: Entity) -> &T
+    where
+        T: Send + Sync + 'static;
+
+    /// Read the value of a mutable variable using a mapping function.
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: Entity, f: F) -> U
+    where
+        T: Send + Sync + 'static;
 }
 
 /// Trait for low-level write-access to mutables given an entity id.

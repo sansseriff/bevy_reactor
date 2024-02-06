@@ -22,10 +22,19 @@ impl<R, F: Fn(&mut Rcx) -> R> DerivedFnRef<R> for F {
 pub(crate) struct DerivedCell<R>(pub(crate) Arc<dyn DerivedFnRef<R> + Send + Sync>);
 
 /// A [`Derived`] is a readonly value that is computed from other signals.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, PartialEq)]
 pub struct Derived<R> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<R>,
+}
+
+impl<T> Clone for Derived<T> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            marker: self.marker,
+        }
+    }
 }
 
 impl<R> Derived<R>
@@ -77,6 +86,12 @@ pub trait ReadDerived {
     fn read_derived_clone<R>(&self, derived: Entity) -> R
     where
         R: Send + Sync + Clone + 'static;
+
+    /// Read the value of a mutable variable using a mapping function. This adds any dependencies of
+    /// the derived signal to the current tracking scope.
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: Entity, f: F) -> U
+    where
+        R: Send + Sync + 'static;
 }
 
 /// Trait used to implement reading of derives while passing an explicit tracking scope.
@@ -92,4 +107,15 @@ pub(crate) trait ReadDerivedInternal {
     fn read_derived_clone_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
     where
         R: Send + Sync + Clone + 'static;
+
+    /// Read the value of a mutable variable using a mapping function. This adds any dependencies of
+    /// the derived signal to the current tracking scope.
+    fn read_derived_map_with_scope<R, U, F: Fn(&R) -> U>(
+        &self,
+        derived: Entity,
+        scope: &mut TrackingScope,
+        f: F,
+    ) -> U
+    where
+        R: Send + Sync + 'static;
 }
