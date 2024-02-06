@@ -8,8 +8,8 @@ use bevy_mod_picking::{
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, gradient_slider, slider, splitter, ButtonProps, CheckboxProps,
-        GradientSliderProps, SliderProps, SplitterDirection, SplitterProps,
+        button, checkbox, gradient_slider, slider, splitter, swatch, ButtonProps, CheckboxProps,
+        GradientSliderProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
     },
     typography,
     viewport::{self},
@@ -163,6 +163,12 @@ fn ui_main(cx: &mut Cx) -> impl View {
     let red = cx.create_mutable::<f32>(128.);
     let saturation = cx.create_mutable::<f32>(50.);
 
+    let rgb_color = cx.create_derived(move |cx| {
+        let red = red.get(cx);
+        let saturation = saturation.get(cx);
+        Srgba::new(red / 255., saturation / 100.0, 0.0, 1.0)
+    });
+
     let panel_width = cx
         .create_derived(|cx| {
             let res = cx.use_resource::<PanelWidth>();
@@ -300,6 +306,11 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 on_change: Some(cx.create_callback(move |cx| {
                                     saturation.set(cx, cx.props);
                                 })),
+                                ..default()
+                            }),
+                            swatch.bind(SwatchProps {
+                                color: rgb_color.signal(),
+                                // style: StyleHandle::new(style_slider),
                                 ..default()
                             }),
                         )),

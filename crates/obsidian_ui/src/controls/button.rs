@@ -70,34 +70,6 @@ fn style_button_bg(ss: &mut StyleBuilder) {
         .bottom(0);
 }
 
-fn style_button_xxxs(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Xxxs.height());
-}
-
-fn style_button_xxs(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Xxs.height());
-}
-
-fn style_button_xs(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Xs.height());
-}
-
-fn style_button_sm(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Sm.height());
-}
-
-fn style_button_md(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Md.height());
-}
-
-fn style_button_lg(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Lg.height());
-}
-
-fn style_button_xl(ss: &mut StyleBuilder) {
-    ss.min_height(Size::Xl.height());
-}
-
 /// Construct a button widget.
 pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<NodeBundle> {
     let id = cx.create_entity();
@@ -106,6 +78,8 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
 
     let disabled = cx.props.disabled;
     let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
+
+    let size = cx.props.size;
 
     let mut ui_materials = cx
         .world_mut()
@@ -120,14 +94,8 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
         .named("button")
         .with_styles((
             style_button,
-            match cx.props.size {
-                Size::Xxxs => style_button_xxxs,
-                Size::Xxs => style_button_xxs,
-                Size::Xs => style_button_xs,
-                Size::Sm => style_button_sm,
-                Size::Md => style_button_md,
-                Size::Lg => style_button_lg,
-                Size::Xl => style_button_xl,
+            move |ss: &mut StyleBuilder| {
+                ss.min_height(size.height());
             },
             cx.props.styles.clone(),
         ))
