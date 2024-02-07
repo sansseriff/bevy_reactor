@@ -136,7 +136,7 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
                     let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                     bg.0 = color.into();
                 })
-                .children(Cond::new(
+                .children(cond(
                     move |cx| checked.get(cx),
                     move || Element::<NodeBundle>::new().with_styles(style_checkbox_inner),
                     || (),

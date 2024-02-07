@@ -414,3 +414,54 @@ Element::<NodeBundle>::from_id(button_id)
 
 The function takes an entity id as input; to use this effectively you'll want to pre-allocate
 the entity id before creating the view nodes.
+
+# Examples
+
+Here's an example showing a complex example of using derived signals and callbacks.
+The `gradient` widget displays a horizontal slider that has a gradient background, and can
+be used for building a color editor. The inputs to the slider are signals:
+
+* The `gradient` signal tells the slider what colors to display in the background. In this
+  example, we're using a resource `ColorEditState` to hold the current RGB value. The slider
+  is editing the `red` component, so the gradient varies the red channel from 0 to 1 while
+  keeping the green, blue and alpha channels constant. Because the `gradient` parameter
+  is wrapped in a `.create_derived()`, it will calculate a new gradient when the color changes.
+* The `min` and `max` parameters are also signals, however in this case they are constants,
+  so we pass `Signal::Constant()` as the value.
+* The `value` parameter tells the slider where to display the "thumb" component. It's also
+  derived from the current color, but multiplied by 255 to make it easier to edit.
+* The `style` parameter allows us to add additional styles to the widget, such as adding a
+  `flex_grow` value so that the slider will stretch to fill the available space.
+* The `precision` parameter indicates how many decimal places the output value should be rounded
+  to. This parameter is not a signal, which means it is not reactive: it cannot be changed
+  once the slider has been created.
+* The `on_change` parameter accepts a callback which is called whenever the slider thumb is
+  dragged. In this case, a callback is created which mutates the resource with the new
+  RGB color value.
+
+The derived signals and callbacks are automatically added as children of the current scope,
+and will be despawned when the scope is destroyed.
+
+```rust
+gradient_slider.bind(GradientSliderProps {
+    gradient: cx.create_derived(|cx| {
+        let rgb = cx.use_resource::<ColorEditState>().rgb;
+        ColorGradient::new(&[
+            Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
+            Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
+        ])
+    }),
+    min: Signal::Constant(0.),
+    max: Signal::Constant(255.),
+    value: cx.create_derived(|cx| {
+        cx.use_resource::<ColorEditState>().rgb.red * 255.0
+    }),
+    style: StyleHandle::new(style_slider),
+    precision: 1,
+    on_change: Some(cx.create_callback(move |cx| {
+        cx.world_mut().resource_mut::<ColorEditState>().rgb.red =
+            cx.props / 255.0;
+    })),
+    ..default()
+}),
+```
