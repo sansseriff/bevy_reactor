@@ -31,13 +31,13 @@ impl Size {
     /// Returns the height of the widget in pixels.
     pub fn height(&self) -> f32 {
         match self {
-            Size::Xl => 2.5 * 16.0,
-            Size::Lg => 2.2 * 16.0,
-            Size::Md => 2.0 * 16.0,
-            Size::Sm => 1.85 * 16.0,
-            Size::Xs => 1.65 * 16.0,
-            Size::Xxs => 1.45 * 16.0,
-            Size::Xxxs => 1.3 * 16.0,
+            Size::Xl => 2.5 * 12.0,
+            Size::Lg => 2.2 * 12.0,
+            Size::Md => 2.0 * 12.0,
+            Size::Sm => 1.85 * 12.0,
+            Size::Xs => 1.65 * 12.0,
+            Size::Xxs => 1.45 * 12.0,
+            Size::Xxxs => 1.3 * 12.0,
         }
     }
 

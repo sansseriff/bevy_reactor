@@ -11,6 +11,7 @@ use obsidian_ui::{
         button, checkbox, gradient_slider, slider, splitter, swatch, ButtonProps, CheckboxProps,
         GradientSliderProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
     },
+    size::Size,
     typography,
     viewport::{self},
     ObsidianUiPlugin,
@@ -310,8 +311,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             }),
                             swatch.bind(SwatchProps {
                                 color: rgb_color.signal(),
+                                size: Size::Md,
                                 // style: StyleHandle::new(style_slider),
                                 ..default()
+                            }),
+                            text_computed(move |cx| {
+                                let color = rgb_color.signal().get(cx);
+                                color.to_hex()
                             }),
                         )),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),

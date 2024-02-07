@@ -5,7 +5,7 @@ use bevy_reactor::*;
 
 use crate::{colors, gradient_rect::GradientRectMaterial};
 
-const THUMB_WIDTH: f32 = 14.;
+const THUMB_WIDTH: f32 = 12.;
 
 /// Properties for slider widget.
 pub struct GradientSliderProps {
@@ -65,6 +65,8 @@ fn style_slider(ss: &mut StyleBuilder) {
 
 fn style_alpha(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
+        .background_color(colors::U5)
+        .background_image("obsidian_ui://textures/checkerboard.png")
         .top(0)
         .bottom(0)
         .left(0)
@@ -85,15 +87,15 @@ fn style_end_cap(ss: &mut StyleBuilder) {
 
 fn style_track(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
-        .top(0)
-        .bottom(0)
-        .left(0)
-        .right(THUMB_WIDTH);
+        .top(1)
+        .bottom(1)
+        .left(1)
+        .right(THUMB_WIDTH + 1.);
 }
 
 fn style_thumb(ss: &mut StyleBuilder) {
-    ss.border_color(colors::U1)
-        .border(2)
+    ss.background_color(colors::U5)
+        .background_image("obsidian_ui://textures/gradient_thumb.png")
         .position(ui::PositionType::Absolute)
         .top(0)
         .bottom(0)
