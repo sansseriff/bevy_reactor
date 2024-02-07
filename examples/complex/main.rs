@@ -12,7 +12,8 @@ use obsidian_ui::{
     colors,
     controls::{
         button, checkbox, gradient_slider, slider, splitter, swatch, ButtonProps, CheckboxProps,
-        GradientSliderProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
+        ColorGradient, GradientSliderProps, SliderProps, SplitterDirection, SplitterProps,
+        SwatchProps,
     },
     size::Size,
     typography,
@@ -124,7 +125,7 @@ fn main() {
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,
-            rgb: Srgba::new(255., 0., 0., 255.),
+            rgb: Srgba::new(1., 0., 0., 1.),
             recent: vec![],
             ..default()
         })
@@ -212,7 +213,6 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                         )),
-                    color_edit.bind(()),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .children((
@@ -252,38 +252,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                             gradient_slider.bind(GradientSliderProps {
-                                gradient: Signal::Constant(vec![
-                                    Srgba::new(0.0, 0.0, 0.0, 1.0),
-                                    Srgba::new(1.0, 1.0, 0.0, 1.0),
-                                    Srgba::new(1.0, 1.0, 1.0, 1.0),
-                                ]),
-                                min: Signal::Constant(0.),
-                                max: Signal::Constant(255.),
-                                value: saturation.signal(),
-                                style: StyleHandle::new(style_slider),
-                                precision: 1,
-                                on_change: Some(cx.create_callback(move |cx| {
-                                    saturation.set(cx, cx.props);
-                                })),
-                                ..default()
-                            }),
-                            gradient_slider.bind(GradientSliderProps {
-                                gradient: Signal::Constant(vec![
-                                    Srgba::new(0.5, 0.5, 0.5, 1.0),
-                                    Srgba::new(1.0, 0.0, 0.0, 1.0),
-                                ]),
-                                min: Signal::Constant(0.),
-                                max: Signal::Constant(255.),
-                                value: saturation.signal(),
-                                style: StyleHandle::new(style_slider),
-                                precision: 1,
-                                on_change: Some(cx.create_callback(move |cx| {
-                                    saturation.set(cx, cx.props);
-                                })),
-                                ..default()
-                            }),
-                            gradient_slider.bind(GradientSliderProps {
-                                gradient: Signal::Constant(vec![
+                                gradient: Signal::Constant(ColorGradient::new(&[
                                     Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
                                     Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
                                     Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
@@ -291,22 +260,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                     Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
                                     Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
                                     Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
-                                ]),
-                                min: Signal::Constant(0.),
-                                max: Signal::Constant(255.),
-                                value: saturation.signal(),
-                                style: StyleHandle::new(style_slider),
-                                precision: 1,
-                                on_change: Some(cx.create_callback(move |cx| {
-                                    saturation.set(cx, cx.props);
-                                })),
-                                ..default()
-                            }),
-                            gradient_slider.bind(GradientSliderProps {
-                                gradient: Signal::Constant(vec![
-                                    Srgba::new(0.5, 0.5, 0.5, 0.0),
-                                    Srgba::new(0.5, 0.5, 0.5, 1.5),
-                                ]),
+                                ])),
                                 min: Signal::Constant(0.),
                                 max: Signal::Constant(255.),
                                 value: saturation.signal(),
@@ -328,6 +282,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 color.to_hex()
                             }),
                         )),
+                    color_edit.bind(()),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
             splitter.bind(SplitterProps {

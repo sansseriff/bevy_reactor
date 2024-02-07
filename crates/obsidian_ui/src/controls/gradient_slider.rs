@@ -7,10 +7,72 @@ use crate::{colors, gradient_rect::GradientRectMaterial};
 
 const THUMB_WIDTH: f32 = 12.;
 
+/// Struct representing a sequence of color stops, evenly spaced. Up to 8 stops are supported.
+#[derive(Debug, Copy, Clone)]
+pub struct ColorGradient {
+    /// Number of color stops.
+    pub num_colors: usize,
+
+    /// Array of color stops.
+    pub colors: [Srgba; 8],
+}
+
+impl ColorGradient {
+    /// Construct a new color gradient from an array of colors.
+    pub fn new(colors: &[Srgba]) -> Self {
+        assert!(colors.len() <= 8);
+        let mut result = Self {
+            num_colors: colors.len(),
+            colors: [Srgba::default(); 8],
+        };
+        for (i, color) in colors.iter().enumerate() {
+            result.colors[i] = *color;
+        }
+        result
+    }
+
+    /// Return the first color in the gradient, if any.
+    pub fn first(&self) -> Option<Srgba> {
+        if self.num_colors > 0 {
+            Some(self.colors[0])
+        } else {
+            None
+        }
+    }
+
+    /// Return the last color in the gradient, if any.
+    pub fn last(&self) -> Option<Srgba> {
+        if self.num_colors > 0 {
+            Some(self.colors[self.num_colors - 1])
+        } else {
+            None
+        }
+    }
+
+    /// Return the number of color stops in the gradient.
+    pub fn len(&self) -> usize {
+        self.num_colors
+    }
+
+    /// Check if the gradient is empty.
+    pub fn is_empty(&self) -> bool {
+        self.num_colors == 0
+    }
+}
+
+impl Default for ColorGradient {
+    fn default() -> Self {
+        Self {
+            num_colors: 1,
+            colors: [Srgba::BLACK; 8],
+        }
+    }
+}
+
 /// Properties for slider widget.
 pub struct GradientSliderProps {
     /// Gradient to display.
-    pub gradient: Signal<Vec<Srgba>>,
+    pub gradient: Signal<ColorGradient>,
 
     /// Current slider value.
     pub value: Signal<f32>,
@@ -37,7 +99,7 @@ pub struct GradientSliderProps {
 impl Default for GradientSliderProps {
     fn default() -> Self {
         Self {
-            gradient: Signal::Constant(Vec::new()),
+            gradient: Signal::Constant(ColorGradient::default()),
             value: Signal::Constant(0.),
             min: Signal::Constant(0.),
             max: Signal::Constant(1.),
@@ -117,31 +179,24 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
 
     // Derived signal of first color in gradient.
     let first_color = {
-        let gradient = cx.props.gradient.clone();
-        cx.create_derived(move |cc| {
-            gradient
-                .map(cc, |g| g.first().cloned())
-                .unwrap_or(Srgba::BLACK)
-        })
+        let gradient = cx.props.gradient;
+        cx.create_derived(move |cc| gradient.map(cc, |g| g.first()).unwrap_or(Srgba::BLACK))
     };
 
     // Derived signal of last color in gradient.
     let last_color = {
-        let gradient = cx.props.gradient.clone();
-        cx.create_derived(move |cc| {
-            gradient
-                .map(cc, |g| g.last().cloned())
-                .unwrap_or(Srgba::BLACK)
-        })
+        let gradient = cx.props.gradient;
+        cx.create_derived(move |cc| gradient.map(cc, |g| g.last()).unwrap_or(Srgba::BLACK))
     };
 
     // This should really be an effect.
     let color_stops: Signal<(usize, [Vec4; 8])> = {
-        let gradient = cx.props.gradient.clone();
+        let gradient = cx.props.gradient;
         cx.create_derived(move |cc| {
             gradient.map(cc, |g| {
                 let mut result: [Vec4; 8] = [Vec4::default(); 8];
-                for (i, color) in g.iter().enumerate() {
+                let num_color_stops = g.len();
+                for (i, color) in g.colors[0..num_color_stops].iter().enumerate() {
                     // Note that we do *not* convert to linear here, because interpolating
                     // linear looks bad. That gets done in the shader.
                     result[i] = Vec4::new(color.red, color.green, color.blue, color.alpha);
@@ -261,7 +316,7 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
                             let max = max.get(cx);
                             let value = value.get(cx);
                             let percent = if max > min {
-                                (value - min) / (max - min)
+                                ((value - min) / (max - min)).clamp(0., 1.)
                             } else {
                                 0.
                             };
