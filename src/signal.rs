@@ -26,8 +26,8 @@ where
     /// Read the value of the signal using Copy semantics.
     pub fn get<R: ReadMutable + ReadDerived>(&self, rc: &R) -> T {
         match self {
-            Signal::Mutable(mutable) => rc.read_mutable(mutable.id),
-            Signal::Derived(derived) => rc.read_derived(derived.id),
+            Signal::Mutable(mutable) => rc.read_mutable(mutable),
+            Signal::Derived(derived) => rc.read_derived(derived),
             Signal::Memo => unimplemented!(),
             Signal::Constant(value) => *value,
         }
@@ -41,8 +41,8 @@ where
     /// Read the value of the signal using Copy semantics.
     pub fn get_clone<R: ReadMutable + ReadDerived>(&self, rc: &R) -> T {
         match self {
-            Signal::Mutable(mutable) => rc.read_mutable_clone(mutable.id),
-            Signal::Derived(derived) => rc.read_derived_clone(derived.id),
+            Signal::Mutable(mutable) => rc.read_mutable_clone(mutable),
+            Signal::Derived(derived) => rc.read_derived_clone(derived),
             Signal::Memo => unimplemented!(),
             Signal::Constant(value) => value.clone(),
         }
@@ -56,8 +56,8 @@ where
     /// Read the value of the signal using a mapping function.
     pub fn map<R: ReadMutable + ReadDerived, U, F: Fn(&T) -> U>(&self, rc: &R, f: F) -> U {
         match self {
-            Signal::Mutable(mutable) => rc.read_mutable_map(mutable.id, f),
-            Signal::Derived(derived) => rc.read_derived_map(derived.id, f),
+            Signal::Mutable(mutable) => rc.read_mutable_map(mutable, f),
+            Signal::Derived(derived) => rc.read_derived_map(derived, f),
             Signal::Memo => unimplemented!(),
             Signal::Constant(value) => f(value),
         }

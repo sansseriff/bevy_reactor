@@ -278,35 +278,35 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
 }
 
 impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
-    fn read_mutable<T>(&self, mutable: Entity) -> T
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable(mutable)
     }
 
-    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Clone + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_clone(mutable)
     }
 
-    fn read_mutable_as_ref<T>(&self, mutable: Entity) -> &T
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_as_ref(mutable)
     }
 
-    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: Entity, f: F) -> U
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_map(mutable, f)
     }
 }
@@ -328,28 +328,28 @@ impl<'p, 'w, Props> WriteMutable for Cx<'p, 'w, Props> {
 }
 
 impl<'p, 'w, Props> ReadDerived for Cx<'p, 'w, Props> {
-    fn read_derived<R>(&self, derived: Entity) -> R
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Copy + 'static,
     {
         self.world
-            .read_derived_with_scope(derived, &mut self.tracking.borrow_mut())
+            .read_derived_with_scope(derived.id, &mut self.tracking.borrow_mut())
     }
 
-    fn read_derived_clone<R>(&self, derived: Entity) -> R
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Clone + 'static,
     {
         self.world
-            .read_derived_clone_with_scope(derived, &mut self.tracking.borrow_mut())
+            .read_derived_clone_with_scope(derived.id, &mut self.tracking.borrow_mut())
     }
 
-    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: Entity, f: F) -> U
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
     where
         R: Send + Sync + 'static,
     {
         self.world
-            .read_derived_map_with_scope(derived, &mut self.tracking.borrow_mut(), f)
+            .read_derived_map_with_scope(derived.id, &mut self.tracking.borrow_mut(), f)
     }
 }
 
@@ -402,62 +402,62 @@ impl<'p, 'w> Rcx<'p, 'w> {
 }
 
 impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
-    fn read_mutable<T>(&self, mutable: Entity) -> T
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable(mutable)
     }
 
-    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Clone + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_clone(mutable)
     }
 
-    fn read_mutable_as_ref<T>(&self, mutable: Entity) -> &T
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_as_ref(mutable)
     }
 
-    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: Entity, f: F) -> U
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable);
+        self.tracking.borrow_mut().add_mutable(mutable.id);
         self.world.read_mutable_map(mutable, f)
     }
 }
 
 impl<'p, 'w> ReadDerived for Rcx<'p, 'w> {
-    fn read_derived<R>(&self, derived: Entity) -> R
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Copy + 'static,
     {
         self.world
-            .read_derived_with_scope(derived, &mut self.tracking.borrow_mut())
+            .read_derived_with_scope(derived.id, &mut self.tracking.borrow_mut())
     }
 
-    fn read_derived_clone<R>(&self, derived: Entity) -> R
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Clone + 'static,
     {
         self.world
-            .read_derived_clone_with_scope(derived, &mut self.tracking.borrow_mut())
+            .read_derived_clone_with_scope(derived.id, &mut self.tracking.borrow_mut())
     }
 
-    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: Entity, f: F) -> U
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
     where
         R: Send + Sync + 'static,
     {
         self.world
-            .read_derived_map_with_scope(derived, &mut self.tracking.borrow_mut(), f)
+            .read_derived_map_with_scope(derived.id, &mut self.tracking.borrow_mut(), f)
     }
 }
 
@@ -474,11 +474,11 @@ impl<'p, 'w> RunContextRead for Rcx<'p, 'w> {
 }
 
 impl ReadMutable for World {
-    fn read_mutable<T>(&self, mutable: Entity) -> T
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static,
     {
-        let mutable_entity = self.entity(mutable);
+        let mutable_entity = self.entity(mutable.id);
         *mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -487,11 +487,11 @@ impl ReadMutable for World {
             .unwrap()
     }
 
-    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Clone + 'static,
     {
-        let mutable_entity = self.entity(mutable);
+        let mutable_entity = self.entity(mutable.id);
         mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -501,11 +501,11 @@ impl ReadMutable for World {
             .clone()
     }
 
-    fn read_mutable_as_ref<T>(&self, mutable: Entity) -> &T
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable);
+        let mutable_entity = self.entity(mutable.id);
         mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -514,11 +514,11 @@ impl ReadMutable for World {
             .unwrap()
     }
 
-    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: Entity, f: F) -> U
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable);
+        let mutable_entity = self.entity(mutable.id);
         f(mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -563,31 +563,31 @@ impl WriteMutable for World {
 }
 
 impl ReadDerived for World {
-    fn read_derived<R>(&self, derived: Entity) -> R
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Copy + 'static,
     {
         let ticks = self.read_change_tick();
         let mut scope = TrackingScope::new(ticks);
-        self.read_derived_with_scope(derived, &mut scope)
+        self.read_derived_with_scope(derived.id, &mut scope)
     }
 
-    fn read_derived_clone<R>(&self, derived: Entity) -> R
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Clone + 'static,
     {
         let ticks = self.read_change_tick();
         let mut scope = TrackingScope::new(ticks);
-        self.read_derived_clone_with_scope(derived, &mut scope)
+        self.read_derived_clone_with_scope(derived.id, &mut scope)
     }
 
-    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: Entity, f: F) -> U
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
     where
         R: Send + Sync + 'static,
     {
         let ticks = self.read_change_tick();
         let mut scope = TrackingScope::new(ticks);
-        self.read_derived_map_with_scope(derived, &mut scope, f)
+        self.read_derived_map_with_scope(derived.id, &mut scope, f)
     }
 }
 

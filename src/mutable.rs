@@ -61,7 +61,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     pub fn as_ref<'a, 'b: 'a, R: ReadMutable>(&'a self, cx: &'b mut R) -> &'a T {
-        cx.read_mutable_as_ref(self.id)
+        cx.read_mutable_as_ref(self)
     }
 }
 
@@ -79,7 +79,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     pub fn get<R: ReadMutable>(&self, cx: &mut R) -> T {
-        cx.read_mutable(self.id)
+        cx.read_mutable(self)
     }
 
     /// Set the value of this [`Mutable`] with Copy semantics.
@@ -106,7 +106,7 @@ where
     /// Arguments:
     /// * `cx`: The reactive context.
     pub fn get_clone<R: ReadMutable>(&self, cx: &mut R) -> T {
-        cx.read_mutable_clone(self.id)
+        cx.read_mutable_clone(self)
     }
 
     /// Set the value of this [`Mutable`] with Clone semantics.
@@ -123,23 +123,23 @@ where
 pub trait ReadMutable {
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the
     /// mutable to the current tracking scope.
-    fn read_mutable<T>(&self, mutable: Entity) -> T
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static;
 
     /// Read the value of a mutable variable using Clone semantics. Calling this function adds the
     /// mutable to the current tracking scope.
-    fn read_mutable_clone<T>(&self, mutable: Entity) -> T
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Clone + 'static;
 
     /// Return an immutable reference to the mutable variable.
-    fn read_mutable_as_ref<T>(&self, mutable: Entity) -> &T
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
     where
         T: Send + Sync + 'static;
 
     /// Read the value of a mutable variable using a mapping function.
-    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: Entity, f: F) -> U
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
     where
         T: Send + Sync + 'static;
 }

@@ -38,19 +38,19 @@ impl<T> Clone for Derived<T> {
 pub trait ReadDerived {
     /// Read the value of a derived signal using Copy semantics. This adds any dependencies of
     /// the derived signal to the current tracking scope.
-    fn read_derived<R>(&self, derived: Entity) -> R
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Copy + 'static;
 
     /// Read the value of a mutable variable using Copy semantics. This adds any dependencies of
     /// the derived signal to the current tracking scope.
-    fn read_derived_clone<R>(&self, derived: Entity) -> R
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Clone + 'static;
 
     /// Read the value of a mutable variable using a mapping function. This adds any dependencies of
     /// the derived signal to the current tracking scope.
-    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: Entity, f: F) -> U
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
     where
         R: Send + Sync + 'static;
 }
