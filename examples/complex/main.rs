@@ -1,10 +1,13 @@
 //! Example of a simple UI layout
+mod color_edit;
+
 use bevy_color::{Hsla, Srgba};
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
     input::InputPlugin,
     picking_core::{CorePlugin, InteractionPlugin},
 };
+use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
@@ -119,6 +122,12 @@ fn main() {
         )
         .init_resource::<Counter>()
         .insert_resource(PanelWidth(200.))
+        .insert_resource(ColorEditState {
+            mode: ColorMode::Rgb,
+            rgb: Srgba::new(255., 0., 0., 255.),
+            recent: vec![],
+            ..default()
+        })
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
@@ -170,12 +179,10 @@ fn ui_main(cx: &mut Cx) -> impl View {
         Srgba::new(red / 255., saturation / 100.0, 0.0, 1.0)
     });
 
-    let panel_width = cx
-        .create_derived(|cx| {
-            let res = cx.use_resource::<PanelWidth>();
-            res.0
-        })
-        .signal();
+    let panel_width = cx.create_derived(|cx| {
+        let res = cx.use_resource::<PanelWidth>();
+        res.0
+    });
 
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
@@ -205,6 +212,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                         )),
+                    color_edit.bind(()),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .children((
@@ -310,13 +318,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                             swatch.bind(SwatchProps {
-                                color: rgb_color.signal(),
+                                color: rgb_color,
                                 size: Size::Md,
                                 // style: StyleHandle::new(style_slider),
                                 ..default()
                             }),
                             text_computed(move |cx| {
-                                let color = rgb_color.signal().get(cx);
+                                let color = rgb_color.get(cx);
                                 color.to_hex()
                             }),
                         )),

@@ -25,13 +25,16 @@ pub enum ButtonVariant {
 
     /// An appearance indicating a potentially dangerous action.
     Danger,
+
+    /// A button that is in a "toggled" state.
+    Selected,
 }
 
 /// Button properties
 #[derive(Default)]
 pub struct ButtonProps<V: ViewTuple + Clone> {
     /// Color variant - default, primary or danger.
-    pub variant: ButtonVariant,
+    pub variant: Signal<ButtonVariant>,
 
     /// Button size.
     pub size: Size,
@@ -73,6 +76,7 @@ fn style_button_bg(ss: &mut StyleBuilder) {
 /// Construct a button widget.
 pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<NodeBundle> {
     let id = cx.create_entity();
+    let variant = cx.props.variant;
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
 
@@ -146,10 +150,16 @@ pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<Node
                 .create_effect(move |cx, _| {
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
+                    let base_color = match variant.get(cx) {
+                        ButtonVariant::Default => colors::U3,
+                        ButtonVariant::Primary => colors::PRIMARY,
+                        ButtonVariant::Danger => colors::DESTRUCTIVE,
+                        ButtonVariant::Selected => colors::U4,
+                    };
                     let color = match (is_pressed, is_hovering) {
-                        (true, _) => colors::U3.lighter(0.05),
-                        (false, true) => colors::U3.lighter(0.01),
-                        (false, false) => colors::U3,
+                        (true, _) => base_color.lighter(0.05),
+                        (false, true) => base_color.lighter(0.01),
+                        (false, false) => base_color,
                     };
                     let mut ui_materials = cx
                         .world_mut()

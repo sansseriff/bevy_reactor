@@ -137,13 +137,8 @@ Mutables are transactional: when you write to a mutable, the change does not tak
 the next frame. There's an ECS system that "commits" the pending changes.
 
 The `.get()`, `.set()` and `.signal()` methods given above assume that the data in the mutable
-implements `Copy`. There is another set of methods for data that implements `Clone`:
-
-* Getting the data via `mutable.get_clone(context)`;
-* Setting the data via `mutable.set_clone(context, value)`;
-* Accessing the data via a signal: `mutable.signal_clone()` which returns a `SignalClone` object;
-
-Other than the fact that they work with clones, the methods behave identically.
+implements `Copy`. There is also a `.get_clone()` method, which works with data types that
+implement `Clone`.
 
 ## Derived Signals
 
@@ -155,16 +150,14 @@ let panel_width = cx
     .create_derived(|cx| {
         let res = cx.use_resource::<PanelWidth>();
         res.0
-    })
-    .signal();
+    });
 ```
 
-The `.create_derived()` method returns a `Derived<T>`, which, like mutables, is just a handle
-containing an entity id. It has methods like a mutable: `.get()`, `.map()`. Reading a derived
+The `.create_derived()` method returns a `Signal<T>`. Reading a derived signal
 adds all of the derived's dependencies to the current tracking scope, so if any of those
 dependencies change, the caller of the derived will be re-run.
 
-Deriveds are not memoized, however, for that we need to use `Memo` (still to be implemented).
+Derived signals are not memoized, however, for that we need to use `Memo` (still to be implemented).
 
 ## Tracking Scopes and Reactions
 

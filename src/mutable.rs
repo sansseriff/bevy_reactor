@@ -1,7 +1,4 @@
-use crate::{
-    signal::{Signal, SignalClone},
-    RunContextWrite,
-};
+use crate::{signal::Signal, RunContextWrite};
 use bevy::prelude::*;
 use std::any::Any;
 
@@ -100,8 +97,8 @@ where
     T: PartialEq + Clone + Send + Sync + 'static,
 {
     /// Returns a getter for this [`Mutable`] with Clone semantics.
-    pub fn signal_clone(&self) -> SignalClone<T> {
-        SignalClone::Mutable(self.clone())
+    pub fn signal_clone(&self) -> Signal<T> {
+        Signal::Mutable(self.clone())
     }
 
     /// Get the value of this [`Mutable`] with Clone semantics.
@@ -259,14 +256,14 @@ mod tests {
         let reader2 = cx.create_mutable::<i32>(0).signal_clone();
 
         // Check initial values
-        assert_eq!(reader.get(&cx), "Hello".to_string());
+        assert_eq!(reader.get_clone(&cx), "Hello".to_string());
         assert_eq!(reader2.get(&cx), 0);
 
         // Update signals
         mutable.set_clone(&mut cx, "Goodbye".to_string());
 
         // Values should not have changed yet
-        assert_eq!(reader.get(&cx), "Hello".to_string());
+        assert_eq!(reader.get_clone(&cx), "Hello".to_string());
         assert_eq!(reader2.get(&cx), 0);
 
         // Now commit the changes
@@ -274,7 +271,7 @@ mod tests {
 
         // Signals should have changed
         let cx = Cx::new(&(), &mut world, &mut scope);
-        assert_eq!(reader.get(&cx), "Goodbye".to_string());
+        assert_eq!(reader.get_clone(&cx), "Goodbye".to_string());
         assert_eq!(reader2.get(&cx), 0);
     }
 }

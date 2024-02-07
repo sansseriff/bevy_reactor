@@ -52,7 +52,6 @@ pub use presenter::*;
 pub use r#for::For;
 pub use reaction::*;
 pub use signal::Signal;
-pub use signal::SignalClone;
 pub use style::StyleBuilder;
 pub use style::StyleBuilderBackground;
 pub use style::StyleBuilderBorderColor;

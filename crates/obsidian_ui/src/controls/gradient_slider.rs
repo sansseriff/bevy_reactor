@@ -136,7 +136,7 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
     };
 
     // This should really be an effect.
-    let color_stops: Derived<(usize, [Vec4; 8])> = {
+    let color_stops: Signal<(usize, [Vec4; 8])> = {
         let gradient = cx.props.gradient.clone();
         cx.create_derived(move |cc| {
             gradient.map(cc, |g| {

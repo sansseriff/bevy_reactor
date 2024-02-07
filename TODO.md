@@ -24,10 +24,12 @@
 * Checkbox (finish)
 * Radio
 * Button Group
+* DisclosureTriangle - with transition
 * Flex
 * Multi-layered nine-patch button.
 * Modal
 * Menu
+* Focus Outlines
 * etc...
 
 ## Notes on fine-grained

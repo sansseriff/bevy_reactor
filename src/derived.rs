@@ -2,10 +2,7 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 
-use crate::{
-    signal::{Signal, SignalClone},
-    Rcx, TrackingScope,
-};
+use crate::{Rcx, TrackingScope};
 
 pub(crate) trait DerivedFnRef<R> {
     fn call(&self, cx: &mut Rcx) -> R;
@@ -34,42 +31,6 @@ impl<T> Clone for Derived<T> {
             id: self.id,
             marker: self.marker,
         }
-    }
-}
-
-impl<R> Derived<R>
-where
-    R: PartialEq + Copy + Send + Sync + 'static,
-{
-    /// Returns a getter for this [`Derived`] with Copy semantics.
-    pub fn signal(&self) -> Signal<R> {
-        Signal::Derived(*self)
-    }
-
-    /// Get the value of this [`Derived`] with Copy semantics.
-    ///
-    /// Arguments:
-    /// * `cx`: The reactive context.
-    pub fn get<Rc: ReadDerived>(&self, cx: &mut Rc) -> R {
-        cx.read_derived(self.id)
-    }
-}
-
-impl<R> Derived<R>
-where
-    R: PartialEq + Clone + Send + Sync + 'static,
-{
-    /// Returns a getter for this [`Derived`] with Clone semantics.
-    pub fn signal_clone(self) -> SignalClone<R> {
-        SignalClone::Derived(self)
-    }
-
-    /// Get the value of this [`Derived`] with Clone semantics.
-    ///
-    /// Arguments:
-    /// * `cx`: The reactive context.
-    pub fn get_clone<Rc: ReadDerived>(&self, cx: &mut Rc) -> R {
-        cx.read_derived_clone(self.id)
     }
 }
 

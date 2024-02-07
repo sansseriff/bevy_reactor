@@ -7,7 +7,7 @@ use crate::{
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
     mutable::{MutableCell, MutableNextCell, ReadMutable, WriteMutable},
     tracking_scope::TrackingScope,
-    Mutable,
+    Mutable, Signal,
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
@@ -131,16 +131,16 @@ pub trait RunContextSetup<'p> {
     fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
         &mut self,
         callback: F,
-    ) -> Derived<R> {
+    ) -> Signal<R> {
         let derived = self
             .world_mut()
             .spawn(DerivedCell::<R>(Arc::new(callback)))
             .id();
         self.add_owned(derived);
-        Derived {
+        Signal::Derived(Derived {
             id: derived,
             marker: PhantomData,
-        }
+        })
     }
 }
 
