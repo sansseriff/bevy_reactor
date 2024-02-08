@@ -1,10 +1,10 @@
 # TODO
 
+* Memo Signals
+* create_effect()
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().
-* Memo Signals
-* create_effect()
 * Cleanup Handlers - on_cleanup();
 * Scoped values
 * Access to ECS components
@@ -21,7 +21,7 @@
 
 # Obsidian
 
-* Checkbox (finish)
+* Checkbox (finish rounded corners)
 * Radio
 * Button Group
 * DisclosureTriangle - with transition

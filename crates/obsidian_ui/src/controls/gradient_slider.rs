@@ -215,6 +215,21 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
         num_color_stops: 2,
     });
 
+    // Effect to update the material handle.
+    cx.create_effect({
+        let material = material.clone();
+        move |cx| {
+            let (num_color_stops, color_stops) = color_stops.get(cx);
+            let mut ui_materials = cx
+                .world_mut()
+                .get_resource_mut::<Assets<GradientRectMaterial>>()
+                .unwrap();
+            let material = ui_materials.get_mut(material.clone()).unwrap();
+            material.num_color_stops = num_color_stops as i32;
+            material.color_stops = color_stops;
+        }
+    });
+
     Element::<NodeBundle>::for_entity(slider_id)
         .with_styles((style_slider, cx.props.style.clone()))
         .insert((
@@ -286,17 +301,7 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
                 }),
             Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
                 .insert(material.clone())
-                .with_styles(style_gradient)
-                .create_effect(move |cx, _| {
-                    let (num_color_stops, color_stops) = color_stops.get(cx);
-                    let mut ui_materials = cx
-                        .world_mut()
-                        .get_resource_mut::<Assets<GradientRectMaterial>>()
-                        .unwrap();
-                    let material = ui_materials.get_mut(material.clone()).unwrap();
-                    material.num_color_stops = num_color_stops as i32;
-                    material.color_stops = color_stops;
-                }),
+                .with_styles(style_gradient),
             Element::<NodeBundle>::new()
                 .with_styles(style_end_cap)
                 .create_effect({

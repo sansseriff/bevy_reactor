@@ -1,4 +1,9 @@
-use std::{any::TypeId, cell::RefCell, marker::PhantomData, sync::Arc};
+use std::{
+    any::TypeId,
+    cell::RefCell,
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 
 use bevy::prelude::*;
 
@@ -7,7 +12,7 @@ use crate::{
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
     mutable::{MutableCell, MutableNextCell, ReadMutable, WriteMutable},
     tracking_scope::TrackingScope,
-    Mutable, Signal,
+    Mutable, Reaction, ReactionHandle, Signal,
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
@@ -123,24 +128,88 @@ pub trait RunContextSetup<'p> {
         }
     }
 
-    /// Create a new [`Derived`] in this context. This holds a `Fn` within an entity.
+    /// Create a new [`Derived`] in this context. This represents a readable signal which
+    /// is computed from other signals. The result is not memoized, but is recomputed whenever
+    /// the dependencies change.
     ///
     /// Arguments:
-    /// * `callback` - The callback function to invoke. This will be called with a single
-    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
+    /// * `compute` - The function that computes the output. This will be called with a single
+    ///    parameter, which is a [`Cx`] object.
     fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
         &mut self,
-        callback: F,
+        compute: F,
     ) -> Signal<R> {
         let derived = self
             .world_mut()
-            .spawn(DerivedCell::<R>(Arc::new(callback)))
+            .spawn(DerivedCell::<R>(Arc::new(compute)))
             .id();
         self.add_owned(derived);
         Signal::Derived(Derived {
             id: derived,
             marker: PhantomData,
         })
+    }
+
+    // /// Create a new [`Memo`] in this context. This represents a readable signal which
+    // /// is computed from other signals. The result is memoized, which means that downstream
+    // /// dependants will not be notified unless the output changes.
+    // ///
+    // /// Arguments:
+    // /// * `compute` - The function that computes the output. This will be called with a single
+    // ///    parameter, which is a [`Cx`] object.
+    // fn create_memo<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
+    //     &mut self,
+    //     compute: F,
+    // ) -> Signal<R> {
+    //     let ticks = self.world_mut().read_change_tick();
+    //     let derived = self
+    //         .world_mut()
+    //         .spawn((
+    //             TrackingScope::new(ticks),
+    //             MutableCell(Box::new(init)),
+    //             DerivedCell::<R>(Arc::new(compute)),
+    //         ))
+    //         .id();
+    //     self.add_owned(derived);
+    //     Signal::Derived(Derived {
+    //         id: derived,
+    //         marker: PhantomData,
+    //     })
+    // }
+
+    /// Create an effect. This is a function that is associated with an entity, and which
+    /// re-runs whenever any of it's dependencies change.
+    ///
+    /// Arguments:
+    /// * `compute` - The function that computes the output. This will be called with a single
+    ///    parameter, which is a [`Cx`] object.
+    fn create_effect<F: Send + Sync + 'static + Fn(&mut Cx<()>)>(&mut self, effect: F) {
+        let ticks = self.world_mut().read_change_tick();
+        let action = Arc::new(Mutex::new(effect));
+        let mut scope = TrackingScope::new(ticks);
+        action.lock().unwrap()(&mut Cx::new((), self.world_mut(), &mut scope));
+        let entity = self
+            .world_mut()
+            .spawn((scope, ReactionHandle(action.clone())))
+            .id();
+        self.add_owned(entity);
+    }
+
+    // /// Register a cleanup function for the current tracking scope. This will be called when
+    // /// the scope is dropped, or (if it's an effect) just before the effect is re-run.
+    // ///
+    // /// Arguments:
+    // /// * `cleanup` - The function that performs the cleanup.
+    // fn on_cleanup<F: Send + Sync + 'static + FnOnce(&mut Cx<()>)>(&mut self, cleanup: F) {
+    //     let cleanup_action = Arc::new(Mutex::new(cleanup));
+    //     self.add_cleanup(cleanup_action);
+    // }
+}
+
+impl<F: Send + Sync + 'static + Fn(&mut Cx<()>)> Reaction for F {
+    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let mut cx = Cx::new((), world, tracking);
+        (self)(&mut cx);
     }
 }
 
