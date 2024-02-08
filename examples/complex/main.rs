@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
 mod color_edit;
 
-use bevy_color::{Hsla, Srgba};
+use bevy_color::Srgba;
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
     input::InputPlugin,
@@ -11,9 +11,8 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, gradient_slider, slider, splitter, swatch, ButtonProps, CheckboxProps,
-        ColorGradient, GradientSliderProps, SliderProps, SplitterDirection, SplitterProps,
-        SwatchProps,
+        button, checkbox, slider, splitter, swatch, ButtonProps, CheckboxProps, SliderProps,
+        SplitterDirection, SplitterProps, SwatchProps,
     },
     size::Size,
     typography,
@@ -248,26 +247,6 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 precision: 1,
                                 on_change: Some(cx.create_callback(move |cx| {
                                     red.set(cx, cx.props);
-                                })),
-                                ..default()
-                            }),
-                            gradient_slider.bind(GradientSliderProps {
-                                gradient: Signal::Constant(ColorGradient::new(&[
-                                    Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(180.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
-                                    Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
-                                ])),
-                                min: Signal::Constant(0.),
-                                max: Signal::Constant(255.),
-                                value: saturation.signal(),
-                                style: StyleHandle::new(style_slider),
-                                precision: 1,
-                                on_change: Some(cx.create_callback(move |cx| {
-                                    saturation.set(cx, cx.props);
                                 })),
                                 ..default()
                             }),

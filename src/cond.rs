@@ -8,8 +8,6 @@ use crate::{
     DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewHandle, ViewRef,
 };
 
-// Cond
-
 pub enum CondState {
     Unset,
     True((ViewRef, Entity)),
@@ -43,7 +41,7 @@ impl<
         }
     }
 
-    fn build_branch_state<Result: IntoView, Factory: Fn() -> Result>(
+    fn build_branch_state<V: IntoView, Factory: Fn() -> V>(
         &self,
         branch: &Factory,
         parent: Entity,

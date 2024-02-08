@@ -69,7 +69,14 @@ impl TrackingScope {
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     fn dependencies_changed(&self, world: &World) -> bool {
-        self.mutable_deps.iter().any(|m| {
+        let this_run = world.read_change_tick();
+        self.component_deps.iter().any(|(e, c)| {
+            world
+                .entity(*e)
+                .get_change_ticks_by_id(*c)
+                .map(|ct| ct.is_changed(self.tick, this_run))
+                .unwrap_or(false)
+        }) || self.mutable_deps.iter().any(|m| {
             world
                 .entity(*m)
                 .get_ref::<MutableCell>()

@@ -221,7 +221,7 @@ pub struct Cx<'p, 'w, Props = ()> {
     pub props: Props,
 
     /// Bevy World
-    pub(crate) world: &'w mut World,
+    world: &'w mut World,
 
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
