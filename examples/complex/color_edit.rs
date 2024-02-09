@@ -66,7 +66,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                 .with_styles(style_mode_selector)
                 .children((
                     button.bind(ButtonProps {
-                        children: "RGB",
+                        children: "RGB".into(),
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Rgb => ButtonVariant::Selected,
@@ -79,7 +79,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                         ..default()
                     }),
                     button.bind(ButtonProps {
-                        children: "HSL",
+                        children: "HSL".into(),
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Hsl => ButtonVariant::Selected,
@@ -92,7 +92,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                         ..default()
                     }),
                     button.bind(ButtonProps {
-                        children: "Recent",
+                        children: "Recent".into(),
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Recent => ButtonVariant::Selected,

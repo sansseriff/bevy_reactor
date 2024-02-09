@@ -11,13 +11,12 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, dialog, slider, splitter, swatch, ButtonProps, CheckboxProps,
-        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
+        button, checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch,
+        ButtonProps, CheckboxProps, DialogFooterProps, DialogHeaderProps, DialogProps, SliderProps,
+        SplitterDirection, SplitterProps, SwatchProps,
     },
     size::Size,
-    typography,
-    viewport::{self},
-    ObsidianUiPlugin,
+    typography, viewport, ObsidianUiPlugin,
 };
 
 use std::f32::consts::PI;
@@ -188,7 +187,27 @@ fn ui_main(cx: &mut Cx) -> impl View {
         .children((
             dialog.bind(DialogProps {
                 open: checked_1.signal(),
-                children: "Dialog",
+                children: Fragment::new((
+                    dialog_header.bind(DialogHeaderProps {
+                        children: "Dialog Header".into(),
+                    }),
+                    "Dialog Body",
+                    dialog_footer.bind(DialogFooterProps {
+                        children: Fragment::new((
+                            button.bind(ButtonProps {
+                                children: "Cancel".into(),
+                                ..default()
+                            }),
+                            button.bind(ButtonProps {
+                                children: "Close".into(),
+                                on_click: Some(clicked_increment),
+                                ..default()
+                            }),
+                        ))
+                        .into(),
+                    }),
+                ))
+                .into(),
                 width: ui::Val::Px(400.),
                 ..default()
             }),
@@ -204,13 +223,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         .with_styles(style_button_row)
                         .children((
                             button.bind(ButtonProps {
-                                children: "Open…",
+                                children: "Open…".into(),
                                 on_click: Some(clicked_increment),
                                 styles: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                             button.bind(ButtonProps {
-                                children: "Save",
+                                children: "Save".into(),
                                 on_click: Some(clicked_decrement),
                                 styles: StyleHandle::new(style_button_flex),
                                 ..default()
@@ -220,7 +239,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                         .with_styles(style_color_edit)
                         .children((
                             checkbox.bind(CheckboxProps {
-                                label: "Include Author Name",
+                                label: "Include Author Name".into(),
                                 checked: checked_1.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
                                     let checked = cx.props;
@@ -230,7 +249,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                                 ..default()
                             }),
                             checkbox.bind(CheckboxProps {
-                                label: "Include Metadata",
+                                label: "Include Metadata".into(),
                                 checked: checked_2.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
                                     let checked = cx.props;

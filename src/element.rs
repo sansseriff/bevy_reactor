@@ -1,7 +1,4 @@
-use std::{
-    marker::PhantomData,
-    sync::{Arc, Mutex},
-};
+use std::marker::PhantomData;
 
 use bevy::prelude::*;
 
@@ -12,12 +9,12 @@ use crate::{
     },
     node_span::NodeSpan,
     view::View,
-    view_tuple::ViewTuple,
-    Cx, DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef,
+    view_children::ViewChildren,
+    Cx, DespawnScopes, Rcx, TrackingScope, ViewHandle,
 };
 
 struct ElementChild {
-    view: ViewRef,
+    view: ViewHandle,
     entity: Option<Entity>,
 }
 
@@ -69,7 +66,7 @@ impl<B: Bundle + Default> Element<B> {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: ViewTuple>(mut self, views: V) -> Self {
+    pub fn children<V: ViewChildren>(mut self, views: V) -> Self {
         if !self.children.is_empty() {
             panic!("Children already set");
         }
@@ -81,6 +78,27 @@ impl<B: Bundle + Default> Element<B> {
                 entity: None,
             })
             .collect();
+        self
+    }
+
+    /// Set the child views for this element.
+    pub fn with_child(mut self, view: &ViewHandle) -> Self {
+        if !self.children.is_empty() {
+            panic!("Children already set");
+        }
+        self.children = vec![ElementChild {
+            view: view.clone(),
+            entity: None,
+        }];
+        self
+    }
+
+    /// Add a child views to this element.
+    pub fn append_child(mut self, view: &ViewHandle) -> Self {
+        self.children.push(ElementChild {
+            view: view.clone(),
+            entity: None,
+        });
         self
     }
 
@@ -143,12 +161,12 @@ impl<B: Bundle + Default> Element<B> {
     fn attach_children(&self, world: &mut World) {
         let mut count: usize = 0;
         for child in self.children.iter() {
-            count += child.view.lock().unwrap().nodes().count();
+            count += child.view.nodes().count();
         }
 
         let mut flat: Vec<Entity> = Vec::with_capacity(count);
         for child in self.children.iter() {
-            child.view.lock().unwrap().nodes().flatten(&mut flat);
+            child.view.nodes().flatten(&mut flat);
         }
 
         world
@@ -206,8 +224,8 @@ impl<B: Bundle + Default> View for Element<B> {
         assert!(self.display.is_some());
         // Raze all child views
         for child in self.children.drain(..) {
-            let inner = child.view.clone();
-            inner.lock().unwrap().raze(child.entity.unwrap(), world);
+            let inner = child.view;
+            inner.raze(child.entity.unwrap(), world);
             // Child raze() will despawn itself.
         }
 
@@ -224,11 +242,5 @@ impl<B: Bundle + Default> View for Element<B> {
         // info!("children_changed handled");
         self.attach_children(world);
         true
-    }
-}
-
-impl<B: Bundle + Default> IntoView for Element<B> {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
     }
 }

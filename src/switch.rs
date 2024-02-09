@@ -1,12 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use bevy::ecs::world::World;
 use bevy::prelude::*;
 
 use crate::node_span::NodeSpan;
-use crate::{
-    DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewHandle, ViewRef,
-};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewHandle};
 
 #[doc(hidden)]
 pub trait CasePredicate: Send + Sync {
@@ -27,12 +25,12 @@ impl CasePredicate for bool {
 
 #[doc(hidden)]
 pub trait CaseBody: Send + Sync {
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity);
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity);
 }
 
-impl<V: IntoView, FV: Send + Sync + Fn() -> V> CaseBody for FV {
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity) {
-        let view = (self)().into_view();
+impl<V: Into<ViewHandle>, FV: Send + Sync + Fn() -> V> CaseBody for FV {
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity) {
+        let view = (self)().into();
         let entity = ViewHandle::spawn(&view, parent, world);
         world.entity_mut(parent).insert(DisplayNodeChanged);
         (view, entity)
@@ -50,7 +48,7 @@ impl Case {
     /// Construct a new conditional case.
     pub fn new<
         F: Send + Sync + 'static + Fn(&Rcx) -> bool,
-        V: IntoView,
+        V: Into<ViewHandle>,
         FV: Send + Sync + 'static + Fn() -> V,
     >(
         test: F,
@@ -63,7 +61,7 @@ impl Case {
     }
 
     /// Construct a default case, one which is always true.
-    pub fn default<V: IntoView, FV: Send + Sync + 'static + Fn() -> V>(view: FV) -> Self {
+    pub fn default<V: Into<ViewHandle>, FV: Send + Sync + 'static + Fn() -> V>(view: FV) -> Self {
         Self {
             test: Arc::new(true),
             view: Arc::new(view),
@@ -74,7 +72,7 @@ impl Case {
         self.test.test(re)
     }
 
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity) {
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity) {
         self.view.build(parent, world)
     }
 }
@@ -83,7 +81,7 @@ impl Case {
 pub struct Switch {
     cases: Vec<Case>,
     state_index: usize,
-    state: Option<(ViewRef, Entity)>,
+    state: Option<(ViewHandle, Entity)>,
 }
 
 impl Switch {
@@ -100,7 +98,7 @@ impl Switch {
 impl View for Switch {
     fn nodes(&self) -> NodeSpan {
         match self.state {
-            Some((ref state, _entity)) => state.lock().unwrap().nodes(),
+            Some((ref state, _entity)) => state.nodes(),
             None => NodeSpan::Empty,
         }
     }
@@ -120,14 +118,14 @@ impl View for Switch {
         if let Some((index, case)) = self.cases.iter().enumerate().find(|(_, c)| c.test(&re)) {
             if index != self.state_index {
                 if let Some((ref mut state, entity)) = self.state {
-                    state.lock().unwrap().raze(entity, world);
+                    state.raze(entity, world);
                 }
                 self.state_index = index;
                 self.state = Some(case.build(view_entity, world));
             }
         } else {
             if let Some((ref mut state, entity)) = self.state {
-                state.lock().unwrap().raze(entity, world);
+                state.raze(entity, world);
             }
             self.state_index = usize::MAX;
             self.state = None;
@@ -136,14 +134,8 @@ impl View for Switch {
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         if let Some((ref mut state, entity)) = self.state {
-            state.lock().unwrap().raze(entity, world);
+            state.raze(entity, world);
         }
         world.despawn_owned_recursive(view_entity);
-    }
-}
-
-impl IntoView for Switch {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
     }
 }

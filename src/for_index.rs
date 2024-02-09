@@ -1,18 +1,14 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
-use crate::{
-    DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewHandle, ViewRef,
-};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
 pub struct IndexedListItem<Item> {
     id: Entity,
-    view: ViewRef,
+    view: ViewHandle,
     value: Item,
 }
 
@@ -21,14 +17,14 @@ pub struct ForIndex<
     Item: PartialEq + Clone + 'static,
     ItemIter: Iterator<Item = Item>,
     ItemFn: Fn(&Rcx) -> ItemIter,
-    V: IntoView,
+    V: Into<ViewHandle>,
     F: Fn(&Item, usize) -> V,
 > {
     item_fn: ItemFn,
     each_fn: F,
     items: Vec<IndexedListItem<Item>>,
     marker: std::marker::PhantomData<Item>,
-    fallback: Option<ViewRef>,
+    fallback: Option<ViewHandle>,
     fallback_ent: Option<Entity>,
 }
 
@@ -36,7 +32,7 @@ impl<
         Item: PartialEq + Clone + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item, usize) -> V,
     > ForIndex<Item, ItemIter, ItemFn, V, F>
 {
@@ -52,8 +48,8 @@ impl<
     }
 
     /// Allow specifying a fallback view to render if there are no items.
-    pub fn with_fallback<FB: IntoView>(mut self, fallback: FB) -> Self {
-        self.fallback = Some(fallback.into_view());
+    pub fn with_fallback<FB: Into<ViewHandle>>(mut self, fallback: FB) -> Self {
+        self.fallback = Some(fallback.into());
         self
     }
 }
@@ -62,16 +58,12 @@ impl<
         Item: PartialEq + Clone + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item, usize) -> V,
     > View for ForIndex<Item, ItemIter, ItemFn, V, F>
 {
     fn nodes(&self) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = self
-            .items
-            .iter()
-            .map(|item| item.view.lock().unwrap().nodes())
-            .collect();
+        let child_spans: Vec<NodeSpan> = self.items.iter().map(|item| item.view.nodes()).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
@@ -101,15 +93,15 @@ impl<
                 // Overwrite existing items.
                 let entry = &mut self.items[index];
                 if item != entry.value {
-                    entry.view.lock().unwrap().raze(entry.id, world);
+                    entry.view.raze(entry.id, world);
                     entry.value = item.clone();
-                    entry.view = (self.each_fn)(&entry.value, index).into_view();
+                    entry.view = (self.each_fn)(&entry.value, index).into();
                     entry.id = ViewHandle::spawn(&entry.view, view_entity, world);
                     changed = true;
                 }
             } else {
                 // Append new items.
-                let view = (self.each_fn)(&item, index).into_view();
+                let view = (self.each_fn)(&item, index).into();
                 let id = ViewHandle::spawn(&view, view_entity, world);
                 self.items.push(IndexedListItem {
                     id,
@@ -125,7 +117,7 @@ impl<
         while index < prev_len {
             prev_len -= 1;
             let entry = &mut self.items[prev_len];
-            entry.view.lock().unwrap().raze(entry.id, world);
+            entry.view.raze(entry.id, world);
             self.items.pop();
         }
 
@@ -134,7 +126,7 @@ impl<
             match self.fallback_ent {
                 // If there are > 0 items, destroy fallback if present.
                 Some(fb_ent) if index > 0 => {
-                    fallback.lock().unwrap().raze(fb_ent, world);
+                    fallback.raze(fb_ent, world);
                     self.fallback_ent = None;
                 }
 
@@ -155,23 +147,8 @@ impl<
 
     fn raze(&mut self, view_entity: bevy::prelude::Entity, world: &mut World) {
         for entry in self.items.drain(..) {
-            entry.view.lock().unwrap().raze(entry.id, world);
+            entry.view.raze(entry.id, world);
         }
         world.despawn_owned_recursive(view_entity);
-    }
-}
-
-impl<
-        Item: Send + Sync + PartialEq + Clone + 'static,
-        ItemIter: Iterator<Item = Item>,
-        ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
-        V: 'static + IntoView,
-        F: Send + Sync + 'static + Fn(&Item, usize) -> V,
-    > IntoView for ForIndex<Item, ItemIter, ItemFn, V, F>
-where
-    Self: 'static,
-{
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
     }
 }

@@ -26,7 +26,7 @@ mod switch;
 mod text;
 mod tracking_scope;
 mod view;
-mod view_tuple;
+mod view_children;
 
 pub use callback::CallDeferred;
 pub use callback::Callback;
@@ -72,4 +72,4 @@ pub use text::*;
 pub(crate) use tracking_scope::DespawnScopes;
 pub(crate) use tracking_scope::TrackingScope;
 pub use view::*;
-pub use view_tuple::ViewTuple;
+pub use view_children::ViewChildren;

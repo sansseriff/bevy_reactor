@@ -46,7 +46,7 @@ fn style_dialog(ss: &mut StyleBuilder) {
 
 /// Dialog box properties.
 #[derive(Clone, Default)]
-pub struct DialogProps<V: ViewTuple> {
+pub struct DialogProps {
     /// The width of the dialog, one of several standard widths.
     pub width: ui::Val,
 
@@ -55,7 +55,7 @@ pub struct DialogProps<V: ViewTuple> {
     pub open: Signal<bool>,
 
     /// The content of the dialog.
-    pub children: V,
+    pub children: ViewHandle,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<Callback>,
@@ -66,9 +66,7 @@ pub struct DialogProps<V: ViewTuple> {
 
 /// Displays a modal dialog box. This will display the dialog frame and the backdrop overlay.
 /// Use the dialog header/body/footer controls to get the standard layout.
-pub fn dialog<V: ViewTuple + Clone + Send + Sync + 'static>(
-    cx: &mut Cx<DialogProps<V>>,
-) -> impl View {
+pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
     let on_close = cx.props.on_close;
     let on_exited = cx.props.on_exited;
     let state = cx.create_bistable_transition(cx.props.open, 0.3);
@@ -102,7 +100,7 @@ pub fn dialog<V: ViewTuple + Clone + Send + Sync + 'static>(
                     .children(
                         Element::<NodeBundle>::new()
                             .with_styles(style_dialog)
-                            .children(children.clone()),
+                            .with_child(&children),
                     ),
             )
         },
@@ -120,16 +118,17 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
 }
 
 /// Dialog header properties.
-pub struct DialogHeaderProps<V: ViewTuple> {
+#[derive(Clone, Default)]
+pub struct DialogHeaderProps {
     /// The content of the dialog header.
-    pub children: V,
+    pub children: ViewHandle,
 }
 
 /// Displays a standard dialog header.
-pub fn dialog_header<V: ViewTuple + Clone>(cx: &mut Cx<DialogHeaderProps<V>>) -> impl View {
+pub fn dialog_header(cx: &mut Cx<DialogHeaderProps>) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_dialog_header)
-        .children(cx.props.children.clone())
+        .with_child(&cx.props.children)
 }
 
 fn style_dialog_body(ss: &mut StyleBuilder) {
@@ -141,11 +140,18 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
         .min_height(200);
 }
 
+/// Dialog body properties.
+#[derive(Clone, Default)]
+pub struct DialogBodyProps {
+    /// The content of the dialog header.
+    pub children: ViewHandle,
+}
+
 /// Displays a standard dialog body.
-pub fn dialog_body(_cx: &mut Cx<()>) -> impl View {
+pub fn dialog_body(cx: &mut Cx<DialogBodyProps>) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_dialog_body)
-        .children("Body")
+        .with_child(&cx.props.children)
 }
 
 fn style_dialog_footer(ss: &mut StyleBuilder) {
@@ -159,9 +165,16 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
         .padding((8, 6));
 }
 
+/// Dialog header properties.
+#[derive(Clone, Default)]
+pub struct DialogFooterProps {
+    /// The content of the dialog header.
+    pub children: ViewHandle,
+}
+
 /// Displays a standard dialog footer.
-pub fn dialog_footer(_cx: &mut Cx<()>) -> impl View {
+pub fn dialog_footer(cx: &mut Cx<DialogFooterProps>) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_dialog_footer)
-        .children("Footer")
+        .with_child(&cx.props.children)
 }

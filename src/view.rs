@@ -19,6 +19,7 @@ use crate::{node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope
 /// Lifecycle: To create a view, use [`ViewHandle::spawn`]. This creates an entity to hold the view,
 /// and which drives the reaction system. When the view is no longer needed, call [`View::raze`].
 /// This will destroy the view entity, and all of its children and display nodes.
+#[allow(unused_variables)]
 pub trait View {
     /// Returns the display nodes produced by this `View`.
     fn nodes(&self) -> NodeSpan;
@@ -32,7 +33,7 @@ pub trait View {
 
     /// Update the view, reacting to changes in dependencies. This is optional, and need only
     /// be implemented for views that are reactive.
-    fn react(&mut self, _view_entity: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
+    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {}
 
     /// Destroy the view, including the display nodes, and all descendant views.
     fn raze(&mut self, view_entity: Entity, world: &mut World);
@@ -40,42 +41,39 @@ pub trait View {
     /// Notification from child views that the child display nodes have changed and need
     /// to be re-attached to the parent. This is optional, and need only be implemented for
     /// views which have display nodes that have child display nodes (like [`Element`]).
-    fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
+    fn children_changed(&mut self, view_entity: Entity, world: &mut World) -> bool {
         false
     }
 }
 
-/// A reference to a view.
-pub type ViewRef = Arc<Mutex<dyn View + Sync + Send + 'static>>;
-
-/// Trait that allows a type to be converted into a `ViewHandle`.
-pub trait IntoView {
-    /// Convert the type into a `ViewRef`.
-    fn into_view(self) -> ViewRef;
-}
-
-impl IntoView for () {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(EmptyView))
+impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
+    fn from(view: V) -> Self {
+        ViewHandle(Arc::new(Mutex::new(view)))
     }
 }
 
-impl IntoView for &str {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(TextStatic::new(self.to_string())))
+impl From<()> for ViewHandle {
+    fn from(_value: ()) -> Self {
+        ViewHandle(Arc::new(Mutex::new(EmptyView)))
     }
 }
 
-impl IntoView for String {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(TextStatic::new(self)))
+impl From<&str> for ViewHandle {
+    fn from(value: &str) -> Self {
+        ViewHandle(Arc::new(Mutex::new(TextStatic::new(value.to_string()))))
+    }
+}
+
+impl From<String> for ViewHandle {
+    fn from(value: String) -> Self {
+        ViewHandle(Arc::new(Mutex::new(TextStatic::new(value))))
     }
 }
 
 #[derive(Component)]
 /// Component which holds the top level of the view hierarchy.
 pub struct ViewRoot {
-    pub(crate) view: ViewRef,
+    pub(crate) view: Arc<Mutex<dyn View + Sync + Send + 'static>>,
 }
 
 impl ViewRoot {
@@ -95,32 +93,54 @@ impl ViewRoot {
 
 /// Component used to hold a reference to a child view.
 #[derive(Component)]
-pub struct ViewHandle {
-    pub(crate) view: ViewRef,
-}
+pub struct ViewHandle(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
 
 impl ViewHandle {
     /// Construct a new [`ViewHandle`] from a [`View`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
-        Self {
-            view: Arc::new(Mutex::new(view)),
-        }
-    }
-
-    /// Construct a new [`ViewHandle`] from a [`ViewRef`].
-    pub fn from_ref(view: ViewRef) -> Self {
-        Self { view }
+        Self(Arc::new(Mutex::new(view)))
     }
 
     /// Given a view template, construct a new view. This creates an entity to hold the view
     /// and the view handle, and then calls [`View::build`] on the view. The resuling entity
     /// is part of the template invocation hierarchy, it is not a display node.
-    pub fn spawn(view: &ViewRef, parent: Entity, world: &mut World) -> Entity {
-        let mut child_ent = world.spawn(ViewHandle::from_ref(view.clone()));
+    pub fn spawn(view: &ViewHandle, parent: Entity, world: &mut World) -> Entity {
+        let mut child_ent = world.spawn(ViewHandle(view.0.clone()));
         child_ent.set_parent(parent);
         let id = child_ent.id();
-        view.lock().unwrap().build(child_ent.id(), world);
+        view.build(child_ent.id(), world);
         id
+    }
+
+    /// Returns the display nodes produced by this `View`.
+    pub fn nodes(&self) -> NodeSpan {
+        self.0.lock().unwrap().nodes()
+    }
+
+    /// Initialize the view, creating any entities needed.
+    ///
+    /// Arguments:
+    /// * `view_entity`: The entity that owns this view.
+    /// * `world`: The Bevy world.
+    pub fn build(&self, view_entity: Entity, world: &mut World) {
+        self.0.lock().unwrap().build(view_entity, world);
+    }
+
+    /// Destroy the view, including the display nodes, and all descendant views.
+    pub fn raze(&self, view_entity: Entity, world: &mut World) {
+        self.0.lock().unwrap().raze(view_entity, world);
+    }
+}
+
+impl Clone for ViewHandle {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl Default for ViewHandle {
+    fn default() -> Self {
+        Self(Arc::new(Mutex::new(EmptyView)))
     }
 }
 
@@ -163,7 +183,7 @@ pub(crate) fn attach_child_views(world: &mut World) {
         let mut e = entity;
         loop {
             if let Some(handle) = world.entity(e).get::<ViewHandle>() {
-                let inner = handle.view.clone();
+                let inner = handle.0.clone();
                 if inner.lock().unwrap().children_changed(e, world) {
                     break;
                 }

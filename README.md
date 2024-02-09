@@ -249,8 +249,8 @@ All views, including elements, have a lifecycle:
 ## Element Children
 
 The `Element` object has a method `.children()` which accepts either a single child, or
-a variable-length tuple of children. Any object that implements the `IntoView` trait can
-be passed as a child view, so for example text strings implement `IntoView` and automatically
+a variable-length tuple of children. Any object that implements the `Into<ViewHandle>` trait can
+be passed as a child view, so for example text strings implement `Into<ViewHandle>` and automatically
 generate a text node.
 
 ```rust

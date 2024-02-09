@@ -15,7 +15,7 @@ use crate::colors;
 
 /// Checkbox properties
 #[derive(Default)]
-pub struct CheckboxProps<V: ViewTuple> {
+pub struct CheckboxProps {
     /// Whether the checkbox is checked.
     pub checked: Signal<bool>,
 
@@ -23,7 +23,7 @@ pub struct CheckboxProps<V: ViewTuple> {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub label: V,
+    pub label: ViewHandle,
 
     /// Additional styles to be applied to the button.
     pub styles: StyleHandle,
@@ -66,7 +66,7 @@ fn style_checkbox_label(ss: &mut StyleBuilder) {
 }
 
 /// Construct a button widget.
-pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<NodeBundle> {
+pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
     let id = cx.create_entity();
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
@@ -143,6 +143,6 @@ pub fn checkbox<V: ViewTuple + Clone>(cx: &mut Cx<CheckboxProps<V>>) -> Element<
                 )),
             Element::<NodeBundle>::new()
                 .with_styles(style_checkbox_label)
-                .children(cx.props.label.clone()),
+                .with_child(&cx.props.label),
         ))
 }

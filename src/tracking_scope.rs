@@ -154,7 +154,7 @@ pub fn run_reactions(world: &mut World) {
         let mut next_scope = TrackingScope::new(tick);
         if let Some(mut entt) = world.get_entity_mut(*scope_entity) {
             if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
-                let inner = view_handle.view.clone();
+                let inner = view_handle.0.clone();
                 inner
                     .lock()
                     .unwrap()

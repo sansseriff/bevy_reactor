@@ -1,14 +1,11 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, view::View, view_tuple::ViewTuple, DespawnScopes, IntoView, ViewHandle,
-    ViewRef,
+    node_span::NodeSpan, view::View, view_children::ViewChildren, DespawnScopes, ViewHandle,
 };
 
 struct FragmentChild {
-    view: ViewRef,
+    view: ViewHandle,
     entity: Option<Entity>,
 }
 
@@ -24,7 +21,7 @@ pub struct Fragment {
 
 impl Fragment {
     /// Construct a new `Fragment`.
-    pub fn new<V: ViewTuple>(views: V) -> Self {
+    pub fn new<V: ViewChildren>(views: V) -> Self {
         let child_views = views.to_vec();
         Self {
             children: child_views
@@ -40,11 +37,8 @@ impl Fragment {
 
 impl View for Fragment {
     fn nodes(&self) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = self
-            .children
-            .iter()
-            .map(|item| item.view.lock().unwrap().nodes())
-            .collect();
+        let child_spans: Vec<NodeSpan> =
+            self.children.iter().map(|item| item.view.nodes()).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
@@ -58,17 +52,10 @@ impl View for Fragment {
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         // Raze all child views
         for child in self.children.drain(..) {
-            let inner = child.view.clone();
-            inner.lock().unwrap().raze(child.entity.unwrap(), world);
+            child.view.raze(child.entity.unwrap(), world);
             // Child raze() will despawn itself.
         }
 
         world.despawn_owned_recursive(view_entity);
-    }
-}
-
-impl IntoView for Fragment {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
     }
 }

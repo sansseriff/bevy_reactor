@@ -1,4 +1,6 @@
-use super::{ForEach, ForIndex, IntoView, Rcx};
+use crate::ViewHandle;
+
+use super::{ForEach, ForIndex, Rcx};
 
 /// A namespace that contains constructor functions for various kinds of for-loops:
 /// * `For::each()`
@@ -15,7 +17,7 @@ impl For {
         Item: Send + Sync + Clone + PartialEq + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
-        V: 'static + IntoView,
+        V: 'static + Into<ViewHandle>,
         F: Send + Sync + 'static + Fn(&Item, usize) -> V,
     >(
         item_fn: ItemFn,
@@ -33,7 +35,7 @@ impl For {
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item) -> V + Send,
     >(
         item_fn: ItemFn,
@@ -51,7 +53,7 @@ impl For {
         Item: Clone + PartialEq,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item) -> V + Send,
     >(
         item_fn: ItemFn,

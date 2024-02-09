@@ -1,10 +1,6 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::ecs::{entity::Entity, world::World};
 
-use crate::{
-    node_span::NodeSpan, Cx, DespawnScopes, IntoView, TrackingScope, View, ViewHandle, ViewRef,
-};
+use crate::{node_span::NodeSpan, Cx, DespawnScopes, TrackingScope, View, ViewHandle};
 
 /// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<F: 'static>: Sized + Send + Sync + Copy + 'static {
@@ -88,23 +84,24 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         assert!(self.inner.is_some());
         let mut entt = world.entity_mut(self.inner.unwrap());
         if let Some(handle) = entt.get_mut::<ViewHandle>() {
-            let inner = handle.view.clone();
             // Despawn the inner view.
-            inner.lock().unwrap().raze(entt.id(), world);
+            handle.clone().raze(entt.id(), world);
         };
         self.inner = None;
         world.despawn_owned_recursive(view_entity);
     }
 }
 
-impl<F: 'static, P: PresenterFn<F>> IntoView for Bind<F, P> {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
-    }
-}
+// impl<F: 'static, P: PresenterFn<F>> From<Bind<F, P>> for ViewHandle {
+//     fn from(value: Bind<F, P>) -> ViewHandle {
+//         ViewHandle(Arc::new(Mutex::new(value)))
+//     }
+// }
 
-// impl<V: View + Send + Sync, F: Send + Sync + 'static + Fn(&mut Cx<()>) -> V> IntoView for F {
-//     fn into_view(self) -> ViewRef {
-//         Arc::new(Mutex::new(Bind::new(self, ())))
+// impl<V: View + Send + Sync, F: Send + Sync + 'static + Fn(&mut Cx<()>) -> V> From<F>
+//     for ViewHandle
+// {
+//     fn from(value: V) -> ViewHandle {
+//         Arc::new(Mutex::new(Bind::new(value, ())))
 //     }
 // }

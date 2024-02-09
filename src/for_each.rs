@@ -1,18 +1,17 @@
 use std::ops::Range;
-use std::sync::{Arc, Mutex};
 
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
 use crate::{lcs::lcs, View};
-use crate::{DespawnScopes, IntoView, Rcx, TrackingScope, ViewHandle, ViewRef};
+use crate::{DespawnScopes, Rcx, TrackingScope, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
 struct ListItem<Value: Clone> {
     id: Entity,
-    view: ViewRef,
+    view: ViewHandle,
     value: Value,
 }
 
@@ -20,7 +19,7 @@ impl<Value: Clone> Clone for ListItem<Value> {
     fn clone(&self) -> Self {
         Self {
             id: self.id,
-            view: self.view.clone(),
+            view: ViewHandle(self.view.0.clone()),
             value: self.value.clone(),
         }
     }
@@ -33,14 +32,14 @@ pub struct ForEach<
     ItemIter: Iterator<Item = Item>,
     ItemFn: Fn(&Rcx) -> ItemIter,
     Cmp: Fn(&Item, &Item) -> bool,
-    V: IntoView,
+    V: Into<ViewHandle>,
     F: Fn(&Item) -> V + Send,
 > {
     item_fn: ItemFn,
     items: Vec<ListItem<Item>>,
     cmp: Cmp,
     each: F,
-    fallback: Option<ViewRef>,
+    fallback: Option<ViewHandle>,
     fallback_ent: Option<Entity>,
 }
 
@@ -50,7 +49,7 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item) -> V + Send,
     > ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
@@ -66,8 +65,8 @@ impl<
     }
 
     /// Allow specifying a fallback view to render if there are no items.
-    pub fn with_fallback<FB: IntoView>(mut self, fallback: FB) -> Self {
-        self.fallback = Some(fallback.into_view());
+    pub fn with_fallback<FB: Into<ViewHandle>>(mut self, fallback: FB) -> Self {
+        self.fallback = Some(fallback.into());
         self
     }
 
@@ -105,11 +104,11 @@ impl<
             // Raze old elements
             for i in prev_range {
                 let prev = &prev_state[i];
-                prev.view.lock().unwrap().raze(prev.id, world);
+                prev.view.raze(prev.id, world);
             }
             // Build new elements
             for i in next_range {
-                let view = (self.each)(&next_items[i]).into_view();
+                let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
                     id: ViewHandle::spawn(&view, view_entity, world),
                     view,
@@ -140,13 +139,13 @@ impl<
                 // Deletions
                 for i in prev_range.start..prev_start {
                     let prev = &prev_state[i];
-                    prev.view.lock().unwrap().raze(prev.id, world);
+                    prev.view.raze(prev.id, world);
                 }
             }
         } else if next_start > next_range.start {
             // Insertions
             for i in next_range.start..next_start {
-                let view = (self.each)(&next_items[i]).into_view();
+                let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
                     id: ViewHandle::spawn(&view, view_entity, world),
                     view,
@@ -180,13 +179,13 @@ impl<
                 // Deletions
                 for i in prev_end..prev_range.end {
                     let prev = &prev_state[i];
-                    prev.view.lock().unwrap().raze(prev.id, world);
+                    prev.view.raze(prev.id, world);
                 }
             }
         } else if next_end < next_range.end {
             // Insertions
             for i in next_end..next_range.end {
-                let view = (self.each)(&next_items[i]).into_view();
+                let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
                     id: ViewHandle::spawn(&view, view_entity, world),
                     view,
@@ -203,16 +202,12 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: IntoView,
+        V: Into<ViewHandle>,
         F: Fn(&Item) -> V + Send,
     > View for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
     fn nodes(&self) -> NodeSpan {
-        let child_spans: Vec<NodeSpan> = self
-            .items
-            .iter()
-            .map(|item| item.view.lock().unwrap().nodes())
-            .collect();
+        let child_spans: Vec<NodeSpan> = self.items.iter().map(|item| item.view.nodes()).collect();
         NodeSpan::Fragment(child_spans.into_boxed_slice())
     }
 
@@ -249,7 +244,7 @@ impl<
             match self.fallback_ent {
                 // If there are > 0 items, destroy fallback if present.
                 Some(fb_ent) if next_len > 0 => {
-                    fallback.lock().unwrap().raze(fb_ent, world);
+                    fallback.raze(fb_ent, world);
                     self.fallback_ent = None;
                 }
 
@@ -268,25 +263,9 @@ impl<
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         for entry in self.items.drain(..) {
-            entry.view.lock().unwrap().raze(entry.id, world);
+            entry.view.raze(entry.id, world);
         }
         world.despawn_owned_recursive(view_entity);
-    }
-}
-
-impl<
-        Item: Send + Sync + Clone,
-        ItemIter: Iterator<Item = Item>,
-        ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
-        Cmp: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        V: IntoView,
-        F: Send + Sync + Fn(&Item) -> V + Send,
-    > IntoView for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
-where
-    Self: 'static,
-{
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
     }
 }
 

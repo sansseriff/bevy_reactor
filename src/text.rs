@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::prelude::*;
 
 use crate::{
@@ -7,7 +5,7 @@ use crate::{
     style::{InheritableFontStyles, TextStyleChanged},
     tracking_scope::TrackingScope,
     view::View,
-    DespawnScopes, IntoView, Rcx, ViewRef,
+    DespawnScopes, Rcx,
 };
 
 /// A UI element that displays text
@@ -75,12 +73,6 @@ impl<F: FnMut(&Rcx) -> String> TextComputed<F> {
     }
 }
 
-impl IntoView for TextStatic {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
-    }
-}
-
 impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
     fn nodes(&self) -> NodeSpan {
         NodeSpan::Node(self.node.unwrap())
@@ -129,12 +121,6 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
 /// Creates a computed text view.
 pub fn text_computed<F: FnMut(&Rcx) -> String>(text: F) -> TextComputed<F> {
     TextComputed::new(text)
-}
-
-impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> IntoView for TextComputed<F> {
-    fn into_view(self) -> ViewRef {
-        Arc::new(Mutex::new(self))
-    }
 }
 
 pub(crate) fn update_text_styles(

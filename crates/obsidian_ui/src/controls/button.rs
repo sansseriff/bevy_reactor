@@ -32,7 +32,7 @@ pub enum ButtonVariant {
 
 /// Button properties
 #[derive(Default)]
-pub struct ButtonProps<V: ViewTuple> {
+pub struct ButtonProps {
     /// Color variant - default, primary or danger.
     pub variant: Signal<ButtonVariant>,
 
@@ -43,7 +43,7 @@ pub struct ButtonProps<V: ViewTuple> {
     pub disabled: Option<Signal<bool>>,
 
     /// The content to display inside the button.
-    pub children: V,
+    pub children: ViewHandle,
 
     /// Additional styles to be applied to the button.
     pub styles: StyleHandle,
@@ -74,7 +74,7 @@ fn style_button_bg(ss: &mut StyleBuilder) {
 }
 
 /// Construct a button widget.
-pub fn button<V: ViewTuple + Clone>(cx: &mut Cx<ButtonProps<V>>) -> Element<NodeBundle> {
+pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
     let id = cx.create_entity();
     let variant = cx.props.variant;
     let pressed = cx.create_mutable::<bool>(false);
