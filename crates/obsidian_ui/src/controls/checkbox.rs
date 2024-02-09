@@ -15,7 +15,7 @@ use crate::colors;
 
 /// Checkbox properties
 #[derive(Default)]
-pub struct CheckboxProps<V: ViewTuple + Clone> {
+pub struct CheckboxProps<V: ViewTuple> {
     /// Whether the checkbox is checked.
     pub checked: Signal<bool>,
 

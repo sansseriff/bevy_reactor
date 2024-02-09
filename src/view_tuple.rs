@@ -6,11 +6,19 @@ use impl_trait_for_tuples::*;
 #[doc(hidden)]
 pub trait ViewTuple {
     fn get_handles(self, out: &mut Vec<ViewRef>);
+
+    fn to_vec(self) -> Vec<ViewRef>;
 }
 
 impl<I: IntoView> ViewTuple for I {
     fn get_handles(self, out: &mut Vec<ViewRef>) {
         out.push(self.into_view());
+    }
+
+    fn to_vec(self) -> Vec<ViewRef> {
+        let mut out = Vec::new();
+        self.get_handles(&mut out);
+        out
     }
 }
 
@@ -20,6 +28,12 @@ impl<I: IntoView> ViewTuple for Option<I> {
             out.push(view.into_view());
         }
     }
+
+    fn to_vec(self) -> Vec<ViewRef> {
+        let mut out = Vec::new();
+        self.get_handles(&mut out);
+        out
+    }
 }
 
 #[impl_for_tuples(1, 15)]
@@ -27,5 +41,11 @@ impl<I: IntoView> ViewTuple for Option<I> {
 impl ViewTuple for Tuple {
     fn get_handles(self, out: &mut Vec<ViewRef>) {
         for_tuples!(#( self.Tuple.get_handles(out); )*)
+    }
+
+    fn to_vec(self) -> Vec<ViewRef> {
+        let mut out = Vec::new();
+        self.get_handles(&mut out);
+        out
     }
 }

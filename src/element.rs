@@ -73,8 +73,7 @@ impl<B: Bundle + Default> Element<B> {
         if !self.children.is_empty() {
             panic!("Children already set");
         }
-        let mut child_views: Vec<ViewRef> = Vec::new();
-        views.get_handles(&mut child_views);
+        let child_views = views.to_vec();
         self.children = child_views
             .iter()
             .map(|v| ElementChild {

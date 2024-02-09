@@ -74,10 +74,6 @@ impl<
         let mut tracking = TrackingScope::new(world.read_change_tick());
         self.react(view_entity, world, &mut tracking);
         world.entity_mut(view_entity).insert(tracking);
-        assert!(
-            world.entity_mut(view_entity).get::<Parent>().is_some(),
-            "Cond should have a parent view"
-        );
     }
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {

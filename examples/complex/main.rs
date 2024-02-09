@@ -11,8 +11,8 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, slider, splitter, swatch, ButtonProps, CheckboxProps, SliderProps,
-        SplitterDirection, SplitterProps, SwatchProps,
+        button, checkbox, dialog, slider, splitter, swatch, ButtonProps, CheckboxProps,
+        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
     },
     size::Size,
     typography,
@@ -171,12 +171,10 @@ fn ui_main(cx: &mut Cx) -> impl View {
     let checked_1 = cx.create_mutable(false);
     let checked_2 = cx.create_mutable(true);
     let red = cx.create_mutable::<f32>(128.);
-    let saturation = cx.create_mutable::<f32>(50.);
 
     let rgb_color = cx.create_derived(move |cx| {
         let red = red.get(cx);
-        let saturation = saturation.get(cx);
-        Srgba::new(red / 255., saturation / 100.0, 0.0, 1.0)
+        Srgba::new(red / 255., 100.0, 0.0, 1.0)
     });
 
     let panel_width = cx.create_derived(|cx| {
@@ -188,6 +186,12 @@ fn ui_main(cx: &mut Cx) -> impl View {
         .with_styles((typography::text_default, style_main))
         // .insert(TargetCamera(c2d.0))
         .children((
+            dialog.bind(DialogProps {
+                open: checked_1.signal(),
+                children: "Dialog",
+                width: ui::Val::Px(400.),
+                ..default()
+            }),
             Element::<NodeBundle>::new()
                 .with_styles(style_aside)
                 .create_effect(move |cx, ent| {

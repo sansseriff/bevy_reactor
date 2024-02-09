@@ -50,7 +50,7 @@ impl TrackingScope {
         self.mutable_deps.insert(mutable);
     }
 
-    pub(crate) fn add_resource<T: Resource>(&mut self, resource_id: ComponentId) {
+    fn add_resource<T: Resource>(&mut self, resource_id: ComponentId) {
         self.resource_deps
             .entry(resource_id)
             .or_insert_with(|| TrackedResource::new::<T>());
@@ -64,6 +64,17 @@ impl TrackingScope {
                 .get_resource_id(TypeId::of::<T>())
                 .expect("Unknown resource type"),
         );
+    }
+
+    /// Convenience method for adding a resource dependency.
+    pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
+        self.component_deps.insert((
+            entity,
+            world
+                .components()
+                .component_id::<C>()
+                .expect("Unknown component type"),
+        ));
     }
 
     /// Returns true if any of the dependencies of this scope have been updated since

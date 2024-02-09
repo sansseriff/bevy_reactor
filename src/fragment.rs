@@ -12,7 +12,10 @@ struct FragmentChild {
     entity: Option<Entity>,
 }
 
-/// A basic UI fragment
+/// A `Fragment` represents a group of one or more child views which can be inserted inline
+/// within a parent view. A parent view which contains a `Fragment` will render the child views of
+/// the `Fragment` in place of the `Fragment` itself. This is useful in cases where a function's
+/// return type only allows a single view to be returned, but you want to return multiple views.
 #[derive(Default)]
 pub struct Fragment {
     /// Children of this fragment.
@@ -22,8 +25,7 @@ pub struct Fragment {
 impl Fragment {
     /// Construct a new `Fragment`.
     pub fn new<V: ViewTuple>(views: V) -> Self {
-        let mut child_views: Vec<ViewRef> = Vec::new();
-        views.get_handles(&mut child_views);
+        let child_views = views.to_vec();
         Self {
             children: child_views
                 .iter()

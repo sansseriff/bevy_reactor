@@ -102,3 +102,9 @@ impl<F: 'static, P: PresenterFn<F>> IntoView for Bind<F, P> {
         Arc::new(Mutex::new(self))
     }
 }
+
+// impl<V: View + Send + Sync, F: Send + Sync + 'static + Fn(&mut Cx<()>) -> V> IntoView for F {
+//     fn into_view(self) -> ViewRef {
+//         Arc::new(Mutex::new(Bind::new(self, ())))
+//     }
+// }

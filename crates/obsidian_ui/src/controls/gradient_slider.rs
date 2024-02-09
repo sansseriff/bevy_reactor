@@ -3,7 +3,7 @@ use bevy_color::Srgba;
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
-use crate::{colors, gradient_rect::GradientRectMaterial};
+use crate::{colors, materials::GradientRectMaterial};
 
 const THUMB_WIDTH: f32 = 12.;
 

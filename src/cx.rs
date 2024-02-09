@@ -1,5 +1,4 @@
 use std::{
-    any::TypeId,
     cell::RefCell,
     marker::PhantomData,
     sync::{Arc, Mutex},
@@ -18,8 +17,12 @@ use crate::{
 /// An immutable reactive context, used for reactive closures such as derived signals.
 pub trait RunContextRead {
     /// Return a reference to the resource of the given type. Calling this function
-    /// adds the resource as a dependency of the current presenter invocation.
+    /// adds the resource as a dependency of the current tracking scope.
     fn use_resource<T: Resource>(&self) -> &T;
+
+    /// Return a reference to the Component `C` on the given entity. Calling this function
+    /// adds the component as a dependency of the current tracking scope.
+    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C>;
 }
 
 /// A mutable reactive context. This allows write access to reactive data sources.
@@ -181,9 +184,9 @@ pub trait RunContextSetup<'p> {
     /// re-runs whenever any of it's dependencies change.
     ///
     /// Arguments:
-    /// * `compute` - The function that computes the output. This will be called with a single
+    /// * `effect` - The function that computes the output. This will be called with a single
     ///    parameter, which is a [`Cx`] object.
-    fn create_effect<F: Send + Sync + 'static + Fn(&mut Cx<()>)>(&mut self, effect: F) {
+    fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx<()>)>(&mut self, effect: F) {
         let ticks = self.world_mut().read_change_tick();
         let action = Arc::new(Mutex::new(effect));
         let mut scope = TrackingScope::new(ticks);
@@ -206,7 +209,7 @@ pub trait RunContextSetup<'p> {
     // }
 }
 
-impl<F: Send + Sync + 'static + Fn(&mut Cx<()>)> Reaction for F {
+impl<F: Send + Sync + 'static + FnMut(&mut Cx<()>)> Reaction for F {
     fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let mut cx = Cx::new((), world, tracking);
         (self)(&mut cx);
@@ -244,6 +247,13 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     /// Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
     pub fn create_entity(&mut self) -> Entity {
         self.world_mut().spawn_empty().id()
+    }
+
+    /// Spawn an empty [`Entity`]. The entity will be despawned when the tracking scope is dropped.
+    pub fn create_owned_entity(&mut self) -> Entity {
+        let entity = self.world_mut().spawn_empty().id();
+        self.tracking.borrow_mut().add_owned(entity);
+        entity
     }
 
     // /// Return a reference to the Component `C` on the given entity.
@@ -424,13 +434,15 @@ impl<'p, 'w, Props> ReadDerived for Cx<'p, 'w, Props> {
 
 impl<'p, 'w, Props> RunContextRead for Cx<'p, 'w, Props> {
     fn use_resource<T: Resource>(&self) -> &T {
-        self.tracking.borrow_mut().add_resource::<T>(
-            self.world
-                .components()
-                .get_resource_id(TypeId::of::<T>())
-                .expect("Unknown resource type"),
-        );
+        self.tracking.borrow_mut().track_resource::<T>(self.world);
         self.world.resource::<T>()
+    }
+
+    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.tracking
+            .borrow_mut()
+            .track_component::<C>(entity, self.world);
+        self.world.entity(entity).get::<C>()
     }
 }
 
@@ -532,13 +544,15 @@ impl<'p, 'w> ReadDerived for Rcx<'p, 'w> {
 
 impl<'p, 'w> RunContextRead for Rcx<'p, 'w> {
     fn use_resource<T: Resource>(&self) -> &T {
-        self.tracking.borrow_mut().add_resource::<T>(
-            self.world
-                .components()
-                .get_resource_id(TypeId::of::<T>())
-                .expect("Unknown resource type"),
-        );
+        self.tracking.borrow_mut().track_resource::<T>(self.world);
         self.world.resource::<T>()
+    }
+
+    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.tracking
+            .borrow_mut()
+            .track_component::<C>(entity, self.world);
+        self.world.entity(entity).get::<C>()
     }
 }
 
@@ -715,6 +729,10 @@ impl ReadDerivedInternal for World {
 impl RunContextRead for World {
     fn use_resource<T: Resource>(&self) -> &T {
         self.resource::<T>()
+    }
+
+    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.entity(entity).get::<C>()
     }
 }
 

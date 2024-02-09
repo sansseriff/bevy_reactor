@@ -111,7 +111,7 @@ impl View for Switch {
         world.entity_mut(view_entity).insert(tracking);
         assert!(
             world.entity_mut(view_entity).get::<Parent>().is_some(),
-            "Cond should have a parent view"
+            "Switch should have a parent view"
         );
     }
 

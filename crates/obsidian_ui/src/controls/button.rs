@@ -11,7 +11,7 @@ use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
 
-use crate::{colors, rounded_rect::RoundedRectMaterial, size::Size};
+use crate::{colors, materials::RoundedRectMaterial, size::Size};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -32,7 +32,7 @@ pub enum ButtonVariant {
 
 /// Button properties
 #[derive(Default)]
-pub struct ButtonProps<V: ViewTuple + Clone> {
+pub struct ButtonProps<V: ViewTuple> {
     /// Color variant - default, primary or danger.
     pub variant: Signal<ButtonVariant>,
 

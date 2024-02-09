@@ -30,6 +30,13 @@ pub struct Mutable<T> {
     pub(crate) marker: std::marker::PhantomData<T>,
 }
 
+impl<T> Mutable<T> {
+    /// The entity that holds the mutable value.
+    pub fn id(&self) -> Entity {
+        self.id
+    }
+}
+
 impl<T> Clone for Mutable<T> {
     fn clone(&self) -> Self {
         Self {
