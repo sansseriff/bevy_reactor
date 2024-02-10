@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::{
+    core::Name,
     ecs::{
         component::Component,
         entity::Entity,
@@ -181,10 +182,12 @@ pub(crate) fn attach_child_views(world: &mut World) {
     for entity in query_copy {
         world.entity_mut(entity).remove::<DisplayNodeChanged>();
         let mut e = entity;
+        let mut finished = false;
         loop {
             if let Some(handle) = world.entity(e).get::<ViewHandle>() {
                 let inner = handle.0.clone();
                 if inner.lock().unwrap().children_changed(e, world) {
+                    finished = true;
                     break;
                 }
             }
@@ -192,6 +195,7 @@ pub(crate) fn attach_child_views(world: &mut World) {
             if let Some(handle) = world.entity(e).get::<ViewRoot>() {
                 let inner = handle.view.clone();
                 if inner.lock().unwrap().children_changed(e, world) {
+                    finished = true;
                     break;
                 }
             }
@@ -199,10 +203,27 @@ pub(crate) fn attach_child_views(world: &mut World) {
             e = match world.entity(e).get::<Parent>() {
                 Some(parent) => parent.get(),
                 None => {
-                    warn!("DisplayNodeChanged not handled.");
                     break;
                 }
             };
+        }
+
+        if !finished {
+            warn!("DisplayNodeChanged not handled.");
+            e = entity;
+            loop {
+                if let Some(name) = world.entity(e).get::<Name>() {
+                    println!("* Entity: {:?}", name);
+                } else {
+                    println!("* Entity: {:?}", e);
+                }
+                e = match world.entity(e).get::<Parent>() {
+                    Some(parent) => parent.get(),
+                    None => {
+                        break;
+                    }
+                };
+            }
         }
     }
 }

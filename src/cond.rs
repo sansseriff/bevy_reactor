@@ -76,6 +76,7 @@ impl<
     }
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
+        world.entity_mut(view_entity).insert(Name::new("Cond"));
         let mut tracking = TrackingScope::new(world.read_change_tick());
         self.react(view_entity, world, &mut tracking);
         world.entity_mut(view_entity).insert(tracking);

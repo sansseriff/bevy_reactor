@@ -25,6 +25,7 @@ impl View for Portal {
     }
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
+        world.entity_mut(view_entity).insert(Name::new("Portal"));
         self.entity = Some(ViewHandle::spawn(&self.view, view_entity, world));
     }
 

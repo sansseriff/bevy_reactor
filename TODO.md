@@ -1,5 +1,9 @@
 # TODO
 
+* BUG: Dialog always creates content nodes even when closed.
+* BUG: Dialog doesn't render a second time.
+* BUG: "DisplayNodeChanged" warning.
+* BUG: Can't render Switch or For as root of a presenter?
 * Memo Signals
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
