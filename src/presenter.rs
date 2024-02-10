@@ -1,4 +1,7 @@
-use bevy::ecs::{entity::Entity, world::World};
+use bevy::{
+    ecs::{entity::Entity, world::World},
+    hierarchy::BuildWorldChildren,
+};
 
 use crate::{node_span::NodeSpan, Cx, DespawnScopes, TrackingScope, View, ViewHandle};
 
@@ -67,13 +70,13 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         self.nodes.clone()
     }
 
-    fn build(&mut self, _view_entity: Entity, world: &mut World) {
+    fn build(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_none());
         assert!(self.props.is_some());
         let mut tracking = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new(self.props.take().unwrap(), world, &mut tracking);
         let mut view = self.presenter.call(&mut cx);
-        let inner = world.spawn(tracking).id();
+        let inner = world.spawn(tracking).set_parent(view_entity).id();
         view.build(inner, world);
         self.nodes = view.nodes();
         world.entity_mut(inner).insert(ViewHandle::new(view));
