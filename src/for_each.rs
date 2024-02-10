@@ -5,7 +5,7 @@ use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
 use crate::{lcs::lcs, View};
-use crate::{DespawnScopes, Rcx, TrackingScope, ViewHandle};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewHandle};
 
 use crate::node_span::NodeSpan;
 
@@ -90,7 +90,9 @@ impl<
         next_items: &[Item],
         next_range: Range<usize>,
         out: &mut Vec<ListItem<Item>>,
-    ) {
+    ) -> bool {
+        let mut changed = false;
+
         // Look for longest common subsequence.
         // prev_start and next_start are *relative to the slice*.
         let (prev_start, next_start, lcs_length) = lcs(
@@ -105,9 +107,11 @@ impl<
             for i in prev_range {
                 let prev = &prev_state[i];
                 prev.view.raze(prev.id, world);
+                changed = true;
             }
             // Build new elements
             for i in next_range {
+                changed = true;
                 let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
                     id: ViewHandle::spawn(&view, view_entity, world),
@@ -115,7 +119,7 @@ impl<
                     value: next_items[i].clone(),
                 });
             }
-            return;
+            return changed;
         }
 
         // Adjust prev_start and next_start to be relative to the entire state array.
@@ -126,7 +130,7 @@ impl<
         if prev_start > prev_range.start {
             if next_start > next_range.start {
                 // Both prev and next have entries before lcs, so recurse
-                self.build_recursive(
+                changed |= self.build_recursive(
                     world,
                     view_entity,
                     prev_state,
@@ -140,6 +144,7 @@ impl<
                 for i in prev_range.start..prev_start {
                     let prev = &prev_state[i];
                     prev.view.raze(prev.id, world);
+                    changed = true;
                 }
             }
         } else if next_start > next_range.start {
@@ -151,6 +156,7 @@ impl<
                     view,
                     value: next_items[i].clone(),
                 });
+                changed = true;
             }
         }
 
@@ -166,7 +172,7 @@ impl<
         if prev_end < prev_range.end {
             if next_end < next_range.end {
                 // Both prev and next have entries after lcs, so recurse
-                self.build_recursive(
+                changed |= self.build_recursive(
                     world,
                     view_entity,
                     prev_state,
@@ -174,12 +180,13 @@ impl<
                     next_items,
                     next_end..next_range.end,
                     out,
-                )
+                );
             } else {
                 // Deletions
                 for i in prev_end..prev_range.end {
                     let prev = &prev_state[i];
                     prev.view.raze(prev.id, world);
+                    changed = true;
                 }
             }
         } else if next_end < next_range.end {
@@ -191,8 +198,11 @@ impl<
                     view,
                     value: next_items[i].clone(),
                 });
+                changed = true;
             }
         }
+
+        changed
     }
 }
 
@@ -228,6 +238,7 @@ impl<
         let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(hint);
         let next_len = items.len();
         let prev_len = self.items.len();
+        let mut changed = false;
 
         self.build_recursive(
             world,
@@ -246,16 +257,22 @@ impl<
                 Some(fb_ent) if next_len > 0 => {
                     fallback.raze(fb_ent, world);
                     self.fallback_ent = None;
+                    changed = true;
                 }
 
                 // If there are no items, render fallback unless already rendered.
                 None if next_len == 0 => {
                     self.fallback_ent = Some(ViewHandle::spawn(fallback, view_entity, world));
+                    changed = true;
                 }
 
                 // Otherwise, no change.
                 _ => {}
             }
+        }
+
+        if changed {
+            world.entity_mut(view_entity).insert(DisplayNodeChanged);
         }
 
         self.items = std::mem::take(&mut next_state);

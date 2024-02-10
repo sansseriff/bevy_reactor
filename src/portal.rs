@@ -33,4 +33,9 @@ impl View for Portal {
         self.entity = None;
         world.despawn_owned_recursive(view_entity);
     }
+
+    fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
+        // info!("children_changed handled");
+        true
+    }
 }

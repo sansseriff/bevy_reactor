@@ -51,6 +51,10 @@ impl<
         let state_view = (branch)().into();
         let state_entity = ViewHandle::spawn(&state_view, parent, world);
         world.entity_mut(parent).insert(DisplayNodeChanged);
+        // assert!(
+        //     world.entity_mut(parent).get::<Parent>().is_some(),
+        //     "Cond should have a parent view"
+        // );
         (state_view, state_entity)
     }
 }

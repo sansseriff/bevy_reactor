@@ -1,11 +1,16 @@
-use crate::ViewHandle;
+use crate::{Fragment, ViewHandle};
 use impl_trait_for_tuples::*;
 
+/// A tuple of [`View`]s which can be converted into a [`Vec<ViewHandle>`].
 #[doc(hidden)]
 pub trait ViewChildren {
+    #[doc(hidden)]
     fn get_handles(self, out: &mut Vec<ViewHandle>);
 
     fn to_vec(self) -> Vec<ViewHandle>;
+
+    /// Convert this tuple of views into a [`ViewHandle`] containing a [`Fragment`].
+    fn fragment(self) -> ViewHandle;
 }
 
 impl<I: Into<ViewHandle>> ViewChildren for I {
@@ -17,6 +22,10 @@ impl<I: Into<ViewHandle>> ViewChildren for I {
         let mut out = Vec::new();
         self.get_handles(&mut out);
         out
+    }
+
+    fn fragment(self) -> ViewHandle {
+        ViewHandle::new(Fragment::new(self))
     }
 }
 
@@ -31,5 +40,9 @@ impl ViewChildren for Tuple {
         let mut out = Vec::new();
         self.get_handles(&mut out);
         out
+    }
+
+    fn fragment(self) -> ViewHandle {
+        ViewHandle::new(Fragment::new(self))
     }
 }

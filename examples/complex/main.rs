@@ -187,27 +187,35 @@ fn ui_main(cx: &mut Cx) -> impl View {
         .children((
             dialog.bind(DialogProps {
                 open: checked_1.signal(),
-                children: Fragment::new((
+                on_close: Some(cx.create_callback(move |cx| {
+                    checked_1.set(cx, false);
+                })),
+                children: (
                     dialog_header.bind(DialogHeaderProps {
                         children: "Dialog Header".into(),
                     }),
                     "Dialog Body",
                     dialog_footer.bind(DialogFooterProps {
-                        children: Fragment::new((
+                        children: (
                             button.bind(ButtonProps {
                                 children: "Cancel".into(),
+                                on_click: Some(cx.create_callback(move |cx| {
+                                    checked_1.set(cx, false);
+                                })),
                                 ..default()
                             }),
                             button.bind(ButtonProps {
                                 children: "Close".into(),
-                                on_click: Some(clicked_increment),
+                                on_click: Some(cx.create_callback(move |cx| {
+                                    checked_1.set(cx, false);
+                                })),
                                 ..default()
                             }),
-                        ))
-                        .into(),
+                        )
+                            .fragment(),
                     }),
-                ))
-                .into(),
+                )
+                    .fragment(),
                 width: ui::Val::Px(400.),
                 ..default()
             }),

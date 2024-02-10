@@ -5,6 +5,9 @@
 use bevy::{app::*, ui::UiMaterialPlugin};
 use materials::{GradientRectMaterial, RoundedRectMaterial};
 
+/// Utilities for animation.
+pub mod animation;
+
 /// Module containing standard color definitions.
 #[allow(missing_docs)]
 pub mod colors;
@@ -36,6 +39,7 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<RoundedRectMaterial>::default(),
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             hooks::BistableTransitionPlugin,
+            animation::AnimatedTransitionPlugin,
         ));
     }
 }

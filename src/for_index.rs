@@ -128,11 +128,13 @@ impl<
                 Some(fb_ent) if index > 0 => {
                     fallback.raze(fb_ent, world);
                     self.fallback_ent = None;
+                    changed = true;
                 }
 
                 // If there are no items, render fallback unless already rendered.
                 None if index == 0 => {
                     self.fallback_ent = Some(ViewHandle::spawn(fallback, view_entity, world));
+                    changed = true;
                 }
 
                 // Otherwise, no change.
