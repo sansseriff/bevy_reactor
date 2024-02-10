@@ -51,8 +51,9 @@ impl View for Fragment {
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         // Raze all child views
-        for child in self.children.drain(..) {
+        for child in self.children.iter_mut() {
             child.view.raze(child.entity.unwrap(), world);
+            child.entity = None;
             // Child raze() will despawn itself.
         }
 

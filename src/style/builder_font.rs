@@ -61,7 +61,7 @@ impl<'a, 'w> StyleBuilderFont for StyleBuilder<'a, 'w> {
 ///
 /// This will be applied to any text nodes that are children of the target entity, unless
 /// those nodes explicitly override the properties.
-#[derive(Component, Default, Clone)]
+#[derive(Component, Default, Clone, Debug)]
 pub(crate) struct InheritableFontStyles {
     /// Path to the font asset.
     pub(crate) font: Option<Handle<Font>>,
@@ -81,13 +81,13 @@ impl InheritableFontStyles {
 
     /// Merge the properties from another `InheritableTextStyles` into this one.
     pub(crate) fn merge(&mut self, other: &InheritableFontStyles) {
-        if other.font.is_some() {
+        if other.font.is_some() && self.font.is_none() {
             self.font = other.font.clone();
         }
-        if other.font_size.is_some() {
+        if other.font_size.is_some() && self.font_size.is_none() {
             self.font_size = other.font_size;
         }
-        if other.color.is_some() {
+        if other.color.is_some() && self.color.is_none() {
             self.color = other.color;
         }
     }

@@ -76,6 +76,7 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         let mut tracking = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new(self.props.take().unwrap(), world, &mut tracking);
         let mut view = self.presenter.call(&mut cx);
+        self.props = Some(cx.props);
         let inner = world.spawn(tracking).set_parent(view_entity).id();
         view.build(inner, world);
         self.nodes = view.nodes();

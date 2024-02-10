@@ -1,18 +1,13 @@
 # TODO
 
-* BUG: Dialog always creates content nodes even when closed.
-* BUG: Dialog doesn't render a second time.
-* BUG: Can't render Switch or For as root of a presenter?
 * Memo Signals
 * Verify Razing / Despawning doesn't leak
 * Reactive focus hook
 * No-arg .bind().
 * Cleanup Handlers - on_cleanup();
 * Scoped values
-* Access to ECS components
 * Access to owner entity
 * use_element_rect hook
-* enter/exit transition hooks
 * Animated transitions / spring
 * Gizmo
 

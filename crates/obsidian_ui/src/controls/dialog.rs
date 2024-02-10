@@ -10,6 +10,7 @@ use crate::{
     animation::{AnimatedBackgroundColor, AnimatedTransition},
     colors,
     hooks::{BistableTransitionState, CreateBistableTransition},
+    typography::text_default,
 };
 
 // Dialog background overlay
@@ -90,7 +91,7 @@ pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
         move || {
             Portal::new(
                 Element::<NodeBundle>::new()
-                    .with_styles(style_dialog_overlay)
+                    .with_styles((style_dialog_overlay, text_default))
                     .insert(
                         // Click on backdrop sends close signal.
                         On::<Pointer<Click>>::run(move |world: &mut World| {
@@ -131,6 +132,7 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .justify_content(ui::JustifyContent::SpaceBetween)
+        .font_size(18)
         .border_color(colors::U2.darker(0.01))
         .border_bottom(1)
         .padding((12, 6));

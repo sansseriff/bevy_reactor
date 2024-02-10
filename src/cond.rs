@@ -140,6 +140,7 @@ impl<
             CondState::False((ref mut false_state, entity)) => false_state.raze(entity, world),
             CondState::Unset => {}
         }
+        self.state = CondState::Unset;
         world.despawn_owned_recursive(view_entity);
     }
 }

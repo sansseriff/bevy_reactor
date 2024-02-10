@@ -49,6 +49,7 @@ impl View for TextStatic {
         let display = self.node.expect("Razing unbuilt DynTextNode");
         world.entity_mut(display).remove_parent();
         world.entity_mut(display).despawn();
+        self.node = None;
     }
 }
 
@@ -133,7 +134,7 @@ pub(crate) fn update_text_styles(
     for (entity, mut text) in query.iter_mut() {
         let mut styles = InheritableFontStyles::default();
 
-        // Search parenrs for inherited styles.
+        // Search parents for inherited styles.
         let mut ancestor = entity;
         loop {
             if styles.is_final() {
