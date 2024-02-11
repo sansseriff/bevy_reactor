@@ -8,6 +8,10 @@ pub(crate) struct GradientRectMaterial {
     pub(crate) num_color_stops: i32,
     #[uniform(1)]
     pub(crate) color_stops: [Vec4; 8],
+    #[uniform(2)]
+    pub(crate) radius: f32,
+    #[uniform(3)]
+    pub(crate) cap_size: f32,
 }
 
 impl UiMaterial for GradientRectMaterial {

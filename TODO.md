@@ -7,9 +7,11 @@
 * Cleanup Handlers - on_cleanup();
 * Scoped values
 * Access to owner entity
-* use_element_rect hook
+* use_element_rect hook - needed for popup menus
 * Animated transitions / spring
 * Gizmo
+* Focus keys.
+* ESC to close dialog.
 
 # StyleBuilder
 
@@ -20,13 +22,13 @@
 
 * Checkbox (finish rounded corners)
 * Radio
-* Button Group
+* Button Group (Needed rounded corners first)
 * DisclosureTriangle - with transition
 * Flex
 * Multi-layered nine-patch button.
-* Modal
 * Menu
 * Focus Outlines
+* Modal animation.
 
 ## Notes on fine-grained
 
