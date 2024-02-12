@@ -12,9 +12,10 @@ use obsidian_ui::{
     colors,
     controls::{
         button, checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch,
-        ButtonProps, CheckboxProps, DialogFooterProps, DialogHeaderProps, DialogProps, SliderProps,
-        SplitterDirection, SplitterProps, SwatchProps,
+        ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps, DialogHeaderProps,
+        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
     },
+    focus::TabGroup,
     size::Size,
     typography, viewport, ObsidianUiPlugin,
 };
@@ -183,6 +184,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
 
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
+        .insert(TabGroup::default())
         // .insert(TargetCamera(c2d.0))
         .children((
             dialog.bind(DialogProps {
@@ -206,6 +208,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             }),
                             button.bind(ButtonProps {
                                 children: "Close".into(),
+                                variant: Signal::Constant(ButtonVariant::Primary),
                                 on_click: Some(cx.create_callback(move |cx| {
                                     checked_1.set(cx, false);
                                 })),

@@ -5,8 +5,11 @@ use bevy::{
 };
 use bevy_color::{Hsla, Srgba};
 use bevy_reactor::*;
-use obsidian_ui::controls::{
-    button, gradient_slider, ButtonProps, ButtonVariant, ColorGradient, GradientSliderProps,
+use obsidian_ui::{
+    controls::{
+        button, gradient_slider, ButtonProps, ButtonVariant, ColorGradient, GradientSliderProps,
+    },
+    RoundedCorners,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -67,6 +70,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                 .children((
                     button.bind(ButtonProps {
                         children: "RGB".into(),
+                        corners: RoundedCorners::Left,
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Rgb => ButtonVariant::Selected,
@@ -80,6 +84,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                     }),
                     button.bind(ButtonProps {
                         children: "HSL".into(),
+                        corners: RoundedCorners::None,
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Hsl => ButtonVariant::Selected,
@@ -93,6 +98,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                     }),
                     button.bind(ButtonProps {
                         children: "Recent".into(),
+                        corners: RoundedCorners::Right,
                         variant: cx.create_derived(|cx| {
                             match cx.use_resource::<ColorEditState>().mode {
                                 ColorMode::Recent => ButtonVariant::Selected,

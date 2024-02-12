@@ -9,6 +9,7 @@ use bevy_reactor::*;
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedTransition},
     colors,
+    focus::TabGroup,
     hooks::{BistableTransitionState, CreateBistableTransition},
     typography::text_default,
 };
@@ -119,6 +120,10 @@ pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
                     })
                     .children(
                         Element::<NodeBundle>::new()
+                            .insert(TabGroup {
+                                order: 0,
+                                modal: true,
+                            })
                             .with_styles(style_dialog)
                             .with_child(&children),
                     ),

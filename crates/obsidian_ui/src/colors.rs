@@ -24,3 +24,4 @@ pub const PRIMARY_ACC: Srgba = Srgba::new(0.475, 0.604, 0.733, 1.0);
 pub const DESTRUCTIVE: Srgba = Srgba::new(0.525, 0.341, 0.404, 1.0);
 pub const DESTRUCTIVE_ACC: Srgba = Srgba::new(0.733, 0.475, 0.612, 1.0);
 pub const TRANSPARENT: Srgba = Srgba::new(0.0, 0.0, 0.0, 0.0);
+pub const FOCUS: Srgba = Srgba::new(0.055, 0.647, 0.914, 0.15);

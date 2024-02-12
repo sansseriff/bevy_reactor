@@ -1,3 +1,8 @@
+use crate::{
+    focus::{KeyPressEvent, TabIndex},
+    hooks::CreateFocusSignal,
+    RoundedCorners,
+};
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
@@ -9,7 +14,6 @@ use bevy::{
 use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
-// use bevy_tabindex::TabIndex;
 
 use crate::{colors, materials::RoundedRectMaterial, size::Size};
 
@@ -50,6 +54,12 @@ pub struct ButtonProps {
 
     /// Callback called when clicked
     pub on_click: Option<Callback>,
+
+    /// The tab index of the button (default 0).
+    pub tab_index: i32,
+
+    /// Which corners to render rounded.
+    pub corners: RoundedCorners,
 }
 
 fn style_button(ss: &mut StyleBuilder) {
@@ -79,19 +89,21 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
     let variant = cx.props.variant;
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
+    let focused = cx.create_focus_signal(id);
 
     let disabled = cx.props.disabled;
     let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
 
     let size = cx.props.size;
 
+    let radius = cx.props.corners.to_vec(5.0);
     let mut ui_materials = cx
         .world_mut()
         .get_resource_mut::<Assets<RoundedRectMaterial>>()
         .unwrap();
     let material = ui_materials.add(RoundedRectMaterial {
         color: colors::U3.into(),
-        radius: Vec4::new(4., 4., 4., 4.),
+        radius,
     });
 
     Element::<NodeBundle>::for_entity(id)
@@ -104,7 +116,7 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
             cx.props.styles.clone(),
         ))
         .insert((
-            // TabIndex(0),
+            TabIndex(cx.props.tab_index),
             AccessibilityNode::from(NodeBuilder::new(Role::Button)),
             {
                 let on_click = cx.props.on_click;
@@ -142,6 +154,22 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
                     pressed.set(world, false);
                 }
             }),
+            On::<KeyPressEvent>::run({
+                let on_click = cx.props.on_click;
+                move |world: &mut World| {
+                    if !disabled.get(world) {
+                        let mut event = world
+                            .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                            .unwrap();
+                        if event.key_code == KeyCode::Return || event.key_code == KeyCode::Space {
+                            event.stop_propagation();
+                            if let Some(on_click) = on_click {
+                                world.run_callback(on_click, ());
+                            }
+                        }
+                    }
+                }
+            }),
         ))
         .children((
             Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
@@ -167,6 +195,22 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
                         .unwrap();
                     let material = ui_materials.get_mut(material.clone()).unwrap();
                     material.color = LinearRgba::from(color).into();
+                })
+                .create_effect(move |cx, entt| {
+                    let is_focused = focused.get(cx);
+                    let mut entt = cx.world_mut().entity_mut(entt);
+                    match is_focused {
+                        true => {
+                            entt.insert(Outline {
+                                color: colors::FOCUS.into(),
+                                offset: ui::Val::Px(2.0),
+                                width: ui::Val::Px(2.0),
+                            });
+                        }
+                        false => {
+                            entt.remove::<Outline>();
+                        }
+                    };
                 }),
             cx.props.children.clone(),
         ))

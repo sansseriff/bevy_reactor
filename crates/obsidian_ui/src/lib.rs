@@ -20,12 +20,16 @@ pub mod hooks;
 
 /// Module containing custom materials.
 pub mod materials;
+pub use materials::RoundedCorners;
 
 /// Module containing standard sizes.
 pub mod size;
 
 /// Module of utilities for embedding a 3D viewport in the 2D UI.
 pub mod viewport;
+
+/// Utilities for tabbing between widgets.
+pub mod focus;
 
 /// Standard styles for fonts.
 pub mod typography;
@@ -40,6 +44,7 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             hooks::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
+            focus::KeyboardInputPlugin,
         ));
     }
 }

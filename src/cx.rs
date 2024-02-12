@@ -480,6 +480,11 @@ impl<'p, 'w> Rcx<'p, 'w> {
             tracking: RefCell::new(tracking),
         }
     }
+
+    /// Access to immutable world from reactive context.
+    pub fn world(&self) -> &World {
+        self.world
+    }
 }
 
 impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {

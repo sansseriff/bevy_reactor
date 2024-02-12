@@ -6,12 +6,18 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_color::Luminance;
+use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
 
-use crate::colors;
+use crate::{
+    colors,
+    focus::{KeyPressEvent, TabIndex},
+    hooks::CreateFocusSignal,
+    materials::RoundedRectMaterial,
+    RoundedCorners,
+};
 
 /// Checkbox properties
 #[derive(Default)]
@@ -30,6 +36,9 @@ pub struct CheckboxProps {
 
     /// Callback called when clicked
     pub on_change: Option<Callback<bool>>,
+
+    /// The tab index of the button (default 0).
+    pub tab_index: i32,
 }
 
 fn style_checkbox(ss: &mut StyleBuilder) {
@@ -70,22 +79,32 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
     let id = cx.create_entity();
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
+    let focused = cx.create_focus_signal(id);
 
     let disabled = cx.props.disabled;
     let checked = cx.props.checked;
+
+    let mut ui_materials = cx
+        .world_mut()
+        .get_resource_mut::<Assets<RoundedRectMaterial>>()
+        .unwrap();
+    let material = ui_materials.add(RoundedRectMaterial {
+        color: colors::U3.into(),
+        radius: RoundedCorners::All.to_vec(8.0),
+    });
 
     Element::<NodeBundle>::for_entity(id)
         .named("checkbox")
         .with_styles((style_checkbox, cx.props.styles.clone()))
         .insert((
-            // TabIndex(0),
+            TabIndex(cx.props.tab_index),
             AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
             {
-                let on_click = cx.props.on_change;
+                let on_change = cx.props.on_change;
                 On::<Pointer<Click>>::run(move |world: &mut World| {
                     if !disabled.get(world) {
                         let next_checked = checked.get(world);
-                        if let Some(on_click) = on_click {
+                        if let Some(on_click) = on_change {
                             world.run_callback(on_click, !next_checked);
                         }
                     }
@@ -117,11 +136,29 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
                     pressed.set(world, false);
                 }
             }),
+            On::<KeyPressEvent>::run({
+                let on_change = cx.props.on_change;
+                move |world: &mut World| {
+                    if !disabled.get(world) {
+                        let mut event = world
+                            .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                            .unwrap();
+                        if event.key_code == KeyCode::Return || event.key_code == KeyCode::Space {
+                            event.stop_propagation();
+                            let next_checked = checked.get(world);
+                            if let Some(on_click) = on_change {
+                                world.run_callback(on_click, !next_checked);
+                            }
+                        }
+                    }
+                }
+            }),
         ))
         .children((
-            Element::<NodeBundle>::new()
+            Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                 .with_styles(style_checkbox_border)
-                .create_effect(move |cx, ent| {
+                .insert(material.clone())
+                .create_effect(move |cx, _| {
                     let is_checked = checked.get(cx);
                     let is_pressed = pressed.get(cx);
                     let is_hovering = hovering.get(cx);
@@ -133,8 +170,30 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
                         (false, false, true) => colors::U1.lighter(0.002),
                         (false, false, false) => colors::U1,
                     };
-                    let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                    bg.0 = color.into();
+                    let mut ui_materials = cx
+                        .world_mut()
+                        .get_resource_mut::<Assets<RoundedRectMaterial>>()
+                        .unwrap();
+                    let material = ui_materials.get_mut(material.clone()).unwrap();
+                    material.color = LinearRgba::from(color).into();
+                    // let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                    // bg.0 = color.into();
+                })
+                .create_effect(move |cx, entt| {
+                    let is_focused = focused.get(cx);
+                    let mut entt = cx.world_mut().entity_mut(entt);
+                    match is_focused {
+                        true => {
+                            entt.insert(Outline {
+                                color: colors::FOCUS.into(),
+                                offset: ui::Val::Px(2.0),
+                                width: ui::Val::Px(2.0),
+                            });
+                        }
+                        false => {
+                            entt.remove::<Outline>();
+                        }
+                    };
                 })
                 .children(cond(
                     move |cx| checked.get(cx),
