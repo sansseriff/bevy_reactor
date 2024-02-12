@@ -236,6 +236,7 @@ pub(crate) fn handle_text_input(
     }
 }
 
+/// Plugin for handling keyboard input.
 pub struct KeyboardInputPlugin;
 
 impl Plugin for KeyboardInputPlugin {

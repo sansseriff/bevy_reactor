@@ -1,5 +1,3 @@
-// TODO: This belongs in Grackle, not Egret
-
 /// Standard sizes for buttons and other widgets that have size variants.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 #[allow(missing_docs)]

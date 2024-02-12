@@ -1,17 +1,19 @@
 # TODO
 
-* Memo Signals
+* Text input.
+* Change tab handling to use bubbled events.
+* Dialogs should focus.
+* ESC to close dialog.
+* Rounded corners for sliders.
+* Memoized Signals
 * Verify Razing / Despawning doesn't leak
-* Reactive focus hook
 * No-arg .bind().
 * Cleanup Handlers - on_cleanup();
 * Scoped values
 * Access to owner entity
 * use_element_rect hook - needed for popup menus
-* Animated transitions / spring
 * Gizmo
-* Focus keys.
-* ESC to close dialog.
+* Composite buffers.
 
 # StyleBuilder
 
@@ -22,12 +24,10 @@
 
 * Checkbox (finish rounded corners)
 * Radio
-* Button Group (Needed rounded corners first)
 * DisclosureTriangle - with transition
-* Flex
 * Multi-layered nine-patch button.
 * Menu
-* Focus Outlines
+* Focus Outlines (improve appearance)
 * Modal animation.
 
 ## Notes on fine-grained
