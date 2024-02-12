@@ -5,7 +5,7 @@ use bevy::{
         component::Component,
         entity::Entity,
         event::{Event, EventReader, EventWriter},
-        query::{With, Without},
+        query::{Added, With, Without},
         system::{Query, Res, ResMut, SystemParam},
     },
     hierarchy::{Children, Parent},
@@ -67,6 +67,10 @@ pub struct TabGroup {
     /// of this group. If false, then tabbing within the group will cycle through all non-modal
     /// tab groups.
     pub modal: bool,
+
+    /// If true, then the group will automatically focus the first focusable entity when this
+    /// component is added to the entity.
+    pub auto_focus: bool,
 }
 
 /// An injectable object that provides tab navigation functionality.
@@ -94,7 +98,7 @@ impl TabNavigation<'_, '_> {
     /// * `focus`: The current focus entity. If `None`, then the first focusable entity is returned,
     ///    unless `reverse` is true, in which case the last focusable entity is returned.
     /// * `reverse`: Whether to navigate in reverse order.
-    pub fn navigate(&self, focus: Option<Entity>, reverse: bool) -> Option<Entity> {
+    fn navigate(&self, focus: Option<Entity>, reverse: bool) -> Option<Entity> {
         // If there are no tab groups, then there are no focusable entities.
         if self.tabgroup.is_empty() {
             warn!("No tab groups found");
@@ -113,13 +117,36 @@ impl TabNavigation<'_, '_> {
             entity = self.parent.get(ent).ok().map(|parent| parent.get());
         }
 
+        self.navigate_in_group(tabgroup, focus, reverse)
+    }
+
+    /// Automatically focus the first focusable entity in the given tab group.
+    fn auto_focus(&self, tabgroup_entity: Entity) -> Option<Entity> {
+        if let Ok((_, tabgroup, _)) = self.tabgroup.get(tabgroup_entity) {
+            if tabgroup.auto_focus {
+                return self.navigate_in_group(Some((tabgroup_entity, tabgroup)), None, false);
+            }
+        }
+        None
+    }
+
+    fn navigate_in_group(
+        &self,
+        tabgroup: Option<(Entity, &TabGroup)>,
+        focus: Option<Entity>,
+        reverse: bool,
+    ) -> Option<Entity> {
         // List of all focusable entities found.
         let mut focusable: Vec<(Entity, TabIndex)> = Vec::with_capacity(self.tabindex.iter().len());
 
         match tabgroup {
             Some((tg_entity, tg)) if tg.modal => {
                 // We're in a modal tab group, then gather all tab indices in that group.
-                self.gather_focusable(&mut focusable, tg_entity);
+                if let Ok((_, _, children)) = self.tabgroup.get(tg_entity) {
+                    for child in children.iter() {
+                        self.gather_focusable(&mut focusable, *child);
+                    }
+                }
             }
             _ => {
                 // Otherwise, gather all tab indices in all non-modal tab groups.
@@ -158,6 +185,7 @@ impl TabNavigation<'_, '_> {
         focusable.get(next).map(|(e, _)| e).copied()
     }
 
+    /// Gather all focusable entities in tree order.
     fn gather_focusable(&self, out: &mut Vec<(Entity, TabIndex)>, parent: Entity) {
         if let Ok((entity, tabindex, children)) = self.tabindex.get(parent) {
             if let Some(tabindex) = tabindex {
@@ -192,7 +220,17 @@ fn compare_tab_indices(a: &(Entity, TabIndex), b: &(Entity, TabIndex)) -> std::c
     a.1 .0.cmp(&b.1 .0)
 }
 
-pub(crate) fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Focus>) {
+fn handle_auto_focus(
+    nav: TabNavigation,
+    mut focus: ResMut<Focus>,
+    query: Query<Entity, Added<TabGroup>>,
+) {
+    if let Some(entity) = query.iter().next() {
+        focus.0 = nav.auto_focus(entity);
+    }
+}
+
+fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Focus>) {
     if key.just_pressed(KeyCode::Tab) {
         let next = nav.navigate(
             focus.0,
@@ -204,7 +242,7 @@ pub(crate) fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus
     }
 }
 
-pub(crate) fn handle_text_input(
+fn handle_text_input(
     mut key_events: EventReader<KeyboardInput>,
     mut char_events: EventReader<ReceivedCharacter>,
     key: Res<Input<KeyCode>>,
@@ -247,6 +285,6 @@ impl Plugin for KeyboardInputPlugin {
         ))
         .add_event::<KeyPressEvent>()
         .add_event::<KeyCharEvent>()
-        .add_systems(Update, (handle_tab, handle_text_input));
+        .add_systems(Update, (handle_auto_focus, handle_tab, handle_text_input));
     }
 }

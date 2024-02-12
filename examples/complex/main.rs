@@ -104,11 +104,11 @@ fn style_log_inner(ss: &mut StyleBuilder) {
         .margin(8);
 }
 
-fn style_log_entry(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex)
-        .justify_content(ui::JustifyContent::SpaceBetween)
-        .align_self(ui::AlignSelf::Stretch);
-}
+// fn style_log_entry(ss: &mut StyleBuilder) {
+//     ss.display(ui::Display::Flex)
+//         .justify_content(ui::JustifyContent::SpaceBetween)
+//         .align_self(ui::AlignSelf::Stretch);
+// }
 
 #[derive(Resource)]
 pub struct PanelWidth(f32);

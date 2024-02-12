@@ -9,7 +9,7 @@ use bevy_reactor::*;
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedTransition},
     colors,
-    focus::TabGroup,
+    focus::{TabGroup, TabNavigation},
     hooks::{BistableTransitionState, CreateBistableTransition},
     typography::text_default,
 };
@@ -123,6 +123,7 @@ pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
                             .insert(TabGroup {
                                 order: 0,
                                 modal: true,
+                                auto_focus: true,
                             })
                             .with_styles(style_dialog)
                             .with_child(&children),
