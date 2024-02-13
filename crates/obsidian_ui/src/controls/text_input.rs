@@ -71,8 +71,8 @@ fn style_text_input_border(ss: &mut StyleBuilder) {
 
 fn style_text_scroll(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
-        .border(1)
-        .border_color(colors::CODE)
+        // .border(1)
+        // .border_color(colors::CODE)
         .overflow(ui::OverflowAxis::Clip)
         .align_self(ui::AlignSelf::Stretch)
         .align_items(ui::AlignItems::Center)
@@ -88,7 +88,7 @@ fn style_text_inner(ss: &mut StyleBuilder) {
 
 fn style_text_cursor(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
-        .background_color(colors::ACCENT)
+        .background_color(colors::TEXT_SELECT)
         .width(2)
         .height(16);
 }
@@ -96,7 +96,7 @@ fn style_text_cursor(ss: &mut StyleBuilder) {
 fn style_text_selection(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
         .border(1)
-        .border_color(colors::ACCENT);
+        .border_color(colors::TEXT_SELECT);
 }
 
 /// Selection state for a text input.
@@ -245,14 +245,24 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                         match event.key_code {
                             KeyCode::Left => {
                                 if sel.cursor > 0 {
-                                    selection.set(world, Selection::single(sel.cursor - 1));
+                                    if event.shift {
+                                        selection
+                                            .set(world, Selection::new(sel.cursor - 1, sel.anchor));
+                                    } else {
+                                        selection.set(world, Selection::single(sel.cursor - 1));
+                                    }
                                     handled = true;
                                 }
                             }
 
                             KeyCode::Right => {
                                 if sel.cursor < text_len {
-                                    selection.set(world, Selection::single(sel.cursor + 1));
+                                    if event.shift {
+                                        selection
+                                            .set(world, Selection::new(sel.cursor + 1, sel.anchor));
+                                    } else {
+                                        selection.set(world, Selection::single(sel.cursor + 1));
+                                    }
                                     handled = true;
                                 }
                             }
@@ -358,6 +368,7 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                 .create_effect(move |cx, entt| {
                     let is_focused = focused.get(cx);
                     let mut entt = cx.world_mut().entity_mut(entt);
+                    // TODO: Don't do this as an outline, do it as an inset border.
                     match is_focused {
                         true => {
                             entt.insert(Outline {
@@ -389,28 +400,6 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                                 },
                                 || Element::<NodeBundle>::new().with_styles(style_text_selection),
                                 || (),
-                            ),
-                            // Text
-                            Element::<TextBundle>::for_entity(text_id).create_effect(
-                                move |cx, elem| {
-                                    let sections = value.map(cx, |s| {
-                                        let mut sections: Vec<TextSection> = Vec::new();
-                                        sections.push(TextSection {
-                                            value: s[..].to_string(),
-                                            style: TextStyle {
-                                                font: font.clone(),
-                                                font_size: 16.0,
-                                                color: colors::FOREGROUND.into(),
-                                            },
-                                        });
-                                        sections
-                                    });
-                                    let mut entt = cx.world_mut().entity_mut(elem);
-                                    if let Some(mut text) = entt.get_mut::<Text>() {
-                                        text.linebreak_behavior = BreakLineOn::NoWrap;
-                                        text.sections = sections;
-                                    }
-                                },
                             ),
                             // Caret
                             Cond::new(
@@ -449,6 +438,28 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                                         })
                                 },
                                 || (),
+                            ),
+                            // Text
+                            Element::<TextBundle>::for_entity(text_id).create_effect(
+                                move |cx, elem| {
+                                    let sections = value.map(cx, |s| {
+                                        let mut sections: Vec<TextSection> = Vec::new();
+                                        sections.push(TextSection {
+                                            value: s[..].to_string(),
+                                            style: TextStyle {
+                                                font: font.clone(),
+                                                font_size: 16.0,
+                                                color: colors::FOREGROUND.into(),
+                                            },
+                                        });
+                                        sections
+                                    });
+                                    let mut entt = cx.world_mut().entity_mut(elem);
+                                    if let Some(mut text) = entt.get_mut::<Text>() {
+                                        text.linebreak_behavior = BreakLineOn::NoWrap;
+                                        text.sections = sections;
+                                    }
+                                },
                             ),
                         )),
                 ),

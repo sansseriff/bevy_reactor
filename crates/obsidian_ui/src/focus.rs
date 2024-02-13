@@ -42,6 +42,9 @@ pub struct KeyPressEvent {
 
     /// Whether this is a repeated key.
     pub repeat: bool,
+
+    /// Whether the shift key is held down.
+    pub shift: bool,
 }
 
 /// A component which indicates that an entity wants to participate in tab navigation.
@@ -250,6 +253,7 @@ fn handle_text_input(
                         target: focus_elt,
                         key_code,
                         repeat: !key.just_pressed(key_code),
+                        shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
                     };
                     press_writer.send(ev);
                 }
