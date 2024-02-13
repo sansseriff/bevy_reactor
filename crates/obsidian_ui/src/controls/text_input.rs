@@ -240,17 +240,18 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                 move |world: &mut World| {
                     if !disabled.get(world) {
                         let mut text_value = value.get_clone(world);
+                        let sel = selection.get(world);
                         let mut event = world
                             .get_resource_mut::<ListenerInput<KeyCharEvent>>()
                             .unwrap();
-                        if event.key >= ' ' && event.key <= '~' {
-                            text_value.push(event.key);
-                            let new_cursor_pos = text_value.len();
+                        if !event.key.is_control() {
+                            text_value.replace_range(sel.range(), &event.key.to_string());
+                            let new_cursor_pos = sel.start() + 1;
                             event.stop_propagation();
                             if let Some(on_change) = on_change {
                                 world.run_callback(on_change, text_value);
+                                selection.set(world, Selection::single(new_cursor_pos));
                             }
-                            selection.set(world, Selection::single(new_cursor_pos));
                         }
                     }
                 }
