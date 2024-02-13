@@ -95,8 +95,7 @@ fn style_text_cursor(ss: &mut StyleBuilder) {
 
 fn style_text_selection(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
-        .border(1)
-        .border_color(colors::TEXT_SELECT);
+        .background_color(colors::TEXT_SELECT);
 }
 
 /// Selection state for a text input.
@@ -168,6 +167,31 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
     let material = ui_materials.add(RoundedRectMaterial {
         color: colors::U1.into(),
         radius: RoundedCorners::All.to_vec(5.0),
+    });
+
+    // Derived signal that computes the selection rectangles.
+    let selection_rects = cx.create_derived(move |cx| {
+        let selection = selection.get(cx);
+        let mut rects = Vec::<Rect>::new();
+        if !focused.get(cx) {
+            return rects;
+        }
+        if let Some(text_layout) = cx.use_component::<TextLayoutInfo>(text_id) {
+            if !selection.is_empty() {
+                let start = selection.start();
+                let end = selection.end();
+                let start_glyph = &text_layout.glyphs[start];
+                let end_glyph = &text_layout.glyphs[end - 1];
+                rects.push(Rect::new(
+                    start_glyph.position.x * 0.5,
+                    (start_glyph.position.y - start_glyph.size.y)
+                        .min(end_glyph.position.y - end_glyph.size.y),
+                    end_glyph.position.x * 0.5 + end_glyph.size.x,
+                    start_glyph.position.y.max(end_glyph.position.y),
+                ));
+            }
+        }
+        rects
     });
 
     Element::<NodeBundle>::for_entity(id)
@@ -391,15 +415,23 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                     Element::<NodeBundle>::new()
                         .with_styles(style_text_inner)
                         .children((
-                            // Selection rect
-                            Cond::new(
-                                move |cx| {
-                                    !selection.get(cx).is_empty()
-                                        && focused.get(cx)
-                                        && !disabled.get(cx)
+                            // Selection rects
+                            For::index(
+                                move |cx| selection_rects.get_clone(cx).into_iter(),
+                                move |rect, _| {
+                                    Element::<NodeBundle>::new().with_styles((
+                                        style_text_selection,
+                                        {
+                                            let rect = *rect;
+                                            move |ss: &mut StyleBuilder| {
+                                                ss.left(ui::Val::Px(rect.min.x))
+                                                    .top(ui::Val::Px(rect.min.y))
+                                                    .width(ui::Val::Px(rect.width()))
+                                                    .height(ui::Val::Px(rect.height()));
+                                            }
+                                        },
+                                    ))
                                 },
-                                || Element::<NodeBundle>::new().with_styles(style_text_selection),
-                                || (),
                             ),
                             // Caret
                             Cond::new(
