@@ -2,8 +2,8 @@
 
 * Text input.
 * Change tab handling to use bubbled events.
-* Dialogs should focus.
 * ESC to close dialog.
+* Restore focus when dialog closes.
 * Rounded corners for sliders.
 * Memoized Signals
 * Verify Razing / Despawning doesn't leak

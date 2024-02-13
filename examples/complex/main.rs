@@ -209,6 +209,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             button.bind(ButtonProps {
                                 children: "Close".into(),
                                 variant: Signal::Constant(ButtonVariant::Primary),
+                                autofocus: true,
                                 on_click: Some(cx.create_callback(move |cx| {
                                     checked_1.set(cx, false);
                                 })),

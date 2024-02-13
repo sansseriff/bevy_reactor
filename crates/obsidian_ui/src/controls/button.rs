@@ -1,5 +1,5 @@
 use crate::{
-    focus::{KeyPressEvent, TabIndex},
+    focus::{AutoFocus, KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
     RoundedCorners,
 };
@@ -60,6 +60,9 @@ pub struct ButtonProps {
 
     /// Which corners to render rounded.
     pub corners: RoundedCorners,
+
+    /// If true, set focus to this button when it's added to the UI.
+    pub autofocus: bool,
 }
 
 fn style_button(ss: &mut StyleBuilder) {
@@ -171,6 +174,7 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
                 }
             }),
         ))
+        .insert_if(cx.props.autofocus, AutoFocus)
         .children((
             Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                 .insert(material.clone())

@@ -56,6 +56,10 @@ pub struct KeyPressEvent {
 #[derive(Debug, Default, Component, Copy, Clone)]
 pub struct TabIndex(pub i32);
 
+/// Indicates that this widget should automatically receive focus when it's added.
+#[derive(Debug, Default, Component, Copy, Clone)]
+pub struct AutoFocus;
+
 /// A component used to mark a tree of entities as containing tabbable elements.
 #[derive(Debug, Default, Component, Copy, Clone)]
 pub struct TabGroup {
@@ -67,10 +71,6 @@ pub struct TabGroup {
     /// of this group. If false, then tabbing within the group will cycle through all non-modal
     /// tab groups.
     pub modal: bool,
-
-    /// If true, then the group will automatically focus the first focusable entity when this
-    /// component is added to the entity.
-    pub auto_focus: bool,
 }
 
 /// An injectable object that provides tab navigation functionality.
@@ -118,16 +118,6 @@ impl TabNavigation<'_, '_> {
         }
 
         self.navigate_in_group(tabgroup, focus, reverse)
-    }
-
-    /// Automatically focus the first focusable entity in the given tab group.
-    fn auto_focus(&self, tabgroup_entity: Entity) -> Option<Entity> {
-        if let Ok((_, tabgroup, _)) = self.tabgroup.get(tabgroup_entity) {
-            if tabgroup.auto_focus {
-                return self.navigate_in_group(Some((tabgroup_entity, tabgroup)), None, false);
-            }
-        }
-        None
     }
 
     fn navigate_in_group(
@@ -221,12 +211,11 @@ fn compare_tab_indices(a: &(Entity, TabIndex), b: &(Entity, TabIndex)) -> std::c
 }
 
 fn handle_auto_focus(
-    nav: TabNavigation,
     mut focus: ResMut<Focus>,
-    query: Query<Entity, Added<TabGroup>>,
+    query: Query<Entity, (With<TabIndex>, Added<AutoFocus>)>,
 ) {
     if let Some(entity) = query.iter().next() {
-        focus.0 = nav.auto_focus(entity);
+        focus.0 = Some(entity);
     }
 }
 

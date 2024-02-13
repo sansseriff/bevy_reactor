@@ -126,6 +126,16 @@ impl<B: Bundle + Default> Element<B> {
         self
     }
 
+    /// Add a static bundle to the element, if a condition is true.
+    pub fn insert_if<T: Bundle>(mut self, cond: bool, bundle: T) -> Self {
+        if cond {
+            self.add_effect(Box::new(InsertBundleEffect {
+                bundle: Some(bundle),
+            }));
+        }
+        self
+    }
+
     /// Add a computed bundle to the element.
     pub fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Rcx) -> T>(
         mut self,
