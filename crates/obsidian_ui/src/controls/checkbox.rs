@@ -1,7 +1,7 @@
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
+        AccessibilityNode, Focus,
     },
     prelude::*,
     ui,
@@ -102,6 +102,8 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
             {
                 let on_change = cx.props.on_change;
                 On::<Pointer<Click>>::run(move |world: &mut World| {
+                    let mut focus = world.get_resource_mut::<Focus>().unwrap();
+                    focus.0 = Some(id);
                     if !disabled.get(world) {
                         let next_checked = checked.get(world);
                         if let Some(on_click) = on_change {
@@ -143,7 +145,10 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
                         let mut event = world
                             .get_resource_mut::<ListenerInput<KeyPressEvent>>()
                             .unwrap();
-                        if event.key_code == KeyCode::Return || event.key_code == KeyCode::Space {
+                        if !event.repeat
+                            && (event.key_code == KeyCode::Return
+                                || event.key_code == KeyCode::Space)
+                        {
                             event.stop_propagation();
                             let next_checked = checked.get(world);
                             if let Some(on_click) = on_change {

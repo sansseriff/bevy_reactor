@@ -25,7 +25,7 @@ pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
 pub(crate) struct MutableNextCell(pub(crate) Option<Box<dyn Any + Send + Sync + 'static>>);
 
 /// Contains a reference to a reactive mutable variable.
-#[derive(Copy)]
+#[derive(PartialEq)]
 pub struct Mutable<T> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<T>,
@@ -38,12 +38,10 @@ impl<T> Mutable<T> {
     }
 }
 
+impl<T> Copy for Mutable<T> {}
 impl<T> Clone for Mutable<T> {
     fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            marker: self.marker,
-        }
+        *self
     }
 }
 
@@ -53,7 +51,7 @@ where
 {
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
-    pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&mut self, cx: &mut R, updater: F) {
+    pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&self, cx: &mut R, updater: F) {
         let value = cx.world_mut().get_mut::<MutableCell>(self.id).unwrap();
         let inner = value.map_unchanged(|v| v.0.downcast_mut::<T>().unwrap());
         (updater)(inner);
@@ -64,6 +62,11 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Send + Sync + 'static,
 {
+    /// Returns a signal for this [`Mutable`] with Copy semantics.
+    pub fn signal(&self) -> Signal<T> {
+        Signal::Mutable(*self)
+    }
+
     /// Get a reference to the value of this [`Mutable`].
     ///
     /// Arguments:
@@ -77,16 +80,11 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Copy + Send + Sync + 'static,
 {
-    /// Returns a getter for this [`Mutable`] with Copy semantics.
-    pub fn signal(&self) -> Signal<T> {
-        Signal::Mutable(*self)
-    }
-
     /// Get the value of this [`Mutable`] with Copy semantics.
     ///
     /// Arguments:
     /// * `cx`: The reactive context.
-    pub fn get<R: ReadMutable>(&self, cx: &mut R) -> T {
+    pub fn get<R: ReadMutable>(&self, cx: &R) -> T {
         cx.read_mutable(self)
     }
 
@@ -104,11 +102,6 @@ impl<T> Mutable<T>
 where
     T: PartialEq + Clone + Send + Sync + 'static,
 {
-    /// Returns a getter for this [`Mutable`] with Clone semantics.
-    pub fn signal_clone(&self) -> Signal<T> {
-        Signal::Mutable(self.clone())
-    }
-
     /// Get the value of this [`Mutable`] with Clone semantics.
     ///
     /// Arguments:
@@ -260,8 +253,8 @@ mod tests {
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
         let mutable = cx.create_mutable("Hello".to_string());
-        let reader = mutable.signal_clone();
-        let reader2 = cx.create_mutable::<i32>(0).signal_clone();
+        let reader = mutable.signal();
+        let reader2 = cx.create_mutable::<i32>(0).signal();
 
         // Check initial values
         assert_eq!(reader.get_clone(&cx), "Hello".to_string());

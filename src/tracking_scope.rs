@@ -66,7 +66,7 @@ impl TrackingScope {
         );
     }
 
-    /// Convenience method for adding a resource dependency.
+    /// Convenience method for adding a component dependency.
     pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
         self.component_deps.insert((
             entity,
@@ -75,6 +75,11 @@ impl TrackingScope {
                 .component_id::<C>()
                 .expect("Unknown component type"),
         ));
+    }
+
+    /// Convenience method for adding a component dependency by component id.
+    pub(crate) fn track_component_id(&mut self, entity: Entity, component: ComponentId) {
+        self.component_deps.insert((entity, component));
     }
 
     /// Returns true if any of the dependencies of this scope have been updated since

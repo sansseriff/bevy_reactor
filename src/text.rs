@@ -91,7 +91,6 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
                         text: Text::from_section(text, TextStyle { ..default() }),
                         ..default()
                     },
-                    BorderColor(Color::WHITE),
                     TextStyleChanged,
                 ))
                 .id(),

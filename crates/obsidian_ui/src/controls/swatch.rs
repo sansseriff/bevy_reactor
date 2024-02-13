@@ -39,7 +39,7 @@ pub fn swatch(cx: &mut Cx<SwatchProps>) -> Element<NodeBundle> {
     let size = cx.props.size;
 
     Element::<NodeBundle>::new()
-        .named("button")
+        .named("color_swatch")
         .with_styles((
             style_swatch,
             move |ss: &mut StyleBuilder| {

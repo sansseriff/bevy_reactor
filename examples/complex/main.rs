@@ -12,8 +12,9 @@ use obsidian_ui::{
     colors,
     controls::{
         button, checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch,
-        ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps, DialogHeaderProps,
-        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
+        text_input, ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps,
+        DialogHeaderProps, DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
+        TextInputProps,
     },
     focus::TabGroup,
     size::Size,
@@ -171,6 +172,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
     let checked_1 = cx.create_mutable(false);
     let checked_2 = cx.create_mutable(true);
     let red = cx.create_mutable::<f32>(128.);
+    let name = cx.create_mutable("filename.txt".to_string());
 
     let rgb_color = cx.create_derived(move |cx| {
         let red = red.get(cx);
@@ -297,6 +299,13 @@ fn ui_main(cx: &mut Cx) -> impl View {
                             }),
                         )),
                     color_edit.bind(()),
+                    text_input.bind(TextInputProps {
+                        value: name.signal(),
+                        on_change: Some(cx.create_callback(move |cx: &mut Cx<String>| {
+                            name.set_clone(cx, cx.props.clone());
+                        })),
+                        ..default()
+                    }),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
             splitter.bind(SplitterProps {

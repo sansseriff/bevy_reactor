@@ -256,16 +256,24 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         entity
     }
 
-    // /// Return a reference to the Component `C` on the given entity.
-    // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-    //     match self.bc.world.get_entity(entity) {
-    //         Some(c) => {
-    //             self.add_tracked_component::<C>(entity);
-    //             c.get::<C>()
-    //         }
-    //         None => None,
-    //     }
-    // }
+    /// Return a reference to the Component `C` on the given entity.
+    pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        let component = self
+            .world
+            .components()
+            .component_id::<C>()
+            .expect("Unknown component type");
+
+        match self.world.get_entity(entity) {
+            Some(c) => {
+                self.tracking
+                    .borrow_mut()
+                    .track_component_id(entity, component);
+                c.get::<C>()
+            }
+            None => None,
+        }
+    }
 
     // /// Return a reference to the Component `C` on the given entity. This version does not
     // /// add the component to the tracking scope, and is intended for components that update

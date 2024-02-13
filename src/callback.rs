@@ -34,10 +34,17 @@ pub(crate) struct CallbackFnMutCell<P> {
 }
 
 /// Contains a reference to a callback. `P` is the type of the props.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(PartialEq)]
 pub struct Callback<P = ()> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<P>,
+}
+
+impl<P> Copy for Callback<P> {}
+impl<P> Clone for Callback<P> {
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 /// An event which will call a callback with the given props.

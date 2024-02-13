@@ -39,6 +39,9 @@ pub struct KeyPressEvent {
 
     /// Key code of the pressed key.
     pub key_code: KeyCode,
+
+    /// Whether this is a repeated key.
+    pub repeat: bool,
 }
 
 /// A component which indicates that an entity wants to participate in tab navigation.
@@ -242,10 +245,11 @@ fn handle_text_input(
     if let Some(focus_elt) = focus.0 {
         for ev in key_events.read() {
             if let Some(key_code) = ev.key_code {
-                if ev.state == ButtonState::Pressed && key.just_pressed(key_code) {
+                if ev.state == ButtonState::Pressed {
                     let ev = KeyPressEvent {
                         target: focus_elt,
                         key_code,
+                        repeat: !key.just_pressed(key_code),
                     };
                     press_writer.send(ev);
                 }

@@ -3,7 +3,7 @@ use crate::{derived::ReadDerived, mutable::ReadMutable, Derived, Mutable};
 /// What type of reactive node underlies this signal. "Signals" in this framework represent
 /// any kind of reactive data source, including mutable variables, derived signals, and memoized
 /// computations.
-#[derive(Copy, Clone)]
+#[derive(Copy)]
 pub enum Signal<T> {
     /// A mutable variable that can be read and written to.
     Mutable(Mutable<T>),
@@ -17,6 +17,20 @@ pub enum Signal<T> {
 
     /// A constant value, mainly useful for establishing defaults.
     Constant(T),
+}
+
+impl<T> Clone for Signal<T>
+where
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        match self {
+            Signal::Mutable(mutable) => Signal::Mutable(*mutable),
+            Signal::Derived(derived) => Signal::Derived(*derived),
+            Signal::Memo => Signal::Memo,
+            Signal::Constant(value) => Signal::Constant(value.clone()),
+        }
+    }
 }
 
 impl<T> Signal<T>

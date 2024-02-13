@@ -6,7 +6,7 @@ use crate::{
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
+        AccessibilityNode, Focus,
     },
     prelude::*,
     ui,
@@ -44,7 +44,7 @@ pub struct ButtonProps {
     pub size: Size,
 
     /// Whether the button is disabled.
-    pub disabled: Option<Signal<bool>>,
+    pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
     pub children: ViewHandle,
@@ -95,7 +95,6 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
     let focused = cx.create_focus_signal(id);
 
     let disabled = cx.props.disabled;
-    let disabled = cx.create_derived(move |cc| disabled.map(|s| s.get(cc)).unwrap_or(false));
 
     let size = cx.props.size;
 
@@ -124,6 +123,8 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
             {
                 let on_click = cx.props.on_click;
                 On::<Pointer<Click>>::run(move |world: &mut World| {
+                    let mut focus = world.get_resource_mut::<Focus>().unwrap();
+                    focus.0 = Some(id);
                     if !disabled.get(world) {
                         if let Some(on_click) = on_click {
                             world.run_callback(on_click, ());
@@ -164,7 +165,10 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
                         let mut event = world
                             .get_resource_mut::<ListenerInput<KeyPressEvent>>()
                             .unwrap();
-                        if event.key_code == KeyCode::Return || event.key_code == KeyCode::Space {
+                        if !event.repeat
+                            && (event.key_code == KeyCode::Return
+                                || event.key_code == KeyCode::Space)
+                        {
                             event.stop_propagation();
                             if let Some(on_click) = on_click {
                                 world.run_callback(on_click, ());

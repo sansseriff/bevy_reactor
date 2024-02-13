@@ -19,18 +19,16 @@ impl<R, F: Fn(&mut Rcx) -> R> DerivedFnRef<R> for F {
 pub(crate) struct DerivedCell<R>(pub(crate) Arc<dyn DerivedFnRef<R> + Send + Sync>);
 
 /// A [`Derived`] is a readonly value that is computed from other signals.
-#[derive(Copy, PartialEq)]
+#[derive(PartialEq)]
 pub struct Derived<R> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<R>,
 }
 
+impl<T> Copy for Derived<T> {}
 impl<T> Clone for Derived<T> {
     fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            marker: self.marker,
-        }
+        *self
     }
 }
 
