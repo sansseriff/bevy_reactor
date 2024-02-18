@@ -92,7 +92,7 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
     let variant = cx.props.variant;
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
-    let focused = cx.create_focus_signal(id);
+    let focused = cx.create_focus_visible_signal(id);
 
     let disabled = cx.props.disabled;
 

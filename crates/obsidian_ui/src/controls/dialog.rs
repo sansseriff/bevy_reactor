@@ -2,14 +2,14 @@ use bevy::{prelude::*, ui};
 use bevy_color::{Alpha, Luminance};
 use bevy_mod_picking::{
     events::{Click, Pointer},
-    prelude::On,
+    prelude::{ListenerInput, On},
 };
 use bevy_reactor::*;
 
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedTransition},
     colors,
-    focus::TabGroup,
+    focus::{KeyPressEvent, TabGroup},
     hooks::{BistableTransitionState, CreateBistableTransition},
     typography::text_default,
 };
@@ -93,14 +93,27 @@ pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
             Portal::new(
                 Element::<NodeBundle>::new()
                     .with_styles((style_dialog_overlay, text_default))
-                    .insert(
+                    .insert((
                         // Click on backdrop sends close signal.
                         On::<Pointer<Click>>::run(move |world: &mut World| {
                             if let Some(on_close) = on_close {
                                 world.run_callback(on_close, ());
                             }
                         }),
-                    )
+                        On::<KeyPressEvent>::run({
+                            move |world: &mut World| {
+                                let mut event = world
+                                    .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                                    .unwrap();
+                                if !event.repeat && event.key_code == KeyCode::Escape {
+                                    event.stop_propagation();
+                                    if let Some(on_close) = on_close {
+                                        world.run_callback(on_close, ());
+                                    }
+                                }
+                            }
+                        }),
+                    ))
                     .create_effect(move |cx, ent| {
                         let state = state.get(cx);
                         let mut entt = cx.world_mut().entity_mut(ent);

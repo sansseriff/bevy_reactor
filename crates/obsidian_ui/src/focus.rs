@@ -6,7 +6,7 @@ use bevy::{
         entity::Entity,
         event::{Event, EventReader, EventWriter},
         query::{Added, With, Without},
-        system::{Query, Res, ResMut, SystemParam},
+        system::{Query, Res, ResMut, Resource, SystemParam},
     },
     hierarchy::{Children, Parent},
     input::{
@@ -65,6 +65,12 @@ pub struct TabIndex(pub i32);
 /// Indicates that this widget should automatically receive focus when it's added.
 #[derive(Debug, Default, Component, Copy, Clone)]
 pub struct AutoFocus;
+
+/// Resource that controls whether the focus indicators are visible or not. Generally
+/// these are only visible after the Tab key has been pressed, and become hidden when
+/// the user interacts with the UI in with the pointing device.
+#[derive(Debug, Default, Resource, Copy, Clone)]
+pub struct FocusVisible(pub bool);
 
 /// A component used to mark a tree of entities as containing tabbable elements.
 #[derive(Debug, Default, Component, Copy, Clone)]
@@ -225,7 +231,12 @@ fn handle_auto_focus(
     }
 }
 
-fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Focus>) {
+fn handle_tab(
+    nav: TabNavigation,
+    key: Res<Input<KeyCode>>,
+    mut focus: ResMut<Focus>,
+    mut visible: ResMut<FocusVisible>,
+) {
     if key.just_pressed(KeyCode::Tab) {
         let next = nav.navigate(
             focus.0,
@@ -233,6 +244,7 @@ fn handle_tab(nav: TabNavigation, key: Res<Input<KeyCode>>, mut focus: ResMut<Fo
         );
         if next.is_some() {
             focus.0 = next;
+            visible.0 = true;
         }
     }
 }
@@ -280,6 +292,7 @@ impl Plugin for KeyboardInputPlugin {
             EventListenerPlugin::<KeyCharEvent>::default(),
             EventListenerPlugin::<KeyPressEvent>::default(),
         ))
+        .init_resource::<FocusVisible>()
         .add_event::<KeyPressEvent>()
         .add_event::<KeyCharEvent>()
         .add_systems(Update, (handle_auto_focus, handle_tab, handle_text_input));

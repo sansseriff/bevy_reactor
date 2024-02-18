@@ -79,7 +79,7 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
     let id = cx.create_entity();
     let pressed = cx.create_mutable::<bool>(false);
     let hovering = cx.create_hover_signal(id);
-    let focused = cx.create_focus_signal(id);
+    let focused = cx.create_focus_visible_signal(id);
 
     let disabled = cx.props.disabled;
     let checked = cx.props.checked;

@@ -5,6 +5,8 @@ use bevy::{
 };
 use bevy_reactor::{Cx, RunContextRead, RunContextSetup, Signal};
 
+use crate::focus::FocusVisible;
+
 /// True if the given entity is a descendant of the given ancestor.
 fn is_descendant(world: &World, e: &Entity, ancestor: &Entity) -> bool {
     let mut ha = e;
@@ -26,6 +28,13 @@ pub trait CreateFocusSignal {
 
     /// Signal that returns true when the the target, or a descendant, has focus.
     fn create_focus_within_signal(&mut self, target: Entity) -> Signal<bool>;
+
+    /// Signal that returns true when the the target has focus and the focus ring is visible.
+    fn create_focus_visible_signal(&mut self, target: Entity) -> Signal<bool>;
+
+    /// Signal that returns true when the the target, or a descendant, has focus, and the
+    /// focus ring is visible.
+    fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool>;
 }
 
 impl<'p, 'w, Props> CreateFocusSignal for Cx<'p, 'w, Props> {
@@ -38,6 +47,28 @@ impl<'p, 'w, Props> CreateFocusSignal for Cx<'p, 'w, Props> {
 
     fn create_focus_within_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
+            let focus = cx.use_resource::<Focus>();
+            match focus.0 {
+                Some(focus) => is_descendant(cx.world(), &focus, &target),
+                None => false,
+            }
+        })
+    }
+
+    fn create_focus_visible_signal(&mut self, target: Entity) -> Signal<bool> {
+        self.create_derived(move |cx| {
+            let visible = cx.use_resource::<FocusVisible>();
+            let focus = cx.use_resource::<Focus>();
+            visible.0 && focus.0 == Some(target)
+        })
+    }
+
+    fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool> {
+        self.create_derived(move |cx| {
+            let visible = cx.use_resource::<FocusVisible>();
+            if !visible.0 {
+                return false;
+            }
             let focus = cx.use_resource::<Focus>();
             match focus.0 {
                 Some(focus) => is_descendant(cx.world(), &focus, &target),

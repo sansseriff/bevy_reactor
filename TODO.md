@@ -1,24 +1,27 @@
 # TODO
 
-* Text input.
+* Migrate to Bevy 0.13.
 * Change tab handling to use bubbled events.
-* ESC to close dialog.
-* Restore focus when dialog closes.
+* Restore focus, focus-visible when dialog closes.
+* Clear focus when clicking on empty space.
 * Rounded corners for sliders.
 * Memoized Signals
 * Verify Razing / Despawning doesn't leak
 * No-arg .bind().
 * Cleanup Handlers - on_cleanup();
 * Scoped values
-* Access to owner entity
 * use_element_rect hook - needed for popup menus
 * Gizmo
 * Composite buffers.
+* Text Input
+    * drag to select (requires text measurement)
+    * correct rendering of selection rects and cursor
+    * correct rendering of focus rect (just uses outline for now)
+    * correct rendering of rounded corners
 
 # StyleBuilder
 
 * cursors
-* line break
 
 # Obsidian
 
