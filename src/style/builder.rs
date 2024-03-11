@@ -75,31 +75,34 @@ impl ColorParam for Color {
 
 impl ColorParam for Srgba {
     fn to_val(self) -> Option<Color> {
-        Some(self.into())
+        Some(Color::rgba(self.red, self.green, self.blue, self.alpha))
     }
 }
 
 impl ColorParam for Option<Srgba> {
     fn to_val(self) -> Option<Color> {
-        self.map(|c| c.into())
+        self.map(|c| Color::rgba(c.red, c.green, c.blue, c.alpha))
     }
 }
 
 impl ColorParam for LinearRgba {
     fn to_val(self) -> Option<Color> {
-        Some(self.into())
+        Some(Color::rgba_linear(
+            self.red, self.green, self.blue, self.alpha,
+        ))
     }
 }
 
 impl ColorParam for Option<LinearRgba> {
     fn to_val(self) -> Option<Color> {
-        self.map(|c| c.into())
+        self.map(|c| Color::rgba_linear(c.red, c.green, c.blue, c.alpha))
     }
 }
 
 impl ColorParam for &str {
     fn to_val(self) -> Option<Color> {
-        Some(Color::hex(self).unwrap())
+        let c = Srgba::hex(self).unwrap();
+        Some(Color::rgba(c.red, c.green, c.blue, c.alpha))
     }
 }
 

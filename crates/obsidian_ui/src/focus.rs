@@ -11,7 +11,7 @@ use bevy::{
     hierarchy::{Children, Parent},
     input::{
         keyboard::{KeyCode, KeyboardInput},
-        ButtonState, Input,
+        ButtonInput, ButtonState,
     },
     log::*,
     ui::Node,
@@ -233,7 +233,7 @@ fn handle_auto_focus(
 
 fn handle_tab(
     nav: TabNavigation,
-    key: Res<Input<KeyCode>>,
+    key: Res<ButtonInput<KeyCode>>,
     mut focus: ResMut<Focus>,
     mut visible: ResMut<FocusVisible>,
 ) {
@@ -252,31 +252,29 @@ fn handle_tab(
 fn handle_text_input(
     mut key_events: EventReader<KeyboardInput>,
     mut char_events: EventReader<ReceivedCharacter>,
-    key: Res<Input<KeyCode>>,
+    key: Res<ButtonInput<KeyCode>>,
     focus: ResMut<Focus>,
     mut press_writer: EventWriter<KeyPressEvent>,
     mut char_writer: EventWriter<KeyCharEvent>,
 ) {
     if let Some(focus_elt) = focus.0 {
         for ev in key_events.read() {
-            if let Some(key_code) = ev.key_code {
-                if ev.state == ButtonState::Pressed {
-                    let ev = KeyPressEvent {
-                        target: focus_elt,
-                        key_code,
-                        repeat: !key.just_pressed(key_code),
-                        shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
-                    };
-                    press_writer.send(ev);
-                }
+            if ev.state == ButtonState::Pressed {
+                let ev = KeyPressEvent {
+                    target: focus_elt,
+                    key_code: ev.key_code,
+                    repeat: !key.just_pressed(ev.key_code),
+                    shift: key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
+                };
+                press_writer.send(ev);
             }
         }
 
-        for ev in char_events.read() {
+        for _ev in char_events.read() {
             // println!("Key char: {:?}", ev.char);
             let ev = KeyCharEvent {
                 target: focus_elt,
-                key: ev.char,
+                key: 'a', // ev.char,
             };
             char_writer.send(ev);
         }

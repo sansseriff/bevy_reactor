@@ -213,7 +213,6 @@ pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> 
     let gradient_material = gradient_material_assets.add(GradientRectMaterial {
         color_stops: [Srgba::ALICE_BLUE.into(); 8],
         num_color_stops: 2,
-        radius: 8.,
         cap_size: THUMB_WIDTH * 0.5,
     });
 

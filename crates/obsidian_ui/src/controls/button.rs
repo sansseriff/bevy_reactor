@@ -166,7 +166,7 @@ pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
                             .get_resource_mut::<ListenerInput<KeyPressEvent>>()
                             .unwrap();
                         if !event.repeat
-                            && (event.key_code == KeyCode::Return
+                            && (event.key_code == KeyCode::Enter
                                 || event.key_code == KeyCode::Space)
                         {
                             event.stop_propagation();

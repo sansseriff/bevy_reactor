@@ -25,10 +25,9 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
-    core_pipeline::clear_color::ClearColorConfig,
     prelude::*,
     render::{
-        // render_asset::RenderAssetPersistencePolicy,
+        render_asset::RenderAssetUsages,
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
     ui,
@@ -153,11 +152,11 @@ struct Shape;
 
 const X_EXTENT: f32 = 14.5;
 
-fn setup_view_root(_camera: In<Entity>, mut commands: Commands) {
-    commands.spawn(ViewRoot::new(ui_main.bind(())));
+fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
+    commands.spawn(ViewRoot::new(ui_main.bind(*camera)));
 }
 
-fn ui_main(cx: &mut Cx) -> impl View {
+fn ui_main(cx: &mut Cx<Entity>) -> impl View {
     let mut inc_count = 0;
     let mut dec_count = 0;
     let clicked_increment = cx.create_callback_mut(move |_cx| {
@@ -186,7 +185,7 @@ fn ui_main(cx: &mut Cx) -> impl View {
 
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
-        .insert(TabGroup::default())
+        .insert((TabGroup::default(), TargetCamera(cx.props)))
         // .insert(TargetCamera(c2d.0))
         .children((
             dialog.bind(DialogProps {
@@ -334,7 +333,7 @@ pub struct Counter {
     pub foo: usize,
 }
 
-fn update_counter(mut counter: ResMut<Counter>, key: Res<Input<KeyCode>>) {
+fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
     if key.pressed(KeyCode::Space) {
         counter.count += 1;
     }
@@ -353,13 +352,12 @@ fn setup(
     });
 
     let shapes = [
-        meshes.add(shape::Cube::default().into()),
-        meshes.add(shape::Box::default().into()),
-        meshes.add(shape::Capsule::default().into()),
-        meshes.add(shape::Torus::default().into()),
-        meshes.add(shape::Cylinder::default().into()),
-        meshes.add(Mesh::try_from(shape::Icosphere::default()).unwrap()),
-        meshes.add(shape::UVSphere::default().into()),
+        meshes.add(Cuboid::default()),
+        meshes.add(Capsule3d::default()),
+        meshes.add(Torus::default()),
+        meshes.add(Cylinder::default()),
+        meshes.add(Sphere::default().mesh().ico(5).unwrap()),
+        meshes.add(Sphere::default().mesh().uv(32, 18)),
     ];
 
     let num_shapes = shapes.len();
@@ -383,8 +381,8 @@ fn setup(
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 9000.0,
-            // intensity: 1500000.0,
+            // intensity: 9000.0,
+            intensity: 10000000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
@@ -395,27 +393,22 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0).into()),
-        material: materials.add(Color::SILVER.into()),
+        mesh: meshes.add(shape::Plane::from_size(50.0)),
+        material: materials.add(Color::SILVER),
         ..default()
     });
 
     let c2d = commands
-        .spawn((
-            Camera2dBundle {
-                camera: Camera {
-                    // HUD goes on top of 3D
-                    order: 1,
-                    // clear_color: ClearColorConfig::None,
-                    ..default()
-                },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
-                },
+        .spawn((Camera2dBundle {
+            camera: Camera {
+                // HUD goes on top of 3D
+                order: 1,
+                clear_color: ClearColorConfig::None,
                 ..default()
             },
-            UiCameraConfig { show_ui: true },
-        ))
+            camera_2d: Camera2d {},
+            ..default()
+        },))
         .id();
 
     commands.spawn((
@@ -425,7 +418,6 @@ fn setup(
             ..default()
         },
         viewport::ViewportCamera,
-        UiCameraConfig { show_ui: false },
     ));
 
     c2d
@@ -462,6 +454,6 @@ fn uv_debug_texture() -> Image {
         TextureDimension::D2,
         &texture_data,
         TextureFormat::Rgba8UnormSrgb,
-        // RenderAssetPersistencePolicy::Unload,
+        RenderAssetUsages::default(),
     )
 }

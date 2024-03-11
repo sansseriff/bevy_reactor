@@ -12,7 +12,7 @@ var<uniform> radius: vec4<f32>;
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
     // the UVs are now adjusted around the middle of the rect.
     let uv = in.uv - 0.5;
-    let size = vec2<f32>(96., 32.);
+    let size = vec2<f32>(in.size.x, in.size.y);
 
     let external_distance = sd_rounded_box(uv * size, size, radius);
     let alpha = smoothstep(0.01, 0.0, external_distance);

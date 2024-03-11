@@ -1,7 +1,7 @@
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     math::{Rect, Vec2},
-    sprite::TextureAtlas,
+    sprite::{TextureAtlas, TextureAtlasLayout},
 };
 use serde::{Deserialize, Serialize};
 
@@ -25,7 +25,7 @@ struct TextureAtlasGridSer {
 }
 
 impl AssetLoader for TextureAtlasLoader {
-    type Asset = TextureAtlas;
+    type Asset = TextureAtlasLayout;
     type Settings = ();
     type Error = anyhow::Error;
 

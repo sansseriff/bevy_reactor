@@ -268,7 +268,7 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                             .unwrap();
                         let mut handled = false;
                         match event.key_code {
-                            KeyCode::Left => {
+                            KeyCode::ArrowLeft => {
                                 if sel.cursor > 0 {
                                     if event.shift {
                                         selection
@@ -280,7 +280,7 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                                 }
                             }
 
-                            KeyCode::Right => {
+                            KeyCode::ArrowRight => {
                                 if sel.cursor < text_len {
                                     if event.shift {
                                         selection
@@ -292,12 +292,12 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                                 }
                             }
 
-                            KeyCode::Up => {
+                            KeyCode::ArrowUp => {
                                 // TODO: For multiline text inputs, move the cursor up a line.
                                 handled = true;
                             }
 
-                            KeyCode::Down => {
+                            KeyCode::ArrowDown => {
                                 // TODO: For multiline text inputs, move the cursor down a line.
                                 handled = true;
                             }
@@ -316,7 +316,7 @@ pub fn text_input(cx: &mut Cx<TextInputProps>) -> Element<NodeBundle> {
                                 }
                             }
 
-                            KeyCode::Back => {
+                            KeyCode::Backspace => {
                                 let mut new_text = value.get_clone(world);
                                 if sel.is_empty() {
                                     if sel.cursor > 0 {

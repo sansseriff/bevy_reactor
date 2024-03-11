@@ -5,7 +5,7 @@ use crate::{
     build_added_view_roots,
     // callback::{run_deferred_callbacks, DeferredCall},
     mutable::commit_mutables,
-    style::TextureAtlasLoader,
+    // style::TextureAtlasLoader,
     tracking_scope::run_reactions,
     update_text_styles,
 };
@@ -15,7 +15,8 @@ pub struct ReactorPlugin;
 
 impl Plugin for ReactorPlugin {
     fn build(&self, app: &mut App) {
-        app.register_asset_loader(TextureAtlasLoader)
+        app
+            //.register_asset_loader(TextureAtlasLoader)
             // .add_event::<DeferredCall<f32>>()
             .add_systems(
                 Update,

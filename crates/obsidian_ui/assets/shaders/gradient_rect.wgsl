@@ -7,9 +7,6 @@ var<uniform> num_color_stops: i32;
 @group(1) @binding(1)
 var<uniform> color_stops: array<vec4<f32>, 8>;
 
-@group(1) @binding(2)
-var<uniform> radius: f32;
-
 @group(1) @binding(3)
 var<uniform> cap_size: f32;
 
@@ -27,8 +24,8 @@ fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
     let bg = mix(vec3<f32>(0.4, 0.4, 0.4), vec3<f32>(0.6, 0.6, 0.6), check);
     let c = srgb_to_linear(mix(bg, color.rgb, color.w));
 
-    let size = vec2<f32>(160., 18.);
-    let external_distance = sd_rounded_box((in.uv - 0.5) * size, size, vec4<f32>(radius));
+    let size = vec2<f32>(in.size.x, in.size.y);
+    let external_distance = sd_rounded_box((in.uv - 0.5) * size, size, vec4<f32>(size.y * 0.5));
     let alpha = smoothstep(0.5, -0.5, external_distance);
 
     return vec4<f32>(c, alpha);

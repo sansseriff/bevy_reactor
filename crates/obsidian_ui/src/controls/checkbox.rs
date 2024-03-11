@@ -146,7 +146,7 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
                             .get_resource_mut::<ListenerInput<KeyPressEvent>>()
                             .unwrap();
                         if !event.repeat
-                            && (event.key_code == KeyCode::Return
+                            && (event.key_code == KeyCode::Enter
                                 || event.key_code == KeyCode::Space)
                         {
                             event.stop_propagation();

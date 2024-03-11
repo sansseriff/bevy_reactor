@@ -22,12 +22,13 @@ pub trait StyleBuilderTextureAtlas {
 
 impl<'a, 'w> StyleBuilderTextureAtlas for StyleBuilder<'a, 'w> {
     fn texture_atlas<'p>(&mut self, path: impl AssetPathParam<'p>) -> &mut Self {
-        let texture = path
-            .to_path()
-            .map(|p| self.load_asset::<TextureAtlas>(p))
-            .unwrap();
-        self.target.insert(texture);
-        self
+        todo!("Implement texture atlas loading");
+        // let texture = path
+        //     .to_path()
+        //     .map(|p| self.load_asset::<TextureAtlas>(p))
+        //     .unwrap();
+        // self.target.insert(texture);
+        // self
     }
 
     fn texture_atlas_tile(&mut self, index: usize) -> &mut Self {

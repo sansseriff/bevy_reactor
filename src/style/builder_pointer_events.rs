@@ -13,7 +13,7 @@ impl<'a, 'w> StyleBuilderPointerEvents for StyleBuilder<'a, 'w> {
             true => self.target.remove::<Pickable>(),
             false => self.target.insert(Pickable {
                 should_block_lower: false,
-                should_emit_events: false,
+                is_hoverable: false,
             }),
         };
         self

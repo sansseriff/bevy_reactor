@@ -1,4 +1,5 @@
 use bevy::{
+    prelude::*,
     render::texture::Image,
     ui::{self, UiImage},
 };
@@ -33,7 +34,7 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
             (Some(texture), None) => {
                 self.target.insert(UiImage {
                     texture,
-                    ..Default::default()
+                    ..default()
                 });
             }
             (None, Some(_)) => {
