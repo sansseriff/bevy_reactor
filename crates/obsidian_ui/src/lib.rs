@@ -3,7 +3,7 @@
 #![warn(missing_docs)]
 
 use bevy::{app::*, ui::UiMaterialPlugin};
-use materials::{GradientRectMaterial, RoundedRectMaterial};
+use materials::{GradientRectMaterial, RoundedRectMaterial, SliderRectMaterial};
 
 /// Utilities for animation.
 pub mod animation;
@@ -42,6 +42,7 @@ impl Plugin for ObsidianUiPlugin {
         app.add_plugins((
             UiMaterialPlugin::<RoundedRectMaterial>::default(),
             UiMaterialPlugin::<GradientRectMaterial>::default(),
+            UiMaterialPlugin::<SliderRectMaterial>::default(),
             hooks::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,

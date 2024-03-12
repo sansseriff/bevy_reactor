@@ -90,7 +90,7 @@ pub fn checkbox(cx: &mut Cx<CheckboxProps>) -> Element<NodeBundle> {
         .unwrap();
     let material = ui_materials.add(RoundedRectMaterial {
         color: colors::U3.into(),
-        radius: RoundedCorners::All.to_vec(8.0),
+        radius: RoundedCorners::All.to_vec(3.0),
     });
 
     Element::<NodeBundle>::for_entity(id)

@@ -1,9 +1,9 @@
 use bevy::{prelude::*, ui};
-use bevy_color::Luminance;
+use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
-use crate::colors;
+use crate::{colors, materials::SliderRectMaterial, RoundedCorners};
 
 /// Properties for slider widget.
 pub struct SliderProps {
@@ -68,16 +68,16 @@ struct DragState {
 }
 
 fn style_slider(ss: &mut StyleBuilder) {
-    ss.background_color(colors::U1).min_width(64).height(20);
+    ss.min_width(64).height(20);
 }
 
-fn style_value_bar(ss: &mut StyleBuilder) {
-    ss.background_color(colors::U3)
-        .position(ui::PositionType::Absolute)
-        .left(0)
-        .top(0)
-        .bottom(0);
-}
+// fn style_value_bar(ss: &mut StyleBuilder) {
+//     ss.background_color(colors::U3)
+//         .position(ui::PositionType::Absolute)
+//         .left(0)
+//         .top(0)
+//         .bottom(0);
+// }
 
 fn style_overlay(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -130,7 +130,7 @@ fn style_label(ss: &mut StyleBuilder) {
 }
 
 /// Horizontal slider widget
-pub fn slider(cx: &mut Cx<SliderProps>) -> Element<NodeBundle> {
+pub fn slider(cx: &mut Cx<SliderProps>) -> Element<MaterialNodeBundle<SliderRectMaterial>> {
     let slider_id = cx.create_entity();
     let hovering = cx.create_hover_signal(slider_id);
     let drag_state = cx.create_mutable::<DragState>(DragState::default());
@@ -143,9 +143,21 @@ pub fn slider(cx: &mut Cx<SliderProps>) -> Element<NodeBundle> {
     let step = cx.props.step;
     let on_change = cx.props.on_change;
 
-    Element::<NodeBundle>::for_entity(slider_id)
+    let mut ui_materials = cx
+        .world_mut()
+        .get_resource_mut::<Assets<SliderRectMaterial>>()
+        .unwrap();
+    let material = ui_materials.add(SliderRectMaterial {
+        color_lo: LinearRgba::from(colors::U1).into(),
+        color_hi: LinearRgba::from(colors::U3).into(),
+        value: 0.5,
+        radius: RoundedCorners::All.to_vec(4.),
+    });
+
+    Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
         .with_styles((style_slider, cx.props.style.clone()))
         .insert((
+            material.clone(),
             On::<Pointer<DragStart>>::run(move |world: &mut World| {
                 // Save initial value to use as drag offset.
                 let mut event = world
@@ -201,64 +213,53 @@ pub fn slider(cx: &mut Cx<SliderProps>) -> Element<NodeBundle> {
                 }
             }),
         ))
-        .children((
-            Element::<NodeBundle>::new()
-                .with_styles(style_value_bar)
-                .create_effect(move |cx, ent| {
-                    let ds = drag_state.get(cx);
-                    let is_hovering = hovering.get(cx);
-                    let color = match (ds.dragging, is_hovering) {
-                        (DragType::Dragging, _) => colors::U3.lighter(0.03),
-                        (_, true) => colors::U3.lighter(0.01),
-                        (_, false) => colors::U3,
-                    };
-                    let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                    bg.0 = color.into();
-                })
-                .create_effect(move |cx, ent| {
-                    let min = min.get(cx);
-                    let max = max.get(cx);
-                    let value = value.get(cx);
-                    let percent = if max > min {
-                        (value - min) / (max - min)
-                    } else {
-                        0.
-                    };
+        .create_effect(move |cx, _ent| {
+            let min = min.get(cx);
+            let max = max.get(cx);
+            let value = value.get(cx);
+            let pos = if max > min {
+                (value - min) / (max - min)
+            } else {
+                0.
+            };
 
-                    let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
-                    style.width = ui::Val::Percent(percent * 100.);
+            let mut ui_materials = cx
+                .world_mut()
+                .get_resource_mut::<Assets<SliderRectMaterial>>()
+                .unwrap();
+            let material = ui_materials.get_mut(material.clone()).unwrap();
+            material.value = pos;
+        })
+        .children((Element::<NodeBundle>::new()
+            .with_styles(style_overlay)
+            .children((
+                slider_button.bind(SliderButtonProps {
+                    value,
+                    min,
+                    max,
+                    step: -step,
+                    hovering,
+                    on_change,
+                    drag_state,
                 }),
-            Element::<NodeBundle>::new()
-                .with_styles(style_overlay)
-                .children((
-                    slider_button.bind(SliderButtonProps {
-                        value,
-                        min,
-                        max,
-                        step: -step,
-                        hovering,
-                        on_change,
-                        drag_state,
-                    }),
-                    Element::<NodeBundle>::new()
-                        .with_styles(style_label)
-                        .children(text_computed({
-                            move |cx| {
-                                let value = value.get(cx);
-                                format!("{:.*}", precision, value)
-                            }
-                        })),
-                    slider_button.bind(SliderButtonProps {
-                        value,
-                        min,
-                        max,
-                        step,
-                        hovering,
-                        on_change,
-                        drag_state,
-                    }),
-                )),
-        ))
+                Element::<NodeBundle>::new()
+                    .with_styles(style_label)
+                    .children(text_computed({
+                        move |cx| {
+                            let value = value.get(cx);
+                            format!("{:.*}", precision, value)
+                        }
+                    })),
+                slider_button.bind(SliderButtonProps {
+                    value,
+                    min,
+                    max,
+                    step,
+                    hovering,
+                    on_change,
+                    drag_state,
+                }),
+            )),))
 }
 
 struct SliderButtonProps {
