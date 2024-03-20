@@ -286,6 +286,20 @@ impl<
     }
 }
 
+impl<
+        Item: Send + Sync + 'static + Clone,
+        ItemIter: 'static + Iterator<Item = Item>,
+        ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
+        Cmp: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
+        V: 'static + Into<ViewHandle>,
+        F: Send + Sync + 'static + Fn(&Item) -> V + Send,
+    > From<ForEach<Item, ItemIter, ItemFn, Cmp, V, F>> for ViewHandle
+{
+    fn from(value: ForEach<Item, ItemIter, ItemFn, Cmp, V, F>) -> Self {
+        ViewHandle::new(value)
+    }
+}
+
 // #[cfg(test)]
 // mod tests {
 //     use bevy::ecs::world::World;

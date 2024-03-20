@@ -7,7 +7,7 @@ use bevy_color::{Hsla, Srgba};
 use bevy_reactor::*;
 use obsidian_ui::{
     controls::{
-        button, gradient_slider, ButtonProps, ButtonVariant, ColorGradient, GradientSliderProps,
+        gradient_slider, Button, ButtonProps, ButtonVariant, ColorGradient, GradientSliderProps,
     },
     RoundedCorners,
 };
@@ -68,7 +68,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
             Element::<NodeBundle>::new()
                 .with_styles(style_mode_selector)
                 .children((
-                    button.bind(ButtonProps {
+                    Button::new(ButtonProps {
                         children: "RGB".into(),
                         corners: RoundedCorners::Left,
                         variant: cx.create_derived(|cx| {
@@ -82,7 +82,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                         })),
                         ..default()
                     }),
-                    button.bind(ButtonProps {
+                    Button::new(ButtonProps {
                         children: "HSL".into(),
                         corners: RoundedCorners::None,
                         variant: cx.create_derived(|cx| {
@@ -96,7 +96,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
                         })),
                         ..default()
                     }),
-                    button.bind(ButtonProps {
+                    Button::new(ButtonProps {
                         children: "Recent".into(),
                         corners: RoundedCorners::Right,
                         variant: cx.create_derived(|cx| {

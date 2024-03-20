@@ -159,3 +159,16 @@ pub fn cond<
 ) -> Cond<Test, Pos, PosFn, Neg, NegFn> {
     Cond::new(test, pos, neg)
 }
+
+impl<
+        Test: Send + Sync + Fn(&Rcx) -> bool,
+        Pos: 'static + Into<ViewHandle>,
+        PosFn: Send + Sync + 'static + Fn() -> Pos,
+        Neg: 'static + Into<ViewHandle>,
+        NegFn: Send + Sync + 'static + Fn() -> Neg,
+    > From<Cond<Test, Pos, PosFn, Neg, NegFn>> for ViewHandle
+{
+    fn from(value: Cond<Test, Pos, PosFn, Neg, NegFn>) -> Self {
+        ViewHandle::new(value)
+    }
+}

@@ -86,140 +86,159 @@ fn style_button_bg(ss: &mut StyleBuilder) {
         .bottom(0);
 }
 
-/// Construct a button widget.
-pub fn button(cx: &mut Cx<ButtonProps>) -> Element<NodeBundle> {
-    let id = cx.create_entity();
-    let variant = cx.props.variant;
-    let pressed = cx.create_mutable::<bool>(false);
-    let hovering = cx.create_hover_signal(id);
-    let focused = cx.create_focus_visible_signal(id);
+/// Button widget
+pub struct Button(ButtonProps);
 
-    let disabled = cx.props.disabled;
+impl Button {
+    /// Create a new button control.
+    pub fn new(props: ButtonProps) -> Self {
+        Self(props)
+    }
+}
 
-    let size = cx.props.size;
+impl Widget for Button {
+    type View = Element<NodeBundle>;
 
-    let radius = cx.props.corners.to_vec(5.0);
-    let mut ui_materials = cx
-        .world_mut()
-        .get_resource_mut::<Assets<RoundedRectMaterial>>()
-        .unwrap();
-    let material = ui_materials.add(RoundedRectMaterial {
-        color: colors::U3.into(),
-        radius,
-    });
+    fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
+        let id = cx.create_entity();
+        let variant = self.0.variant;
+        let pressed = cx.create_mutable::<bool>(false);
+        let hovering = cx.create_hover_signal(id);
+        let focused = cx.create_focus_visible_signal(id);
 
-    Element::<NodeBundle>::for_entity(id)
-        .named("button")
-        .with_styles((
-            style_button,
-            move |ss: &mut StyleBuilder| {
-                ss.min_height(size.height());
-            },
-            cx.props.styles.clone(),
-        ))
-        .insert((
-            TabIndex(cx.props.tab_index),
-            AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-            {
-                let on_click = cx.props.on_click;
-                On::<Pointer<Click>>::run(move |world: &mut World| {
-                    let mut focus = world.get_resource_mut::<Focus>().unwrap();
-                    focus.0 = Some(id);
-                    if !disabled.get(world) {
-                        if let Some(on_click) = on_click {
-                            world.run_callback(on_click, ());
-                        }
-                    }
-                })
-            },
-            On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                if !disabled.get(world) {
-                    pressed.set(world, true);
-                }
-            }),
-            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                if !disabled.get(world) {
-                    pressed.set(world, false);
-                }
-            }),
-            On::<Pointer<DragEnter>>::run(move |world: &mut World| {
-                if !disabled.get(world) {
-                    pressed.set(world, true);
-                }
-            }),
-            On::<Pointer<DragLeave>>::run(move |world: &mut World| {
-                if !disabled.get(world) {
-                    pressed.set(world, false);
-                }
-            }),
-            On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
-                println!("PointerCancel");
-                if !disabled.get(world) {
-                    pressed.set(world, false);
-                }
-            }),
-            On::<KeyPressEvent>::run({
-                let on_click = cx.props.on_click;
-                move |world: &mut World| {
-                    if !disabled.get(world) {
-                        let mut event = world
-                            .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                            .unwrap();
-                        if !event.repeat
-                            && (event.key_code == KeyCode::Enter
-                                || event.key_code == KeyCode::Space)
-                        {
-                            event.stop_propagation();
+        let disabled = self.0.disabled;
+
+        let size = self.0.size;
+
+        let radius = self.0.corners.to_vec(5.0);
+        let mut ui_materials = cx
+            .world_mut()
+            .get_resource_mut::<Assets<RoundedRectMaterial>>()
+            .unwrap();
+        let material = ui_materials.add(RoundedRectMaterial {
+            color: colors::U3.into(),
+            radius,
+        });
+
+        Element::<NodeBundle>::for_entity(id)
+            .named("button")
+            .with_styles((
+                style_button,
+                move |ss: &mut StyleBuilder| {
+                    ss.min_height(size.height());
+                },
+                self.0.styles.clone(),
+            ))
+            .insert((
+                TabIndex(self.0.tab_index),
+                AccessibilityNode::from(NodeBuilder::new(Role::Button)),
+                {
+                    let on_click = self.0.on_click;
+                    On::<Pointer<Click>>::run(move |world: &mut World| {
+                        let mut focus = world.get_resource_mut::<Focus>().unwrap();
+                        focus.0 = Some(id);
+                        if !disabled.get(world) {
                             if let Some(on_click) = on_click {
                                 world.run_callback(on_click, ());
                             }
                         }
+                    })
+                },
+                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                    if !disabled.get(world) {
+                        pressed.set(world, true);
                     }
-                }
-            }),
-        ))
-        .insert_if(cx.props.autofocus, AutoFocus)
-        .children((
-            Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
-                .insert(material.clone())
-                .with_styles(style_button_bg)
-                .create_effect(move |cx, _| {
-                    let is_pressed = pressed.get(cx);
-                    let is_hovering = hovering.get(cx);
-                    let base_color = match variant.get(cx) {
-                        ButtonVariant::Default => colors::U3,
-                        ButtonVariant::Primary => colors::PRIMARY,
-                        ButtonVariant::Danger => colors::DESTRUCTIVE,
-                        ButtonVariant::Selected => colors::U4,
-                    };
-                    let color = match (is_pressed, is_hovering) {
-                        (true, _) => base_color.lighter(0.05),
-                        (false, true) => base_color.lighter(0.01),
-                        (false, false) => base_color,
-                    };
-                    let mut ui_materials = cx
-                        .world_mut()
-                        .get_resource_mut::<Assets<RoundedRectMaterial>>()
-                        .unwrap();
-                    let material = ui_materials.get_mut(material.clone()).unwrap();
-                    material.color = LinearRgba::from(color).into();
-                })
-                .create_effect(move |cx, entt| {
-                    let is_focused = focused.get(cx);
-                    let mut entt = cx.world_mut().entity_mut(entt);
-                    match is_focused {
-                        true => {
-                            entt.insert(Outline {
-                                color: colors::FOCUS.into(),
-                                offset: ui::Val::Px(2.0),
-                                width: ui::Val::Px(2.0),
-                            });
-                        }
-                        false => {
-                            entt.remove::<Outline>();
-                        }
-                    };
                 }),
-            cx.props.children.clone(),
-        ))
+                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                    if !disabled.get(world) {
+                        pressed.set(world, false);
+                    }
+                }),
+                On::<Pointer<DragEnter>>::run(move |world: &mut World| {
+                    if !disabled.get(world) {
+                        pressed.set(world, true);
+                    }
+                }),
+                On::<Pointer<DragLeave>>::run(move |world: &mut World| {
+                    if !disabled.get(world) {
+                        pressed.set(world, false);
+                    }
+                }),
+                On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
+                    println!("PointerCancel");
+                    if !disabled.get(world) {
+                        pressed.set(world, false);
+                    }
+                }),
+                On::<KeyPressEvent>::run({
+                    let on_click = self.0.on_click;
+                    move |world: &mut World| {
+                        if !disabled.get(world) {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                                .unwrap();
+                            if !event.repeat
+                                && (event.key_code == KeyCode::Enter
+                                    || event.key_code == KeyCode::Space)
+                            {
+                                event.stop_propagation();
+                                if let Some(on_click) = on_click {
+                                    world.run_callback(on_click, ());
+                                }
+                            }
+                        }
+                    }
+                }),
+            ))
+            .insert_if(self.0.autofocus, AutoFocus)
+            .children((
+                Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
+                    .insert(material.clone())
+                    .with_styles(style_button_bg)
+                    .create_effect(move |cx, _| {
+                        let is_pressed = pressed.get(cx);
+                        let is_hovering = hovering.get(cx);
+                        let base_color = match variant.get(cx) {
+                            ButtonVariant::Default => colors::U3,
+                            ButtonVariant::Primary => colors::PRIMARY,
+                            ButtonVariant::Danger => colors::DESTRUCTIVE,
+                            ButtonVariant::Selected => colors::U4,
+                        };
+                        let color = match (is_pressed, is_hovering) {
+                            (true, _) => base_color.lighter(0.05),
+                            (false, true) => base_color.lighter(0.01),
+                            (false, false) => base_color,
+                        };
+                        let mut ui_materials = cx
+                            .world_mut()
+                            .get_resource_mut::<Assets<RoundedRectMaterial>>()
+                            .unwrap();
+                        let material = ui_materials.get_mut(material.clone()).unwrap();
+                        material.color = LinearRgba::from(color).into();
+                    })
+                    .create_effect(move |cx, entt| {
+                        let is_focused = focused.get(cx);
+                        let mut entt = cx.world_mut().entity_mut(entt);
+                        match is_focused {
+                            true => {
+                                entt.insert(Outline {
+                                    color: colors::FOCUS.into(),
+                                    offset: ui::Val::Px(2.0),
+                                    width: ui::Val::Px(2.0),
+                                });
+                            }
+                            false => {
+                                entt.remove::<Outline>();
+                            }
+                        };
+                    }),
+                self.0.children.clone(),
+            ))
+    }
 }
+
+// impl From<&Button> for ViewHandle {
+//     fn from(button: &Button) -> Self {
+//         ViewHandle(Arc::new(Mutex::new(view)))
+//     }
+// }

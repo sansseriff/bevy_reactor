@@ -41,3 +41,9 @@ impl View for Portal {
         true
     }
 }
+
+impl From<Portal> for ViewHandle {
+    fn from(value: Portal) -> Self {
+        ViewHandle::new(value)
+    }
+}

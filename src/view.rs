@@ -12,7 +12,9 @@ use bevy::{
     log::warn,
 };
 
-use crate::{node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope};
+use crate::{
+    node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope, Cx, DespawnScopes,
+};
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.
@@ -47,27 +49,27 @@ pub trait View {
     }
 }
 
-impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
-    fn from(view: V) -> Self {
-        ViewHandle(Arc::new(Mutex::new(view)))
-    }
-}
+// impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
+//     fn from(view: V) -> Self {
+//         ViewHandle::new(view)
+//     }
+// }
 
 impl From<()> for ViewHandle {
     fn from(_value: ()) -> Self {
-        ViewHandle(Arc::new(Mutex::new(EmptyView)))
+        ViewHandle::new(EmptyView)
     }
 }
 
 impl From<&str> for ViewHandle {
     fn from(value: &str) -> Self {
-        ViewHandle(Arc::new(Mutex::new(TextStatic::new(value.to_string()))))
+        ViewHandle::new(TextStatic::new(value.to_string()))
     }
 }
 
 impl From<String> for ViewHandle {
     fn from(value: String) -> Self {
-        ViewHandle(Arc::new(Mutex::new(TextStatic::new(value))))
+        ViewHandle::new(TextStatic::new(value))
     }
 }
 
@@ -141,7 +143,7 @@ impl Clone for ViewHandle {
 
 impl Default for ViewHandle {
     fn default() -> Self {
-        Self(Arc::new(Mutex::new(EmptyView)))
+        Self::new(EmptyView)
     }
 }
 
@@ -159,6 +161,76 @@ impl View for EmptyView {
 
     fn build(&mut self, _view_entity: Entity, _world: &mut World) {}
     fn raze(&mut self, _view_entity: Entity, _world: &mut World) {}
+}
+
+/// Defines a UI widget: A View that can be constructed from an object.
+pub trait Widget {
+    /// The view that represents the control.
+    type View: View + Send + Sync + 'static;
+
+    /// Create the view for the control.
+    fn create(&self, cx: &mut Cx) -> Self::View;
+}
+
+/// Trait that defines a widget instance.
+pub struct WidgetInstance<W: Widget> {
+    /// Reference to presenter function.
+    widget: W,
+
+    /// The view handle for the presenter output.
+    inner: Option<Entity>,
+
+    /// Display nodes.
+    nodes: NodeSpan,
+}
+
+impl<W: Widget> WidgetInstance<W> {
+    /// Construct a new `WidgetInstance`.
+    pub fn new(widget: W) -> Self {
+        Self {
+            widget,
+            inner: None,
+            nodes: NodeSpan::Empty,
+        }
+    }
+}
+
+impl<W: Widget> View for WidgetInstance<W> {
+    fn nodes(&self) -> NodeSpan {
+        self.nodes.clone()
+    }
+
+    fn build(&mut self, view_entity: Entity, world: &mut World) {
+        assert!(self.inner.is_none());
+        let mut tracking = TrackingScope::new(world.read_change_tick());
+        let mut cx = Cx::new((), world, &mut tracking);
+        let mut view = self.widget.create(&mut cx);
+        let inner = world.spawn(tracking).set_parent(view_entity).id();
+        view.build(inner, world);
+        self.nodes = view.nodes();
+        world.entity_mut(inner).insert(ViewHandle::new(view));
+        self.inner = Some(inner);
+    }
+
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        assert!(self.inner.is_some());
+        let mut entt = world.entity_mut(self.inner.unwrap());
+        if let Some(handle) = entt.get_mut::<ViewHandle>() {
+            // Despawn the inner view.
+            handle.clone().raze(entt.id(), world);
+        };
+        self.inner = None;
+        world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl<W: Widget> From<W> for ViewHandle
+where
+    W: Send + Sync + 'static,
+{
+    fn from(value: W) -> Self {
+        ViewHandle::new(WidgetInstance::new(value))
+    }
 }
 
 /// System that initializes any views that have been added.

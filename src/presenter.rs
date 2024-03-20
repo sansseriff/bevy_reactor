@@ -96,6 +96,12 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
     }
 }
 
+impl<F: 'static, P: PresenterFn<F>> From<Bind<F, P>> for ViewHandle {
+    fn from(value: Bind<F, P>) -> Self {
+        ViewHandle::new(value)
+    }
+}
+
 // /// A binding between a presenter function the parameters passed to it.
 // pub struct BindNoArgs<V: View + Send + Sync + 'static> {
 //     /// Reference to presenter function.

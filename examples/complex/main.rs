@@ -11,10 +11,9 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        button, checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch,
-        text_input, ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps,
-        DialogHeaderProps, DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps,
-        TextInputProps,
+        checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch, text_input,
+        Button, ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps, DialogHeaderProps,
+        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps, TextInputProps,
     },
     focus::TabGroup,
     size::Size,
@@ -200,14 +199,14 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     "Dialog Body",
                     dialog_footer.bind(DialogFooterProps {
                         children: (
-                            button.bind(ButtonProps {
+                            Button::new(ButtonProps {
                                 children: "Cancel".into(),
                                 on_click: Some(cx.create_callback(move |cx| {
                                     checked_1.set(cx, false);
                                 })),
                                 ..default()
                             }),
-                            button.bind(ButtonProps {
+                            Button::new(ButtonProps {
                                 children: "Close".into(),
                                 variant: Signal::Constant(ButtonVariant::Primary),
                                 autofocus: true,
@@ -235,13 +234,13 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     Element::<NodeBundle>::new()
                         .with_styles(style_button_row)
                         .children((
-                            button.bind(ButtonProps {
+                            Button::new(ButtonProps {
                                 children: "Open…".into(),
                                 on_click: Some(clicked_increment),
                                 styles: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
-                            button.bind(ButtonProps {
+                            Button::new(ButtonProps {
                                 children: "Save".into(),
                                 on_click: Some(clicked_decrement),
                                 styles: StyleHandle::new(style_button_flex),

@@ -154,3 +154,16 @@ impl<
         world.despawn_owned_recursive(view_entity);
     }
 }
+
+impl<
+        Item: Send + Sync + Clone + PartialEq + 'static,
+        ItemIter: 'static + Iterator<Item = Item>,
+        ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
+        V: 'static + Into<ViewHandle>,
+        F: Send + Sync + 'static + Fn(&Item, usize) -> V,
+    > From<ForIndex<Item, ItemIter, ItemFn, V, F>> for ViewHandle
+{
+    fn from(value: ForIndex<Item, ItemIter, ItemFn, V, F>) -> Self {
+        ViewHandle::new(value)
+    }
+}

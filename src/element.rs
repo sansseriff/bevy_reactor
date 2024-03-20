@@ -254,3 +254,9 @@ impl<B: Bundle + Default> View for Element<B> {
         true
     }
 }
+
+impl<B: Bundle + Default> From<Element<B>> for ViewHandle {
+    fn from(value: Element<B>) -> Self {
+        ViewHandle::new(value)
+    }
+}

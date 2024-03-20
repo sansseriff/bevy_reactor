@@ -139,3 +139,9 @@ impl View for Switch {
         world.despawn_owned_recursive(view_entity);
     }
 }
+
+impl From<Switch> for ViewHandle {
+    fn from(value: Switch) -> Self {
+        ViewHandle::new(value)
+    }
+}
