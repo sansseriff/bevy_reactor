@@ -11,9 +11,9 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        checkbox, dialog, dialog_footer, dialog_header, slider, splitter, swatch, text_input,
-        Button, ButtonProps, ButtonVariant, CheckboxProps, DialogFooterProps, DialogHeaderProps,
-        DialogProps, SliderProps, SplitterDirection, SplitterProps, SwatchProps, TextInputProps,
+        Button, ButtonProps, ButtonVariant, Checkbox, CheckboxProps, Dialog, DialogFooter,
+        DialogFooterProps, DialogHeader, DialogHeaderProps, DialogProps, Slider, SliderProps,
+        Splitter, SplitterDirection, SplitterProps, Swatch, SwatchProps, TextInput, TextInputProps,
     },
     focus::TabGroup,
     size::Size,
@@ -187,17 +187,17 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
         .insert((TabGroup::default(), TargetCamera(cx.props)))
         // .insert(TargetCamera(c2d.0))
         .children((
-            dialog.bind(DialogProps {
+            Dialog::new(DialogProps {
                 open: checked_1.signal(),
                 on_close: Some(cx.create_callback(move |cx| {
                     checked_1.set(cx, false);
                 })),
                 children: (
-                    dialog_header.bind(DialogHeaderProps {
+                    DialogHeader::new(DialogHeaderProps {
                         children: "Dialog Header".into(),
                     }),
                     "Dialog Body",
-                    dialog_footer.bind(DialogFooterProps {
+                    DialogFooter::new(DialogFooterProps {
                         children: (
                             Button::new(ButtonProps {
                                 children: "Cancel".into(),
@@ -250,7 +250,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .children((
-                            checkbox.bind(CheckboxProps {
+                            Checkbox::new(CheckboxProps {
                                 label: "Include Author Name".into(),
                                 checked: checked_1.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
@@ -260,7 +260,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                 })),
                                 ..default()
                             }),
-                            checkbox.bind(CheckboxProps {
+                            Checkbox::new(CheckboxProps {
                                 label: "Include Metadata".into(),
                                 checked: checked_2.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
@@ -274,7 +274,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .children((
-                            slider.bind(SliderProps {
+                            Slider::new(SliderProps {
                                 min: Signal::Constant(0.),
                                 max: Signal::Constant(255.),
                                 value: red.signal(),
@@ -285,7 +285,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                 })),
                                 ..default()
                             }),
-                            swatch.bind(SwatchProps {
+                            Swatch::new(SwatchProps {
                                 color: rgb_color,
                                 size: Size::Md,
                                 // style: StyleHandle::new(style_slider),
@@ -297,7 +297,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             }),
                         )),
                     color_edit.bind(()),
-                    text_input.bind(TextInputProps {
+                    TextInput::new(TextInputProps {
                         value: name.signal(),
                         on_change: Some(cx.create_callback(move |cx: &mut Cx<String>| {
                             name.set_clone(cx, cx.props.clone());
@@ -306,7 +306,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     }),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
                 )),
-            splitter.bind(SplitterProps {
+            Splitter::new(SplitterProps {
                 direction: SplitterDirection::Vertical,
                 value: panel_width,
                 on_change: cx.create_callback(|cx: &mut Cx<f32>| {

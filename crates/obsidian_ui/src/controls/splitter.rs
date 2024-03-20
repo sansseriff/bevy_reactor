@@ -52,73 +52,86 @@ fn style_vsplitter_inner(ss: &mut StyleBuilder) {
 }
 
 /// Splitter bar which can be dragged
-pub fn splitter(cx: &mut Cx<SplitterProps>) -> impl View {
-    let id = cx.create_entity();
-    let hovering = cx.create_hover_signal(id);
-    let drag_state = cx.create_mutable::<DragState>(DragState::default());
-    let current_offset = cx.props.value;
-    Element::<NodeBundle>::for_entity(id)
-        .named("v_splitter")
-        // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
-        .with_styles(style_vsplitter)
-        .insert((
-            On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                // Save initial value to use as drag offset.
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: true,
-                        offset: current_offset.get(world),
-                    },
-                );
-            }),
-            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: false,
-                        offset: current_offset.get(world),
-                    },
-                );
-            }),
-            On::<Pointer<Drag>>::run({
-                let on_change = cx.props.on_change;
-                move |world: &mut World| {
-                    let event = world
-                        .get_resource::<ListenerInput<Pointer<Drag>>>()
-                        .unwrap();
-                    let ev = event.distance;
-                    let ds = drag_state.get(world);
-                    if ds.dragging {
-                        world.run_callback(on_change, ev.x + ds.offset);
-                    }
-                }
-            }),
-            On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
-                println!("Splitter Cancel");
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: false,
-                        offset: current_offset.get(world),
-                    },
-                );
-            }),
-        ))
-        .children(
-            Element::<NodeBundle>::new()
-                .with_styles(style_vsplitter_inner)
-                .create_effect(move |cx, ent| {
-                    // Color change on hover / drag
-                    let ds = drag_state.get(cx);
-                    let is_hovering = hovering.get(cx);
-                    let color = match (ds.dragging, is_hovering) {
-                        (true, _) => colors::U3.lighter(0.05),
-                        (false, true) => colors::U3.lighter(0.02),
-                        (false, false) => colors::U3,
-                    };
-                    let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                    bg.0 = color.into();
+pub struct Splitter(SplitterProps);
+
+impl Splitter {
+    /// Create a new splitter.
+    pub fn new(props: SplitterProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for Splitter {
+    type View = Element<NodeBundle>;
+
+    fn create(&self, cx: &mut Cx) -> Self::View {
+        let id = cx.create_entity();
+        let hovering = cx.create_hover_signal(id);
+        let drag_state = cx.create_mutable::<DragState>(DragState::default());
+        let current_offset = self.0.value;
+        Element::<NodeBundle>::for_entity(id)
+            .named("v_splitter")
+            // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
+            .with_styles(style_vsplitter)
+            .insert((
+                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                    // Save initial value to use as drag offset.
+                    drag_state.set(
+                        world,
+                        DragState {
+                            dragging: true,
+                            offset: current_offset.get(world),
+                        },
+                    );
                 }),
-        )
+                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                    drag_state.set(
+                        world,
+                        DragState {
+                            dragging: false,
+                            offset: current_offset.get(world),
+                        },
+                    );
+                }),
+                On::<Pointer<Drag>>::run({
+                    let on_change = self.0.on_change;
+                    move |world: &mut World| {
+                        let event = world
+                            .get_resource::<ListenerInput<Pointer<Drag>>>()
+                            .unwrap();
+                        let ev = event.distance;
+                        let ds = drag_state.get(world);
+                        if ds.dragging {
+                            world.run_callback(on_change, ev.x + ds.offset);
+                        }
+                    }
+                }),
+                On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
+                    println!("Splitter Cancel");
+                    drag_state.set(
+                        world,
+                        DragState {
+                            dragging: false,
+                            offset: current_offset.get(world),
+                        },
+                    );
+                }),
+            ))
+            .children(
+                Element::<NodeBundle>::new()
+                    .with_styles(style_vsplitter_inner)
+                    .create_effect(move |cx, ent| {
+                        // Color change on hover / drag
+                        let ds = drag_state.get(cx);
+                        let is_hovering = hovering.get(cx);
+                        let color = match (ds.dragging, is_hovering) {
+                            (true, _) => colors::U3.lighter(0.05),
+                            (false, true) => colors::U3.lighter(0.02),
+                            (false, false) => colors::U3,
+                        };
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
+                    }),
+            )
+    }
 }

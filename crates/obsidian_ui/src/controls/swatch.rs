@@ -34,34 +34,47 @@ fn style_swatch(ss: &mut StyleBuilder) {
 }
 
 /// Color swatch widget.
-pub fn swatch(cx: &mut Cx<SwatchProps>) -> Element<NodeBundle> {
-    let color = cx.props.color;
-    let size = cx.props.size;
+pub struct Swatch(SwatchProps);
 
-    Element::<NodeBundle>::new()
-        .named("color_swatch")
-        .with_styles((
-            style_swatch,
-            move |ss: &mut StyleBuilder| {
-                ss.min_height(size.height());
-            },
-            cx.props.styles.clone(),
-        ))
-        .insert((
-            // TabIndex(0),
-            // AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-            {
-                let on_click = cx.props.on_click;
-                On::<Pointer<Click>>::run(move |world: &mut World| {
-                    if let Some(on_click) = on_click {
-                        world.run_callback(on_click, ());
-                    }
-                })
-            },
-        ))
-        .create_effect(move |cx, ent| {
-            let color = color.get(cx);
-            let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-            bg.0 = color.into();
-        })
+impl Swatch {
+    /// Create a new swatch.
+    pub fn new(props: SwatchProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for Swatch {
+    type View = Element<NodeBundle>;
+
+    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+        let color = self.0.color;
+        let size = self.0.size;
+
+        Element::<NodeBundle>::new()
+            .named("color_swatch")
+            .with_styles((
+                style_swatch,
+                move |ss: &mut StyleBuilder| {
+                    ss.min_height(size.height());
+                },
+                self.0.styles.clone(),
+            ))
+            .insert((
+                // TabIndex(0),
+                // AccessibilityNode::from(NodeBuilder::new(Role::Button)),
+                {
+                    let on_click = self.0.on_click;
+                    On::<Pointer<Click>>::run(move |world: &mut World| {
+                        if let Some(on_click) = on_click {
+                            world.run_callback(on_click, ());
+                        }
+                    })
+                },
+            ))
+            .create_effect(move |cx, ent| {
+                let color = color.get(cx);
+                let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                bg.0 = color.into();
+            })
+    }
 }

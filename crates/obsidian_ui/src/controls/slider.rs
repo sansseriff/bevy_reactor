@@ -130,136 +130,149 @@ fn style_label(ss: &mut StyleBuilder) {
 }
 
 /// Horizontal slider widget
-pub fn slider(cx: &mut Cx<SliderProps>) -> Element<MaterialNodeBundle<SliderRectMaterial>> {
-    let slider_id = cx.create_entity();
-    let hovering = cx.create_hover_signal(slider_id);
-    let drag_state = cx.create_mutable::<DragState>(DragState::default());
+pub struct Slider(SliderProps);
 
-    // Pain point: Need to capture all props for closures.
-    let min = cx.props.min;
-    let max = cx.props.max;
-    let value = cx.props.value;
-    let precision = cx.props.precision;
-    let step = cx.props.step;
-    let on_change = cx.props.on_change;
+impl Slider {
+    /// Create a new slider control.
+    pub fn new(props: SliderProps) -> Self {
+        Self(props)
+    }
+}
 
-    let mut ui_materials = cx
-        .world_mut()
-        .get_resource_mut::<Assets<SliderRectMaterial>>()
-        .unwrap();
-    let material = ui_materials.add(SliderRectMaterial {
-        color_lo: LinearRgba::from(colors::U1).into(),
-        color_hi: LinearRgba::from(colors::U3).into(),
-        value: 0.5,
-        radius: RoundedCorners::All.to_vec(4.),
-    });
+impl Widget for Slider {
+    type View = Element<MaterialNodeBundle<SliderRectMaterial>>;
 
-    Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
-        .with_styles((style_slider, cx.props.style.clone()))
-        .insert((
-            material.clone(),
-            On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                // Save initial value to use as drag offset.
-                let mut event = world
-                    .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
-                    .unwrap();
-                event.stop_propagation();
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: DragType::Dragging,
-                        offset: value.get(world),
-                    },
-                );
-            }),
-            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                if ds.dragging == DragType::Dragging {
+    fn create(&self, cx: &mut Cx) -> Element<MaterialNodeBundle<SliderRectMaterial>> {
+        let slider_id = cx.create_entity();
+        let hovering = cx.create_hover_signal(slider_id);
+        let drag_state = cx.create_mutable::<DragState>(DragState::default());
+
+        // Pain point: Need to capture all props for closures.
+        let min = self.0.min;
+        let max = self.0.max;
+        let value = self.0.value;
+        let precision = self.0.precision;
+        let step = self.0.step;
+        let on_change = self.0.on_change;
+
+        let mut ui_materials = cx
+            .world_mut()
+            .get_resource_mut::<Assets<SliderRectMaterial>>()
+            .unwrap();
+        let material = ui_materials.add(SliderRectMaterial {
+            color_lo: LinearRgba::from(colors::U1).into(),
+            color_hi: LinearRgba::from(colors::U3).into(),
+            value: 0.5,
+            radius: RoundedCorners::All.to_vec(4.),
+        });
+
+        Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
+            .with_styles((style_slider, self.0.style.clone()))
+            .insert((
+                material.clone(),
+                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                    // Save initial value to use as drag offset.
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
+                        .unwrap();
+                    event.stop_propagation();
                     drag_state.set(
                         world,
                         DragState {
-                            dragging: DragType::None,
+                            dragging: DragType::Dragging,
                             offset: value.get(world),
                         },
                     );
-                }
-            }),
-            On::<Pointer<Drag>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                if ds.dragging == DragType::Dragging {
-                    let event = world
-                        .get_resource::<ListenerInput<Pointer<Drag>>>()
-                        .unwrap();
-                    let ent = world.entity(slider_id);
-                    let node = ent.get::<Node>();
-                    let transform = ent.get::<GlobalTransform>();
-                    if let (Some(node), Some(transform)) = (node, transform) {
-                        // Measure node width and slider value.
-                        let slider_width = node.logical_rect(transform).width();
-                        let min = min.get(world);
-                        let max = max.get(world);
-                        let range = max - min;
-                        let new_value = if range > 0. {
-                            ds.offset + (event.distance.x * range) / slider_width
-                        } else {
-                            min + range * 0.5
-                        };
-                        let rounding = f32::powi(10., precision as i32);
-                        let new_value = (new_value * rounding).round() / rounding;
-                        if let Some(on_change) = on_change {
-                            world.run_callback(on_change, new_value.clamp(min, max));
+                }),
+                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    if ds.dragging == DragType::Dragging {
+                        drag_state.set(
+                            world,
+                            DragState {
+                                dragging: DragType::None,
+                                offset: value.get(world),
+                            },
+                        );
+                    }
+                }),
+                On::<Pointer<Drag>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    if ds.dragging == DragType::Dragging {
+                        let event = world
+                            .get_resource::<ListenerInput<Pointer<Drag>>>()
+                            .unwrap();
+                        let ent = world.entity(slider_id);
+                        let node = ent.get::<Node>();
+                        let transform = ent.get::<GlobalTransform>();
+                        if let (Some(node), Some(transform)) = (node, transform) {
+                            // Measure node width and slider value.
+                            let slider_width = node.logical_rect(transform).width();
+                            let min = min.get(world);
+                            let max = max.get(world);
+                            let range = max - min;
+                            let new_value = if range > 0. {
+                                ds.offset + (event.distance.x * range) / slider_width
+                            } else {
+                                min + range * 0.5
+                            };
+                            let rounding = f32::powi(10., precision as i32);
+                            let new_value = (new_value * rounding).round() / rounding;
+                            if let Some(on_change) = on_change {
+                                world.run_callback(on_change, new_value.clamp(min, max));
+                            }
                         }
                     }
-                }
-            }),
-        ))
-        .create_effect(move |cx, _ent| {
-            let min = min.get(cx);
-            let max = max.get(cx);
-            let value = value.get(cx);
-            let pos = if max > min {
-                (value - min) / (max - min)
-            } else {
-                0.
-            };
+                }),
+            ))
+            .create_effect(move |cx, _ent| {
+                let min = min.get(cx);
+                let max = max.get(cx);
+                let value = value.get(cx);
+                let pos = if max > min {
+                    (value - min) / (max - min)
+                } else {
+                    0.
+                };
 
-            let mut ui_materials = cx
-                .world_mut()
-                .get_resource_mut::<Assets<SliderRectMaterial>>()
-                .unwrap();
-            let material = ui_materials.get_mut(material.clone()).unwrap();
-            material.value = pos;
-        })
-        .children((Element::<NodeBundle>::new()
-            .with_styles(style_overlay)
-            .children((
-                slider_button.bind(SliderButtonProps {
-                    value,
-                    min,
-                    max,
-                    step: -step,
-                    hovering,
-                    on_change,
-                    drag_state,
-                }),
-                Element::<NodeBundle>::new()
-                    .with_styles(style_label)
-                    .children(text_computed({
-                        move |cx| {
-                            let value = value.get(cx);
-                            format!("{:.*}", precision, value)
-                        }
-                    })),
-                slider_button.bind(SliderButtonProps {
-                    value,
-                    min,
-                    max,
-                    step,
-                    hovering,
-                    on_change,
-                    drag_state,
-                }),
-            )),))
+                let mut ui_materials = cx
+                    .world_mut()
+                    .get_resource_mut::<Assets<SliderRectMaterial>>()
+                    .unwrap();
+                let material = ui_materials.get_mut(material.clone()).unwrap();
+                material.value = pos;
+            })
+            .children((Element::<NodeBundle>::new()
+                .with_styles(style_overlay)
+                .children((
+                    slider_button.bind(SliderButtonProps {
+                        value,
+                        min,
+                        max,
+                        step: -step,
+                        hovering,
+                        on_change,
+                        drag_state,
+                    }),
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_label)
+                        .children(text_computed({
+                            move |cx| {
+                                let value = value.get(cx);
+                                format!("{:.*}", precision, value)
+                            }
+                        })),
+                    slider_button.bind(SliderButtonProps {
+                        value,
+                        min,
+                        max,
+                        step,
+                        hovering,
+                        on_change,
+                        drag_state,
+                    }),
+                )),))
+    }
 }
 
 struct SliderButtonProps {

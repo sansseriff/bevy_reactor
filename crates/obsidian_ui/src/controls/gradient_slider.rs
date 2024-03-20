@@ -165,171 +165,184 @@ fn style_thumb(ss: &mut StyleBuilder) {
 }
 
 /// Horizontal slider widget that displays a gradient bar and a draggable button.
-pub fn gradient_slider(cx: &mut Cx<GradientSliderProps>) -> Element<NodeBundle> {
-    let slider_id = cx.create_entity();
-    // let hovering = cx.create_hover_signal(slider_id);
-    let drag_state = cx.create_mutable::<DragState>(DragState::default());
+pub struct GradientSlider(GradientSliderProps);
 
-    // Pain point: Need to capture all props for closures.
-    let min = cx.props.min;
-    let max = cx.props.max;
-    let value = cx.props.value;
-    let precision = cx.props.precision;
-    let on_change = cx.props.on_change;
+impl GradientSlider {
+    /// Create a new gradient slider control.
+    pub fn new(props: GradientSliderProps) -> Self {
+        Self(props)
+    }
+}
 
-    // Derived signal of first color in gradient.
-    // let first_color = {
-    //     let gradient = cx.props.gradient;
-    //     cx.create_derived(move |cc| gradient.map(cc, |g| g.first()).unwrap_or(Srgba::BLACK))
-    // };
+impl Widget for GradientSlider {
+    type View = Element<NodeBundle>;
 
-    // // Derived signal of last color in gradient.
-    // let last_color = {
-    //     let gradient = cx.props.gradient;
-    //     cx.create_derived(move |cc| gradient.map(cc, |g| g.last()).unwrap_or(Srgba::BLACK))
-    // };
+    fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
+        let slider_id = cx.create_entity();
+        // let hovering = cx.create_hover_signal(slider_id);
+        let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
-    // This should really be an effect.
-    let color_stops: Signal<(usize, [Vec4; 8])> = {
-        let gradient = cx.props.gradient;
-        cx.create_derived(move |cc| {
-            gradient.map(cc, |g| {
-                let mut result: [Vec4; 8] = [Vec4::default(); 8];
-                let num_color_stops = g.len();
-                for (i, color) in g.colors[0..num_color_stops].iter().enumerate() {
-                    // Note that we do *not* convert to linear here, because interpolating
-                    // linear looks bad. That gets done in the shader.
-                    result[i] = Vec4::new(color.red, color.green, color.blue, color.alpha);
-                }
-                (g.len(), result)
+        // Pain point: Need to capture all props for closures.
+        let min = self.0.min;
+        let max = self.0.max;
+        let value = self.0.value;
+        let precision = self.0.precision;
+        let on_change = self.0.on_change;
+
+        // Derived signal of first color in gradient.
+        // let first_color = {
+        //     let gradient = self.0.gradient;
+        //     cx.create_derived(move |cc| gradient.map(cc, |g| g.first()).unwrap_or(Srgba::BLACK))
+        // };
+
+        // // Derived signal of last color in gradient.
+        // let last_color = {
+        //     let gradient = self.0.gradient;
+        //     cx.create_derived(move |cc| gradient.map(cc, |g| g.last()).unwrap_or(Srgba::BLACK))
+        // };
+
+        // This should really be an effect.
+        let color_stops: Signal<(usize, [Vec4; 8])> = {
+            let gradient = self.0.gradient;
+            cx.create_derived(move |cc| {
+                gradient.map(cc, |g| {
+                    let mut result: [Vec4; 8] = [Vec4::default(); 8];
+                    let num_color_stops = g.len();
+                    for (i, color) in g.colors[0..num_color_stops].iter().enumerate() {
+                        // Note that we do *not* convert to linear here, because interpolating
+                        // linear looks bad. That gets done in the shader.
+                        result[i] = Vec4::new(color.red, color.green, color.blue, color.alpha);
+                    }
+                    (g.len(), result)
+                })
             })
-        })
-    };
+        };
 
-    let mut gradient_material_assets = cx
-        .world_mut()
-        .get_resource_mut::<Assets<GradientRectMaterial>>()
-        .unwrap();
-    let gradient_material = gradient_material_assets.add(GradientRectMaterial {
-        color_stops: [Srgba::ALICE_BLUE.into(); 8],
-        num_color_stops: 2,
-        cap_size: THUMB_WIDTH * 0.5,
-    });
+        let mut gradient_material_assets = cx
+            .world_mut()
+            .get_resource_mut::<Assets<GradientRectMaterial>>()
+            .unwrap();
+        let gradient_material = gradient_material_assets.add(GradientRectMaterial {
+            color_stops: [Srgba::ALICE_BLUE.into(); 8],
+            num_color_stops: 2,
+            cap_size: THUMB_WIDTH * 0.5,
+        });
 
-    // Effect to update the material handle.
-    cx.create_effect({
-        let material = gradient_material.clone();
-        move |cx| {
-            let (num_color_stops, color_stops) = color_stops.get(cx);
-            let mut ui_materials = cx
-                .world_mut()
-                .get_resource_mut::<Assets<GradientRectMaterial>>()
-                .unwrap();
-            let material = ui_materials.get_mut(material.clone()).unwrap();
-            material.num_color_stops = num_color_stops as i32;
-            material.color_stops = color_stops;
-        }
-    });
-
-    Element::<NodeBundle>::for_entity(slider_id)
-        .with_styles((style_slider, cx.props.style.clone()))
-        .insert((
-            On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                // Save initial value to use as drag offset.
-                let mut event = world
-                    .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
+        // Effect to update the material handle.
+        cx.create_effect({
+            let material = gradient_material.clone();
+            move |cx| {
+                let (num_color_stops, color_stops) = color_stops.get(cx);
+                let mut ui_materials = cx
+                    .world_mut()
+                    .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
-                event.stop_propagation();
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: true,
-                        offset: value.get(world),
-                    },
-                );
-            }),
-            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                if ds.dragging {
+                let material = ui_materials.get_mut(material.clone()).unwrap();
+                material.num_color_stops = num_color_stops as i32;
+                material.color_stops = color_stops;
+            }
+        });
+
+        Element::<NodeBundle>::for_entity(slider_id)
+            .with_styles((style_slider, self.0.style.clone()))
+            .insert((
+                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                    // Save initial value to use as drag offset.
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
+                        .unwrap();
+                    event.stop_propagation();
                     drag_state.set(
                         world,
                         DragState {
-                            dragging: false,
+                            dragging: true,
                             offset: value.get(world),
                         },
                     );
-                }
-            }),
-            On::<Pointer<Drag>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                if ds.dragging {
-                    let event = world
-                        .get_resource::<ListenerInput<Pointer<Drag>>>()
-                        .unwrap();
-                    let ent = world.entity(slider_id);
-                    let node = ent.get::<Node>();
-                    let transform = ent.get::<GlobalTransform>();
-                    if let (Some(node), Some(transform)) = (node, transform) {
-                        // Measure node width and slider value.
-                        let slider_width = node.logical_rect(transform).width();
-                        let min = min.get(world);
-                        let max = max.get(world);
-                        let range = max - min;
-                        let new_value = if range > 0. {
-                            ds.offset + (event.distance.x * range) / slider_width
-                        } else {
-                            min + range * 0.5
-                        };
-                        let rounding = f32::powi(10., precision as i32);
-                        let new_value = (new_value * rounding).round() / rounding;
-                        if let Some(on_change) = on_change {
-                            world.run_callback(on_change, new_value.clamp(min, max));
+                }),
+                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    if ds.dragging {
+                        drag_state.set(
+                            world,
+                            DragState {
+                                dragging: false,
+                                offset: value.get(world),
+                            },
+                        );
+                    }
+                }),
+                On::<Pointer<Drag>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    if ds.dragging {
+                        let event = world
+                            .get_resource::<ListenerInput<Pointer<Drag>>>()
+                            .unwrap();
+                        let ent = world.entity(slider_id);
+                        let node = ent.get::<Node>();
+                        let transform = ent.get::<GlobalTransform>();
+                        if let (Some(node), Some(transform)) = (node, transform) {
+                            // Measure node width and slider value.
+                            let slider_width = node.logical_rect(transform).width();
+                            let min = min.get(world);
+                            let max = max.get(world);
+                            let range = max - min;
+                            let new_value = if range > 0. {
+                                ds.offset + (event.distance.x * range) / slider_width
+                            } else {
+                                min + range * 0.5
+                            };
+                            let rounding = f32::powi(10., precision as i32);
+                            let new_value = (new_value * rounding).round() / rounding;
+                            if let Some(on_change) = on_change {
+                                world.run_callback(on_change, new_value.clamp(min, max));
+                            }
                         }
                     }
-                }
-            }),
-        ))
-        .children((
-            // Element::<NodeBundle>::new().with_styles(style_alpha),
-            // Element::<NodeBundle>::new()
-            //     .with_styles(style_start_cap)
-            //     .create_effect({
-            //         move |cx, ent| {
-            //             let color = first_color.get(cx);
-            //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-            //             bg.0 = color.into();
-            //         }
-            //     }),
-            Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
-                .insert(gradient_material.clone())
-                .with_styles(style_gradient),
-            // Element::<NodeBundle>::new()
-            //     .with_styles(style_end_cap)
-            //     .create_effect({
-            //         move |cx, ent| {
-            //             let color = last_color.get(cx);
-            //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-            //             bg.0 = color.into();
-            //         }
-            //     }),
-            Element::<NodeBundle>::new()
-                .with_styles(style_track)
-                .children(
-                    Element::<NodeBundle>::new()
-                        .with_styles(style_thumb)
-                        .create_effect(move |cx, ent| {
-                            let min = min.get(cx);
-                            let max = max.get(cx);
-                            let value = value.get(cx);
-                            let percent = if max > min {
-                                ((value - min) / (max - min)).clamp(0., 1.)
-                            } else {
-                                0.
-                            };
+                }),
+            ))
+            .children((
+                // Element::<NodeBundle>::new().with_styles(style_alpha),
+                // Element::<NodeBundle>::new()
+                //     .with_styles(style_start_cap)
+                //     .create_effect({
+                //         move |cx, ent| {
+                //             let color = first_color.get(cx);
+                //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                //             bg.0 = color.into();
+                //         }
+                //     }),
+                Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
+                    .insert(gradient_material.clone())
+                    .with_styles(style_gradient),
+                // Element::<NodeBundle>::new()
+                //     .with_styles(style_end_cap)
+                //     .create_effect({
+                //         move |cx, ent| {
+                //             let color = last_color.get(cx);
+                //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                //             bg.0 = color.into();
+                //         }
+                //     }),
+                Element::<NodeBundle>::new()
+                    .with_styles(style_track)
+                    .children(
+                        Element::<NodeBundle>::new()
+                            .with_styles(style_thumb)
+                            .create_effect(move |cx, ent| {
+                                let min = min.get(cx);
+                                let max = max.get(cx);
+                                let value = value.get(cx);
+                                let percent = if max > min {
+                                    ((value - min) / (max - min)).clamp(0., 1.)
+                                } else {
+                                    0.
+                                };
 
-                            let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
-                            style.left = ui::Val::Percent(percent * 100.);
-                        }),
-                ),
-        ))
+                                let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
+                                style.left = ui::Val::Percent(percent * 100.);
+                            }),
+                    ),
+            ))
+    }
 }

@@ -72,78 +72,91 @@ const TRANSITION_DURATION: f32 = 0.3;
 
 /// Displays a modal dialog box. This will display the dialog frame and the backdrop overlay.
 /// Use the dialog header/body/footer controls to get the standard layout.
-pub fn dialog(cx: &mut Cx<DialogProps>) -> impl View {
-    let on_close = cx.props.on_close;
-    let on_exited = cx.props.on_exited;
-    let state = cx.create_bistable_transition(cx.props.open, TRANSITION_DURATION);
-    let children = cx.props.children.clone();
+pub struct Dialog(DialogProps);
 
-    cx.create_effect(move |ve| {
-        let state = state.get(ve);
-        if state == BistableTransitionState::Exited {
-            if let Some(on_exited) = on_exited {
-                ve.run_callback(on_exited, ());
+impl Dialog {
+    /// Create a new dialog.
+    pub fn new(props: DialogProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for Dialog {
+    type View = Fragment;
+
+    fn create(&self, cx: &mut Cx) -> Fragment {
+        let on_close = self.0.on_close;
+        let on_exited = self.0.on_exited;
+        let state = cx.create_bistable_transition(self.0.open, TRANSITION_DURATION);
+        let children = self.0.children.clone();
+
+        cx.create_effect(move |ve| {
+            let state = state.get(ve);
+            if state == BistableTransitionState::Exited {
+                if let Some(on_exited) = on_exited {
+                    ve.run_callback(on_exited, ());
+                }
             }
-        }
-    });
+        });
 
-    Cond::new(
-        move |cx| state.get(cx) != BistableTransitionState::Exited,
-        move || {
-            Portal::new(
-                Element::<NodeBundle>::new()
-                    .with_styles((style_dialog_overlay, text_default))
-                    .insert((
-                        // Click on backdrop sends close signal.
-                        On::<Pointer<Click>>::run(move |world: &mut World| {
-                            if let Some(on_close) = on_close {
-                                world.run_callback(on_close, ());
-                            }
-                        }),
-                        On::<KeyPressEvent>::run({
-                            move |world: &mut World| {
-                                let mut event = world
-                                    .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                    .unwrap();
-                                if !event.repeat && event.key_code == KeyCode::Escape {
-                                    event.stop_propagation();
-                                    if let Some(on_close) = on_close {
-                                        world.run_callback(on_close, ());
+        Fragment::new(Cond::new(
+            move |cx| state.get(cx) != BistableTransitionState::Exited,
+            move || {
+                Portal::new(
+                    Element::<NodeBundle>::new()
+                        .with_styles((style_dialog_overlay, text_default))
+                        .insert((
+                            // Click on backdrop sends close signal.
+                            On::<Pointer<Click>>::run(move |world: &mut World| {
+                                if let Some(on_close) = on_close {
+                                    world.run_callback(on_close, ());
+                                }
+                            }),
+                            On::<KeyPressEvent>::run({
+                                move |world: &mut World| {
+                                    let mut event = world
+                                        .get_resource_mut::<ListenerInput<KeyPressEvent>>()
+                                        .unwrap();
+                                    if !event.repeat && event.key_code == KeyCode::Escape {
+                                        event.stop_propagation();
+                                        if let Some(on_close) = on_close {
+                                            world.run_callback(on_close, ());
+                                        }
                                     }
                                 }
-                            }
-                        }),
-                    ))
-                    .create_effect(move |cx, ent| {
-                        let state = state.get(cx);
-                        let mut entt = cx.world_mut().entity_mut(ent);
-                        let target = match state {
-                            BistableTransitionState::EnterStart
-                            | BistableTransitionState::Entering
-                            | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
-                            BistableTransitionState::ExitStart
-                            | BistableTransitionState::Exiting
-                            | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
-                        };
-                        AnimatedTransition::<AnimatedBackgroundColor>::start(
-                            &mut entt,
-                            target,
-                            TRANSITION_DURATION,
-                        );
-                    })
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .insert(TabGroup {
-                                order: 0,
-                                modal: true,
-                            })
-                            .with_styles(style_dialog)
-                            .with_child(&children),
-                    ),
-            )
-        },
-        || (),
-    )
+                            }),
+                        ))
+                        .create_effect(move |cx, ent| {
+                            let state = state.get(cx);
+                            let mut entt = cx.world_mut().entity_mut(ent);
+                            let target = match state {
+                                BistableTransitionState::EnterStart
+                                | BistableTransitionState::Entering
+                                | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
+                                BistableTransitionState::ExitStart
+                                | BistableTransitionState::Exiting
+                                | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
+                            };
+                            AnimatedTransition::<AnimatedBackgroundColor>::start(
+                                &mut entt,
+                                target,
+                                TRANSITION_DURATION,
+                            );
+                        })
+                        .children(
+                            Element::<NodeBundle>::new()
+                                .insert(TabGroup {
+                                    order: 0,
+                                    modal: true,
+                                })
+                                .with_styles(style_dialog)
+                                .with_child(&children),
+                        ),
+                )
+            },
+            || (),
+        ))
+    }
 }
 
 fn style_dialog_header(ss: &mut StyleBuilder) {
@@ -164,10 +177,23 @@ pub struct DialogHeaderProps {
 }
 
 /// Displays a standard dialog header.
-pub fn dialog_header(cx: &mut Cx<DialogHeaderProps>) -> impl View {
-    Element::<NodeBundle>::new()
-        .with_styles(style_dialog_header)
-        .with_child(&cx.props.children)
+pub struct DialogHeader(DialogHeaderProps);
+
+impl DialogHeader {
+    /// Create a new dialog header.
+    pub fn new(props: DialogHeaderProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for DialogHeader {
+    type View = Element<NodeBundle>;
+
+    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+        Element::<NodeBundle>::new()
+            .with_styles(style_dialog_header)
+            .with_child(&self.0.children)
+    }
 }
 
 fn style_dialog_body(ss: &mut StyleBuilder) {
@@ -187,10 +213,23 @@ pub struct DialogBodyProps {
 }
 
 /// Displays a standard dialog body.
-pub fn dialog_body(cx: &mut Cx<DialogBodyProps>) -> impl View {
-    Element::<NodeBundle>::new()
-        .with_styles(style_dialog_body)
-        .with_child(&cx.props.children)
+pub struct DialogBody(DialogBodyProps);
+
+impl DialogBody {
+    /// Create a new dialog body.
+    pub fn new(props: DialogBodyProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for DialogBody {
+    type View = Element<NodeBundle>;
+
+    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+        Element::<NodeBundle>::new()
+            .with_styles(style_dialog_body)
+            .with_child(&self.0.children)
+    }
 }
 
 fn style_dialog_footer(ss: &mut StyleBuilder) {
@@ -212,8 +251,21 @@ pub struct DialogFooterProps {
 }
 
 /// Displays a standard dialog footer.
-pub fn dialog_footer(cx: &mut Cx<DialogFooterProps>) -> impl View {
-    Element::<NodeBundle>::new()
-        .with_styles(style_dialog_footer)
-        .with_child(&cx.props.children)
+pub struct DialogFooter(DialogFooterProps);
+
+impl DialogFooter {
+    /// Create a new dialog footer.
+    pub fn new(props: DialogFooterProps) -> Self {
+        Self(props)
+    }
+}
+
+impl Widget for DialogFooter {
+    type View = Element<NodeBundle>;
+
+    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+        Element::<NodeBundle>::new()
+            .with_styles(style_dialog_footer)
+            .with_child(&self.0.children)
+    }
 }

@@ -7,7 +7,7 @@ use bevy_color::{Hsla, Srgba};
 use bevy_reactor::*;
 use obsidian_ui::{
     controls::{
-        gradient_slider, Button, ButtonProps, ButtonVariant, ColorGradient, GradientSliderProps,
+        Button, ButtonProps, ButtonVariant, ColorGradient, GradientSlider, GradientSliderProps,
     },
     RoundedCorners,
 };
@@ -133,7 +133,7 @@ fn rgb_sliders(cx: &mut Cx) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_sliders)
         .children((
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let rgb = cx.use_resource::<ColorEditState>().rgb;
                     ColorGradient::new(&[
@@ -154,7 +154,7 @@ fn rgb_sliders(cx: &mut Cx) -> impl View {
             text_computed(|cx| {
                 format!("{:.0}", cx.use_resource::<ColorEditState>().rgb.red * 255.0)
             }),
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let rgb = cx.use_resource::<ColorEditState>().rgb;
                     ColorGradient::new(&[
@@ -179,7 +179,7 @@ fn rgb_sliders(cx: &mut Cx) -> impl View {
                     cx.use_resource::<ColorEditState>().rgb.green * 255.0
                 )
             }),
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let rgb = cx.use_resource::<ColorEditState>().rgb;
                     ColorGradient::new(&[
@@ -211,7 +211,7 @@ fn hsl_sliders(cx: &mut Cx) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_sliders)
         .children((
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: Signal::Constant(ColorGradient::new(&[
                     Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
                     Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
@@ -234,7 +234,7 @@ fn hsl_sliders(cx: &mut Cx) -> impl View {
             text_computed(|cx| {
                 format!("{:.0}", cx.use_resource::<ColorEditState>().hsl.hue * 360.0)
             }),
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let hsl = cx.use_resource::<ColorEditState>().hsl;
                     ColorGradient::new(&[
@@ -264,7 +264,7 @@ fn hsl_sliders(cx: &mut Cx) -> impl View {
                     cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
                 )
             }),
-            gradient_slider.bind(GradientSliderProps {
+            GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let hsl = cx.use_resource::<ColorEditState>().hsl;
                     ColorGradient::new(&[
@@ -299,7 +299,7 @@ fn hsl_sliders(cx: &mut Cx) -> impl View {
 
 fn alpha_slider(cx: &mut Cx) -> impl View {
     Fragment::new((
-        gradient_slider.bind(GradientSliderProps {
+        GradientSlider::new(GradientSliderProps {
             gradient: cx.create_derived(|cx| {
                 let rgb = cx.use_resource::<ColorEditState>().rgb;
                 ColorGradient::new(&[
