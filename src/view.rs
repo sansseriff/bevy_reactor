@@ -44,11 +44,17 @@ pub trait View {
     /// Notification from child views that the child display nodes have changed and need
     /// to be re-attached to the parent. This is optional, and need only be implemented for
     /// views which have display nodes that have child display nodes (like [`Element`]).
+    ///
+    /// Returns `true` if the view was able to update its display nodes. If it returns `false`,
+    /// then it means that this view is only a thin wrapper for other views, and doesn't actually
+    /// have any display nodes of its own, in which case the parent view will need to handle the
+    /// change.
     fn children_changed(&mut self, view_entity: Entity, world: &mut World) -> bool {
         false
     }
 }
 
+// This From impl is commented out because it causes many conflicts with other From impls.
 // impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
 //     fn from(view: V) -> Self {
 //         ViewHandle::new(view)
@@ -154,17 +160,18 @@ pub struct DisplayNodeChanged;
 /// A `[View]` which displays nothing - can be used as a placeholder.
 pub struct EmptyView;
 
+#[allow(unused_variables)]
 impl View for EmptyView {
     fn nodes(&self) -> NodeSpan {
         NodeSpan::Empty
     }
 
-    fn build(&mut self, _view_entity: Entity, _world: &mut World) {}
-    fn raze(&mut self, _view_entity: Entity, _world: &mut World) {}
+    fn build(&mut self, view_entity: Entity, world: &mut World) {}
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {}
 }
 
-/// Defines a UI widget: A View that can be constructed from an object.
-pub trait Widget {
+/// Trait that defines a factory object that can construct a [`View`] from a reactive context.
+pub trait ViewFactory {
     /// The view that represents the control.
     type View: View + Send + Sync + 'static;
 
@@ -172,10 +179,11 @@ pub trait Widget {
     fn create(&self, cx: &mut Cx) -> Self::View;
 }
 
-/// Trait that defines a widget instance.
-pub struct WidgetInstance<W: Widget> {
+/// Holds a [`ViewFactory`], and the entity and output nodes created by the [`View`] produced
+/// by the factory.
+pub struct ViewFactoryState<VF: ViewFactory> {
     /// Reference to presenter function.
-    widget: W,
+    factory: VF,
 
     /// The view handle for the presenter output.
     inner: Option<Entity>,
@@ -184,18 +192,18 @@ pub struct WidgetInstance<W: Widget> {
     nodes: NodeSpan,
 }
 
-impl<W: Widget> WidgetInstance<W> {
+impl<W: ViewFactory> ViewFactoryState<W> {
     /// Construct a new `WidgetInstance`.
     pub fn new(widget: W) -> Self {
         Self {
-            widget,
+            factory: widget,
             inner: None,
             nodes: NodeSpan::Empty,
         }
     }
 }
 
-impl<W: Widget> View for WidgetInstance<W> {
+impl<W: ViewFactory> View for ViewFactoryState<W> {
     fn nodes(&self) -> NodeSpan {
         self.nodes.clone()
     }
@@ -204,7 +212,7 @@ impl<W: Widget> View for WidgetInstance<W> {
         assert!(self.inner.is_none());
         let mut tracking = TrackingScope::new(world.read_change_tick());
         let mut cx = Cx::new((), world, &mut tracking);
-        let mut view = self.widget.create(&mut cx);
+        let mut view = self.factory.create(&mut cx);
         let inner = world.spawn(tracking).set_parent(view_entity).id();
         view.build(inner, world);
         self.nodes = view.nodes();
@@ -224,12 +232,12 @@ impl<W: Widget> View for WidgetInstance<W> {
     }
 }
 
-impl<W: Widget> From<W> for ViewHandle
+impl<W: ViewFactory> From<W> for ViewHandle
 where
     W: Send + Sync + 'static,
 {
     fn from(value: W) -> Self {
-        ViewHandle::new(WidgetInstance::new(value))
+        ViewHandle::new(ViewFactoryState::new(value))
     }
 }
 

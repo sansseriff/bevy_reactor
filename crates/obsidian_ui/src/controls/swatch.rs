@@ -43,7 +43,7 @@ impl Swatch {
     }
 }
 
-impl Widget for Swatch {
+impl ViewFactory for Swatch {
     type View = Element<NodeBundle>;
 
     fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {

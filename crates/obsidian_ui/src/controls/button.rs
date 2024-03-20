@@ -96,7 +96,7 @@ impl Button {
     }
 }
 
-impl Widget for Button {
+impl ViewFactory for Button {
     type View = Element<NodeBundle>;
 
     fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {

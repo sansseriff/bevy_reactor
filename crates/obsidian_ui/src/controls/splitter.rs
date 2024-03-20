@@ -61,7 +61,7 @@ impl Splitter {
     }
 }
 
-impl Widget for Splitter {
+impl ViewFactory for Splitter {
     type View = Element<NodeBundle>;
 
     fn create(&self, cx: &mut Cx) -> Self::View {

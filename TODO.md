@@ -1,7 +1,7 @@
 # TODO
 
 - Scoped values
-- Widget/Control trait
+- ViewFactory/Control trait
 - Scrollbar
 - Scroll view
 - Build a router that uses Bevy states.

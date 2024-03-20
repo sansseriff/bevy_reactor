@@ -83,7 +83,7 @@ impl Checkbox {
     }
 }
 
-impl Widget for Checkbox {
+impl ViewFactory for Checkbox {
     type View = Element<NodeBundle>;
 
     /// Construct a button widget.

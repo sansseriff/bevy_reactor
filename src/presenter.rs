@@ -13,8 +13,7 @@ pub trait PresenterFn<F: 'static>: Sized + Send + Sync + Copy + 'static {
     /// The type of view produced by this presenter.
     type View: View + Sync + Send;
 
-    /// Used to invoke a presenter. This binds a set of properties to the presenter function, and
-    /// constructs a new [`ViewHandle`].
+    /// Used to bind a presenter to a set of properties.
     fn bind(self, props: Self::Props) -> Bind<F, Self>;
 
     /// Method which calls the presenter, creating the [`View`].
@@ -102,53 +101,23 @@ impl<F: 'static, P: PresenterFn<F>> From<Bind<F, P>> for ViewHandle {
     }
 }
 
-// /// A binding between a presenter function the parameters passed to it.
-// pub struct BindNoArgs<V: View + Send + Sync + 'static> {
-//     /// Reference to presenter function.
-//     presenter: fn(&mut Cx<()>) -> V,
-
-//     /// The view handle for the presenter output.
-//     inner: Option<Entity>,
-
-//     /// Display nodes.
-//     nodes: NodeSpan,
-// }
-
-// impl<V: View + Send + Sync + 'static> View for BindNoArgs<V> {
-//     fn nodes(&self) -> NodeSpan {
-//         self.nodes.clone()
-//     }
-
-//     fn build(&mut self, _view_entity: Entity, world: &mut World) {
-//         assert!(self.inner.is_none());
-//         let mut tracking = TrackingScope::new(world.read_change_tick());
-//         let mut cx = Cx::new((), world, &mut tracking);
-//         let mut view = (self.presenter)(&mut cx);
-//         let inner = world.spawn(tracking).id();
-//         view.build(inner, world);
-//         self.nodes = view.nodes();
-//         world.entity_mut(inner).insert(ViewHandle::new(view));
-//         self.inner = Some(inner);
-//     }
-
-//     fn raze(&mut self, view_entity: Entity, world: &mut World) {
-//         assert!(self.inner.is_some());
-//         let mut entt = world.entity_mut(self.inner.unwrap());
-//         if let Some(handle) = entt.get_mut::<ViewHandle>() {
-//             // Despawn the inner view.
-//             handle.clone().raze(entt.id(), world);
-//         };
-//         self.inner = None;
-//         world.despawn_owned_recursive(view_entity);
+// impl<
+//         V: View + Sync + Send + 'static,
+//         F: FnMut(&mut Cx<()>) -> V + Copy + Send + Sync + 'static,
+//     > From<F> for ViewHandle
+// {
+//     fn from(value: F) -> Self {
+//         ViewHandle::new(Bind::new(value, ()))
 //     }
 // }
 
 // impl<V: View + Send + Sync + 'static> From<fn(&mut Cx<()>) -> V> for ViewHandle {
 //     fn from(value: fn(&mut Cx<()>) -> V) -> ViewHandle {
-//         ViewHandle(Arc::new(Mutex::new(BindNoArgs {
+//         ViewHandle::new(Bind {
 //             presenter: value,
+//             props: None,
 //             inner: None,
 //             nodes: NodeSpan::Empty,
-//         })))
+//         })
 //     }
 // }

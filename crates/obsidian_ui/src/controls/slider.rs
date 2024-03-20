@@ -139,7 +139,7 @@ impl Slider {
     }
 }
 
-impl Widget for Slider {
+impl ViewFactory for Slider {
     type View = Element<MaterialNodeBundle<SliderRectMaterial>>;
 
     fn create(&self, cx: &mut Cx) -> Element<MaterialNodeBundle<SliderRectMaterial>> {

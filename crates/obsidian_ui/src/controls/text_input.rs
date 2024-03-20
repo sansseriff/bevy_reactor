@@ -152,7 +152,7 @@ impl TextInput {
     }
 }
 
-impl Widget for TextInput {
+impl ViewFactory for TextInput {
     type View = Element<NodeBundle>;
 
     #[allow(clippy::vec_init_then_push)]

@@ -81,7 +81,7 @@ impl Dialog {
     }
 }
 
-impl Widget for Dialog {
+impl ViewFactory for Dialog {
     type View = Fragment;
 
     fn create(&self, cx: &mut Cx) -> Fragment {
@@ -186,7 +186,7 @@ impl DialogHeader {
     }
 }
 
-impl Widget for DialogHeader {
+impl ViewFactory for DialogHeader {
     type View = Element<NodeBundle>;
 
     fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
@@ -222,7 +222,7 @@ impl DialogBody {
     }
 }
 
-impl Widget for DialogBody {
+impl ViewFactory for DialogBody {
     type View = Element<NodeBundle>;
 
     fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
@@ -260,7 +260,7 @@ impl DialogFooter {
     }
 }
 
-impl Widget for DialogFooter {
+impl ViewFactory for DialogFooter {
     type View = Element<NodeBundle>;
 
     fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {

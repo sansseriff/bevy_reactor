@@ -174,7 +174,7 @@ impl GradientSlider {
     }
 }
 
-impl Widget for GradientSlider {
+impl ViewFactory for GradientSlider {
     type View = Element<NodeBundle>;
 
     fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
