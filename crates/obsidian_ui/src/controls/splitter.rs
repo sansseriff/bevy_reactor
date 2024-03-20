@@ -62,9 +62,7 @@ impl Splitter {
 }
 
 impl ViewFactory for Splitter {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, cx: &mut Cx) -> Self::View {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

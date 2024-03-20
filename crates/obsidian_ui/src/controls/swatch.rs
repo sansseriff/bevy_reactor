@@ -44,9 +44,7 @@ impl Swatch {
 }
 
 impl ViewFactory for Swatch {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let color = self.0.color;
         let size = self.0.size;
 

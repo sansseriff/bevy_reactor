@@ -153,10 +153,8 @@ impl TextInput {
 }
 
 impl ViewFactory for TextInput {
-    type View = Element<NodeBundle>;
-
     #[allow(clippy::vec_init_then_push)]
-    fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let text_id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);

@@ -97,9 +97,7 @@ impl Button {
 }
 
 impl ViewFactory for Button {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let variant = self.0.variant;
         let pressed = cx.create_mutable::<bool>(false);

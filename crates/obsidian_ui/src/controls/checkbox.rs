@@ -84,10 +84,8 @@ impl Checkbox {
 }
 
 impl ViewFactory for Checkbox {
-    type View = Element<NodeBundle>;
-
     /// Construct a button widget.
-    fn create(&self, cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);

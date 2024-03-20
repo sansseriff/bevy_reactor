@@ -54,6 +54,9 @@ pub trait View {
     }
 }
 
+/// A [`View`] with all the trimmings.
+pub trait SyncView: View + Send + Sync + 'static {}
+
 // This From impl is commented out because it causes many conflicts with other From impls.
 // impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
 //     fn from(view: V) -> Self {
@@ -172,11 +175,8 @@ impl View for EmptyView {
 
 /// Trait that defines a factory object that can construct a [`View`] from a reactive context.
 pub trait ViewFactory {
-    /// The view that represents the control.
-    type View: View + Send + Sync + 'static;
-
     /// Create the view for the control.
-    fn create(&self, cx: &mut Cx) -> Self::View;
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static;
 }
 
 /// Holds a [`ViewFactory`], and the entity and output nodes created by the [`View`] produced

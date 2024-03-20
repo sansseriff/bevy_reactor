@@ -140,9 +140,7 @@ impl Slider {
 }
 
 impl ViewFactory for Slider {
-    type View = Element<MaterialNodeBundle<SliderRectMaterial>>;
-
-    fn create(&self, cx: &mut Cx) -> Element<MaterialNodeBundle<SliderRectMaterial>> {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let slider_id = cx.create_entity();
         let hovering = cx.create_hover_signal(slider_id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

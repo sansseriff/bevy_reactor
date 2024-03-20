@@ -82,9 +82,7 @@ impl Dialog {
 }
 
 impl ViewFactory for Dialog {
-    type View = Fragment;
-
-    fn create(&self, cx: &mut Cx) -> Fragment {
+    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let on_close = self.0.on_close;
         let on_exited = self.0.on_exited;
         let state = cx.create_bistable_transition(self.0.open, TRANSITION_DURATION);
@@ -99,7 +97,7 @@ impl ViewFactory for Dialog {
             }
         });
 
-        Fragment::new(Cond::new(
+        Cond::new(
             move |cx| state.get(cx) != BistableTransitionState::Exited,
             move || {
                 Portal::new(
@@ -155,7 +153,7 @@ impl ViewFactory for Dialog {
                 )
             },
             || (),
-        ))
+        )
     }
 }
 
@@ -187,9 +185,7 @@ impl DialogHeader {
 }
 
 impl ViewFactory for DialogHeader {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
             .with_child(&self.0.children)
@@ -223,9 +219,7 @@ impl DialogBody {
 }
 
 impl ViewFactory for DialogBody {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
             .with_child(&self.0.children)
@@ -261,9 +255,7 @@ impl DialogFooter {
 }
 
 impl ViewFactory for DialogFooter {
-    type View = Element<NodeBundle>;
-
-    fn create(&self, _cx: &mut Cx) -> Element<NodeBundle> {
+    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)
             .with_child(&self.0.children)
