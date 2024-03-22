@@ -3,14 +3,11 @@ use std::marker::PhantomData;
 use bevy::prelude::*;
 
 use crate::{
-    element_effect::{
-        ComputedBundleReaction, ElementEffect, InsertBundleEffect, RunReactionEffect,
-        UpdateReaction,
-    },
+    element_effect::{ElementEffect, ElementEffectTarget},
     node_span::NodeSpan,
     view::View,
     view_children::ViewChildren,
-    Cx, DespawnScopes, Rcx, TrackingScope, ViewHandle,
+    DespawnScopes, TrackingScope, ViewHandle,
 };
 
 struct ElementChild {
@@ -30,7 +27,7 @@ pub struct Element<B: Bundle + Default> {
     /// Children of this element.
     children: Vec<ElementChild>,
 
-    /// List of effects for components to be added to the element.
+    /// List of effects to be added to the element.
     effects: Vec<Box<dyn ElementEffect>>,
 
     marker: PhantomData<B>,
@@ -102,51 +99,6 @@ impl<B: Bundle + Default> Element<B> {
         self
     }
 
-    /// Add a reactive effct to the element.
-    pub fn add_effect(&mut self, effect: Box<dyn ElementEffect>) {
-        self.effects.push(effect);
-    }
-
-    /// Create a reactive effect which is attached to the element.
-    pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
-        mut self,
-        effect: F,
-    ) -> Self {
-        self.add_effect(Box::new(RunReactionEffect::new(UpdateReaction::new(
-            effect,
-        ))));
-        self
-    }
-
-    /// Add a static bundle to the element.
-    pub fn insert<T: Bundle>(mut self, bundle: T) -> Self {
-        self.add_effect(Box::new(InsertBundleEffect {
-            bundle: Some(bundle),
-        }));
-        self
-    }
-
-    /// Add a static bundle to the element, if a condition is true.
-    pub fn insert_if<T: Bundle>(mut self, cond: bool, bundle: T) -> Self {
-        if cond {
-            self.add_effect(Box::new(InsertBundleEffect {
-                bundle: Some(bundle),
-            }));
-        }
-        self
-    }
-
-    /// Add a computed bundle to the element.
-    pub fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Rcx) -> T>(
-        mut self,
-        factory: F,
-    ) -> Self {
-        self.add_effect(Box::new(RunReactionEffect::new(
-            ComputedBundleReaction::new(factory),
-        )));
-        self
-    }
-
     // pub fn insert_computed_ref<
     //     T: Component,
     //     F1: Send + Sync + 'static + FnMut() -> T,
@@ -185,6 +137,12 @@ impl<B: Bundle + Default> Element<B> {
     }
 }
 
+impl<B: Bundle + Default> ElementEffectTarget for Element<B> {
+    fn add_effect(&mut self, effect: Box<dyn ElementEffect>) {
+        self.effects.push(effect);
+    }
+}
+
 impl<B: Bundle + Default> View for Element<B> {
     fn nodes(&self) -> NodeSpan {
         match self.display {
@@ -213,7 +171,7 @@ impl<B: Bundle + Default> View for Element<B> {
             }
         };
 
-        // Insert components
+        // Insert components from effects.
         if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.read_change_tick());
             for producer in self.effects.iter_mut() {

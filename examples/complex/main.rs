@@ -185,7 +185,6 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
         .insert((TabGroup::default(), TargetCamera(cx.props)))
-        // .insert(TargetCamera(c2d.0))
         .children((
             Dialog::new(DialogProps {
                 open: checked_1.signal(),

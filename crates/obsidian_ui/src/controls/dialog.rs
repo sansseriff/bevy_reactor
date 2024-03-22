@@ -36,7 +36,7 @@ fn style_dialog(ss: &mut StyleBuilder) {
         .justify_content(ui::JustifyContent::Center)
         .align_items(ui::AlignItems::Stretch)
         .border_color(colors::U1)
-        .width(200)
+        .width(400)
         .border(3);
     // .scale(0.5)
     // .transition(&[Transition {
@@ -87,6 +87,7 @@ impl ViewFactory for Dialog {
         let on_exited = self.0.on_exited;
         let state = cx.create_bistable_transition(self.0.open, TRANSITION_DURATION);
         let children = self.0.children.clone();
+        let width = self.0.width;
 
         cx.create_effect(move |ve| {
             let state = state.get(ve);
@@ -102,7 +103,7 @@ impl ViewFactory for Dialog {
             move || {
                 Portal::new(
                     Element::<NodeBundle>::new()
-                        .with_styles((style_dialog_overlay, text_default))
+                        .with_styles(style_dialog_overlay)
                         .insert((
                             // Click on backdrop sends close signal.
                             On::<Pointer<Click>>::run(move |world: &mut World| {
@@ -147,7 +148,13 @@ impl ViewFactory for Dialog {
                                     order: 0,
                                     modal: true,
                                 })
-                                .with_styles(style_dialog)
+                                .with_styles((
+                                    text_default,
+                                    style_dialog,
+                                    move |ss: &mut StyleBuilder| {
+                                        ss.width(width);
+                                    },
+                                ))
                                 .with_child(&children),
                         ),
                 )

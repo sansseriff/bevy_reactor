@@ -12,7 +12,8 @@ use std::any::Any;
 // * TrackingScope could treat it just like any other component.
 // * The hard part is handling MutableValueNext, because that is processed via a query.
 // * We would need to register a system for each specialization.
-// * What's missing: a way to issue commands from World.
+// * What's missing: a way to issue commands from World. With that, we wouldn't need a system
+//   for each specialization, we wouldn't need a system at all.
 
 /// Contains a mutable reactive value.
 #[derive(Component)]

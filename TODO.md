@@ -1,7 +1,6 @@
 # TODO
 
 - Scoped values
-- ViewFactory/Control trait
 - Scrollbar
 - Scroll view
 - Build a router that uses Bevy states.
@@ -20,6 +19,7 @@
   - correct rendering of selection rects and cursor
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
+- Simplify ViewFactory type signature.
 
 # StyleBuilder
 
@@ -27,7 +27,6 @@
 
 # Obsidian
 
-- Checkbox (finish rounded corners)
 - Radio
 - DisclosureTriangle - with transition
 - Multi-layered nine-patch button.

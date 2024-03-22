@@ -10,8 +10,8 @@ use bevy::{
     },
 };
 use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, For, PresenterFn, ReactorPlugin, RunContextRead,
-    StyleBuilder, StyleBuilderLayout, View, ViewRoot, WithStyles,
+    text, text_computed, Cond, Cx, Element, ElementEffectTarget, For, PresenterFn, ReactorPlugin,
+    RunContextRead, StyleBuilder, StyleBuilderLayout, View, ViewRoot, WithStyles,
 };
 
 fn style_test(ss: &mut StyleBuilder) {

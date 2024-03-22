@@ -16,6 +16,55 @@ pub trait ElementEffect: Sync + Send {
     fn start(&mut self, tracking: &mut TrackingScope, target: Entity, world: &mut World);
 }
 
+/// An object which can have effects applied to it.
+pub trait ElementEffectTarget
+where
+    Self: Sized,
+{
+    /// Add a reactive effct to the element.
+    fn add_effect(&mut self, effect: Box<dyn ElementEffect>);
+
+    /// Create a reactive effect which is attached to the element.
+    fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
+        mut self,
+        effect: F,
+    ) -> Self {
+        self.add_effect(Box::new(RunReactionEffect::new(UpdateReaction::new(
+            effect,
+        ))));
+        self
+    }
+
+    /// Add a static bundle to the element.
+    fn insert<T: Bundle>(mut self, bundle: T) -> Self {
+        self.add_effect(Box::new(InsertBundleEffect {
+            bundle: Some(bundle),
+        }));
+        self
+    }
+
+    /// Add a static bundle to the element, if a condition is true.
+    fn insert_if<T: Bundle>(mut self, cond: bool, bundle: T) -> Self {
+        if cond {
+            self.add_effect(Box::new(InsertBundleEffect {
+                bundle: Some(bundle),
+            }));
+        }
+        self
+    }
+
+    /// Add a computed bundle to the element.
+    fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Rcx) -> T>(
+        mut self,
+        factory: F,
+    ) -> Self {
+        self.add_effect(Box::new(RunReactionEffect::new(
+            ComputedBundleReaction::new(factory),
+        )));
+        self
+    }
+}
+
 /// Allows a reaction's target entity to be set.
 pub trait Targetable {
     fn set_target(&mut self, target: Entity);

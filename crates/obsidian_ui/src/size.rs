@@ -51,6 +51,19 @@ impl Size {
             Size::Xxxs => 11.0,
         }
     }
+
+    /// Returns the dialog width for this size.
+    pub fn dialog_width(&self) -> f32 {
+        match self {
+            Size::Xl => 800.0,
+            Size::Lg => 600.0,
+            Size::Md => 400.0,
+            Size::Sm => 300.0,
+            Size::Xs => 200.0,
+            Size::Xxs => 150.0,
+            Size::Xxxs => 100.0,
+        }
+    }
 }
 
 // export type Space = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | 'none';

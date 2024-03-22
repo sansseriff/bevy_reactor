@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 
 mod callback;
+mod compositor;
 mod cond;
 mod cx;
 mod derived;
@@ -30,6 +31,7 @@ mod view_children;
 
 pub use callback::CallDeferred;
 pub use callback::Callback;
+pub use compositor::Compositor;
 pub use cond::cond;
 pub use cond::Cond;
 pub use cx::Cx;
@@ -41,6 +43,7 @@ pub use derived::Derived;
 pub use derived::ReadDerived;
 pub use element::Element;
 pub use element_effect::ElementEffect;
+pub use element_effect::ElementEffectTarget;
 pub use for_each::ForEach;
 pub use for_index::ForIndex;
 pub use fragment::Fragment;

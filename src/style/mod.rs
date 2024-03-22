@@ -11,7 +11,7 @@ mod builder_z_index;
 
 use std::sync::Arc;
 
-use crate::{Element, ElementEffect, TrackingScope};
+use crate::{element_effect::ElementEffectTarget, Element, ElementEffect, TrackingScope};
 // pub use atlas_loader::TextureAtlasLoader;
 use bevy::{prelude::*, ui};
 pub use builder::StyleBuilder;
