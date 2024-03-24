@@ -7,7 +7,7 @@ use bevy_mod_picking::{
 use bevy_reactor::*;
 
 use crate::{
-    animation::{AnimatedBackgroundColor, AnimatedTransition},
+    animation::{AnimatedBackgroundColor, AnimatedScale, AnimatedTransition},
     colors,
     focus::{KeyPressEvent, TabGroup},
     hooks::{BistableTransitionState, CreateBistableTransition},
@@ -129,10 +129,10 @@ impl ViewFactory for Dialog {
                             let state = state.get(cx);
                             let mut entt = cx.world_mut().entity_mut(ent);
                             let target = match state {
+                                BistableTransitionState::Entering
+                                | BistableTransitionState::Entered
+                                | BistableTransitionState::ExitStart => colors::U2.with_alpha(0.7),
                                 BistableTransitionState::EnterStart
-                                | BistableTransitionState::Entering
-                                | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
-                                BistableTransitionState::ExitStart
                                 | BistableTransitionState::Exiting
                                 | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
                             };
@@ -142,7 +142,7 @@ impl ViewFactory for Dialog {
                                 TRANSITION_DURATION,
                             );
                         })
-                        .children(
+                        .with_children(
                             Element::<NodeBundle>::new()
                                 .insert(TabGroup {
                                     order: 0,
@@ -155,6 +155,23 @@ impl ViewFactory for Dialog {
                                         ss.width(width);
                                     },
                                 ))
+                                .create_effect(move |cx, ent| {
+                                    let state = state.get(cx);
+                                    let mut entt = cx.world_mut().entity_mut(ent);
+                                    let target = match state {
+                                        BistableTransitionState::EnterStart
+                                        | BistableTransitionState::Exiting
+                                        | BistableTransitionState::Exited => Vec3::splat(0.0),
+                                        BistableTransitionState::Entering
+                                        | BistableTransitionState::Entered
+                                        | BistableTransitionState::ExitStart => Vec3::splat(1.0),
+                                    };
+                                    AnimatedTransition::<AnimatedScale>::start(
+                                        &mut entt,
+                                        target,
+                                        TRANSITION_DURATION,
+                                    );
+                                })
                                 .with_child(&children),
                         ),
                 )

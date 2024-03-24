@@ -1,9 +1,11 @@
-workspace = { members = ["crates/obsidian_ui"] }
 [package]
 name = "bevy_reactor"
 version = "0.1.0"
 edition = "2021"
 publish = false
+
+[workspace]
+members = ["crates/*"]
 
 [dependencies]
 # anyhow = "1.0.79"
@@ -14,9 +16,6 @@ bevy_color = { path = "../bevy_color" }
 # ], branch = "main" }
 bevy_mod_picking = "0.18.0"
 impl-trait-for-tuples = "0.2.2"
-# ron = "0.8.1"
-# serde = "1.0.196"
-# thiserror = "1.0.57"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]

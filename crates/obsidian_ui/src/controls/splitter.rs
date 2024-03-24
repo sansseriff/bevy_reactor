@@ -115,7 +115,7 @@ impl ViewFactory for Splitter {
                     );
                 }),
             ))
-            .children(
+            .with_children(
                 Element::<NodeBundle>::new()
                     .with_styles(style_vsplitter_inner)
                     .create_effect(move |cx, ent| {

@@ -122,6 +122,21 @@ impl AnimatableProperty for AnimatedScale {
     }
 }
 
+/// Animated translation.
+pub struct AnimatedTranslation;
+impl AnimatableProperty for AnimatedTranslation {
+    type ValueType = Vec3;
+    type ComponentType = Transform;
+
+    fn current(component: &Self::ComponentType) -> Self::ValueType {
+        component.translation
+    }
+
+    fn update(trans: &mut Self::ComponentType, t: f32, origin: Vec3, target: Vec3) {
+        trans.translation = origin.lerp(target, t);
+    }
+}
+
 /// ECS component that animates a visual property of a UI node.
 #[derive(Component)]
 pub struct AnimatedTransition<T>
@@ -153,6 +168,8 @@ where
     }
 
     /// Start a new animated transition.
+    /// If the entity already has an animated transition of the same type, the transition will be
+    /// restarted with the new target value.
     pub fn start(entity: &mut EntityWorldMut, target: T::ValueType, duration: f32) {
         // If we're already animating to the same target, don't restart the animation.
         if let Some(anim) = entity.get_mut::<Self>() {
@@ -226,6 +243,7 @@ impl Plugin for AnimatedTransitionPlugin {
                 AnimatedTransition::<AnimatedPxWidth>::run_animations,
                 AnimatedTransition::<AnimatedPxHeight>::run_animations,
                 AnimatedTransition::<AnimatedScale>::run_animations,
+                AnimatedTransition::<AnimatedTranslation>::run_animations,
             ),
         );
     }

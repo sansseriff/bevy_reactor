@@ -11,7 +11,7 @@ mod builder_z_index;
 
 use std::sync::Arc;
 
-use crate::{element_effect::ElementEffectTarget, Element, ElementEffect, TrackingScope};
+use crate::{effect_target::EffectTarget, Element, EntityEffect, TrackingScope};
 // pub use atlas_loader::TextureAtlasLoader;
 use bevy::{prelude::*, ui};
 pub use builder::StyleBuilder;
@@ -66,9 +66,9 @@ pub struct ApplyStylesEffect<S: StyleTuple> {
     pub(crate) styles: S,
 }
 
-impl<S: StyleTuple> ElementEffect for ApplyStylesEffect<S> {
+impl<S: StyleTuple> EntityEffect for ApplyStylesEffect<S> {
     // For a style builder, run the builder over the target entity.
-    fn start(&mut self, _tracking: &mut TrackingScope, target: Entity, world: &mut World) {
+    fn start(&mut self, target: Entity, world: &mut World, _tracking: &mut TrackingScope) {
         let mut target = world.entity_mut(target);
         let mut style = ui::Style::default();
         if let Some(s) = target.get::<ui::Style>() {

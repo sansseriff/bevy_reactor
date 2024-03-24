@@ -482,7 +482,8 @@ pub struct Rcx<'p, 'w> {
 }
 
 impl<'p, 'w> Rcx<'p, 'w> {
-    pub(crate) fn new(world: &'w World, tracking: &'p mut TrackingScope) -> Self {
+    /// Create a new read-only reactive context.
+    pub fn new(world: &'w World, tracking: &'p mut TrackingScope) -> Self {
         Self {
             world,
             tracking: RefCell::new(tracking),

@@ -50,7 +50,7 @@ pub struct ButtonProps {
     pub children: ViewHandle,
 
     /// Additional styles to be applied to the button.
-    pub styles: StyleHandle,
+    pub style: StyleHandle,
 
     /// Callback called when clicked
     pub on_click: Option<Callback>,
@@ -125,7 +125,7 @@ impl ViewFactory for Button {
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
                 },
-                self.0.styles.clone(),
+                self.0.style.clone(),
             ))
             .insert((
                 TabIndex(self.0.tab_index),
@@ -189,7 +189,7 @@ impl ViewFactory for Button {
                 }),
             ))
             .insert_if(self.0.autofocus, AutoFocus)
-            .children((
+            .with_children((
                 Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                     .insert(material.clone())
                     .with_styles(style_button_bg)

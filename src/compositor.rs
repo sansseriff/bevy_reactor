@@ -9,15 +9,10 @@ use bevy::{
 };
 
 use crate::{
-    node_span::NodeSpan, style::ApplyStylesEffect, view::View, DespawnScopes, DisplayNodeChanged,
-    ElementEffect, ElementEffectTarget, StyleTuple, TrackingScope, ViewChildren, ViewHandle,
-    WithStyles,
+    node_span::NodeSpan, style::ApplyStylesEffect, view::View, ChildView, ChildViewTuple,
+    DespawnScopes, DisplayNodeChanged, EffectTarget, EntityEffect, StyleTuple, TrackingScope,
+    ViewHandle, WithStyles,
 };
-
-struct ChildView {
-    view: ViewHandle,
-    entity: Option<Entity>,
-}
 
 /// Marker component which indicates that the entity is a camera for the compositor.
 #[derive(Component)]
@@ -33,12 +28,12 @@ pub struct Compositor {
     image_entity: Option<Entity>,
 
     /// List of effects to be added to the image entity.
-    effects: Vec<Box<dyn ElementEffect>>,
+    effects: Vec<Box<dyn EntityEffect>>,
 }
 
 impl Compositor {
     /// Construct a new `Compositor`.
-    pub fn new<V: ViewChildren>(views: V) -> Self {
+    pub fn new<V: ChildViewTuple>(views: V) -> Self {
         let child_views = views.to_vec();
         Self {
             children: child_views
@@ -153,8 +148,8 @@ impl View for Compositor {
         // Insert components from effects.
         if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.read_change_tick());
-            for producer in self.effects.iter_mut() {
-                producer.start(&mut tracking, image_entity, world);
+            for effect in self.effects.iter_mut() {
+                effect.start(image_entity, world, &mut tracking);
             }
             world.entity_mut(view_entity).insert(tracking);
         }
@@ -183,8 +178,8 @@ impl View for Compositor {
     }
 }
 
-impl ElementEffectTarget for Compositor {
-    fn add_effect(&mut self, effect: Box<dyn ElementEffect>) {
+impl EffectTarget for Compositor {
+    fn add_effect(&mut self, effect: Box<dyn EntityEffect>) {
         self.effects.push(effect);
     }
 }

@@ -19,7 +19,7 @@ pub struct SwatchProps {
     pub size: Size,
 
     /// Additional styles to be applied to the button.
-    pub styles: StyleHandle,
+    pub style: StyleHandle,
 
     /// Callback called when clicked
     pub on_click: Option<Callback>,
@@ -55,7 +55,7 @@ impl ViewFactory for Swatch {
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
                 },
-                self.0.styles.clone(),
+                self.0.style.clone(),
             ))
             .insert((
                 // TabIndex(0),

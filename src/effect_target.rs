@@ -2,36 +2,72 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
 
-use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle};
+use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle, ReactionTarget};
 
 /// A reactive effect that modifies a target entity.
-pub trait ElementEffect: Sync + Send {
+pub trait EntityEffect: Sync + Send {
     /// Start the effect.
     ///
     /// Arguments:
     /// - `owner`: The entity that tracks ownership of this reaction, the reaction
     ///     will be deleted when the owner is deleted.
-    /// - `target`: The display entity that the bundle will be inserted into.
+    /// - `display`: The display entity that will be modified.
     /// - `world`: The Bevy world.
-    fn start(&mut self, tracking: &mut TrackingScope, target: Entity, world: &mut World);
+    fn start(&mut self, display: Entity, world: &mut World, tracking: &mut TrackingScope);
 }
 
 /// An object which can have effects applied to it.
-pub trait ElementEffectTarget
+pub trait EffectTarget
 where
     Self: Sized,
 {
     /// Add a reactive effct to the element.
-    fn add_effect(&mut self, effect: Box<dyn ElementEffect>);
+    fn add_effect(&mut self, effect: Box<dyn EntityEffect>);
+
+    /// Add a reaction to the element. This is a convenience method for adding a reactive
+    /// effect that is already in the form of a `Reaction`.
+    fn add_reaction<R: Reaction + Send + Sync + 'static>(&mut self, reaction: R) {
+        self.add_effect(Box::new(RunReactionEffect::new(reaction)));
+    }
+
+    /// Start a reaction which updates the entity.
+    fn start_reaction<R: Reaction + Send + Sync + 'static>(
+        &mut self,
+        reaction: R,
+        target: Entity,
+        world: &mut World,
+        parent_scope: &mut TrackingScope,
+    ) {
+        // Create a tracking scope for the reaction.
+        let mut scope = TrackingScope::new(world.read_change_tick());
+
+        // Unwrap the reaction and update the target entity, since this was not known at
+        // the time the reaction was constucted.
+        let reaction_arc = Arc::new(Mutex::new(reaction));
+        let mut reaction = reaction_arc.lock().unwrap();
+
+        // Store the reaction in a handle and add it to the world.
+        let reaction_id = world
+            .spawn((ReactionHandle(reaction_arc.clone()), ReactionTarget(target)))
+            .id();
+
+        // Call `react` the first time, update the scope with initial deps.
+        // Note that we need to insert the ReactionTarget first!
+        reaction.react(reaction_id, world, &mut scope);
+
+        // Store the scope in the reaction entity.
+        world.entity_mut(reaction_id).insert(scope);
+
+        // Add the reaction id to the parent scope so that it can be despawned later.
+        parent_scope.add_owned(reaction_id);
+    }
 
     /// Create a reactive effect which is attached to the element.
     fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx, Entity)>(
         mut self,
         effect: F,
     ) -> Self {
-        self.add_effect(Box::new(RunReactionEffect::new(UpdateReaction::new(
-            effect,
-        ))));
+        self.add_reaction(UpdateReaction::new(effect));
         self
     }
 
@@ -58,16 +94,9 @@ where
         mut self,
         factory: F,
     ) -> Self {
-        self.add_effect(Box::new(RunReactionEffect::new(
-            ComputedBundleReaction::new(factory),
-        )));
+        self.add_reaction(ComputedBundleReaction::new(factory));
         self
     }
-}
-
-/// Allows a reaction's target entity to be set.
-pub trait Targetable {
-    fn set_target(&mut self, target: Entity);
 }
 
 /// Inserts a static, pre-constructed bundle into the target entity. No reactivity.
@@ -75,19 +104,19 @@ pub struct InsertBundleEffect<B: Bundle> {
     pub(crate) bundle: Option<B>,
 }
 
-impl<B: Bundle> ElementEffect for InsertBundleEffect<B> {
+impl<B: Bundle> EntityEffect for InsertBundleEffect<B> {
     // For a static bundle, we can just insert it once.
-    fn start(&mut self, _tracking: &mut TrackingScope, target: Entity, world: &mut World) {
+    fn start(&mut self, target: Entity, world: &mut World, _tracking: &mut TrackingScope) {
         world.entity_mut(target).insert(self.bundle.take().unwrap());
     }
 }
 
 /// Effect that runs a reaction function (reactively).
-pub struct RunReactionEffect<R: Targetable> {
+pub struct RunReactionEffect<R> {
     reaction: Arc<Mutex<R>>,
 }
 
-impl<R: Targetable> RunReactionEffect<R> {
+impl<R> RunReactionEffect<R> {
     pub(crate) fn new(reaction: R) -> Self {
         Self {
             reaction: Arc::new(Mutex::new(reaction)),
@@ -95,21 +124,26 @@ impl<R: Targetable> RunReactionEffect<R> {
     }
 }
 
-impl<R: Targetable + Reaction + Send + Sync + 'static> ElementEffect for RunReactionEffect<R> {
+impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> {
     // Start a reaction which updates the bundle.
-    fn start(&mut self, parent_scope: &mut TrackingScope, target: Entity, world: &mut World) {
+    fn start(&mut self, target: Entity, world: &mut World, parent_scope: &mut TrackingScope) {
         // Create a tracking scope for the reaction.
         let mut scope = TrackingScope::new(world.read_change_tick());
 
         // Unwrap the reaction and update the target entity, since this was not known at
         // the time the reaction was constucted.
         let mut reaction = self.reaction.lock().unwrap();
-        reaction.set_target(target);
 
         // Store the reaction in a handle and add it to the world.
-        let reaction_id = world.spawn(ReactionHandle(self.reaction.clone())).id();
+        let reaction_id = world
+            .spawn((
+                ReactionHandle(self.reaction.clone()),
+                ReactionTarget(target),
+            ))
+            .id();
 
         // Call `react` the first time, update the scope with initial deps.
+        // Note that we need to insert the ReactionTarget first!
         reaction.react(reaction_id, world, &mut scope);
 
         // Store the scope in the reaction entity.
@@ -123,31 +157,22 @@ impl<R: Targetable + Reaction + Send + Sync + 'static> ElementEffect for RunReac
 /// Calls a closure which computes a bundle reactively, returns the bundle as a result.
 /// This is then inserted into the target.
 pub struct ComputedBundleReaction<B: Bundle, F: FnMut(&mut Rcx) -> B> {
-    target: Option<Entity>,
     factory: F,
 }
 
 impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> ComputedBundleReaction<B, F> {
     pub(crate) fn new(factory: F) -> Self {
-        Self {
-            target: None,
-            factory,
-        }
+        Self { factory }
     }
 }
 
 impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for ComputedBundleReaction<B, F> {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
         let mut re = Rcx::new(world, tracking);
         let b = (self.factory)(&mut re);
-        let mut entt = world.entity_mut(self.target.unwrap());
+        let mut entt = world.entity_mut(target);
         entt.insert(b);
-    }
-}
-
-impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Targetable for ComputedBundleReaction<B, F> {
-    fn set_target(&mut self, target: Entity) {
-        self.target = Some(target);
     }
 }
 
@@ -215,28 +240,19 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Targetable for ComputedBu
 
 /// Produces a bundle reactively, returns the bundle as a result.
 pub struct UpdateReaction<F: FnMut(&mut Cx, Entity)> {
-    target: Option<Entity>,
     effect: F,
 }
 
 impl<F: FnMut(&mut Cx, Entity)> UpdateReaction<F> {
     pub(crate) fn new(effect: F) -> Self {
-        Self {
-            target: None,
-            effect,
-        }
+        Self { effect }
     }
 }
 
 impl<F: FnMut(&mut Cx, Entity)> Reaction for UpdateReaction<F> {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
         let mut cx = Cx::new((), world, tracking);
-        (self.effect)(&mut cx, self.target.unwrap());
-    }
-}
-
-impl<F: FnMut(&mut Cx, Entity)> Targetable for UpdateReaction<F> {
-    fn set_target(&mut self, target: Entity) {
-        self.target = Some(target);
+        (self.effect)(&mut cx, target);
     }
 }

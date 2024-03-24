@@ -64,10 +64,10 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
 
     Element::<NodeBundle>::new()
         .with_styles(style_color_edit)
-        .children((
+        .with_children((
             Element::<NodeBundle>::new()
                 .with_styles(style_mode_selector)
-                .children((
+                .with_children((
                     Button::new(ButtonProps {
                         children: "RGB".into(),
                         corners: RoundedCorners::Left,
@@ -132,7 +132,7 @@ pub fn color_edit(cx: &mut Cx) -> impl View {
 fn rgb_sliders(cx: &mut Cx) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_sliders)
-        .children((
+        .with_children((
             GradientSlider::new(GradientSliderProps {
                 gradient: cx.create_derived(|cx| {
                     let rgb = cx.use_resource::<ColorEditState>().rgb;
@@ -210,7 +210,7 @@ fn rgb_sliders(cx: &mut Cx) -> impl View {
 fn hsl_sliders(cx: &mut Cx) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles(style_sliders)
-        .children((
+        .with_children((
             GradientSlider::new(GradientSliderProps {
                 gradient: Signal::Constant(ColorGradient::new(&[
                     Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),

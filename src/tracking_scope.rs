@@ -32,6 +32,7 @@ pub struct TrackingScope {
 }
 
 impl TrackingScope {
+    /// Create a new tracking scope.
     pub fn new(tick: Tick) -> Self {
         Self {
             owned: Vec::new(),
@@ -110,7 +111,11 @@ impl TrackingScope {
     }
 }
 
-pub(crate) trait DespawnScopes {
+/// Trait which allows despawning of any owned objects or reactions in the tracking scope
+/// associated with an entity. This operation is recursive in that an owned object may itself
+/// own other objects.
+pub trait DespawnScopes {
+    /// Despawn all owned objects and reactions associated with the given entity.
     fn despawn_owned_recursive(&mut self, scope_entity: Entity);
 }
 

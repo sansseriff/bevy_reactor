@@ -9,10 +9,7 @@ use bevy::{
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
-use bevy_reactor::{
-    text, text_computed, Cond, Cx, Element, ElementEffectTarget, For, PresenterFn, ReactorPlugin,
-    RunContextRead, StyleBuilder, StyleBuilderLayout, View, ViewRoot, WithStyles,
-};
+use bevy_reactor::*;
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -60,7 +57,7 @@ fn setup_view_root(mut commands: Commands) {
                     Color::RED
                 };
             })
-            .children((
+            .with_children((
                 Element::<NodeBundle>::new(),
                 text("Count: "),
                 text_computed(|cx| {
@@ -94,7 +91,7 @@ fn nested_presenter(_: &mut Cx) -> impl View {
         let counter = cx.use_resource::<Counter>();
         format!("{}", counter.count)
     })
-    // .children((
+    // .with_children((
     //     "Root Presenter: ",
     // |cx: &mut Cx| Element::new(),
     //     format!("{}", counter.count),

@@ -3,21 +3,19 @@ use std::marker::PhantomData;
 use bevy::prelude::*;
 
 use crate::{
-    element_effect::{ElementEffect, ElementEffectTarget},
+    effect_target::{EffectTarget, EntityEffect},
     node_span::NodeSpan,
+    parent_view::{ChildView, ParentView},
     view::View,
-    view_children::ViewChildren,
     DespawnScopes, TrackingScope, ViewHandle,
 };
 
-struct ElementChild {
-    view: ViewHandle,
-    entity: Option<Entity>,
-}
-
 /// A basic UI element
 #[derive(Default)]
-pub struct Element<B: Bundle + Default> {
+pub struct Element<B: Bundle + Default>
+where
+    Self: EffectTarget + ParentView,
+{
     /// Debug name for this element.
     debug_name: String,
 
@@ -25,10 +23,10 @@ pub struct Element<B: Bundle + Default> {
     display: Option<Entity>,
 
     /// Children of this element.
-    children: Vec<ElementChild>,
+    children: Vec<ChildView>,
 
     /// List of effects to be added to the element.
-    effects: Vec<Box<dyn ElementEffect>>,
+    effects: Vec<Box<dyn EntityEffect>>,
 
     marker: PhantomData<B>,
 }
@@ -62,43 +60,6 @@ impl<B: Bundle + Default> Element<B> {
         self
     }
 
-    /// Set the child views for this element.
-    pub fn children<V: ViewChildren>(mut self, views: V) -> Self {
-        if !self.children.is_empty() {
-            panic!("Children already set");
-        }
-        let child_views = views.to_vec();
-        self.children = child_views
-            .iter()
-            .map(|v| ElementChild {
-                view: v.clone(),
-                entity: None,
-            })
-            .collect();
-        self
-    }
-
-    /// Set the child views for this element.
-    pub fn with_child(mut self, view: &ViewHandle) -> Self {
-        if !self.children.is_empty() {
-            panic!("Children already set");
-        }
-        self.children = vec![ElementChild {
-            view: view.clone(),
-            entity: None,
-        }];
-        self
-    }
-
-    /// Add a child views to this element.
-    pub fn append_child(mut self, view: &ViewHandle) -> Self {
-        self.children.push(ElementChild {
-            view: view.clone(),
-            entity: None,
-        });
-        self
-    }
-
     // pub fn insert_computed_ref<
     //     T: Component,
     //     F1: Send + Sync + 'static + FnMut() -> T,
@@ -121,25 +82,26 @@ impl<B: Bundle + Default> Element<B> {
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
     fn attach_children(&self, world: &mut World) {
-        let mut count: usize = 0;
-        for child in self.children.iter() {
-            count += child.view.nodes().count();
-        }
-
-        let mut flat: Vec<Entity> = Vec::with_capacity(count);
-        for child in self.children.iter() {
-            child.view.nodes().flatten(&mut flat);
-        }
-
+        let flat = self.child_nodes();
         world
             .entity_mut(self.display.unwrap())
             .replace_children(&flat);
     }
 }
 
-impl<B: Bundle + Default> ElementEffectTarget for Element<B> {
-    fn add_effect(&mut self, effect: Box<dyn ElementEffect>) {
+impl<B: Bundle + Default> EffectTarget for Element<B> {
+    fn add_effect(&mut self, effect: Box<dyn EntityEffect>) {
         self.effects.push(effect);
+    }
+}
+
+impl<B: Bundle + Default> ParentView for Element<B> {
+    fn children(&self) -> &Vec<ChildView> {
+        self.children.as_ref()
+    }
+
+    fn children_mut(&mut self) -> &mut Vec<ChildView> {
+        self.children.as_mut()
     }
 }
 
@@ -174,8 +136,8 @@ impl<B: Bundle + Default> View for Element<B> {
         // Insert components from effects.
         if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.read_change_tick());
-            for producer in self.effects.iter_mut() {
-                producer.start(&mut tracking, display, world);
+            for effect in self.effects.iter_mut() {
+                effect.start(display, world, &mut tracking);
             }
             world.entity_mut(view_entity).insert(tracking);
         }
@@ -190,12 +152,7 @@ impl<B: Bundle + Default> View for Element<B> {
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.display.is_some());
-        // Raze all child views
-        for child in self.children.drain(..) {
-            let inner = child.view;
-            inner.raze(child.entity.unwrap(), world);
-            // Child raze() will despawn itself.
-        }
+        self.raze_children(world);
 
         // Delete the display node.
         world.entity_mut(self.display.unwrap()).remove_parent();

@@ -240,9 +240,9 @@ impl ViewFactory for Slider {
                 let material = ui_materials.get_mut(material.clone()).unwrap();
                 material.value = pos;
             })
-            .children((Element::<NodeBundle>::new()
+            .with_children((Element::<NodeBundle>::new()
                 .with_styles(style_overlay)
-                .children((
+                .with_children((
                     slider_button.bind(SliderButtonProps {
                         value,
                         min,
@@ -254,7 +254,7 @@ impl ViewFactory for Slider {
                     }),
                     Element::<NodeBundle>::new()
                         .with_styles(style_label)
-                        .children(text_computed({
+                        .with_children(text_computed({
                             move |cx| {
                                 let value = value.get(cx);
                                 format!("{:.*}", precision, value)
@@ -367,7 +367,7 @@ fn slider_button(cx: &mut Cx<SliderButtonProps>) -> Element<NodeBundle> {
                 }
             }),
         ))
-        .children(
+        .with_children(
             Element::<NodeBundle>::new()
                 .with_styles((
                     style_button_icon,

@@ -5,12 +5,12 @@ concepts such as signals built on Bevy primitives such as entities and component
 
 ## Features
 
-* Reactive data sources: `Mutable`, `Derived` and `Signal`.
-* Tracked ownership.
-* Copyable callback handles.
-* Create entities that respond to reactive data sources such as mutable variables, Bevy resources
+- Reactive data sources: `Mutable`, `Derived` and `Signal`.
+- Tracked ownership.
+- Copyable callback handles.
+- Create entities that respond to reactive data sources such as mutable variables, Bevy resources
   and components.
-* Simplified styling system.
+- Simplified styling system.
 
 ## Examples
 
@@ -70,12 +70,12 @@ element.insert_computed(|cx| {
 The `Cx` parameter type is the most general and powerful. It's actually an amalgam of several traits,
 which includes:
 
-* `ReadMutable` - methods for reading to instances of `Mutable`.
-* `WriteMutable` - methods for writing to instances of `Derived`.
-* `ReadDerived` - methods for reading from instances of `Derived`.
-* `RunContextWrite` - a trait that defines methods running callbacks and doing other actions
+- `ReadMutable` - methods for reading to instances of `Mutable`.
+- `WriteMutable` - methods for writing to instances of `Derived`.
+- `ReadDerived` - methods for reading from instances of `Derived`.
+- `RunContextWrite` - a trait that defines methods running callbacks and doing other actions
   which may mutate the world but which don't cause structural changes.
-* `RunContextSetup` - a trait that defines methods for *creating* new mutables, callbacks,
+- `RunContextSetup` - a trait that defines methods for _creating_ new mutables, callbacks,
   memos and effects.
 
 The `Cx` type also has a `props` attribute which allows properties to be passed to the function
@@ -97,6 +97,7 @@ create a mutable via `create_mutable()`:
 ```rust
 let pressed = cx.create_mutable::<bool>(false);
 ```
+
 The return result is a `Mutable<T>`, which is a handle used to access the variable. Internally,
 the mutable is simply a Bevy `Entity`, but with some extra type information. Because it's an entity,
 it can be freely passed around, copied, captured in closures, and so on.
@@ -108,11 +109,11 @@ will also be despawned.
 
 Accessing the data in a mutable can be done in one of several ways:
 
-* Getting the data via `mutable.get(context)`;
-* Setting the data via `mutable.set(context, value)`;
-* Getting a reference to the data via `mutable.as_ref(context)`;
-* Transforming the data via `mutable.map(context, mapper_fn)`;
-* Accessing the data via a signal: `mutable.signal()`;
+- Getting the data via `mutable.get(context)`;
+- Setting the data via `mutable.set(context, value)`;
+- Getting a reference to the data via `mutable.as_ref(context)`;
+- Transforming the data via `mutable.map(context, mapper_fn)`;
+- Accessing the data via a signal: `mutable.signal()`;
 
 The reason we need to pass in a context object (which can be `Cx`, `Rcx` or `World`) is because
 we the actual data is stored in Bevy's ECS and we need a way to retrieve it. `Mutable<T>` is just
@@ -195,6 +196,7 @@ let button_clicked = cx.create_callback(|cx| {
     println!("Button was clicked");
 });
 ```
+
 You can also call `.create_callback_mut()` which creates a mutable (`FnMut`) callback:
 
 ```rust
@@ -225,37 +227,38 @@ any kind of entity, although they are most often used to create UI nodes:
 
 ```rust
 Element::<NodeBundle>::new()
-    .children((
+    .with_children((
         Element::<NodeBundle>::new(),
         Element::<NodeBundle>::new(),
     ))
 ```
+
 Another kind of view is `Text`, which creates a text entity. Note that `bevy_reactor` currently
 only supports creating text nodes with a single string. (The reason for this because Bevy's
 implementation of how text works may change.)
 
 All views, including elements, have a lifecycle:
 
-* When the view is first constructed, it does nothing until the `.build()` method is called. Before
+- When the view is first constructed, it does nothing until the `.build()` method is called. Before
   that happens, you can call various methods to customize the view, such as adding children
   and effects.
-* The framework calls the `.build()` method, which actually creates the display entities,
+- The framework calls the `.build()` method, which actually creates the display entities,
   attaching children, and starting any effects.
-* Each view has a `TrackingScope`, and is similar to a `Reaction`. When the view's dependencies
+- Each view has a `TrackingScope`, and is similar to a `Reaction`. When the view's dependencies
   change, the `.react()` function of the view is called.
-* When the view is ready to be despawned, the `.raze()` method is called to ensure that all
+- When the view is ready to be despawned, the `.raze()` method is called to ensure that all
   resources are despanwed as well, including the display graph.
 
 ## Element Children
 
-The `Element` object has a method `.children()` which accepts either a single child, or
+The `Element` object has a method `.with_children()` which accepts either a single child, or
 a variable-length tuple of children. Any object that implements the `Into<ViewHandle>` trait can
 be passed as a child view, so for example text strings implement `Into<ViewHandle>` and automatically
 generate a text node.
 
 ```rust
 Element::<NodeBundle>::new()
-    .children((
+    .with_children((
         Element::<NodeBundle>::new(),
         text("Count: "),
         text_computed(|cx| {
@@ -288,7 +291,7 @@ such as `.insert_computed()` and `.styled()` which remove some of the boilerplat
 Conditional rendering is accomplished using the `Cond` struct:
 
 ```rust
-element.children(
+element.with_children(
     Cond::new(
         |cx| {
             let counter = cx.use_resource::<Counter>();
@@ -298,6 +301,7 @@ element.children(
         || "[Odd]",
     ))
 ```
+
 The first argument is a `test` expression, and is a reactive function which returns a boolean.
 The other two arguments are the `true` and `false` branch. Note that these are closures, which
 means that the body of the branch is not evaluated for the branch that is not taken.
@@ -310,7 +314,7 @@ of the array elements, and does a `diff` when the array changes, so that only th
 that actually changed are re-rendered.
 
 ```rust
-element.children(
+element.with_children(
     For::each(
         |cx| {
             let counter = cx.use_resource::<Counter>();
@@ -333,7 +337,7 @@ during the build phase.
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .children((
+            .with_children((
                 nested_presenter.bind(()),
             )),
     ));
@@ -377,10 +381,10 @@ Element::<NodeBundle>::for_entity(id)
 The `StyleBuilder` argument provides a fluent interface that allows the entity's styles to
 be modified with lots of CSS-like shortcuts. For example, the following are all equivalent:
 
-* `.border(ui::UiRect::all(ui::Val::Px(10.)))` -- a border of 10px on all sides.
-* `.border(ui::Val::Px(10.))` -- Scalar is automatically converted to a rect.
-* `.border(10.)` -- `Px` is assumed to be the default unit.
-* `.border(10)` -- Integers are automatically converted to f32 type.
+- `.border(ui::UiRect::all(ui::Val::Px(10.)))` -- a border of 10px on all sides.
+- `.border(ui::Val::Px(10.))` -- Scalar is automatically converted to a rect.
+- `.border(10.)` -- `Px` is assumed to be the default unit.
+- `.border(10)` -- Integers are automatically converted to f32 type.
 
 Unlike the CSS approach, there is no support for selectors, animated transitions, or serialization.
 The style functions are simply executed once, in order, during the build phase. The main advantage
@@ -421,21 +425,21 @@ Here's an example showing a complex example of using derived signals and callbac
 The `gradient` widget displays a horizontal slider that has a gradient background, and can
 be used for building a color editor. The inputs to the slider are signals:
 
-* The `gradient` signal tells the slider what colors to display in the background. In this
+- The `gradient` signal tells the slider what colors to display in the background. In this
   example, we're using a resource `ColorEditState` to hold the current RGB value. The slider
   is editing the `red` component, so the gradient varies the red channel from 0 to 1 while
   keeping the green, blue and alpha channels constant. Because the `gradient` parameter
   is wrapped in a `.create_derived()`, it will calculate a new gradient when the color changes.
-* The `min` and `max` parameters are also signals, however in this case they are constants,
+- The `min` and `max` parameters are also signals, however in this case they are constants,
   so we pass `Signal::Constant()` as the value.
-* The `value` parameter tells the slider where to display the "thumb" component. It's also
+- The `value` parameter tells the slider where to display the "thumb" component. It's also
   derived from the current color, but multiplied by 255 to make it easier to edit.
-* The `style` parameter allows us to add additional styles to the widget, such as adding a
+- The `style` parameter allows us to add additional styles to the widget, such as adding a
   `flex_grow` value so that the slider will stretch to fill the available space.
-* The `precision` parameter indicates how many decimal places the output value should be rounded
+- The `precision` parameter indicates how many decimal places the output value should be rounded
   to. This parameter is not a signal, which means it is not reactive: it cannot be changed
   once the slider has been created.
-* The `on_change` parameter accepts a callback which is called whenever the slider thumb is
+- The `on_change` parameter accepts a callback which is called whenever the slider thumb is
   dragged. In this case, a callback is created which mutates the resource with the new
   RGB color value.
 

@@ -299,7 +299,7 @@ impl ViewFactory for GradientSlider {
                     }
                 }),
             ))
-            .children((
+            .with_children((
                 // Element::<NodeBundle>::new().with_styles(style_alpha),
                 // Element::<NodeBundle>::new()
                 //     .with_styles(style_start_cap)
@@ -324,7 +324,7 @@ impl ViewFactory for GradientSlider {
                 //     }),
                 Element::<NodeBundle>::new()
                     .with_styles(style_track)
-                    .children(
+                    .with_children(
                         Element::<NodeBundle>::new()
                             .with_styles(style_thumb)
                             .create_effect(move |cx, ent| {

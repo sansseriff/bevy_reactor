@@ -1,13 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, view::View, view_children::ViewChildren, DespawnScopes, ViewHandle,
+    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes,
+    ViewHandle,
 };
-
-struct FragmentChild {
-    view: ViewHandle,
-    entity: Option<Entity>,
-}
 
 /// A `Fragment` represents a group of one or more child views which can be inserted inline
 /// within a parent view. A parent view which contains a `Fragment` will render the child views of
@@ -16,17 +12,17 @@ struct FragmentChild {
 #[derive(Default)]
 pub struct Fragment {
     /// Children of this fragment.
-    children: Vec<FragmentChild>,
+    children: Vec<ChildView>,
 }
 
 impl Fragment {
     /// Construct a new `Fragment`.
-    pub fn new<V: ViewChildren>(views: V) -> Self {
+    pub fn new<V: ChildViewTuple>(views: V) -> Self {
         let child_views = views.to_vec();
         Self {
             children: child_views
                 .iter()
-                .map(|v| FragmentChild {
+                .map(|v| ChildView {
                     view: v.clone(),
                     entity: None,
                 })

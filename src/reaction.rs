@@ -17,7 +17,7 @@ pub trait Reaction {
     /// Arguments:
     /// - `owner`: The entity that owns this reaction and tracking scope.
     /// - `world`: The Bevy world.
-    /// -
+    /// - `tracking`: The tracking scope for the reaction.
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope);
 
     /// Release any resources used by the reaction.
@@ -38,3 +38,8 @@ impl ReactionHandle {
         Self(Arc::new(Mutex::new(view)))
     }
 }
+
+/// In some cases, reactions are targeted at an entity other than the owner, where the entity
+/// id is not known until the reaction is started. This component tracks the target entity.
+#[derive(Component)]
+pub struct ReactionTarget(pub Entity);

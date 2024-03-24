@@ -31,7 +31,7 @@ pub struct CheckboxProps {
     pub label: ViewHandle,
 
     /// Additional styles to be applied to the button.
-    pub styles: StyleHandle,
+    pub style: StyleHandle,
 
     /// Callback called when clicked
     pub on_change: Option<Callback<bool>>,
@@ -105,7 +105,7 @@ impl ViewFactory for Checkbox {
 
         Element::<NodeBundle>::for_entity(id)
             .named("checkbox")
-            .with_styles((style_checkbox, self.0.styles.clone()))
+            .with_styles((style_checkbox, self.0.style.clone()))
             .insert((
                 TabIndex(self.0.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
@@ -169,7 +169,7 @@ impl ViewFactory for Checkbox {
                     }
                 }),
             ))
-            .children((
+            .with_children((
                 Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                     .with_styles(style_checkbox_border)
                     .insert(material.clone())
@@ -210,7 +210,7 @@ impl ViewFactory for Checkbox {
                             }
                         };
                     })
-                    .children(cond(
+                    .with_children(cond(
                         move |cx| checked.get(cx),
                         move || Element::<NodeBundle>::new().with_styles(style_checkbox_inner),
                         || (),

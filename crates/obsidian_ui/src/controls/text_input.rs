@@ -31,7 +31,7 @@ pub struct TextInputProps {
     pub value: Signal<String>,
 
     /// Additional styles to be applied to the button.
-    pub styles: StyleHandle,
+    pub style: StyleHandle,
 
     /// Callback called when the text changes.
     pub on_change: Option<Callback<String>>,
@@ -211,7 +211,7 @@ impl ViewFactory for TextInput {
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
                 },
-                self.0.styles.clone(),
+                self.0.style.clone(),
             ))
             .insert((
                 TabIndex(self.0.tab_index),
@@ -384,7 +384,7 @@ impl ViewFactory for TextInput {
                 }),
             ))
             .insert_if(self.0.autofocus, AutoFocus)
-            .children((
+            .with_children((
                 // Background
                 Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                     .insert(material.clone())
@@ -426,10 +426,10 @@ impl ViewFactory for TextInput {
                 // Scrolling content
                 Element::<NodeBundle>::new()
                     .with_styles(style_text_scroll)
-                    .children(
+                    .with_children(
                         Element::<NodeBundle>::new()
                             .with_styles(style_text_inner)
-                            .children((
+                            .with_children((
                                 // Selection rects
                                 For::index(
                                     move |cx| selection_rects.get_clone(cx).into_iter(),

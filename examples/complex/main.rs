@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
 mod color_edit;
 
-use bevy_color::Srgba;
+use bevy_color::{LinearRgba, Srgba};
 use bevy_mod_picking::{
     backends::bevy_ui::BevyUiBackend,
     input::InputPlugin,
@@ -12,10 +12,12 @@ use obsidian_ui::{
     colors,
     controls::{
         Button, ButtonProps, ButtonVariant, Checkbox, CheckboxProps, Dialog, DialogFooter,
-        DialogFooterProps, DialogHeader, DialogHeaderProps, DialogProps, Slider, SliderProps,
-        Splitter, SplitterDirection, SplitterProps, Swatch, SwatchProps, TextInput, TextInputProps,
+        DialogFooterProps, DialogHeader, DialogHeaderProps, DialogProps, ScrollView,
+        ScrollViewProps, Slider, SliderProps, Splitter, SplitterDirection, SplitterProps, Swatch,
+        SwatchProps, TextInput, TextInputProps,
     },
     focus::TabGroup,
+    overlays,
     size::Size,
     typography, viewport, ObsidianUiPlugin,
 };
@@ -103,6 +105,10 @@ fn style_log_inner(ss: &mut StyleBuilder) {
         .margin(8);
 }
 
+fn style_scroll_area(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.0);
+}
+
 // fn style_log_entry(ss: &mut StyleBuilder) {
 //     ss.display(ui::Display::Flex)
 //         .justify_content(ui::JustifyContent::SpaceBetween)
@@ -131,7 +137,13 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins((ReactorPlugin, ObsidianUiPlugin))
-        .add_systems(Startup, setup.pipe(setup_view_root))
+        .add_systems(
+            Startup,
+            (
+                setup.pipe(setup_view_overlays),
+                setup_ui.pipe(setup_view_root),
+            ),
+        )
         .add_systems(
             Update,
             (
@@ -185,7 +197,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
     Element::<NodeBundle>::new()
         .with_styles((typography::text_default, style_main))
         .insert((TabGroup::default(), TargetCamera(cx.props)))
-        .children((
+        .with_children((
             Dialog::new(DialogProps {
                 open: checked_1.signal(),
                 on_close: Some(cx.create_callback(move |cx| {
@@ -229,26 +241,26 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     let mut style = cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
                     style.width = ui::Val::Px(width);
                 })
-                .children((
+                .with_children((
                     Element::<NodeBundle>::new()
                         .with_styles(style_button_row)
-                        .children((
+                        .with_children((
                             Button::new(ButtonProps {
                                 children: "Open…".into(),
                                 on_click: Some(clicked_increment),
-                                styles: StyleHandle::new(style_button_flex),
+                                style: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                             Button::new(ButtonProps {
                                 children: "Save".into(),
                                 on_click: Some(clicked_decrement),
-                                styles: StyleHandle::new(style_button_flex),
+                                style: StyleHandle::new(style_button_flex),
                                 ..default()
                             }),
                         )),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
-                        .children((
+                        .with_children((
                             Checkbox::new(CheckboxProps {
                                 label: "Include Author Name".into(),
                                 checked: checked_1.signal(),
@@ -272,7 +284,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         )),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
-                        .children((
+                        .with_children((
                             Slider::new(SliderProps {
                                 min: Signal::Constant(0.),
                                 max: Signal::Constant(255.),
@@ -304,6 +316,13 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         ..default()
                     }),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
+                    ScrollView::new(ScrollViewProps {
+                        children: "Hello".into(),
+                        style: StyleHandle::new(style_scroll_area),
+                        scroll_enable_x: true,
+                        scroll_enable_y: true,
+                        ..default()
+                    }),
                 )),
             Splitter::new(SplitterProps {
                 direction: SplitterDirection::Vertical,
@@ -317,12 +336,27 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
             Element::<NodeBundle>::new()
                 .with_styles(style_viewport)
                 .insert(viewport::ViewportInsetElement)
-                .children(
+                .with_children(
                     Element::<NodeBundle>::new()
                         .with_styles(style_log)
-                        .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
+                        .with_children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
                 ),
         ))
+}
+
+fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
+    commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
+}
+
+fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
+    let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
+
+    overlays::Overlay::new(|_cx, sb| {
+        sb.stroke_rect(Rect::from_center_size(Vec2::new(0., 0.), Vec2::new(5., 7.)));
+    })
+    .with_color_signal(color)
+    // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
+    .insert(TargetCamera(cx.props))
 }
 
 #[derive(Resource, Default)]
@@ -396,7 +430,20 @@ fn setup(
         ..default()
     });
 
-    let c2d = commands
+    commands
+        .spawn((
+            Camera3dBundle {
+                transform: Transform::from_xyz(0.0, 6., 12.0)
+                    .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+                ..default()
+            },
+            viewport::ViewportCamera,
+        ))
+        .id()
+}
+
+fn setup_ui(mut commands: Commands) -> Entity {
+    commands
         .spawn((Camera2dBundle {
             camera: Camera {
                 // HUD goes on top of 3D
@@ -407,18 +454,7 @@ fn setup(
             camera_2d: Camera2d {},
             ..default()
         },))
-        .id();
-
-    commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 6., 12.0)
-                .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
-            ..default()
-        },
-        viewport::ViewportCamera,
-    ));
-
-    c2d
+        .id()
 }
 
 fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
