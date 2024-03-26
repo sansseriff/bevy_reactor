@@ -1,5 +1,5 @@
 use bevy::{
-    math::{Rect, Vec3},
+    math::{Rect, Vec2, Vec3},
     render::mesh::{Indices, Mesh},
 };
 
@@ -23,12 +23,22 @@ pub struct ShapeBuilder {
     stroke_width: f32,
 }
 
+/// Options for drawing a polygon or polyline stroke.
 #[derive(Clone, Debug)]
 pub struct PolygonOptions {
+    /// Whether the polygon should be closed.
     pub closed: bool,
+
+    /// Line style: length of the dash.
     pub dash_length: f32,
+
+    /// Line style: length of the gap between dashes.
     pub gap_length: f32,
+
+    /// Marker at the start of the polyline.
     pub start_marker: StrokeMarker,
+
+    /// Marker at the end of the polyline.
     pub end_marker: StrokeMarker,
 }
 
@@ -36,7 +46,7 @@ impl Default for PolygonOptions {
     fn default() -> Self {
         Self {
             closed: false,
-            dash_length: f32::INFINITY,
+            dash_length: f32::MAX,
             gap_length: 0.,
             start_marker: StrokeMarker::None,
             end_marker: StrokeMarker::None,
@@ -55,6 +65,7 @@ impl ShapeBuilder {
     }
 
     /// Set the stroke width for the shape.
+    #[inline]
     pub fn with_stroke_width(&mut self, stroke_width: f32) -> &mut Self {
         self.stroke_width = stroke_width;
         self
@@ -68,14 +79,23 @@ impl ShapeBuilder {
     }
 
     /// Add a vertex to the shape.
+    #[inline]
     pub fn push_vertex(&mut self, x: f32, y: f32, z: f32) -> &mut Self {
         self.vertices.push(Vec3::new(x, y, z));
         self
     }
 
     /// Add an index to the shape.
+    #[inline]
     pub fn push_index(&mut self, index: u32) -> &mut Self {
         self.indices.push(index);
+        self
+    }
+
+    /// Add an index to the shape.
+    #[inline]
+    pub fn push_indices(&mut self, indices: &[u32]) -> &mut Self {
+        self.indices.extend(indices);
         self
     }
 
@@ -161,7 +181,8 @@ impl ShapeBuilder {
     }
 
     /// Draw a circular stroke.
-    pub fn stroke_circle(&mut self, x: f32, y: f32, radius: f32, segments: u32) -> &mut Self {
+    pub fn stroke_circle(&mut self, center: Vec2, radius: f32, segments: u32) -> &mut Self {
+        self.reserve((segments * 2) as usize, (segments * 6) as usize);
         let start = self.vertices.len() as u32;
         let step = 2.0 * std::f32::consts::PI / segments as f32;
         let radius_inner = (radius - self.stroke_width).max(0.0);
@@ -170,37 +191,218 @@ impl ShapeBuilder {
             let angle = i as f32 * step;
             let c = angle.cos();
             let s = angle.sin();
-            let x_inner = x + radius_inner * c;
-            let y_inner = y + radius_inner * s;
-            let x_outer = x + radius_outer * c;
-            let y_outer = y + radius_outer * s;
+            let x_inner = center.x + radius_inner * c;
+            let y_inner = center.y + radius_inner * s;
+            let x_outer = center.x + radius_outer * c;
+            let y_outer = center.y + radius_outer * s;
+            let next_index = (i + 1).rem_euclid(segments);
             self.push_vertex(x_inner, y_inner, 0.);
             self.push_vertex(x_outer, y_outer, 0.);
+
             self.push_index(start + i * 2);
-            self.push_index(start + (i + 1) % segments);
+            self.push_index(start + i * 2 + 1);
+            self.push_index(start + next_index * 2);
+
+            self.push_index(start + i * 2 + 1);
+            self.push_index(start + next_index * 2 + 1);
+            self.push_index(start + next_index * 2);
         }
         self
     }
 
     /// Draw a filled circle.
-    pub fn fill_circle(&mut self, x: f32, y: f32, radius: f32, segments: u32) -> &mut Self {
+    pub fn fill_circle(&mut self, center: Vec2, radius: f32, segments: u32) -> &mut Self {
+        self.reserve((segments + 1) as usize, (segments * 3) as usize);
         let start = self.vertices.len() as u32;
-        let step = 2.0 * std::f32::consts::PI / segments as f32;
+        let step = 2.0 * std::f32::consts::PI / (segments as f32);
         self.push_vertex(0., 0., 0.);
         for i in 0..segments {
             let angle = i as f32 * step;
-            let x = x + radius * angle.cos();
-            let y = y + radius * angle.sin();
+            let x = center.x + radius * angle.cos();
+            let y = center.y + radius * angle.sin();
             self.push_vertex(x, y, 0.);
             self.push_index(start);
-            self.push_index(start + i);
-            self.push_index(start + (i + 1) % segments);
+            self.push_index(start + i + 1);
+            self.push_index(start + (i + 1).rem_euclid(segments) + 1);
         }
         self
     }
 
-    /// Draw a polygon from a list of points.
-    pub fn draw_polygon(&mut self, vertices: &[Vec3], options: PolygonOptions) -> &mut Self {
+    /// Draw a filled triangle.
+    pub fn fill_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2) -> &mut Self {
+        self.reserve(3, 3);
+        let start = self.vertices.len() as u32;
+        self.push_vertex(a.x, a.y, 0.);
+        self.push_vertex(b.x, b.y, 0.);
+        self.push_vertex(c.x, c.y, 0.);
+        self.push_index(start);
+        self.push_index(start + 1);
+        self.push_index(start + 2);
         self
+    }
+
+    /// Draw a filled quad.
+    pub fn fill_quad(&mut self, a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> &mut Self {
+        self.reserve(4, 6);
+        let start = self.vertices.len() as u32;
+        self.push_vertex(a.x, a.y, 0.);
+        self.push_vertex(b.x, b.y, 0.);
+        self.push_vertex(c.x, c.y, 0.);
+        self.push_vertex(d.x, d.y, 0.);
+        self.push_index(start);
+        self.push_index(start + 1);
+        self.push_index(start + 2);
+        self.push_index(start);
+        self.push_index(start + 2);
+        self.push_index(start + 3);
+        self
+    }
+
+    /// Draw a polygon from a list of points.
+    pub fn stroke_polygon(&mut self, vertices: &[Vec2], options: PolygonOptions) -> &mut Self {
+        if vertices.len() < 2 {
+            return self;
+        }
+        let closed = options.closed && vertices.len() > 2;
+        let lw = self.stroke_width * 0.5;
+        let count = vertices.len();
+
+        let mut dash_end = options.dash_length;
+
+        // Indices of the vertices at the start of the current dash.
+        let mut v0_index: u32 = 0;
+        let mut v1_index: u32 = 0;
+
+        for i in 0..count {
+            let vtx = vertices[i];
+            let vtx_next = vertices[(i + 1).rem_euclid(count)];
+
+            // Length and direction of line segment
+            let mut length = vtx.distance(vtx_next);
+            let v_dir = (vtx_next - vtx) / length;
+            let v_perp = Vec2::new(v_dir.y, -v_dir.x).normalize() * lw;
+
+            if i == 0 {
+                // Generate vertices for the start of first segment.
+                if closed {
+                    // Mitered starting point.
+                    let vtx_prev = *vertices.last().unwrap();
+                    let v_dir_prev = (vtx - vtx_prev).normalize();
+                    let dot = (v_dir + v_dir_prev).normalize().dot(v_dir_prev);
+                    let v_miter =
+                        Vec2::new(v_dir_prev.y + v_dir.y, -v_dir_prev.x - v_dir.x).normalize() * lw
+                            / dot;
+                    let v2_index = self.push_vec2_index(vtx + v_miter);
+                    let v3_index = self.push_vec2_index(vtx - v_miter);
+                    self.push_indices(&[
+                        v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+                    ]);
+                    v0_index = v2_index;
+                    v1_index = v3_index;
+                    // todo!();
+                } else {
+                    // Draw start marker and update position.
+                    let marker_length = self.marker_length(options.start_marker).min(length * 0.4);
+                    self.fill_marker(
+                        options.start_marker,
+                        vtx + v_dir * marker_length,
+                        -v_dir,
+                        marker_length,
+                    );
+                    v0_index = self.push_vec2_index(vtx + v_perp + v_dir * marker_length);
+                    v1_index = self.push_vec2_index(vtx - v_perp + v_dir * marker_length);
+                    dash_end += marker_length;
+                }
+            }
+
+            // If the segment ends in a marker, reduce the line segment length.
+            let marker_length = self.marker_length(options.end_marker).min(length * 0.4);
+            if i == count - 2 && !closed {
+                length -= marker_length;
+            }
+
+            while dash_end < length {
+                // Finish the previous dash.
+                let v_dash_end = vtx + v_dir * dash_end.min(length);
+                let v2_index = self.push_vec2_index(v_dash_end + v_perp);
+                let v3_index = self.push_vec2_index(v_dash_end - v_perp);
+                self.push_indices(&[v0_index, v2_index, v1_index, v1_index, v2_index, v3_index]);
+
+                // Start a new dash if there's room
+                if dash_end + options.gap_length < length {
+                    let v_dash_start = vtx + v_dir * (dash_end + options.gap_length);
+                    v0_index = self.push_vec2_index(v_dash_start + v_perp);
+                    v1_index = self.push_vec2_index(v_dash_start - v_perp);
+                }
+
+                // Prep for next dash
+                dash_end += options.dash_length + options.gap_length;
+            }
+
+            // Miter at end, if it's in the middle of a dash.
+            if dash_end - options.dash_length < length {
+                if i < count - 2 || options.closed {
+                    // Mitered angle.
+                    let vtx_next2 = vertices[(i + 2).rem_euclid(count)];
+                    let v_dir_next = (vtx_next2 - vtx_next).normalize();
+                    let dot = (v_dir_next + v_dir).normalize().dot(v_dir);
+                    let v_miter =
+                        Vec2::new(v_dir.y + v_dir_next.y, -v_dir.x - v_dir_next.x).normalize() * lw
+                            / dot;
+                    let v2_index = self.push_vec2_index(vtx_next + v_miter);
+                    let v3_index = self.push_vec2_index(vtx_next - v_miter);
+                    self.push_indices(&[
+                        v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+                    ]);
+                    v0_index = v2_index;
+                    v1_index = v3_index;
+                } else {
+                    // Butt end
+                    let v_seg_end = vtx + v_dir * length;
+                    let v2 = v_seg_end + v_perp;
+                    let v3 = v_seg_end - v_perp;
+                    let v2_index = self.push_vec2_index(v2);
+                    let v3_index = self.push_vec2_index(v3);
+                    self.push_indices(&[
+                        v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
+                    ]);
+                    self.fill_marker(options.start_marker, v_seg_end, v_dir, marker_length);
+                    break;
+                }
+            }
+
+            dash_end -= length;
+        }
+        self
+    }
+
+    /// Add a vertex to the shape, and return the index of that vertex.
+    #[inline]
+    fn push_vec2_index(&mut self, v: Vec2) -> u32 {
+        let index = self.vertices.len() as u32;
+        self.vertices.push(Vec3::new(v.x, v.y, 0.));
+        index
+    }
+
+    fn fill_marker(&mut self, marker: StrokeMarker, position: Vec2, direction: Vec2, length: f32) {
+        #[allow(clippy::single_match)]
+        match marker {
+            StrokeMarker::Arrowhead => {
+                let v_perp = Vec2::new(direction.y, -direction.x).normalize() * length * 0.5;
+                let v0 = position + direction * length;
+                let v1 = position + v_perp;
+                let v2 = position - v_perp;
+                self.fill_triangle(v0, v2, v1);
+            }
+            _ => {}
+        }
+    }
+
+    /// Compute the length of the stroke marker, relative to the stroke width.
+    fn marker_length(&self, marker: StrokeMarker) -> f32 {
+        match marker {
+            StrokeMarker::Arrowhead => self.stroke_width * 2.0,
+            _ => 0.0,
+        }
     }
 }

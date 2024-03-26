@@ -48,10 +48,11 @@ where
     /// Occlusion opacity, 0.0 to 1.0. This represents the opacity of the overlay when it is
     /// occluded by other objects.
     underlay: f32,
-    // - blend_mode (signal)
-    // - sides
+
     /// Reactive drawing function
     draw: F,
+    // - blend_mode (signal)
+    // - sides
 }
 
 impl<F: Fn(&Rcx, &mut ShapeBuilder)> Overlay<F> {
@@ -346,3 +347,26 @@ impl Reaction for ChangeTransformReaction {
         *transform = next_transform;
     }
 }
+
+// pub struct Circle;
+
+// impl Circle {
+//     pub fn stroke(
+//         center: Signal<Vec2>,
+//         radius: Signal<f32>,
+//         segments: u32,
+//         stroke_width: f32,
+//     ) -> Overlay<fn(&Rcx, &mut ShapeBuilder)> {
+//         Overlay::new(|re, builder| {
+//             let center = center.get(re);
+//             let radius = radius.get(re);
+//             builder.stroke_circle(center, radius, segments);
+//         })
+//     }
+
+//     pub fn fill() -> Overlay<fn(&Rcx, &mut ShapeBuilder)> {
+//         Overlay::new(|re, builder| {
+//             builder.fill_circle(Vec2::new(0.0, 0.0), 5.0, 32);
+//         })
+//     }
+// }

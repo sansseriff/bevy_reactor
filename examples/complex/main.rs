@@ -17,7 +17,7 @@ use obsidian_ui::{
         SwatchProps, TextInput, TextInputProps,
     },
     focus::TabGroup,
-    overlays,
+    overlays::{self, PolygonOptions, StrokeMarker},
     size::Size,
     typography, viewport, ObsidianUiPlugin,
 };
@@ -350,9 +350,20 @@ fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
 
 fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
     let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
-
     overlays::Overlay::new(|_cx, sb| {
-        sb.stroke_rect(Rect::from_center_size(Vec2::new(0., 0.), Vec2::new(5., 7.)));
+        sb.with_stroke_width(0.3)
+            .stroke_circle(Vec2::new(0., 0.), 5., 64)
+            .stroke_polygon(
+                &[Vec2::new(-4., -4.), Vec2::new(0., -4.), Vec2::new(-4., 0.)],
+                PolygonOptions {
+                    start_marker: StrokeMarker::Arrowhead,
+                    end_marker: StrokeMarker::Arrowhead,
+                    // dash_length: 0.1,
+                    // gap_length: 0.1,
+                    closed: true,
+                    ..default()
+                },
+            );
     })
     .with_color_signal(color)
     // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))

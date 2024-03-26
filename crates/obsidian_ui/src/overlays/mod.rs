@@ -4,7 +4,7 @@ mod shape_builder;
 
 use bevy::{app::Plugin, pbr::MaterialPlugin};
 pub use overlay::Overlay;
-pub use shape_builder::{ShapeBuilder, StrokeMarker};
+pub use shape_builder::{PolygonOptions, ShapeBuilder, StrokeMarker};
 
 use self::overlay_material::UnderlayMaterial;
 
