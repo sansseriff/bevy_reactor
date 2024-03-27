@@ -7,6 +7,7 @@ use bevy_mod_picking::{
     input::InputPlugin,
     picking_core::{CorePlugin, InteractionPlugin},
 };
+use bevy_reactor_overlays as overlays;
 use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
@@ -17,7 +18,6 @@ use obsidian_ui::{
         SwatchProps, TextInput, TextInputProps,
     },
     focus::TabGroup,
-    overlays::{self, PolygonOptions, StrokeMarker},
     size::Size,
     typography, viewport, ObsidianUiPlugin,
 };
@@ -136,7 +136,7 @@ fn main() {
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        .add_plugins((ReactorPlugin, ObsidianUiPlugin))
+        .add_plugins((ReactorPlugin, ObsidianUiPlugin, overlays::OverlaysPlugin))
         .add_systems(
             Startup,
             (
@@ -355,9 +355,9 @@ fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
             .stroke_circle(Vec2::new(0., 0.), 5., 64)
             .stroke_polygon(
                 &[Vec2::new(-4., -4.), Vec2::new(0., -4.), Vec2::new(-4., 0.)],
-                PolygonOptions {
-                    start_marker: StrokeMarker::Arrowhead,
-                    end_marker: StrokeMarker::Arrowhead,
+                overlays::PolygonOptions {
+                    start_marker: overlays::StrokeMarker::Arrowhead,
+                    end_marker: overlays::StrokeMarker::Arrowhead,
                     // dash_length: 0.1,
                     // gap_length: 0.1,
                     closed: true,

@@ -23,9 +23,6 @@ pub mod hooks;
 pub mod materials;
 pub use materials::RoundedCorners;
 
-/// Module defining utilities for interactive overlays.
-pub mod overlays;
-
 /// Utilities for managing scrolling views.
 pub mod scrolling;
 
@@ -55,7 +52,6 @@ impl Plugin for ObsidianUiPlugin {
             hooks::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,
-            overlays::OverlaysPlugin,
         ))
         .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
         .add_event::<ScrollWheel>()
