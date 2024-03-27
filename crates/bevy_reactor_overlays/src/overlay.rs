@@ -6,10 +6,9 @@ use bevy::{
 use bevy_color::LinearRgba;
 use bevy_reactor::*;
 
-use super::{
-    mesh_builder::MeshBuilder,
-    overlay_material::{UnderlayExtension, UnderlayMaterial},
-};
+use crate::overlay_material::{OverlayMaterial, UnderlayMaterial};
+
+use super::mesh_builder::MeshBuilder;
 
 /// A transluent overlay that can be used to display diagnostic information in the 3d world.
 #[allow(clippy::type_complexity)]
@@ -31,7 +30,7 @@ where
     effects: Vec<Box<dyn EntityEffect>>,
 
     /// Material for the overlay.
-    material: Handle<StandardMaterial>,
+    material: Handle<OverlayMaterial>,
 
     /// Material for the underlay.
     underlay_material: Handle<UnderlayMaterial>,
@@ -177,12 +176,10 @@ where
         let mesh_handle = meshes.add(mesh);
         self.mesh = mesh_handle.clone();
 
-        let mut materials = world
-            .get_resource_mut::<Assets<StandardMaterial>>()
-            .unwrap();
-        let material = materials.add(StandardMaterial {
-            unlit: true,
-            alpha_mode: bevy::pbr::AlphaMode::Blend,
+        let mut materials = world.get_resource_mut::<Assets<OverlayMaterial>>().unwrap();
+        let material = materials.add(OverlayMaterial {
+            // unlit: true,
+            // alpha_mode: bevy::pbr::AlphaMode::Blend,
             ..Default::default()
         });
         self.material = material.clone();
@@ -190,20 +187,12 @@ where
         let mut underlay_materials = world
             .get_resource_mut::<Assets<UnderlayMaterial>>()
             .unwrap();
-        let underlay_material = underlay_materials.add(UnderlayMaterial {
-            base: StandardMaterial {
-                base_color: LinearRgba::default().into(),
-                unlit: true,
-                alpha_mode: bevy::pbr::AlphaMode::Blend,
-                ..Default::default()
-            },
-            extension: UnderlayExtension {},
-        });
+        let underlay_material = underlay_materials.add(UnderlayMaterial::default());
         self.underlay_material = underlay_material.clone();
 
         let bundle = (
             Name::new(self.debug_name.clone()),
-            MaterialMeshBundle::<StandardMaterial> {
+            MaterialMeshBundle::<OverlayMaterial> {
                 material,
                 mesh: mesh_handle,
                 ..default()
@@ -314,7 +303,7 @@ where
 pub struct ChangeColorReaction {
     color: Signal<LinearRgba>,
     underlay: f32,
-    material: Handle<StandardMaterial>,
+    material: Handle<OverlayMaterial>,
     underlay_material: Handle<UnderlayMaterial>,
 }
 
@@ -323,18 +312,16 @@ impl Reaction for ChangeColorReaction {
         let re = Rcx::new(world, tracking);
         let mut color = self.color.get(&re);
 
-        let mut materials = world
-            .get_resource_mut::<Assets<StandardMaterial>>()
-            .unwrap();
+        let mut materials = world.get_resource_mut::<Assets<OverlayMaterial>>().unwrap();
         let material = materials.get_mut(self.material.id()).unwrap();
-        material.base_color = color.into();
+        material.color = color.into();
 
         let mut underlay_materials = world
             .get_resource_mut::<Assets<UnderlayMaterial>>()
             .unwrap();
         if let Some(underlay_material) = underlay_materials.get_mut(self.underlay_material.id()) {
             color.alpha *= self.underlay;
-            underlay_material.base.base_color = color.into();
+            underlay_material.color = color.into();
         }
     }
 }
