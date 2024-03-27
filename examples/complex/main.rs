@@ -350,7 +350,7 @@ fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
 
 fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
     let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
-    overlays::Overlay::new(|_cx, sb| {
+    overlays::OverlayShape::new(|_cx, sb| {
         sb.with_stroke_width(0.3)
             .stroke_circle(Vec2::new(0., 0.), 5., 64)
             .stroke_polygon(

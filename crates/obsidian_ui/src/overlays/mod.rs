@@ -1,3 +1,4 @@
+mod mesh_builder;
 mod overlay;
 mod overlay_material;
 mod shape_builder;
@@ -16,3 +17,6 @@ impl Plugin for OverlaysPlugin {
         app.add_plugins(MaterialPlugin::<UnderlayMaterial>::default());
     }
 }
+
+/// Overlay that builds flat shapes.
+pub type OverlayShape = Overlay<ShapeBuilder>;

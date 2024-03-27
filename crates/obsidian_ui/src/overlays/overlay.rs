@@ -1,19 +1,19 @@
 use bevy::{
     pbr::{NotShadowCaster, NotShadowReceiver},
     prelude::*,
-    render::{mesh::PrimitiveTopology, render_asset::RenderAssetUsages},
+    render::render_asset::RenderAssetUsages,
 };
 use bevy_color::LinearRgba;
 use bevy_reactor::*;
 
 use super::{
+    mesh_builder::MeshBuilder,
     overlay_material::{UnderlayExtension, UnderlayMaterial},
-    shape_builder::ShapeBuilder,
 };
 
 /// A transluent overlay that can be used to display diagnostic information in the 3d world.
-#[derive(Default)]
-pub struct Overlay<F: Fn(&Rcx, &mut ShapeBuilder)>
+#[allow(clippy::type_complexity)]
+pub struct Overlay<SB>
 where
     Self: EffectTarget,
     Self: ParentView,
@@ -50,14 +50,17 @@ where
     underlay: f32,
 
     /// Reactive drawing function
-    draw: F,
+    draw: Box<dyn Fn(&Rcx, &mut SB) + Send + Sync>,
     // - blend_mode (signal)
     // - sides
 }
 
-impl<F: Fn(&Rcx, &mut ShapeBuilder)> Overlay<F> {
+impl<SB> Overlay<SB>
+where
+    SB: MeshBuilder + Default,
+{
     /// Construct a new `Overlay`.
-    pub fn new(draw: F) -> Self {
+    pub fn new(draw: impl Fn(&Rcx, &mut SB) + Send + Sync + 'static) -> Self {
         Self {
             debug_name: String::new(),
             display: None,
@@ -69,12 +72,12 @@ impl<F: Fn(&Rcx, &mut ShapeBuilder)> Overlay<F> {
             color: Signal::Constant(LinearRgba::default()),
             transform: Signal::Constant(Transform::default()),
             underlay: 0.3,
-            draw,
+            draw: Box::new(draw),
         }
     }
 
     /// Construct a new `Element` with a given entity id.
-    pub fn for_entity(node: Entity, draw: F) -> Self {
+    pub fn for_entity(node: Entity, draw: impl Fn(&Rcx, &mut SB) + Send + Sync + 'static) -> Self {
         Self {
             debug_name: String::new(),
             display: Some(node),
@@ -86,7 +89,7 @@ impl<F: Fn(&Rcx, &mut ShapeBuilder)> Overlay<F> {
             color: Signal::Constant(LinearRgba::default()),
             transform: Signal::Constant(Transform::default()),
             underlay: 0.3,
-            draw,
+            draw: Box::new(draw),
         }
     }
 
@@ -138,13 +141,13 @@ impl<F: Fn(&Rcx, &mut ShapeBuilder)> Overlay<F> {
     }
 }
 
-impl<F: Fn(&Rcx, &mut ShapeBuilder)> EffectTarget for Overlay<F> {
+impl<SB> EffectTarget for Overlay<SB> {
     fn add_effect(&mut self, effect: Box<dyn EntityEffect>) {
         self.effects.push(effect);
     }
 }
 
-impl<F: Fn(&Rcx, &mut ShapeBuilder)> ParentView for Overlay<F> {
+impl<SB> ParentView for Overlay<SB> {
     fn children(&self) -> &Vec<ChildView> {
         &self.children
     }
@@ -154,7 +157,10 @@ impl<F: Fn(&Rcx, &mut ShapeBuilder)> ParentView for Overlay<F> {
     }
 }
 
-impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F> {
+impl<SB> View for Overlay<SB>
+where
+    SB: MeshBuilder + Default,
+{
     fn nodes(&self) -> NodeSpan {
         match self.display {
             None => NodeSpan::Empty,
@@ -165,10 +171,7 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         world.entity_mut(view_entity).insert(Name::new("Overlay"));
 
-        let mesh = Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::RENDER_WORLD,
-        );
+        let mesh = Mesh::new(SB::topology(), RenderAssetUsages::RENDER_WORLD);
 
         let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
         let mesh_handle = meshes.add(mesh);
@@ -178,7 +181,6 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
             .get_resource_mut::<Assets<StandardMaterial>>()
             .unwrap();
         let material = materials.add(StandardMaterial {
-            // base_color: LinearRgba::default().into(),
             unlit: true,
             alpha_mode: bevy::pbr::AlphaMode::Blend,
             ..Default::default()
@@ -206,7 +208,7 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
                 mesh: mesh_handle,
                 ..default()
             },
-            underlay_material,
+            // underlay_material,
             NotShadowCaster,
             NotShadowReceiver,
         );
@@ -223,6 +225,8 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
                 entity
             }
         };
+
+        world.entity_mut(display).insert(underlay_material);
 
         // TODO: only insert an underlay material if the underlay is between 0 and 1 (exclusive).
         // If it's zero, the underly is invisible.
@@ -270,7 +274,7 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
     fn react(&mut self, _view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         // Rebuild the overlay mesh.
         let re = Rcx::new(world, tracking);
-        let mut builder = ShapeBuilder::new();
+        let mut builder = SB::default();
         (self.draw)(&re, &mut builder);
         let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
         let mesh = meshes.get_mut(self.mesh.clone()).unwrap();
@@ -297,8 +301,11 @@ impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> View for Overlay<F>
     }
 }
 
-impl<F: Send + Sync + 'static + Fn(&Rcx, &mut ShapeBuilder)> From<Overlay<F>> for ViewHandle {
-    fn from(value: Overlay<F>) -> Self {
+impl<SB> From<Overlay<SB>> for ViewHandle
+where
+    SB: MeshBuilder + Default + 'static,
+{
+    fn from(value: Overlay<SB>) -> Self {
         ViewHandle::new(value)
     }
 }
@@ -325,11 +332,10 @@ impl Reaction for ChangeColorReaction {
         let mut underlay_materials = world
             .get_resource_mut::<Assets<UnderlayMaterial>>()
             .unwrap();
-        let underlay_material = underlay_materials
-            .get_mut(self.underlay_material.id())
-            .unwrap();
-        color.alpha *= self.underlay;
-        underlay_material.base.base_color = color.into();
+        if let Some(underlay_material) = underlay_materials.get_mut(self.underlay_material.id()) {
+            color.alpha *= self.underlay;
+            underlay_material.base.base_color = color.into();
+        }
     }
 }
 
@@ -347,26 +353,3 @@ impl Reaction for ChangeTransformReaction {
         *transform = next_transform;
     }
 }
-
-// pub struct Circle;
-
-// impl Circle {
-//     pub fn stroke(
-//         center: Signal<Vec2>,
-//         radius: Signal<f32>,
-//         segments: u32,
-//         stroke_width: f32,
-//     ) -> Overlay<fn(&Rcx, &mut ShapeBuilder)> {
-//         Overlay::new(|re, builder| {
-//             let center = center.get(re);
-//             let radius = radius.get(re);
-//             builder.stroke_circle(center, radius, segments);
-//         })
-//     }
-
-//     pub fn fill() -> Overlay<fn(&Rcx, &mut ShapeBuilder)> {
-//         Overlay::new(|re, builder| {
-//             builder.fill_circle(Vec2::new(0.0, 0.0), 5.0, 32);
-//         })
-//     }
-// }

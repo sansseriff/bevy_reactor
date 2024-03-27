@@ -1,7 +1,9 @@
 use bevy::{
     math::{Rect, Vec2, Vec3},
-    render::mesh::{Indices, Mesh},
+    render::mesh::{Indices, Mesh, PrimitiveTopology},
 };
+
+use super::mesh_builder::MeshBuilder;
 
 /// A marker for the start or end of a shape.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -97,13 +99,6 @@ impl ShapeBuilder {
     pub fn push_indices(&mut self, indices: &[u32]) -> &mut Self {
         self.indices.extend(indices);
         self
-    }
-
-    /// Copy the shape into a [`Mesh`]. This will consume the builder and return a mesh.
-    pub fn build(self, mesh: &mut Mesh) {
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, self.vertices);
-        mesh.insert_indices(Indices::U32(self.indices));
-        mesh.compute_aabb();
     }
 
     /// Draw a stroke in the shape of a rectangle.
@@ -404,5 +399,18 @@ impl ShapeBuilder {
             StrokeMarker::Arrowhead => self.stroke_width * 2.0,
             _ => 0.0,
         }
+    }
+}
+
+impl MeshBuilder for ShapeBuilder {
+    fn topology() -> PrimitiveTopology {
+        PrimitiveTopology::TriangleList
+    }
+
+    /// Copy the shape into a [`Mesh`]. This will consume the builder and return a mesh.
+    fn build(self, mesh: &mut Mesh) {
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, self.vertices);
+        mesh.insert_indices(Indices::U32(self.indices));
+        mesh.compute_aabb();
     }
 }
