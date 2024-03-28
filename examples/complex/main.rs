@@ -3,9 +3,10 @@ mod color_edit;
 
 use bevy_color::{LinearRgba, Srgba};
 use bevy_mod_picking::{
-    backends::bevy_ui::BevyUiBackend,
-    input::InputPlugin,
-    picking_core::{CorePlugin, InteractionPlugin},
+    backends::raycast::{RaycastBackendSettings, RaycastPickable},
+    debug::DebugPickingMode,
+    picking_core::Pickable,
+    DefaultPickingPlugins,
 };
 use bevy_reactor_overlays as overlays;
 use color_edit::{color_edit, ColorEditState, ColorMode};
@@ -43,7 +44,8 @@ fn style_main(ss: &mut StyleBuilder) {
         .right(0)
         .border(1)
         .border_color(colors::U2)
-        .display(ui::Display::Flex);
+        .display(ui::Display::Flex)
+        .pointer_events(false);
 }
 
 fn style_aside(ss: &mut StyleBuilder) {
@@ -53,7 +55,8 @@ fn style_aside(ss: &mut StyleBuilder) {
         .gap(8)
         .flex_direction(ui::FlexDirection::Column)
         .width(200)
-        .border(1);
+        .border(1)
+        .pointer_events(true);
 }
 
 fn style_button_row(ss: &mut StyleBuilder) {
@@ -81,7 +84,8 @@ fn style_viewport(ss: &mut StyleBuilder) {
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexEnd)
         .border_left(1)
-        .border_color(Color::BLACK);
+        .border_color(Color::BLACK)
+        .pointer_events(false);
 }
 
 fn style_log(ss: &mut StyleBuilder) {
@@ -135,7 +139,19 @@ fn main() {
         })
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
+        .add_plugins(DefaultPickingPlugins)
+        .insert_resource(DebugPickingMode::Normal)
+        .insert_resource(RaycastBackendSettings {
+            require_markers: true,
+            ..default()
+        })
+        // .add_plugins((
+        //     CorePlugin,
+        //     InputPlugin,
+        //     InteractionPlugin,
+        //     BevyUiBackend,
+        //     RaycastBackend,
+        // ))
         .add_plugins((ReactorPlugin, ObsidianUiPlugin, overlays::OverlaysPlugin))
         .add_systems(
             Startup,
@@ -335,7 +351,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
             }),
             Element::<NodeBundle>::new()
                 .with_styles(style_viewport)
-                .insert(viewport::ViewportInsetElement)
+                .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
                 .with_children(
                     Element::<NodeBundle>::new()
                         .with_styles(style_log)
@@ -349,8 +365,18 @@ fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
 }
 
 fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
-    let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
-    overlays::OverlayShape::new(|_cx, sb| {
+    let id = cx.create_entity();
+    let hovering = cx.create_hover_signal(id);
+    // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
+    let color: Signal<LinearRgba> = cx.create_derived(move |cx| {
+        if hovering.get(cx) {
+            colors::ACCENT.into()
+        } else {
+            colors::U1.into()
+        }
+    });
+
+    overlays::OverlayShape::for_entity(id, |_cx, sb| {
         sb.with_stroke_width(0.3)
             .stroke_circle(Vec2::new(0., 0.), 5., 64)
             .stroke_polygon(
@@ -366,6 +392,7 @@ fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
             );
     })
     .with_color_signal(color)
+    .with_pickable(true)
     // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
     .insert(TargetCamera(cx.props))
 }
@@ -449,6 +476,7 @@ fn setup(
                 ..default()
             },
             viewport::ViewportCamera,
+            RaycastPickable,
         ))
         .id()
 }

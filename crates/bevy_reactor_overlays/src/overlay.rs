@@ -4,6 +4,7 @@ use bevy::{
     render::render_asset::RenderAssetUsages,
 };
 use bevy_color::LinearRgba;
+use bevy_mod_picking::{backends::raycast::RaycastPickable, picking_core::Pickable};
 use bevy_reactor::*;
 
 use crate::overlay_material::{OverlayMaterial, UnderlayMaterial};
@@ -48,6 +49,9 @@ where
     /// occluded by other objects.
     underlay: f32,
 
+    /// Whether the overlay is pickable.
+    pickable: bool,
+
     /// Reactive drawing function
     draw: Box<dyn Fn(&Rcx, &mut SB) + Send + Sync>,
     // - blend_mode (signal)
@@ -71,6 +75,7 @@ where
             color: Signal::Constant(LinearRgba::default()),
             transform: Signal::Constant(Transform::default()),
             underlay: 0.3,
+            pickable: false,
             draw: Box::new(draw),
         }
     }
@@ -88,6 +93,7 @@ where
             color: Signal::Constant(LinearRgba::default()),
             transform: Signal::Constant(Transform::default()),
             underlay: 0.3,
+            pickable: false,
             draw: Box::new(draw),
         }
     }
@@ -112,6 +118,12 @@ where
     /// while a value of 1 means that the overlay is completely visible even when occluded.
     pub fn with_underlay(mut self, underlay: f32) -> Self {
         self.underlay = underlay;
+        self
+    }
+
+    /// Whether this overlay shape should be pickable with `bevy_mod_picking`.
+    pub fn with_pickable(mut self, pickable: bool) -> Self {
+        self.pickable = pickable;
         self
     }
 
@@ -170,7 +182,7 @@ where
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         world.entity_mut(view_entity).insert(Name::new("Overlay"));
 
-        let mesh = Mesh::new(SB::topology(), RenderAssetUsages::RENDER_WORLD);
+        let mesh = Mesh::new(SB::topology(), RenderAssetUsages::default());
 
         let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
         let mesh_handle = meshes.add(mesh);
@@ -178,17 +190,9 @@ where
 
         let mut materials = world.get_resource_mut::<Assets<OverlayMaterial>>().unwrap();
         let material = materials.add(OverlayMaterial {
-            // unlit: true,
-            // alpha_mode: bevy::pbr::AlphaMode::Blend,
             ..Default::default()
         });
         self.material = material.clone();
-
-        let mut underlay_materials = world
-            .get_resource_mut::<Assets<UnderlayMaterial>>()
-            .unwrap();
-        let underlay_material = underlay_materials.add(UnderlayMaterial::default());
-        self.underlay_material = underlay_material.clone();
 
         let bundle = (
             Name::new(self.debug_name.clone()),
@@ -197,7 +201,6 @@ where
                 mesh: mesh_handle,
                 ..default()
             },
-            // underlay_material,
             NotShadowCaster,
             NotShadowReceiver,
         );
@@ -215,12 +218,26 @@ where
             }
         };
 
-        world.entity_mut(display).insert(underlay_material);
-
         // TODO: only insert an underlay material if the underlay is between 0 and 1 (exclusive).
         // If it's zero, the underly is invisible.
         // If it's one, then we can just disable the depth test on the primary material.
         // if self.underlay > 0.0 && self.underlay < 1.0 {}
+        let mut underlay_materials = world
+            .get_resource_mut::<Assets<UnderlayMaterial>>()
+            .unwrap();
+        let underlay_material = underlay_materials.add(UnderlayMaterial::default());
+        self.underlay_material = underlay_material.clone();
+        world.entity_mut(display).insert(underlay_material);
+
+        if self.pickable {
+            world.entity_mut(display).insert((
+                RaycastPickable,
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: true,
+                },
+            ));
+        }
 
         // Build the overlay mesh the first time.
         let mut tracking = TrackingScope::new(world.read_change_tick());
