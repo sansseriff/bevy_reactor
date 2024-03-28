@@ -6,8 +6,10 @@ use bevy_mod_picking::{
     backends::raycast::{RaycastBackendSettings, RaycastPickable},
     debug::DebugPickingMode,
     picking_core::Pickable,
-    DefaultPickingPlugins,
+    prelude::*,
+    DefaultPickingPlugins, PickableBundle,
 };
+use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 use bevy_reactor_overlays as overlays;
 use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
@@ -122,6 +124,9 @@ fn style_scroll_area(ss: &mut StyleBuilder) {
 #[derive(Resource)]
 pub struct PanelWidth(f32);
 
+#[derive(Resource, Default)]
+pub struct SelectedShape(Option<Entity>);
+
 fn main() {
     App::new()
         .register_asset_source(
@@ -129,7 +134,7 @@ fn main() {
             AssetSource::build()
                 .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
         )
-        .init_resource::<Counter>()
+        .init_resource::<SelectedShape>()
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,
@@ -152,7 +157,12 @@ fn main() {
         //     BevyUiBackend,
         //     RaycastBackend,
         // ))
-        .add_plugins((ReactorPlugin, ObsidianUiPlugin, overlays::OverlaysPlugin))
+        .add_plugins((
+            ReactorPlugin,
+            ObsidianUiPlugin,
+            overlays::OverlaysPlugin,
+            BackdropBackend,
+        ))
         .add_systems(
             Startup,
             (
@@ -165,7 +175,6 @@ fn main() {
             (
                 bevy::window::close_on_esc,
                 rotate,
-                update_counter,
                 viewport::update_viewport_inset,
                 viewport::update_camera_viewport,
             ),
@@ -397,18 +406,6 @@ fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
     .insert(TargetCamera(cx.props))
 }
 
-#[derive(Resource, Default)]
-pub struct Counter {
-    pub count: u32,
-    pub foo: usize,
-}
-
-fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
-    if key.pressed(KeyCode::Space) {
-        counter.count += 1;
-    }
-}
-
 // Setup 3d shapes
 fn setup(
     mut commands: Commands,
@@ -432,21 +429,46 @@ fn setup(
 
     let num_shapes = shapes.len();
 
+    let shapes_parent = commands
+        .spawn((
+            SpatialBundle { ..default() },
+            BackdropPickable,
+            On::<Pointer<Down>>::run(
+                |mut event: ListenerMut<Pointer<Down>>,
+                 shapes: Query<&Shape>,
+                 mut selection: ResMut<SelectedShape>| {
+                    if shapes.get(event.target).is_ok() {
+                        selection.0 = Some(event.target);
+                        // println!("Pointer down on shape {:?}", event.target);
+                    } else {
+                        selection.0 = None;
+                        // println!("Pointer down on backdrop {:?}", event.target);
+                    }
+                    event.stop_propagation();
+                },
+            ),
+        ))
+        .id();
+
     for (i, shape) in shapes.into_iter().enumerate() {
-        commands.spawn((
-            PbrBundle {
-                mesh: shape,
-                material: debug_material.clone(),
-                transform: Transform::from_xyz(
-                    -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
-                    2.0,
-                    0.0,
-                )
-                .with_rotation(Quat::from_rotation_x(-PI / 4.)),
-                ..default()
-            },
-            Shape,
-        ));
+        commands
+            .spawn((
+                PbrBundle {
+                    mesh: shape,
+                    material: debug_material.clone(),
+                    transform: Transform::from_xyz(
+                        -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
+                        2.0,
+                        0.0,
+                    )
+                    .with_rotation(Quat::from_rotation_x(-PI / 4.)),
+                    ..default()
+                },
+                Shape,
+                PickableBundle::default(),
+                RaycastPickable,
+            ))
+            .set_parent(shapes_parent);
     }
 
     commands.spawn(PointLightBundle {
@@ -477,6 +499,7 @@ fn setup(
             },
             viewport::ViewportCamera,
             RaycastPickable,
+            BackdropPickable,
         ))
         .id()
 }

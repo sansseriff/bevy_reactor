@@ -24,6 +24,7 @@ opt-level = 3
 [dev-dependencies]
 obsidian_ui = { path = "crates/obsidian_ui" }
 bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
+bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
 
 # [patch.crates-io]
 # bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
