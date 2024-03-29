@@ -1,5 +1,6 @@
 //! Example of a simple UI layout
 mod color_edit;
+mod transform_overlay;
 
 use bevy_color::{LinearRgba, Srgba};
 use bevy_mod_picking::{
@@ -24,6 +25,7 @@ use obsidian_ui::{
     size::Size,
     typography, viewport, ObsidianUiPlugin,
 };
+use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
 
@@ -371,6 +373,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
 
 fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
     commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
+    commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
 }
 
 fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
@@ -404,6 +407,12 @@ fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
     .with_pickable(true)
     // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
     .insert(TargetCamera(cx.props))
+}
+
+fn transform_overlay(cx: &mut Cx<Entity>) -> impl View {
+    let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
+
+    Portal::new(TransformOverlay { target: selected })
 }
 
 // Setup 3d shapes
