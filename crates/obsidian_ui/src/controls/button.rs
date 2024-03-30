@@ -34,9 +34,30 @@ pub enum ButtonVariant {
     Selected,
 }
 
-/// Button properties
+fn style_button(ss: &mut StyleBuilder) {
+    ss.border(1)
+        .display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .justify_content(ui::JustifyContent::Center)
+        .align_items(ui::AlignItems::Center)
+        .align_content(ui::AlignContent::Center)
+        .padding((12, 0))
+        .border(0)
+        .color(colors::FOREGROUND);
+}
+
+fn style_button_bg(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Grid)
+        .position(ui::PositionType::Absolute)
+        .left(0)
+        .right(0)
+        .top(0)
+        .bottom(0);
+}
+
+/// Button widget
 #[derive(Default)]
-pub struct ButtonProps {
+pub struct Button {
     /// Color variant - default, primary or danger.
     pub variant: Signal<ButtonVariant>,
 
@@ -65,50 +86,19 @@ pub struct ButtonProps {
     pub autofocus: bool,
 }
 
-fn style_button(ss: &mut StyleBuilder) {
-    ss.border(1)
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Row)
-        .justify_content(ui::JustifyContent::Center)
-        .align_items(ui::AlignItems::Center)
-        .align_content(ui::AlignContent::Center)
-        .padding((12, 0))
-        .border(0)
-        .color(colors::FOREGROUND);
-}
-
-fn style_button_bg(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Grid)
-        .position(ui::PositionType::Absolute)
-        .left(0)
-        .right(0)
-        .top(0)
-        .bottom(0);
-}
-
-/// Button widget
-pub struct Button(ButtonProps);
-
-impl Button {
-    /// Create a new button control.
-    pub fn new(props: ButtonProps) -> Self {
-        Self(props)
-    }
-}
-
 impl ViewFactory for Button {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
-        let variant = self.0.variant;
+        let variant = self.variant;
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);
         let focused = cx.create_focus_visible_signal(id);
 
-        let disabled = self.0.disabled;
+        let disabled = self.disabled;
 
-        let size = self.0.size;
+        let size = self.size;
 
-        let radius = self.0.corners.to_vec(5.0);
+        let radius = self.corners.to_vec(5.0);
         let mut ui_materials = cx
             .world_mut()
             .get_resource_mut::<Assets<RoundedRectMaterial>>()
@@ -125,13 +115,13 @@ impl ViewFactory for Button {
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
                 },
-                self.0.style.clone(),
+                self.style.clone(),
             ))
             .insert((
-                TabIndex(self.0.tab_index),
+                TabIndex(self.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
                 {
-                    let on_click = self.0.on_click;
+                    let on_click = self.on_click;
                     On::<Pointer<Click>>::run(move |world: &mut World| {
                         let mut focus = world.get_resource_mut::<Focus>().unwrap();
                         focus.0 = Some(id);
@@ -169,7 +159,7 @@ impl ViewFactory for Button {
                     }
                 }),
                 On::<KeyPressEvent>::run({
-                    let on_click = self.0.on_click;
+                    let on_click = self.on_click;
                     move |world: &mut World| {
                         if !disabled.get(world) {
                             let mut event = world
@@ -188,7 +178,7 @@ impl ViewFactory for Button {
                     }
                 }),
             ))
-            .insert_if(self.0.autofocus, AutoFocus)
+            .insert_if(self.autofocus, AutoFocus)
             .with_children((
                 Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
                     .insert(material.clone())
@@ -230,7 +220,7 @@ impl ViewFactory for Button {
                             }
                         };
                     }),
-                self.0.children.clone(),
+                self.children.clone(),
             ))
     }
 }

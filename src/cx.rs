@@ -137,7 +137,7 @@ pub trait RunContextSetup<'p> {
     ///
     /// Arguments:
     /// * `compute` - The function that computes the output. This will be called with a single
-    ///    parameter, which is a [`Cx`] object.
+    ///    parameter, which is an [`Rcx`] object.
     fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
         &mut self,
         compute: F,

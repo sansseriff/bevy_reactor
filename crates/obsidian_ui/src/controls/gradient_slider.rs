@@ -69,48 +69,6 @@ impl Default for ColorGradient {
     }
 }
 
-/// Properties for slider widget.
-pub struct GradientSliderProps {
-    /// Gradient to display.
-    pub gradient: Signal<ColorGradient>,
-
-    /// Current slider value.
-    pub value: Signal<f32>,
-
-    /// Minimum slider value.
-    pub min: Signal<f32>,
-
-    /// Maximum slider value.
-    pub max: Signal<f32>,
-
-    /// Number of decimal places to round to (0 = integer).
-    pub precision: usize,
-
-    /// Whether the slider is disabled.
-    pub disabled: Signal<bool>,
-
-    /// Style handle for slider root element.
-    pub style: StyleHandle,
-
-    /// Callback called when value changes
-    pub on_change: Option<Callback<f32>>,
-}
-
-impl Default for GradientSliderProps {
-    fn default() -> Self {
-        Self {
-            gradient: Signal::Constant(ColorGradient::default()),
-            value: Signal::Constant(0.),
-            min: Signal::Constant(0.),
-            max: Signal::Constant(1.),
-            precision: 0,
-            disabled: Signal::Constant(false),
-            style: StyleHandle::default(),
-            on_change: None,
-        }
-    }
-}
-
 #[derive(Clone, PartialEq, Default, Copy)]
 struct DragState {
     dragging: bool,
@@ -165,12 +123,44 @@ fn style_thumb(ss: &mut StyleBuilder) {
 }
 
 /// Horizontal slider widget that displays a gradient bar and a draggable button.
-pub struct GradientSlider(GradientSliderProps);
+pub struct GradientSlider {
+    /// Gradient to display.
+    pub gradient: Signal<ColorGradient>,
 
-impl GradientSlider {
-    /// Create a new gradient slider control.
-    pub fn new(props: GradientSliderProps) -> Self {
-        Self(props)
+    /// Current slider value.
+    pub value: Signal<f32>,
+
+    /// Minimum slider value.
+    pub min: Signal<f32>,
+
+    /// Maximum slider value.
+    pub max: Signal<f32>,
+
+    /// Number of decimal places to round to (0 = integer).
+    pub precision: usize,
+
+    /// Whether the slider is disabled.
+    pub disabled: Signal<bool>,
+
+    /// Style handle for slider root element.
+    pub style: StyleHandle,
+
+    /// Callback called when value changes
+    pub on_change: Option<Callback<f32>>,
+}
+
+impl Default for GradientSlider {
+    fn default() -> Self {
+        Self {
+            gradient: Signal::Constant(ColorGradient::default()),
+            value: Signal::Constant(0.),
+            min: Signal::Constant(0.),
+            max: Signal::Constant(1.),
+            precision: 0,
+            disabled: Signal::Constant(false),
+            style: StyleHandle::default(),
+            on_change: None,
+        }
     }
 }
 
@@ -181,27 +171,27 @@ impl ViewFactory for GradientSlider {
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
         // Pain point: Need to capture all props for closures.
-        let min = self.0.min;
-        let max = self.0.max;
-        let value = self.0.value;
-        let precision = self.0.precision;
-        let on_change = self.0.on_change;
+        let min = self.min;
+        let max = self.max;
+        let value = self.value;
+        let precision = self.precision;
+        let on_change = self.on_change;
 
         // Derived signal of first color in gradient.
         // let first_color = {
-        //     let gradient = self.0.gradient;
+        //     let gradient = self.gradient;
         //     cx.create_derived(move |cc| gradient.map(cc, |g| g.first()).unwrap_or(Srgba::BLACK))
         // };
 
         // // Derived signal of last color in gradient.
         // let last_color = {
-        //     let gradient = self.0.gradient;
+        //     let gradient = self.gradient;
         //     cx.create_derived(move |cc| gradient.map(cc, |g| g.last()).unwrap_or(Srgba::BLACK))
         // };
 
         // This should really be an effect.
         let color_stops: Signal<(usize, [Vec4; 8])> = {
-            let gradient = self.0.gradient;
+            let gradient = self.gradient;
             cx.create_derived(move |cc| {
                 gradient.map(cc, |g| {
                     let mut result: [Vec4; 8] = [Vec4::default(); 8];
@@ -242,7 +232,7 @@ impl ViewFactory for GradientSlider {
         });
 
         Element::<NodeBundle>::for_entity(slider_id)
-            .with_styles((style_slider, self.0.style.clone()))
+            .with_styles((style_slider, self.style.clone()))
             .insert((
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
                     // Save initial value to use as drag offset.

@@ -6,9 +6,17 @@ use bevy_reactor::*;
 
 use crate::{colors, size::Size};
 
-/// Button properties
+fn style_swatch(ss: &mut StyleBuilder) {
+    ss.border(1)
+        .display(ui::Display::Flex)
+        .padding((12, 0))
+        .border(0)
+        .color(colors::FOREGROUND);
+}
+
+/// Color swatch widget.
 #[derive(Default)]
-pub struct SwatchProps {
+pub struct Swatch {
     /// Color to display
     pub color: Signal<Srgba>,
 
@@ -25,28 +33,10 @@ pub struct SwatchProps {
     pub on_click: Option<Callback>,
 }
 
-fn style_swatch(ss: &mut StyleBuilder) {
-    ss.border(1)
-        .display(ui::Display::Flex)
-        .padding((12, 0))
-        .border(0)
-        .color(colors::FOREGROUND);
-}
-
-/// Color swatch widget.
-pub struct Swatch(SwatchProps);
-
-impl Swatch {
-    /// Create a new swatch.
-    pub fn new(props: SwatchProps) -> Self {
-        Self(props)
-    }
-}
-
 impl ViewFactory for Swatch {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
-        let color = self.0.color;
-        let size = self.0.size;
+        let color = self.color;
+        let size = self.size;
 
         Element::<NodeBundle>::new()
             .named("color_swatch")
@@ -55,13 +45,13 @@ impl ViewFactory for Swatch {
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
                 },
-                self.0.style.clone(),
+                self.style.clone(),
             ))
             .insert((
                 // TabIndex(0),
                 // AccessibilityNode::from(NodeBuilder::new(Role::Button)),
                 {
-                    let on_click = self.0.on_click;
+                    let on_click = self.on_click;
                     On::<Pointer<Click>>::run(move |world: &mut World| {
                         if let Some(on_click) = on_click {
                             world.run_callback(on_click, ());

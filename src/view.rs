@@ -84,21 +84,17 @@ impl From<String> for ViewHandle {
 
 #[derive(Component)]
 /// Component which holds the top level of the view hierarchy.
-pub struct ViewRoot {
-    pub(crate) view: Arc<Mutex<dyn View + Sync + Send + 'static>>,
-}
+pub struct ViewRoot(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
 
 impl ViewRoot {
     /// Construct a new [`ViewRoot`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
-        Self {
-            view: Arc::new(Mutex::new(view)),
-        }
+        Self(Arc::new(Mutex::new(view)))
     }
 
     /// Despawn the view, including the display nodes, and all descendant views.
     pub fn despawn(&mut self, root: Entity, world: &mut World) {
-        self.view.lock().unwrap().raze(root, world);
+        self.0.lock().unwrap().raze(root, world);
         world.entity_mut(root).despawn();
     }
 }
@@ -250,7 +246,7 @@ pub(crate) fn build_added_view_roots(world: &mut World) {
         let Ok((_, root)) = roots.get(world, *root_entity) else {
             continue;
         };
-        let inner = root.view.clone();
+        let inner = root.0.clone();
         inner.lock().unwrap().build(*root_entity, world);
     }
 }
@@ -273,7 +269,7 @@ pub(crate) fn attach_child_views(world: &mut World) {
             }
 
             if let Some(handle) = world.entity(e).get::<ViewRoot>() {
-                let inner = handle.view.clone();
+                let inner = handle.0.clone();
                 if inner.lock().unwrap().children_changed(e, world) {
                     finished = true;
                     break;

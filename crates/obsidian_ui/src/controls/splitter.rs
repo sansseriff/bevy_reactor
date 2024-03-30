@@ -16,18 +16,6 @@ pub enum SplitterDirection {
     Vertical,
 }
 
-/// Splitter properties
-pub struct SplitterProps {
-    /// The current split value.
-    pub value: Signal<f32>,
-
-    /// Whether the splitter bar runs horizontally or vertically.
-    pub direction: SplitterDirection,
-
-    /// Callback involved with the new split value.
-    pub on_change: Callback<f32>,
-}
-
 #[derive(Clone, PartialEq, Default, Copy)]
 struct DragState {
     dragging: bool,
@@ -52,13 +40,15 @@ fn style_vsplitter_inner(ss: &mut StyleBuilder) {
 }
 
 /// Splitter bar which can be dragged
-pub struct Splitter(SplitterProps);
+pub struct Splitter {
+    /// The current split value.
+    pub value: Signal<f32>,
 
-impl Splitter {
-    /// Create a new splitter.
-    pub fn new(props: SplitterProps) -> Self {
-        Self(props)
-    }
+    /// Whether the splitter bar runs horizontally or vertically.
+    pub direction: SplitterDirection,
+
+    /// Callback involved with the new split value.
+    pub on_change: Callback<f32>,
 }
 
 impl ViewFactory for Splitter {
@@ -66,7 +56,7 @@ impl ViewFactory for Splitter {
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
-        let current_offset = self.0.value;
+        let current_offset = self.value;
         Element::<NodeBundle>::for_entity(id)
             .named("v_splitter")
             // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
@@ -92,7 +82,7 @@ impl ViewFactory for Splitter {
                     );
                 }),
                 On::<Pointer<Drag>>::run({
-                    let on_change = self.0.on_change;
+                    let on_change = self.on_change;
                     move |world: &mut World| {
                         let event = world
                             .get_resource::<ListenerInput<Pointer<Drag>>>()

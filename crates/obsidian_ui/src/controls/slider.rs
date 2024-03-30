@@ -5,53 +5,6 @@ use bevy_reactor::*;
 
 use crate::{colors, materials::SliderRectMaterial, RoundedCorners};
 
-/// Properties for slider widget.
-pub struct SliderProps {
-    /// Current slider value.
-    pub value: Signal<f32>,
-
-    /// Minimum slider value.
-    pub min: Signal<f32>,
-
-    /// Maximum slider value.
-    pub max: Signal<f32>,
-
-    /// Number of decimal places to round to (0 = integer).
-    pub precision: usize,
-
-    /// Amount to increment when using arrow buttons.
-    pub step: f32,
-
-    /// Whether the slider is disabled.
-    pub disabled: Signal<bool>,
-
-    /// Signal which returns the value formatted as a string. It `None`, then a default
-    /// formatter will be used.
-    pub formatted_value: Option<Signal<String>>,
-
-    /// Style handle for slider root element.
-    pub style: StyleHandle,
-
-    /// Callback called when value changes
-    pub on_change: Option<Callback<f32>>,
-}
-
-impl Default for SliderProps {
-    fn default() -> Self {
-        Self {
-            value: Signal::Constant(0.),
-            min: Signal::Constant(0.),
-            max: Signal::Constant(1.),
-            precision: 0,
-            step: 1.,
-            disabled: Signal::Constant(false),
-            formatted_value: None,
-            style: StyleHandle::default(),
-            on_change: None,
-        }
-    }
-}
-
 #[derive(Clone, PartialEq, Default, Copy)]
 enum DragType {
     #[default]
@@ -130,12 +83,49 @@ fn style_label(ss: &mut StyleBuilder) {
 }
 
 /// Horizontal slider widget
-pub struct Slider(SliderProps);
+pub struct Slider {
+    /// Current slider value.
+    pub value: Signal<f32>,
 
-impl Slider {
-    /// Create a new slider control.
-    pub fn new(props: SliderProps) -> Self {
-        Self(props)
+    /// Minimum slider value.
+    pub min: Signal<f32>,
+
+    /// Maximum slider value.
+    pub max: Signal<f32>,
+
+    /// Number of decimal places to round to (0 = integer).
+    pub precision: usize,
+
+    /// Amount to increment when using arrow buttons.
+    pub step: f32,
+
+    /// Whether the slider is disabled.
+    pub disabled: Signal<bool>,
+
+    /// Signal which returns the value formatted as a string. It `None`, then a default
+    /// formatter will be used.
+    pub formatted_value: Option<Signal<String>>,
+
+    /// Style handle for slider root element.
+    pub style: StyleHandle,
+
+    /// Callback called when value changes
+    pub on_change: Option<Callback<f32>>,
+}
+
+impl Default for Slider {
+    fn default() -> Self {
+        Self {
+            value: Signal::Constant(0.),
+            min: Signal::Constant(0.),
+            max: Signal::Constant(1.),
+            precision: 0,
+            step: 1.,
+            disabled: Signal::Constant(false),
+            formatted_value: None,
+            style: StyleHandle::default(),
+            on_change: None,
+        }
     }
 }
 
@@ -146,12 +136,12 @@ impl ViewFactory for Slider {
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
         // Pain point: Need to capture all props for closures.
-        let min = self.0.min;
-        let max = self.0.max;
-        let value = self.0.value;
-        let precision = self.0.precision;
-        let step = self.0.step;
-        let on_change = self.0.on_change;
+        let min = self.min;
+        let max = self.max;
+        let value = self.value;
+        let precision = self.precision;
+        let step = self.step;
+        let on_change = self.on_change;
 
         let mut ui_materials = cx
             .world_mut()
@@ -165,7 +155,7 @@ impl ViewFactory for Slider {
         });
 
         Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
-            .with_styles((style_slider, self.0.style.clone()))
+            .with_styles((style_slider, self.style.clone()))
             .insert((
                 material.clone(),
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {

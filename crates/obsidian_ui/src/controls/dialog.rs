@@ -48,9 +48,12 @@ fn style_dialog(ss: &mut StyleBuilder) {
     // .selector(".entering > &,.entered > &", |ss| ss.scale(1.));
 }
 
-/// Dialog box properties.
-#[derive(Clone, Default)]
-pub struct DialogProps {
+const TRANSITION_DURATION: f32 = 0.3;
+
+/// Displays a modal dialog box. This will display the dialog frame and the backdrop overlay.
+/// Use the dialog header/body/footer controls to get the standard layout.
+#[derive(Default)]
+pub struct Dialog {
     /// The width of the dialog, one of several standard widths.
     pub width: ui::Val,
 
@@ -68,26 +71,13 @@ pub struct DialogProps {
     pub on_exited: Option<Callback>,
 }
 
-const TRANSITION_DURATION: f32 = 0.3;
-
-/// Displays a modal dialog box. This will display the dialog frame and the backdrop overlay.
-/// Use the dialog header/body/footer controls to get the standard layout.
-pub struct Dialog(DialogProps);
-
-impl Dialog {
-    /// Create a new dialog.
-    pub fn new(props: DialogProps) -> Self {
-        Self(props)
-    }
-}
-
 impl ViewFactory for Dialog {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
-        let on_close = self.0.on_close;
-        let on_exited = self.0.on_exited;
-        let state = cx.create_bistable_transition(self.0.open, TRANSITION_DURATION);
-        let children = self.0.children.clone();
-        let width = self.0.width;
+        let on_close = self.on_close;
+        let on_exited = self.on_exited;
+        let state = cx.create_bistable_transition(self.open, TRANSITION_DURATION);
+        let children = self.children.clone();
+        let width = self.width;
 
         cx.create_effect(move |ve| {
             let state = state.get(ve);
@@ -191,28 +181,18 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
         .padding((12, 6));
 }
 
-/// Dialog header properties.
+/// Displays a standard dialog header.
 #[derive(Clone, Default)]
-pub struct DialogHeaderProps {
+pub struct DialogHeader {
     /// The content of the dialog header.
     pub children: ViewHandle,
-}
-
-/// Displays a standard dialog header.
-pub struct DialogHeader(DialogHeaderProps);
-
-impl DialogHeader {
-    /// Create a new dialog header.
-    pub fn new(props: DialogHeaderProps) -> Self {
-        Self(props)
-    }
 }
 
 impl ViewFactory for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
-            .with_child(&self.0.children)
+            .with_child(&self.children)
     }
 }
 
@@ -225,28 +205,18 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
         .min_height(200);
 }
 
-/// Dialog body properties.
+/// Displays a standard dialog body.
 #[derive(Clone, Default)]
-pub struct DialogBodyProps {
+pub struct DialogBody {
     /// The content of the dialog header.
     pub children: ViewHandle,
-}
-
-/// Displays a standard dialog body.
-pub struct DialogBody(DialogBodyProps);
-
-impl DialogBody {
-    /// Create a new dialog body.
-    pub fn new(props: DialogBodyProps) -> Self {
-        Self(props)
-    }
 }
 
 impl ViewFactory for DialogBody {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
-            .with_child(&self.0.children)
+            .with_child(&self.children)
     }
 }
 
@@ -261,27 +231,17 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
         .padding((8, 6));
 }
 
-/// Dialog header properties.
+/// Displays a standard dialog footer.
 #[derive(Clone, Default)]
-pub struct DialogFooterProps {
+pub struct DialogFooter {
     /// The content of the dialog header.
     pub children: ViewHandle,
-}
-
-/// Displays a standard dialog footer.
-pub struct DialogFooter(DialogFooterProps);
-
-impl DialogFooter {
-    /// Create a new dialog footer.
-    pub fn new(props: DialogFooterProps) -> Self {
-        Self(props)
-    }
 }
 
 impl ViewFactory for DialogFooter {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)
-            .with_child(&self.0.children)
+            .with_child(&self.children)
     }
 }

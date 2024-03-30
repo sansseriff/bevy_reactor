@@ -16,10 +16,8 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonProps, ButtonVariant, Checkbox, CheckboxProps, Dialog, DialogFooter,
-        DialogFooterProps, DialogHeader, DialogHeaderProps, DialogProps, ScrollView,
-        ScrollViewProps, Slider, SliderProps, Splitter, SplitterDirection, SplitterProps, Swatch,
-        SwatchProps, TextInput, TextInputProps,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ScrollView,
+        ScrollViewProps, Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps,
     },
     focus::TabGroup,
     size::Size,
@@ -225,26 +223,26 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
         .with_styles((typography::text_default, style_main))
         .insert((TabGroup::default(), TargetCamera(cx.props)))
         .with_children((
-            Dialog::new(DialogProps {
+            Dialog {
                 open: checked_1.signal(),
                 on_close: Some(cx.create_callback(move |cx| {
                     checked_1.set(cx, false);
                 })),
                 children: (
-                    DialogHeader::new(DialogHeaderProps {
+                    DialogHeader {
                         children: "Dialog Header".into(),
-                    }),
+                    },
                     "Dialog Body",
-                    DialogFooter::new(DialogFooterProps {
+                    DialogFooter {
                         children: (
-                            Button::new(ButtonProps {
+                            Button {
                                 children: "Cancel".into(),
                                 on_click: Some(cx.create_callback(move |cx| {
                                     checked_1.set(cx, false);
                                 })),
                                 ..default()
-                            }),
-                            Button::new(ButtonProps {
+                            },
+                            Button {
                                 children: "Close".into(),
                                 variant: Signal::Constant(ButtonVariant::Primary),
                                 autofocus: true,
@@ -252,15 +250,15 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                     checked_1.set(cx, false);
                                 })),
                                 ..default()
-                            }),
+                            },
                         )
                             .fragment(),
-                    }),
+                    },
                 )
                     .fragment(),
                 width: ui::Val::Px(400.),
                 ..default()
-            }),
+            },
             Element::<NodeBundle>::new()
                 .with_styles(style_aside)
                 .create_effect(move |cx, ent| {
@@ -272,23 +270,23 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     Element::<NodeBundle>::new()
                         .with_styles(style_button_row)
                         .with_children((
-                            Button::new(ButtonProps {
+                            Button {
                                 children: "Open…".into(),
                                 on_click: Some(clicked_increment),
                                 style: StyleHandle::new(style_button_flex),
                                 ..default()
-                            }),
-                            Button::new(ButtonProps {
+                            },
+                            Button {
                                 children: "Save".into(),
                                 on_click: Some(clicked_decrement),
                                 style: StyleHandle::new(style_button_flex),
                                 ..default()
-                            }),
+                            },
                         )),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .with_children((
-                            Checkbox::new(CheckboxProps {
+                            Checkbox {
                                 label: "Include Author Name".into(),
                                 checked: checked_1.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
@@ -297,8 +295,8 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                     checked_1.set(cx, checked);
                                 })),
                                 ..default()
-                            }),
-                            Checkbox::new(CheckboxProps {
+                            },
+                            Checkbox {
                                 label: "Include Metadata".into(),
                                 checked: checked_2.signal(),
                                 on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
@@ -307,12 +305,12 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                     checked_2.set(cx, checked);
                                 })),
                                 ..default()
-                            }),
+                            },
                         )),
                     Element::<NodeBundle>::new()
                         .with_styles(style_color_edit)
                         .with_children((
-                            Slider::new(SliderProps {
+                            Slider {
                                 min: Signal::Constant(0.),
                                 max: Signal::Constant(255.),
                                 value: red.signal(),
@@ -322,13 +320,13 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                     red.set(cx, cx.props);
                                 })),
                                 ..default()
-                            }),
-                            Swatch::new(SwatchProps {
+                            },
+                            Swatch {
                                 color: rgb_color,
                                 size: Size::Md,
                                 // style: StyleHandle::new(style_slider),
                                 ..default()
-                            }),
+                            },
                             text_computed(move |cx| {
                                 let color = rgb_color.get(cx);
                                 color.to_hex()
@@ -351,7 +349,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         ..default()
                     }),
                 )),
-            Splitter::new(SplitterProps {
+            Splitter {
                 direction: SplitterDirection::Vertical,
                 value: panel_width,
                 on_change: cx.create_callback(|cx: &mut Cx<f32>| {
@@ -359,7 +357,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     let mut panel_width = cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
                     panel_width.0 = value.max(200.);
                 }),
-            }),
+            },
             Element::<NodeBundle>::new()
                 .with_styles(style_viewport)
                 .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
@@ -372,7 +370,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
 }
 
 fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
-    commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
+    // commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
     commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
 }
 

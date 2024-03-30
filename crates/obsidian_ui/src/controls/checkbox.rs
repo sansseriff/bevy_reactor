@@ -18,28 +18,6 @@ use crate::{
     RoundedCorners,
 };
 
-/// Checkbox properties
-#[derive(Default)]
-pub struct CheckboxProps {
-    /// Whether the checkbox is checked.
-    pub checked: Signal<bool>,
-
-    /// Whether the checkbox is disabled.
-    pub disabled: Signal<bool>,
-
-    /// The content to display inside the button.
-    pub label: ViewHandle,
-
-    /// Additional styles to be applied to the button.
-    pub style: StyleHandle,
-
-    /// Callback called when clicked
-    pub on_change: Option<Callback<bool>>,
-
-    /// The tab index of the button (default 0).
-    pub tab_index: i32,
-}
-
 fn style_checkbox(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
@@ -74,13 +52,25 @@ fn style_checkbox_label(ss: &mut StyleBuilder) {
 }
 
 /// A checkbox widget.
-pub struct Checkbox(CheckboxProps);
+#[derive(Default)]
+pub struct Checkbox {
+    /// Whether the checkbox is checked.
+    pub checked: Signal<bool>,
 
-impl Checkbox {
-    /// Create a new button control.
-    pub fn new(props: CheckboxProps) -> Self {
-        Self(props)
-    }
+    /// Whether the checkbox is disabled.
+    pub disabled: Signal<bool>,
+
+    /// The content to display inside the button.
+    pub label: ViewHandle,
+
+    /// Additional styles to be applied to the button.
+    pub style: StyleHandle,
+
+    /// Callback called when clicked
+    pub on_change: Option<Callback<bool>>,
+
+    /// The tab index of the button (default 0).
+    pub tab_index: i32,
 }
 
 impl ViewFactory for Checkbox {
@@ -91,8 +81,8 @@ impl ViewFactory for Checkbox {
         let hovering = cx.create_hover_signal(id);
         let focused = cx.create_focus_visible_signal(id);
 
-        let disabled = self.0.disabled;
-        let checked = self.0.checked;
+        let disabled = self.disabled;
+        let checked = self.checked;
 
         let mut ui_materials = cx
             .world_mut()
@@ -105,12 +95,12 @@ impl ViewFactory for Checkbox {
 
         Element::<NodeBundle>::for_entity(id)
             .named("checkbox")
-            .with_styles((style_checkbox, self.0.style.clone()))
+            .with_styles((style_checkbox, self.style.clone()))
             .insert((
-                TabIndex(self.0.tab_index),
+                TabIndex(self.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
                 {
-                    let on_change = self.0.on_change;
+                    let on_change = self.on_change;
                     On::<Pointer<Click>>::run(move |world: &mut World| {
                         let mut focus = world.get_resource_mut::<Focus>().unwrap();
                         focus.0 = Some(id);
@@ -149,7 +139,7 @@ impl ViewFactory for Checkbox {
                     }
                 }),
                 On::<KeyPressEvent>::run({
-                    let on_change = self.0.on_change;
+                    let on_change = self.on_change;
                     move |world: &mut World| {
                         if !disabled.get(world) {
                             let mut event = world
@@ -217,7 +207,7 @@ impl ViewFactory for Checkbox {
                     )),
                 Element::<NodeBundle>::new()
                     .with_styles(style_checkbox_label)
-                    .with_child(&self.0.label),
+                    .with_child(&self.label),
             ))
     }
 }
