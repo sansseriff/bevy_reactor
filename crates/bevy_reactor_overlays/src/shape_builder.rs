@@ -361,7 +361,7 @@ impl ShapeBuilder {
                     self.push_indices(&[
                         v0_index, v2_index, v1_index, v1_index, v2_index, v3_index,
                     ]);
-                    self.fill_marker(options.start_marker, v_seg_end, v_dir, marker_length);
+                    self.fill_marker(options.end_marker, v_seg_end, v_dir, marker_length);
                     break;
                 }
             }
@@ -383,7 +383,7 @@ impl ShapeBuilder {
         #[allow(clippy::single_match)]
         match marker {
             StrokeMarker::Arrowhead => {
-                let v_perp = Vec2::new(direction.y, -direction.x).normalize() * length * 0.5;
+                let v_perp = Vec2::new(direction.y, -direction.x).normalize() * length;
                 let v0 = position + direction * length;
                 let v1 = position + v_perp;
                 let v2 = position - v_perp;

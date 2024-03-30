@@ -86,6 +86,12 @@ impl TrackingScope {
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     fn dependencies_changed(&self, world: &World) -> bool {
+        self.components_changed(world)
+            || self.mutables_changed(world)
+            || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
+    }
+
+    fn components_changed(&self, world: &World) -> bool {
         let this_run = world.read_change_tick();
         self.component_deps.iter().any(|(e, c)| {
             world
@@ -93,13 +99,17 @@ impl TrackingScope {
                 .get_change_ticks_by_id(*c)
                 .map(|ct| ct.is_changed(self.tick, this_run))
                 .unwrap_or(false)
-        }) || self.mutable_deps.iter().any(|m| {
+        })
+    }
+
+    fn mutables_changed(&self, world: &World) -> bool {
+        self.mutable_deps.iter().any(|m| {
             world
                 .entity(*m)
                 .get_ref::<MutableCell>()
                 .map(|m| m.is_changed())
                 .unwrap_or(false)
-        }) || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
+        })
     }
 
     /// Take the dependencies from another scope. Typically the other scope is a temporary

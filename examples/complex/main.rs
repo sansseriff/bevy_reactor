@@ -8,7 +8,7 @@ use bevy_mod_picking::{
     debug::DebugPickingMode,
     picking_core::Pickable,
     prelude::*,
-    DefaultPickingPlugins, PickableBundle,
+    DefaultPickingPlugins,
 };
 use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 use bevy_reactor_overlays as overlays;
@@ -145,7 +145,7 @@ fn main() {
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
-        .insert_resource(DebugPickingMode::Normal)
+        .insert_resource(DebugPickingMode::Disabled)
         .insert_resource(RaycastBackendSettings {
             require_markers: true,
             ..default()
@@ -374,7 +374,7 @@ fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
     commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
 }
 
-fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
+fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
     let id = cx.create_entity();
     let hovering = cx.create_hover_signal(id);
     // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
@@ -410,6 +410,9 @@ fn overlay_views(cx: &mut Cx<Entity>) -> impl View {
 fn transform_overlay(cx: &mut Cx<Entity>) -> impl View {
     let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
 
+    // TODO: Using a portal here to suppress warning message about no parent.
+    // The real problem is that ViewFactories can't be roots, because they need to be bound
+    // before they can be turned into views.
     Portal::new(TransformOverlay { target: selected })
 }
 
@@ -472,7 +475,7 @@ fn setup(
                     ..default()
                 },
                 Shape,
-                PickableBundle::default(),
+                // PickableBundle::default(),
                 RaycastPickable,
             ))
             .set_parent(shapes_parent);

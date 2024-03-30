@@ -350,8 +350,9 @@ pub struct ChangeTransformReaction {
 }
 
 impl Reaction for ChangeTransformReaction {
-    fn react(&mut self, _owner: Entity, world: &mut World, _tracking: &mut TrackingScope) {
-        let next_transform = self.transform.get(world);
+    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let re = Rcx::new(world, tracking);
+        let next_transform = self.transform.get(&re);
         let mut entt = world.entity_mut(self.mesh);
         let mut transform = entt.get_mut::<Transform>().unwrap();
         *transform = next_transform;
