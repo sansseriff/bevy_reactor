@@ -24,14 +24,6 @@ fn style_slider(ss: &mut StyleBuilder) {
     ss.min_width(64).height(20);
 }
 
-// fn style_value_bar(ss: &mut StyleBuilder) {
-//     ss.background_color(colors::U3)
-//         .position(ui::PositionType::Absolute)
-//         .left(0)
-//         .top(0)
-//         .bottom(0);
-// }
-
 fn style_overlay(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)

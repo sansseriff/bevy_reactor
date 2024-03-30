@@ -410,10 +410,23 @@ fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
 fn transform_overlay(cx: &mut Cx<Entity>) -> impl View {
     let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
 
+    let on_change = Some(cx.create_callback(|cx: &mut Cx<Vec2>| {
+        // println!("Selected shape positions: {:?}", cx.props);
+        let delta = cx.props;
+        let selected = cx.use_resource::<SelectedShape>().0.unwrap();
+        let mut entity = cx.world_mut().entity_mut(selected);
+        let mut transform = entity.get_mut::<Transform>().unwrap();
+        transform.translation.x += delta.x;
+        transform.translation.z += delta.y;
+    }));
+
     // TODO: Using a portal here to suppress warning message about no parent.
     // The real problem is that ViewFactories can't be roots, because they need to be bound
     // before they can be turned into views.
-    Portal::new(TransformOverlay { target: selected })
+    Portal::new(TransformOverlay {
+        target: selected,
+        on_change,
+    })
 }
 
 // Setup 3d shapes
