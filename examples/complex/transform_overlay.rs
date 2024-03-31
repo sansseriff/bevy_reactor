@@ -2,7 +2,11 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy_color::{LinearRgba, Luminance};
-use bevy_mod_picking::{backends::raycast::RaycastPickable, prelude::*};
+use bevy_mod_picking::{
+    backend::ray::{RayId, RayMap},
+    backends::raycast::RaycastPickable,
+    prelude::*,
+};
 use bevy_reactor::*;
 use bevy_reactor_overlays::{OverlayShape, PolygonOptions, StrokeMarker};
 use obsidian_ui::colors;
@@ -11,12 +15,13 @@ use obsidian_ui::colors;
 pub struct TransformOverlay {
     /// Target entity to drag
     pub target: Signal<Option<Entity>>,
-    /// Callback called when dragged. The argument is the delta of the drag.
-    pub on_change: Option<Callback<Vec2>>,
+    /// Callback called when dragged. The argument is the new position of the object.
+    pub on_change: Option<Callback<Vec3>>,
 }
 
 #[derive(Clone, PartialEq, Default, Copy)]
 struct DragState {
+    target_origin: Vec3,
     drag_origin: Vec3,
 }
 
@@ -92,21 +97,30 @@ impl ViewFactory for TransformOverlay {
                     .with_pickable(true)
                     .insert((
                         On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                            let event = world
-                                .get_resource::<ListenerInput<Pointer<DragStart>>>()
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
                                 .unwrap();
-                            // println!("drag start: {:?}", event);
-                            // get_intersect_point(world, &event.location);
-                            // if let Some(on_change) = on_change {
-                            //     world.run_callback(on_change, Vec2::new(event.delta.x, 0.));
-                            // }
+                            event.stop_propagation();
+                            let target_origin = target_position.get(world).translation;
+                            let drag_origin = get_intersect_point(world, target_origin);
+                            drag_state.set(
+                                world,
+                                DragState {
+                                    target_origin,
+                                    drag_origin,
+                                },
+                            );
                         }),
                         On::<Pointer<Drag>>::run(move |world: &mut World| {
-                            let event = world
-                                .get_resource::<ListenerInput<Pointer<Drag>>>()
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<Drag>>>()
                                 .unwrap();
+                            event.stop_propagation();
                             if let Some(on_change) = on_change {
-                                world.run_callback(on_change, Vec2::new(event.delta.x * 0.1, 0.));
+                                let ds = drag_state.get(world);
+                                let new_pos = get_intersect_point(world, ds.target_origin);
+                                let change = Vec3::new(new_pos.x - ds.drag_origin.x, 0., 0.);
+                                world.run_callback(on_change, ds.target_origin + change);
                             }
                         }),
                     )),
@@ -129,15 +143,34 @@ impl ViewFactory for TransformOverlay {
                     })
                     .with_color_signal(y_arrow_color)
                     .with_pickable(true)
-                    .insert(On::<Pointer<Drag>>::run(
-                        move |world: &mut World| {
-                            let event = world
-                                .get_resource::<ListenerInput<Pointer<Drag>>>()
+                    .insert((
+                        On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
                                 .unwrap();
+                            event.stop_propagation();
+                            let target_origin = target_position.get(world).translation;
+                            let drag_origin = get_intersect_point(world, target_origin);
+                            drag_state.set(
+                                world,
+                                DragState {
+                                    target_origin,
+                                    drag_origin,
+                                },
+                            );
+                        }),
+                        On::<Pointer<Drag>>::run(move |world: &mut World| {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<Drag>>>()
+                                .unwrap();
+                            event.stop_propagation();
                             if let Some(on_change) = on_change {
-                                world.run_callback(on_change, Vec2::new(0., event.delta.y * 0.1));
+                                let ds = drag_state.get(world);
+                                let new_pos = get_intersect_point(world, ds.target_origin);
+                                let change = Vec3::new(0., 0., new_pos.z - ds.drag_origin.z);
+                                world.run_callback(on_change, ds.target_origin + change);
                             }
-                        },
+                        }),
                     )),
                 ))
             },
@@ -146,32 +179,17 @@ impl ViewFactory for TransformOverlay {
     }
 }
 
-fn get_intersect_point(world: &mut World, pointer_loc: &PointerLocation) {
-    let (camera, camera_transform) = world
-        .query_filtered::<(&Camera, &GlobalTransform), With<RaycastPickable>>()
+fn get_intersect_point(world: &mut World, target_origin: Vec3) -> Vec3 {
+    let camera_entity = world
+        .query_filtered::<Entity, (With<Camera>, With<RaycastPickable>)>()
         .single(world);
-    let ray = make_ray(camera, camera_transform, pointer_loc);
-    println!("ray: {:?}", ray);
-    // if let Some(ray) = ray {
-    //     let intersect = ray.intersect_plane(Vec3::new(0., 0., 0.), Vec3::new(0., 0., 1.));
-    //     println!("intersect: {:?}", intersect);
-    // }
-}
-
-fn make_ray(
-    // primary_window_entity: &Query<Entity, With<PrimaryWindow>>,
-    camera: &Camera,
-    camera_tfm: &GlobalTransform,
-    pointer_loc: &PointerLocation,
-) -> Option<Ray3d> {
-    let pointer_loc = pointer_loc.location()?;
-    // if !pointer_loc.is_in_viewport(camera, primary_window_entity) {
-    //     return None;
-    // }
-    let mut viewport_pos = pointer_loc.position;
-    if let Some(viewport) = &camera.viewport {
-        let viewport_logical = camera.to_logical(viewport.physical_position)?;
-        viewport_pos -= viewport_logical;
-    }
-    camera.viewport_to_world(camera_tfm, viewport_pos)
+    let ray_map = world.get_resource::<RayMap>().unwrap();
+    let ray = ray_map
+        .map()
+        .get(&RayId::new(camera_entity, PointerId::Mouse))
+        .unwrap();
+    let intersect = ray
+        .intersect_plane(target_origin, Plane3d::new(Vec3::new(0., 1., 0.)))
+        .unwrap();
+    ray.origin + ray.direction * intersect
 }
