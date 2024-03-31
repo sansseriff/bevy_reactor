@@ -69,13 +69,13 @@ impl TrackingScope {
 
     /// Convenience method for adding a component dependency.
     pub(crate) fn track_component<C: Component>(&mut self, entity: Entity, world: &World) {
-        self.component_deps.insert((
+        self.track_component_id(
             entity,
             world
                 .components()
                 .component_id::<C>()
                 .expect("Unknown component type"),
-        ));
+        );
     }
 
     /// Convenience method for adding a component dependency by component id.
@@ -85,19 +85,18 @@ impl TrackingScope {
 
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
-    fn dependencies_changed(&self, world: &World) -> bool {
-        self.components_changed(world)
+    fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
+        self.components_changed(world, tick)
             || self.mutables_changed(world)
             || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
     }
 
-    fn components_changed(&self, world: &World) -> bool {
-        let this_run = world.read_change_tick();
+    fn components_changed(&self, world: &World, tick: Tick) -> bool {
         self.component_deps.iter().any(|(e, c)| {
             world
                 .entity(*e)
                 .get_change_ticks_by_id(*c)
-                .map(|ct| ct.is_changed(self.tick, this_run))
+                .map(|ct| ct.is_changed(self.tick, tick))
                 .unwrap_or(false)
         })
     }
@@ -163,13 +162,13 @@ impl TrackedResource {
 pub fn run_reactions(world: &mut World) {
     let mut scopes = world.query::<(Entity, &mut TrackingScope)>();
     let mut changed = HashSet::<Entity>::default();
+    let tick = world.change_tick();
     for (entity, scope) in scopes.iter(world) {
-        if scope.dependencies_changed(world) {
+        if scope.dependencies_changed(world, tick) {
             changed.insert(entity);
         }
     }
 
-    let tick = world.read_change_tick();
     for scope_entity in changed.iter() {
         let mut next_scope = TrackingScope::new(tick);
         if let Some(mut entt) = world.get_entity_mut(*scope_entity) {

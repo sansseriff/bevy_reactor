@@ -87,7 +87,7 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.node.is_none());
-        let mut tracking = TrackingScope::new(world.read_change_tick());
+        let mut tracking = TrackingScope::new(world.change_tick());
         let re = Rcx::new(world, &mut tracking);
         let text = (self.text)(&re);
         let node = Some(

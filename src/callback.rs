@@ -75,7 +75,7 @@ impl<'w, P: Send + Sync + 'static> CallDeferred<'w, P> {
 #[allow(dead_code)] // For now
 /// System that runs callbacks from an event listener.
 pub fn run_deferred_callbacks<P: 'static + Send + Sync>(world: &mut World) {
-    let tick = world.read_change_tick();
+    let tick = world.change_tick();
     let mut events = world.get_resource_mut::<Events<DeferredCall<P>>>().unwrap();
     let events = events.drain().collect::<Vec<_>>();
     let mut tracking = TrackingScope::new(tick);
