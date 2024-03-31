@@ -39,7 +39,7 @@ where
         parent_scope: &mut TrackingScope,
     ) {
         // Create a tracking scope for the reaction.
-        let mut scope = TrackingScope::new(world.read_change_tick());
+        let mut scope = TrackingScope::new(world.change_tick());
 
         // Unwrap the reaction and update the target entity, since this was not known at
         // the time the reaction was constucted.
@@ -128,7 +128,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
     // Start a reaction which updates the bundle.
     fn start(&mut self, target: Entity, world: &mut World, parent_scope: &mut TrackingScope) {
         // Create a tracking scope for the reaction.
-        let mut scope = TrackingScope::new(world.read_change_tick());
+        let mut scope = TrackingScope::new(world.change_tick());
 
         // Unwrap the reaction and update the target entity, since this was not known at
         // the time the reaction was constucted.
@@ -209,7 +209,7 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for ComputedBund
 //     // Insert the bundle on build, then update.
 //     fn init(&mut self, target: Entity, world: &mut World) {
 //         assert!(self.tracker.is_none());
-//         let mut scope = TrackingScope::new(world.read_change_tick());
+//         let mut scope = TrackingScope::new(world.change_tick());
 //         let b = (self.init)();
 //         let mut entt = world.entity_mut(target);
 //         entt.insert(b);

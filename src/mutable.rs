@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn test_mutable_copy() {
         let mut world = World::default();
-        let mut scope = TrackingScope::new(world.read_change_tick());
+        let mut scope = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
         let mutable = cx.create_mutable::<i32>(0);
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn test_mutable_clone() {
         let mut world = World::default();
-        let mut scope = TrackingScope::new(world.read_change_tick());
+        let mut scope = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(&(), &mut world, &mut scope);
 
         let mutable = cx.create_mutable("Hello".to_string());

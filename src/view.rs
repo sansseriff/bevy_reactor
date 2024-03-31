@@ -206,7 +206,7 @@ impl<W: ViewFactory> View for ViewFactoryState<W> {
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.inner.is_none());
-        let mut tracking = TrackingScope::new(world.read_change_tick());
+        let mut tracking = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new((), world, &mut tracking);
         let mut view = self.factory.create(&mut cx);
         let inner = world.spawn(tracking).set_parent(view_entity).id();

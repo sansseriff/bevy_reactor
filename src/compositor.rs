@@ -147,7 +147,7 @@ impl View for Compositor {
 
         // Insert components from effects.
         if !self.effects.is_empty() {
-            let mut tracking = TrackingScope::new(world.read_change_tick());
+            let mut tracking = TrackingScope::new(world.change_tick());
             for effect in self.effects.iter_mut() {
                 effect.start(image_entity, world, &mut tracking);
             }

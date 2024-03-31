@@ -37,7 +37,7 @@ pub trait RunContextWrite: RunContextRead {
     /// * `props` - The props to pass to the callback.
     fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
         let world = self.world_mut();
-        let tick = world.read_change_tick();
+        let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
         let mut cx = Cx::new(props, world, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
@@ -164,7 +164,7 @@ pub trait RunContextSetup<'p> {
     //     &mut self,
     //     compute: F,
     // ) -> Signal<R> {
-    //     let ticks = self.world_mut().read_change_tick();
+    //     let ticks = self.world_mut().change_tick();
     //     let derived = self
     //         .world_mut()
     //         .spawn((
@@ -187,7 +187,7 @@ pub trait RunContextSetup<'p> {
     /// * `effect` - The function that computes the output. This will be called with a single
     ///    parameter, which is a [`Cx`] object.
     fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx<()>)>(&mut self, effect: F) {
-        let ticks = self.world_mut().read_change_tick();
+        let ticks = self.world_mut().change_tick();
         let action = Arc::new(Mutex::new(effect));
         let mut scope = TrackingScope::new(ticks);
         action.lock().unwrap()(&mut Cx::new((), self.world_mut(), &mut scope));

@@ -135,7 +135,7 @@ impl<B: Bundle + Default> View for Element<B> {
 
         // Insert components from effects.
         if !self.effects.is_empty() {
-            let mut tracking = TrackingScope::new(world.read_change_tick());
+            let mut tracking = TrackingScope::new(world.change_tick());
             for effect in self.effects.iter_mut() {
                 effect.start(display, world, &mut tracking);
             }
