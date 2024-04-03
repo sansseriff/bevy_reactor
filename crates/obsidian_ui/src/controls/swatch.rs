@@ -33,7 +33,7 @@ pub struct Swatch {
     pub on_click: Option<Callback>,
 }
 
-impl ViewFactory for Swatch {
+impl ViewTemplate for Swatch {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let color = self.color;
         let size = self.size;

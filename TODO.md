@@ -19,7 +19,7 @@
   - correct rendering of selection rects and cursor
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
-- Simplify ViewFactory type signature (somehow).
+- Simplify ViewTemplate type signature (somehow).
 
 # StyleBuilder
 

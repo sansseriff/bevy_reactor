@@ -71,7 +71,7 @@ pub struct Dialog {
     pub on_exited: Option<Callback>,
 }
 
-impl ViewFactory for Dialog {
+impl ViewTemplate for Dialog {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
@@ -188,7 +188,7 @@ pub struct DialogHeader {
     pub children: ViewHandle,
 }
 
-impl ViewFactory for DialogHeader {
+impl ViewTemplate for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
@@ -212,7 +212,7 @@ pub struct DialogBody {
     pub children: ViewHandle,
 }
 
-impl ViewFactory for DialogBody {
+impl ViewTemplate for DialogBody {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
@@ -238,7 +238,7 @@ pub struct DialogFooter {
     pub children: ViewHandle,
 }
 
-impl ViewFactory for DialogFooter {
+impl ViewTemplate for DialogFooter {
     fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)

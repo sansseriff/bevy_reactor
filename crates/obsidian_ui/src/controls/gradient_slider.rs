@@ -164,7 +164,7 @@ impl Default for GradientSlider {
     }
 }
 
-impl ViewFactory for GradientSlider {
+impl ViewTemplate for GradientSlider {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let slider_id = cx.create_entity();
         // let hovering = cx.create_hover_signal(slider_id);

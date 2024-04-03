@@ -152,7 +152,7 @@ impl TextInput {
     }
 }
 
-impl ViewFactory for TextInput {
+impl ViewTemplate for TextInput {
     #[allow(clippy::vec_init_then_push)]
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();

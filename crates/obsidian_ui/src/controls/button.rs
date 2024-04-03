@@ -86,7 +86,7 @@ pub struct Button {
     pub autofocus: bool,
 }
 
-impl ViewFactory for Button {
+impl ViewTemplate for Button {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let variant = self.variant;

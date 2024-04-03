@@ -73,7 +73,7 @@ pub struct Checkbox {
     pub tab_index: i32,
 }
 
-impl ViewFactory for Checkbox {
+impl ViewTemplate for Checkbox {
     /// Construct a button widget.
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();

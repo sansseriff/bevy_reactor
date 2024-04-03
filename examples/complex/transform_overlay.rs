@@ -25,7 +25,7 @@ struct DragState {
     drag_origin: Vec3,
 }
 
-impl ViewFactory for TransformOverlay {
+impl ViewTemplate for TransformOverlay {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let target_entity = self.target;
         let target_position = cx.create_derived(move |rcx| {
@@ -66,7 +66,8 @@ impl ViewFactory for TransformOverlay {
 
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
-        Cond::new(
+        // Using a portal here to suppress the error message about no parent.
+        Portal::new(Cond::new(
             move |cx| target_entity.get(cx).is_some(),
             move || {
                 OverlayShape::new(|_cx, sb| {
@@ -175,7 +176,7 @@ impl ViewFactory for TransformOverlay {
                 ))
             },
             || (),
-        )
+        ))
     }
 }
 

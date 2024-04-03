@@ -51,7 +51,7 @@ pub struct Splitter {
     pub on_change: Callback<f32>,
 }
 
-impl ViewFactory for Splitter {
+impl ViewTemplate for Splitter {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);

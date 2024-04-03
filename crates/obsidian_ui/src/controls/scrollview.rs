@@ -102,7 +102,7 @@ impl ScrollView {
     }
 }
 
-impl ViewFactory for ScrollView {
+impl ViewTemplate for ScrollView {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         // A widget which displays a scrolling view of its children.
         let enable_x = self.0.scroll_enable_x;
@@ -186,7 +186,7 @@ impl Scrollbar {
     }
 }
 
-impl ViewFactory for Scrollbar {
+impl ViewTemplate for Scrollbar {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         let vertical = self.0.vertical;
         let drag_state = self.0.drag_state;
