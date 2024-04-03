@@ -1,5 +1,8 @@
 use crate::{signal::Signal, RunContextWrite};
-use bevy::{ecs::component::ComponentId, prelude::*};
+use bevy::{
+    ecs::{component::ComponentId, system::Command},
+    prelude::*,
+};
 use std::any::Any;
 
 // TODO: We could make this component generic over the type of the value. This would mean:
@@ -181,36 +184,20 @@ pub(crate) fn commit_mutables(world: &mut World) {
     });
 }
 
-// struct MutablePlugin<T: Send + Sync + 'static> {
-//     _marker: std::marker::PhantomData<T>,
-// }
+/// Custom command which updates the state of a mutable cell.
+/// (Not used yet, waiting on changes in Bevy 0.14)
+pub(crate) struct UpdateMutableCell<T> {
+    mutable: Entity,
+    value: T,
+}
 
-// impl<T: Send + Sync + 'static> MutablePlugin<T> {
-//     pub(crate) fn commit_mutables(world: &mut World) {
-//         for (mut sig_val, mut sig_next) in world
-//             .query::<(&mut MutableCell, &mut MutableValueNext)>()
-//             .iter_mut(world)
-//         {
-//             // Transfer mutable data from next to current.
-//             std::mem::swap(&mut sig_val.0, &mut sig_next.0);
-//         }
-
-//         // Remove all the MutableNext components.
-//         let mutables: Vec<Entity> = world
-//             .query_filtered::<Entity, With<MutableValueNext>>()
-//             .iter(world)
-//             .collect();
-//         mutables.iter().for_each(|mutable| {
-//             world.entity_mut(*mutable).remove::<MutableValueNext>();
-//         });
-//     }
-// }
-
-// impl<T: Send + Sync + 'static> Plugin for MutablePlugin<T> {
-//     fn build(&self, app: &mut App) {
-//         todo!()
-//     }
-// }
+impl<T: Send + Sync + 'static> Command for UpdateMutableCell<T> {
+    fn apply(self, world: &mut World) {
+        let mut mutable_ent = world.entity_mut(self.mutable);
+        let mut mutable = mutable_ent.get_mut::<MutableCell>().unwrap();
+        mutable.0 = Box::new(self.value);
+    }
+}
 
 #[cfg(test)]
 mod tests {
