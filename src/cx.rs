@@ -79,10 +79,12 @@ pub trait RunContextSetup<'p> {
     where
         T: Send + Sync + 'static,
     {
-        let mutable = self.world_mut().spawn(MutableCell(Box::new(init))).id();
-        self.add_owned(mutable);
+        let id = self.world_mut().spawn(MutableCell(Box::new(init))).id();
+        let component_id = self.world_mut().component_id::<MutableCell>().unwrap();
+        self.add_owned(id);
         Mutable {
-            id: mutable,
+            cell_id: id,
+            component_id,
             marker: PhantomData,
         }
     }
@@ -369,7 +371,9 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     where
         T: Send + Sync + Copy + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable(mutable)
     }
 
@@ -377,7 +381,9 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     where
         T: Send + Sync + Clone + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_clone(mutable)
     }
 
@@ -385,7 +391,9 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_as_ref(mutable)
     }
 
@@ -393,7 +401,9 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_map(mutable, f)
     }
 }
@@ -501,7 +511,9 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     where
         T: Send + Sync + Copy + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable(mutable)
     }
 
@@ -509,7 +521,9 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     where
         T: Send + Sync + Clone + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_clone(mutable)
     }
 
@@ -517,7 +531,9 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_as_ref(mutable)
     }
 
@@ -525,7 +541,9 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     where
         T: Send + Sync + 'static,
     {
-        self.tracking.borrow_mut().add_mutable(mutable.id);
+        self.tracking
+            .borrow_mut()
+            .track_component_id(mutable.cell_id, mutable.component_id);
         self.world.read_mutable_map(mutable, f)
     }
 }
@@ -575,7 +593,7 @@ impl ReadMutable for World {
     where
         T: Send + Sync + Copy + 'static,
     {
-        let mutable_entity = self.entity(mutable.id);
+        let mutable_entity = self.entity(mutable.cell_id);
         *mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -588,7 +606,7 @@ impl ReadMutable for World {
     where
         T: Send + Sync + Clone + 'static,
     {
-        let mutable_entity = self.entity(mutable.id);
+        let mutable_entity = self.entity(mutable.cell_id);
         mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -602,7 +620,7 @@ impl ReadMutable for World {
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable.id);
+        let mutable_entity = self.entity(mutable.cell_id);
         mutable_entity
             .get::<MutableCell>()
             .unwrap()
@@ -615,7 +633,7 @@ impl ReadMutable for World {
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable.id);
+        let mutable_entity = self.entity(mutable.cell_id);
         f(mutable_entity
             .get::<MutableCell>()
             .unwrap()

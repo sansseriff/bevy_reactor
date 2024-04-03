@@ -6,16 +6,13 @@ use bevy::{
     utils::{HashMap, HashSet},
 };
 
-use crate::{mutable::MutableCell, reaction::ReactionHandle, ViewHandle};
+use crate::{reaction::ReactionHandle, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
 pub struct TrackingScope {
     /// List of entities that are owned by this scope.
     owned: Vec<Entity>,
-
-    /// The set of mutables that this scope is subscribed to.
-    mutable_deps: HashSet<Entity>,
 
     /// Set of components that we are currently subscribed to.
     component_deps: HashSet<(Entity, ComponentId)>,
@@ -36,7 +33,6 @@ impl TrackingScope {
     pub fn new(tick: Tick) -> Self {
         Self {
             owned: Vec::new(),
-            mutable_deps: HashSet::default(),
             component_deps: HashSet::default(),
             resource_deps: HashMap::default(),
             tick,
@@ -45,10 +41,6 @@ impl TrackingScope {
 
     pub(crate) fn add_owned(&mut self, owned: Entity) {
         self.owned.push(owned);
-    }
-
-    pub(crate) fn add_mutable(&mut self, mutable: Entity) {
-        self.mutable_deps.insert(mutable);
     }
 
     fn add_resource<T: Resource>(&mut self, resource_id: ComponentId) {
@@ -101,20 +93,9 @@ impl TrackingScope {
         })
     }
 
-    fn mutables_changed(&self, world: &World) -> bool {
-        self.mutable_deps.iter().any(|m| {
-            world
-                .entity(*m)
-                .get_ref::<MutableCell>()
-                .map(|m| m.is_changed())
-                .unwrap_or(false)
-        })
-    }
-
     /// Take the dependencies from another scope. Typically the other scope is a temporary
     /// scope that is used to compute the next set of dependencies.
     pub(crate) fn take_deps(&mut self, other: &mut Self) {
-        self.mutable_deps = std::mem::take(&mut other.mutable_deps);
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
     }

@@ -1,5 +1,5 @@
 use crate::{signal::Signal, RunContextWrite};
-use bevy::prelude::*;
+use bevy::{ecs::component::ComponentId, prelude::*};
 use std::any::Any;
 
 // TODO: We could make this component generic over the type of the value. This would mean:
@@ -7,11 +7,7 @@ use std::any::Any;
 // * We would have to use a different component for each type of mutable.
 // * No need to box the value.
 // * No need to use Any.
-// * We'd need to store the component id in the Mutable so that the tracking scope can know
-//   which component to access.
-// * TrackingScope could treat it just like any other component.
 // * The hard part is handling MutableValueNext, because that is processed via a query.
-// * We would need to register a system for each specialization.
 // * What's missing: a way to issue commands from World. With that, we wouldn't need a system
 //   for each specialization, we wouldn't need a system at all.
 
@@ -28,14 +24,19 @@ pub(crate) struct MutableNextCell(pub(crate) Option<Box<dyn Any + Send + Sync + 
 /// Contains a reference to a reactive mutable variable.
 #[derive(PartialEq)]
 pub struct Mutable<T> {
-    pub(crate) id: Entity,
+    /// The entity that holds the mutable value.
+    pub(crate) cell_id: Entity,
+    /// The component id for the mutable cell.
+    pub(crate) component_id: ComponentId,
+
+    /// Marker
     pub(crate) marker: std::marker::PhantomData<T>,
 }
 
 impl<T> Mutable<T> {
     /// The entity that holds the mutable value.
     pub fn id(&self) -> Entity {
-        self.id
+        self.cell_id
     }
 }
 
@@ -53,7 +54,7 @@ where
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
     pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&self, cx: &mut R, updater: F) {
-        let value = cx.world_mut().get_mut::<MutableCell>(self.id).unwrap();
+        let value = cx.world_mut().get_mut::<MutableCell>(self.cell_id).unwrap();
         let inner = value.map_unchanged(|v| v.0.downcast_mut::<T>().unwrap());
         (updater)(inner);
     }
@@ -95,7 +96,7 @@ where
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
     pub fn set<R: WriteMutable>(&self, cx: &mut R, value: T) {
-        cx.write_mutable(self.id, value);
+        cx.write_mutable(self.cell_id, value);
     }
 }
 
@@ -117,7 +118,7 @@ where
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
     pub fn set_clone<R: WriteMutable>(&self, cx: &mut R, value: T) {
-        cx.write_mutable_clone(self.id, value);
+        cx.write_mutable_clone(self.cell_id, value);
     }
 }
 
