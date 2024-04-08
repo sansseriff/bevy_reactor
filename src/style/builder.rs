@@ -179,6 +179,35 @@ impl<H: LengthParam, V: LengthParam> UiRectParam for (H, V) {
     }
 }
 
+/// Trait that represents border radius
+pub trait BorderRadiusParam {
+    fn to_border_radius(self) -> ui::BorderRadius;
+}
+
+impl BorderRadiusParam for ui::BorderRadius {
+    fn to_border_radius(self) -> ui::BorderRadius {
+        self
+    }
+}
+
+impl BorderRadiusParam for ui::Val {
+    fn to_border_radius(self) -> ui::BorderRadius {
+        ui::BorderRadius::all(self)
+    }
+}
+
+impl BorderRadiusParam for f32 {
+    fn to_border_radius(self) -> ui::BorderRadius {
+        ui::BorderRadius::all(ui::Val::Px(self))
+    }
+}
+
+impl BorderRadiusParam for i32 {
+    fn to_border_radius(self) -> ui::BorderRadius {
+        ui::BorderRadius::all(ui::Val::Px(self as f32))
+    }
+}
+
 /// Trait that represents an optional float
 pub trait OptFloatParam {
     fn to_val(self) -> Option<f32>;

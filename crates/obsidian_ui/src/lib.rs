@@ -4,7 +4,7 @@
 
 use bevy::{app::*, ui::UiMaterialPlugin};
 use bevy_mod_picking::prelude::EventListenerPlugin;
-use materials::{GradientRectMaterial, RoundedRectMaterial, SliderRectMaterial};
+use materials::{GradientRectMaterial, SliderRectMaterial};
 
 /// Utilities for animation.
 pub mod animation;
@@ -21,7 +21,6 @@ pub mod hooks;
 
 /// Module containing custom materials.
 pub mod materials;
-pub use materials::RoundedCorners;
 
 /// Utilities for managing scrolling views.
 pub mod scrolling;
@@ -43,10 +42,12 @@ pub struct ObsidianUiPlugin;
 
 use scrolling::ScrollWheel;
 
+mod rounded_corners;
+pub use rounded_corners::RoundedCorners;
+
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-            UiMaterialPlugin::<RoundedRectMaterial>::default(),
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             hooks::BistableTransitionPlugin,

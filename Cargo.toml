@@ -9,10 +9,7 @@ members = ["crates/*"]
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git" }
-# bevy = "0.13.1"
-# bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
-#   "dynamic_linking",
-# ], branch = "main" }
+# bevy = "0.13.2"
 bevy_mod_picking = "0.18"
 impl-trait-for-tuples = "0.2.2"
 

@@ -1,14 +1,13 @@
 use crate::{
     focus::{AutoFocus, KeyCharEvent, KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
-    RoundedCorners,
 };
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode, Focus,
     },
-    color::{LinearRgba, Luminance},
+    color::Luminance,
     prelude::*,
     text::{BreakLineOn, TextLayoutInfo},
     ui,
@@ -16,7 +15,7 @@ use bevy::{
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
-use crate::{colors, materials::RoundedRectMaterial, size::Size};
+use crate::{colors, size::Size};
 
 /// Text input properties
 #[derive(Default)]
@@ -66,7 +65,8 @@ fn style_text_input_border(ss: &mut StyleBuilder) {
         .left(0)
         .right(0)
         .top(0)
-        .bottom(0);
+        .bottom(0)
+        .border_radius(5.0);
 }
 
 fn style_text_scroll(ss: &mut StyleBuilder) {
@@ -169,15 +169,6 @@ impl ViewTemplate for TextInput {
         let font = server.load("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf");
 
         let value = self.0.value.clone();
-
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(RoundedRectMaterial {
-            color: colors::U1.into(),
-            radius: RoundedCorners::All.to_vec(5.0),
-        });
 
         // Derived signal that computes the selection rectangles.
         let selection_rects = cx.create_derived(move |cx| {
@@ -386,10 +377,9 @@ impl ViewTemplate for TextInput {
             .insert_if(self.0.autofocus, AutoFocus)
             .with_children((
                 // Background
-                Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
-                    .insert(material.clone())
+                Element::<NodeBundle>::new()
                     .with_styles(style_text_input_border)
-                    .create_effect(move |cx, _| {
+                    .create_effect(move |cx, ent| {
                         let is_hovering = hovering.get(cx);
                         let is_focused = focused.get(cx);
                         let color = match (is_focused, is_hovering) {
@@ -397,12 +387,8 @@ impl ViewTemplate for TextInput {
                             (false, true) => colors::U1.lighter(0.01),
                             (false, false) => colors::U1,
                         };
-                        let mut ui_materials = cx
-                            .world_mut()
-                            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-                            .unwrap();
-                        let material = ui_materials.get_mut(material.id()).unwrap();
-                        material.color = LinearRgba::from(color).into();
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
                     })
                     .create_effect(move |cx, entt| {
                         let is_focused = focused.get(cx);

@@ -14,8 +14,6 @@ use crate::{
     colors,
     focus::{KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
-    materials::RoundedRectMaterial,
-    RoundedCorners,
 };
 
 fn style_checkbox(ss: &mut StyleBuilder) {
@@ -29,7 +27,10 @@ fn style_checkbox(ss: &mut StyleBuilder) {
 }
 
 fn style_checkbox_border(ss: &mut StyleBuilder) {
-    ss.display(ui::Display::Flex).width(16).height(16);
+    ss.display(ui::Display::Flex)
+        .width(16)
+        .height(16)
+        .border_radius(3.0);
 }
 
 fn style_checkbox_inner(ss: &mut StyleBuilder) {
@@ -83,15 +84,6 @@ impl ViewTemplate for Checkbox {
 
         let disabled = self.disabled;
         let checked = self.checked;
-
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(RoundedRectMaterial {
-            color: colors::U3.into(),
-            radius: RoundedCorners::All.to_vec(3.0),
-        });
 
         Element::<NodeBundle>::for_entity(id)
             .named("checkbox")
@@ -160,10 +152,9 @@ impl ViewTemplate for Checkbox {
                 }),
             ))
             .with_children((
-                Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
+                Element::<NodeBundle>::new()
                     .with_styles(style_checkbox_border)
-                    .insert(material.clone())
-                    .create_effect(move |cx, _| {
+                    .create_effect(move |cx, ent| {
                         let is_checked = checked.get(cx);
                         let is_pressed = pressed.get(cx);
                         let is_hovering = hovering.get(cx);
@@ -175,14 +166,8 @@ impl ViewTemplate for Checkbox {
                             (false, false, true) => colors::U1.lighter(0.002),
                             (false, false, false) => colors::U1,
                         };
-                        let mut ui_materials = cx
-                            .world_mut()
-                            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-                            .unwrap();
-                        let material = ui_materials.get_mut(material.id()).unwrap();
-                        material.color = LinearRgba::from(color).into();
-                        // let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                        // bg.0 = color.into();
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = LinearRgba::from(color).into();
                     })
                     .create_effect(move |cx, entt| {
                         let is_focused = focused.get(cx);

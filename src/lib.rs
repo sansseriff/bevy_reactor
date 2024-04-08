@@ -64,6 +64,7 @@ pub use signal::Signal;
 pub use style::StyleBuilder;
 pub use style::StyleBuilderBackground;
 pub use style::StyleBuilderBorderColor;
+pub use style::StyleBuilderBorderRadius;
 pub use style::StyleBuilderFont;
 pub use style::StyleBuilderLayout;
 pub use style::StyleBuilderOutline;

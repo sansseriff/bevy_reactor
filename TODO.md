@@ -1,5 +1,6 @@
 # TODO
 
+- Remove border radius material
 - Scrollbar
 - Scroll view
 - Scoped values

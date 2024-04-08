@@ -8,14 +8,14 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode, Focus,
     },
-    color::{LinearRgba, Luminance},
+    color::Luminance,
     prelude::*,
     ui,
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
-use crate::{colors, materials::RoundedRectMaterial, size::Size};
+use crate::{colors, size::Size};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -95,18 +95,9 @@ impl ViewTemplate for Button {
         let focused = cx.create_focus_visible_signal(id);
 
         let disabled = self.disabled;
+        let corners = self.corners;
 
         let size = self.size;
-
-        let radius = self.corners.to_vec(5.0);
-        let mut ui_materials = cx
-            .world_mut()
-            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-            .unwrap();
-        let material = ui_materials.add(RoundedRectMaterial {
-            color: colors::U3.into(),
-            radius,
-        });
 
         Element::<NodeBundle>::for_entity(id)
             .named("button")
@@ -180,10 +171,10 @@ impl ViewTemplate for Button {
             ))
             .insert_if(self.autofocus, AutoFocus)
             .with_children((
-                Element::<MaterialNodeBundle<RoundedRectMaterial>>::new()
-                    .insert(material.clone())
+                Element::<NodeBundle>::new()
                     .with_styles(style_button_bg)
-                    .create_effect(move |cx, _| {
+                    .insert(corners.to_border_radius(5.0))
+                    .create_effect(move |cx, ent| {
                         let is_pressed = pressed.get(cx);
                         let is_hovering = hovering.get(cx);
                         let base_color = match variant.get(cx) {
@@ -197,12 +188,8 @@ impl ViewTemplate for Button {
                             (false, true) => base_color.lighter(0.01),
                             (false, false) => base_color,
                         };
-                        let mut ui_materials = cx
-                            .world_mut()
-                            .get_resource_mut::<Assets<RoundedRectMaterial>>()
-                            .unwrap();
-                        let material = ui_materials.get_mut(material.id()).unwrap();
-                        material.color = LinearRgba::from(color).into();
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
                     })
                     .create_effect(move |cx, entt| {
                         let is_focused = focused.get(cx);
@@ -224,9 +211,3 @@ impl ViewTemplate for Button {
             ))
     }
 }
-
-// impl From<&Button> for ViewHandle {
-//     fn from(button: &Button) -> Self {
-//         ViewHandle(Arc::new(Mutex::new(view)))
-//     }
-// }

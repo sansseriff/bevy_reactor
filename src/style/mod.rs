@@ -2,6 +2,7 @@
 mod builder;
 mod builder_background;
 mod builder_border_color;
+mod builder_border_radius;
 mod builder_font;
 mod builder_layout;
 mod builder_outline;
@@ -17,6 +18,7 @@ use bevy::{prelude::*, ui};
 pub use builder::StyleBuilder;
 pub use builder_background::StyleBuilderBackground;
 pub use builder_border_color::StyleBuilderBorderColor;
+pub use builder_border_radius::StyleBuilderBorderRadius;
 pub use builder_font::StyleBuilderFont;
 pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
