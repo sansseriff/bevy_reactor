@@ -1,9 +1,8 @@
-use bevy::{prelude::*, ui};
-use bevy_color::Srgba;
+use bevy::{color::Srgba, prelude::*, ui};
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
-use crate::{colors, materials::GradientRectMaterial};
+use crate::materials::GradientRectMaterial;
 
 const THUMB_WIDTH: f32 = 12.;
 
@@ -114,8 +113,7 @@ fn style_track(ss: &mut StyleBuilder) {
 }
 
 fn style_thumb(ss: &mut StyleBuilder) {
-    ss.background_color(colors::U5)
-        .background_image("obsidian_ui://textures/gradient_thumb.png")
+    ss.background_image("obsidian_ui://textures/gradient_thumb.png")
         .position(ui::PositionType::Absolute)
         .top(0)
         .bottom(0)
@@ -211,7 +209,7 @@ impl ViewTemplate for GradientSlider {
             .get_resource_mut::<Assets<GradientRectMaterial>>()
             .unwrap();
         let gradient_material = gradient_material_assets.add(GradientRectMaterial {
-            color_stops: [Srgba::ALICE_BLUE.into(); 8],
+            color_stops: [Srgba::default().into(); 8],
             num_color_stops: 2,
             cap_size: THUMB_WIDTH * 0.5,
         });
@@ -225,7 +223,7 @@ impl ViewTemplate for GradientSlider {
                     .world_mut()
                     .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
-                let material = ui_materials.get_mut(material.clone()).unwrap();
+                let material = ui_materials.get_mut(material.id()).unwrap();
                 material.num_color_stops = num_color_stops as i32;
                 material.color_stops = color_stops;
             }

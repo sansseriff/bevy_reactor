@@ -63,6 +63,7 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
                     texture,
                     flip_x,
                     flip_y,
+                    ..default()
                 });
             }
             (None, Some(_)) => {

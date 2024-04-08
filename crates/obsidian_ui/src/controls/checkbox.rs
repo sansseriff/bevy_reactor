@@ -3,10 +3,10 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode, Focus,
     },
+    color::{LinearRgba, Luminance},
     prelude::*,
     ui,
 };
-use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
@@ -35,7 +35,7 @@ fn style_checkbox_border(ss: &mut StyleBuilder) {
 fn style_checkbox_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .background_image("obsidian_ui://textures/checkmark.png")
-        .background_color(colors::FOREGROUND)
+        // .background_color(colors::FOREGROUND)
         .position(ui::PositionType::Absolute)
         .left(2)
         .top(2)
@@ -179,7 +179,7 @@ impl ViewTemplate for Checkbox {
                             .world_mut()
                             .get_resource_mut::<Assets<RoundedRectMaterial>>()
                             .unwrap();
-                        let material = ui_materials.get_mut(material.clone()).unwrap();
+                        let material = ui_materials.get_mut(material.id()).unwrap();
                         material.color = LinearRgba::from(color).into();
                         // let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                         // bg.0 = color.into();

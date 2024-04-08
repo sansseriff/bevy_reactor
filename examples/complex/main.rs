@@ -2,7 +2,6 @@
 mod color_edit;
 mod transform_overlay;
 
-use bevy_color::{LinearRgba, Srgba};
 use bevy_mod_picking::{
     backends::raycast::{RaycastBackendSettings, RaycastPickable},
     debug::DebugPickingMode,
@@ -29,6 +28,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
+    color::{palettes, LinearRgba, Srgba},
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -173,7 +173,7 @@ fn main() {
         .add_systems(
             Update,
             (
-                bevy::window::close_on_esc,
+                close_on_esc,
                 rotate,
                 viewport::update_viewport_inset,
                 viewport::update_camera_viewport,
@@ -504,8 +504,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0)),
-        material: materials.add(Color::SILVER),
+        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+        material: materials.add(Color::from(palettes::css::SILVER)),
         ..default()
     });
 
@@ -571,4 +571,20 @@ fn uv_debug_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::default(),
     )
+}
+
+pub fn close_on_esc(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused {
+            continue;
+        }
+
+        if input.just_pressed(KeyCode::Escape) {
+            commands.entity(window).despawn();
+        }
+    }
 }

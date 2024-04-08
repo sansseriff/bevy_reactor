@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
+use bevy::color::{LinearRgba, Luminance};
 use bevy::prelude::*;
-use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{
     backend::ray::{RayId, RayMap},
     backends::raycast::RaycastPickable,

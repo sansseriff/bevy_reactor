@@ -3,10 +3,10 @@
 
 use bevy::{
     asset::AssetPath,
+    color::{LinearRgba, Srgba},
     prelude::*,
     ui::{self, ZIndex},
 };
-use bevy_color::{LinearRgba, Srgba};
 
 pub struct StyleBuilder<'a, 'w> {
     pub(crate) target: &'a mut EntityWorldMut<'w>,
@@ -75,34 +75,32 @@ impl ColorParam for Color {
 
 impl ColorParam for Srgba {
     fn to_val(self) -> Option<Color> {
-        Some(Color::rgba(self.red, self.green, self.blue, self.alpha))
+        Some(Color::srgba(self.red, self.green, self.blue, self.alpha))
     }
 }
 
 impl ColorParam for Option<Srgba> {
     fn to_val(self) -> Option<Color> {
-        self.map(|c| Color::rgba(c.red, c.green, c.blue, c.alpha))
+        self.map(|c| Color::srgba(c.red, c.green, c.blue, c.alpha))
     }
 }
 
 impl ColorParam for LinearRgba {
     fn to_val(self) -> Option<Color> {
-        Some(Color::rgba_linear(
-            self.red, self.green, self.blue, self.alpha,
-        ))
+        Some(self.into())
     }
 }
 
 impl ColorParam for Option<LinearRgba> {
     fn to_val(self) -> Option<Color> {
-        self.map(|c| Color::rgba_linear(c.red, c.green, c.blue, c.alpha))
+        self.map(|c| c.into())
     }
 }
 
 impl ColorParam for &str {
     fn to_val(self) -> Option<Color> {
         let c = Srgba::hex(self).unwrap();
-        Some(Color::rgba(c.red, c.green, c.blue, c.alpha))
+        Some(Color::srgba(c.red, c.green, c.blue, c.alpha))
     }
 }
 

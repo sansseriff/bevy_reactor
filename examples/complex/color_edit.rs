@@ -1,9 +1,9 @@
 use bevy::{
+    color::{Hsla, Srgba},
     ecs::system::Resource,
     prelude::default,
     ui::{self, node_bundles::NodeBundle},
 };
-use bevy_color::{Hsla, Srgba};
 use bevy_reactor::*;
 use obsidian_ui::{
     controls::{Button, ButtonVariant, ColorGradient, GradientSlider},

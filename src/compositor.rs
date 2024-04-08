@@ -131,7 +131,7 @@ impl View for Compositor {
                     Camera2dBundle {
                         camera: Camera {
                             order: -1,
-                            clear_color: ClearColorConfig::Custom(Color::RED),
+                            clear_color: ClearColorConfig::Custom(Color::default()),
                             target: RenderTarget::Image(image_handle.clone()),
                             ..Camera::default()
                         },

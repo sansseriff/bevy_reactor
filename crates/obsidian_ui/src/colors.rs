@@ -1,4 +1,4 @@
-use bevy_color::Srgba;
+use bevy::color::Srgba;
 
 /// Standard colors for the Obsidian UI.
 

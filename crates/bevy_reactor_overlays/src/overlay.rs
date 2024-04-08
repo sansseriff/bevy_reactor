@@ -1,9 +1,9 @@
 use bevy::{
+    color::LinearRgba,
     pbr::{NotShadowCaster, NotShadowReceiver},
     prelude::*,
     render::render_asset::RenderAssetUsages,
 };
-use bevy_color::LinearRgba;
 use bevy_mod_picking::{backends::raycast::RaycastPickable, picking_core::Pickable};
 use bevy_reactor::*;
 
@@ -283,7 +283,7 @@ where
         let mut builder = SB::default();
         (self.draw)(&re, &mut builder);
         let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
-        let mesh = meshes.get_mut(self.mesh.clone()).unwrap();
+        let mesh = meshes.get_mut(self.mesh.id()).unwrap();
         builder.build(mesh);
     }
 
@@ -331,14 +331,14 @@ impl Reaction for ChangeColorReaction {
 
         let mut materials = world.get_resource_mut::<Assets<OverlayMaterial>>().unwrap();
         let material = materials.get_mut(self.material.id()).unwrap();
-        material.color = color.into();
+        material.color = color;
 
         let mut underlay_materials = world
             .get_resource_mut::<Assets<UnderlayMaterial>>()
             .unwrap();
         if let Some(underlay_material) = underlay_materials.get_mut(self.underlay_material.id()) {
             color.alpha *= self.underlay;
-            underlay_material.color = color.into();
+            underlay_material.color = color;
         }
     }
 }

@@ -3,10 +3,8 @@ name = "bevy_reactor_overlays"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bevy = "0.13.1"
-bevy_color = { path = "../../../bevy_color" }
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy = "0.13.1"
 bevy_mod_picking = "0.18.0"
 bevy_reactor = { path = "../.." }

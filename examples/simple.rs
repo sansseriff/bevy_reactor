@@ -3,6 +3,7 @@
 use std::f32::consts::PI;
 
 use bevy::{
+    color::palettes,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -25,7 +26,7 @@ fn main() {
         // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(ReactorPlugin)
         .add_systems(Startup, (setup, setup_view_root))
-        .add_systems(Update, (bevy::window::close_on_esc, rotate, update_counter))
+        .add_systems(Update, (close_on_esc, rotate, update_counter))
         .run();
 }
 
@@ -39,22 +40,22 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
             .with_styles(style_test)
-            .insert(BorderColor(Color::LIME_GREEN))
+            .insert(BorderColor(palettes::css::LIME.into()))
             .insert_computed(|cx| {
                 let counter = cx.use_resource::<Counter>();
                 BackgroundColor(if counter.count & 1 == 0 {
-                    Color::DARK_GRAY
+                    palettes::css::DARK_GRAY.into()
                 } else {
-                    Color::MAROON
+                    palettes::css::MAROON.into()
                 })
             })
             .create_effect(|cx, ent| {
                 let count = cx.use_resource::<Counter>().count;
                 let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
                 border.0 = if count & 1 == 0 {
-                    Color::LIME_GREEN
+                    palettes::css::LIME.into()
                 } else {
-                    Color::RED
+                    palettes::css::RED.into()
                 };
             })
             .with_children((
@@ -165,8 +166,8 @@ fn setup(
 
     // ground plane
     commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(50.0)),
-        material: materials.add(Color::SILVER),
+        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
+        material: materials.add(Color::from(palettes::css::SILVER)),
         ..default()
     });
 
@@ -209,4 +210,20 @@ fn uv_debug_texture() -> Image {
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::default(),
     )
+}
+
+pub fn close_on_esc(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused {
+            continue;
+        }
+
+        if input.just_pressed(KeyCode::Escape) {
+            commands.entity(window).despawn();
+        }
+    }
 }

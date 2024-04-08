@@ -8,10 +8,10 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode, Focus,
     },
+    color::{LinearRgba, Luminance},
     prelude::*,
     ui,
 };
-use bevy_color::{LinearRgba, Luminance};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
@@ -201,7 +201,7 @@ impl ViewTemplate for Button {
                             .world_mut()
                             .get_resource_mut::<Assets<RoundedRectMaterial>>()
                             .unwrap();
-                        let material = ui_materials.get_mut(material.clone()).unwrap();
+                        let material = ui_materials.get_mut(material.id()).unwrap();
                         material.color = LinearRgba::from(color).into();
                     })
                     .create_effect(move |cx, entt| {

@@ -1,8 +1,5 @@
 use crate::{signal::Signal, RunContextWrite};
-use bevy::{
-    ecs::{component::ComponentId, system::Command},
-    prelude::*,
-};
+use bevy::{ecs::component::ComponentId, ecs::world::Command, prelude::*};
 use std::any::Any;
 
 // TODO: We could make this component generic over the type of the value. This would mean:

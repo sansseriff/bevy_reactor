@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy::{
+    color::{Mix, Srgba},
     ecs::component::Component,
     math::{cubic_splines::CubicSegment, Vec2},
     ui::{self, BackgroundColor, BorderColor, Style},
 };
-use bevy_color::{Mix, Srgba};
 
 // mod transition;
 

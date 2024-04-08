@@ -1,5 +1,8 @@
-use bevy::{prelude::*, ui};
-use bevy_color::{Alpha, Luminance};
+use bevy::{
+    color::{Alpha, Luminance},
+    prelude::*,
+    ui,
+};
 use bevy_mod_picking::{
     events::{Click, Pointer},
     prelude::{ListenerInput, On},

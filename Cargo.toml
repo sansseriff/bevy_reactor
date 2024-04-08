@@ -8,12 +8,12 @@ publish = false
 members = ["crates/*"]
 
 [dependencies]
-bevy = "0.13.1"
-bevy_color = { path = "../bevy_color" }
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy = "0.13.1"
 # bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
 #   "dynamic_linking",
 # ], branch = "main" }
-bevy_mod_picking = "0.18.0"
+bevy_mod_picking = "0.18"
 impl-trait-for-tuples = "0.2.2"
 
 # Enable max optimizations for dependencies, but not for our code:
@@ -25,7 +25,16 @@ obsidian_ui = { path = "crates/obsidian_ui" }
 bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
 
-# [patch.crates-io]
-# bevy = { git = "https://github.com/bevyengine/bevy.git", features = [
-#   "dynamic_linking",
-# ], branch = "main" }
+[patch.crates-io]
+bevy_mod_picking = { git = "https://github.com/tychedelia/bevy_mod_picking" }
+bevy_eventlistener = { git = "https://github.com/tychedelia/bevy_eventlistener" }
+bevy_picking_core = { git = "https://github.com/tychedelia/bevy_mod_picking" }
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
+
+[patch."https://github.com/tychedelia/bevy_mod_picking"]
+bevy_eventlistener = { git = "https://github.com/tychedelia/bevy_eventlistener" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
+
+[patch."https://github.com/tychedelia/bevy_eventlistener"]
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }

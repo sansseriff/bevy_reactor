@@ -1,5 +1,8 @@
-use bevy::{prelude::*, ui};
-use bevy_color::{LinearRgba, Luminance};
+use bevy::{
+    color::{LinearRgba, Luminance},
+    prelude::*,
+    ui,
+};
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
@@ -219,7 +222,7 @@ impl ViewTemplate for Slider {
                     .world_mut()
                     .get_resource_mut::<Assets<SliderRectMaterial>>()
                     .unwrap();
-                let material = ui_materials.get_mut(material.clone()).unwrap();
+                let material = ui_materials.get_mut(material.id()).unwrap();
                 material.value = pos;
             })
             .with_children((Element::<NodeBundle>::new()

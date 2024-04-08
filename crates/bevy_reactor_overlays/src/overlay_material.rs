@@ -1,23 +1,23 @@
 use bevy::{
     asset::Asset,
-    pbr::{AlphaMode, Material, MaterialPipeline, MaterialPipelineKey},
+    color::LinearRgba,
+    pbr::{Material, MaterialPipeline, MaterialPipelineKey},
     reflect::TypePath,
     render::{
-        color::Color,
-        mesh::MeshVertexBufferLayout,
+        alpha::AlphaMode,
+        mesh::MeshVertexBufferLayoutRef,
         render_resource::{
             AsBindGroup, CompareFunction, RenderPipelineDescriptor, ShaderRef,
             SpecializedMeshPipelineError,
         },
     },
 };
-// use bevy_color::LinearRgba;
 
 /// Material for overlays
 #[derive(Debug, Clone, AsBindGroup, Asset, TypePath, Default)]
 pub struct OverlayMaterial {
     #[uniform(1)]
-    pub(crate) color: Color,
+    pub(crate) color: LinearRgba,
 }
 
 #[allow(unused_variables)]
@@ -37,7 +37,7 @@ impl Material for OverlayMaterial {
     fn specialize(
         pipeline: &MaterialPipeline<Self>,
         descriptor: &mut RenderPipelineDescriptor,
-        layout: &MeshVertexBufferLayout,
+        layout: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,
     ) -> Result<(), SpecializedMeshPipelineError> {
         if let Some(ref mut depth_stencil) = descriptor.depth_stencil {
@@ -52,7 +52,7 @@ impl Material for OverlayMaterial {
 #[derive(Debug, Clone, AsBindGroup, Asset, TypePath, Default)]
 pub struct UnderlayMaterial {
     #[uniform(1)]
-    pub(crate) color: Color,
+    pub(crate) color: LinearRgba,
 }
 
 #[allow(unused_variables)]
@@ -72,7 +72,7 @@ impl Material for UnderlayMaterial {
     fn specialize(
         pipeline: &MaterialPipeline<Self>,
         descriptor: &mut RenderPipelineDescriptor,
-        layout: &MeshVertexBufferLayout,
+        layout: &MeshVertexBufferLayoutRef,
         key: MaterialPipelineKey<Self>,
     ) -> Result<(), SpecializedMeshPipelineError> {
         if let Some(ref mut depth_stencil) = descriptor.depth_stencil {
