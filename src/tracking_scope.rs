@@ -79,7 +79,6 @@ impl TrackingScope {
     /// the previous reaction.
     fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
         self.components_changed(world, tick)
-            || self.mutables_changed(world)
             || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
     }
 
