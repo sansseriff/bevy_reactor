@@ -3,7 +3,7 @@ use std::any::TypeId;
 use bevy::{
     ecs::component::{ComponentId, Tick},
     prelude::*,
-    utils::{HashMap, HashSet},
+    utils::HashSet,
 };
 
 use crate::{reaction::ReactionHandle, ViewHandle};
@@ -18,7 +18,7 @@ pub struct TrackingScope {
     component_deps: HashSet<(Entity, ComponentId)>,
 
     /// Set of resources that we are currently subscribed to.
-    resource_deps: HashMap<ComponentId, TrackedResource>,
+    resource_deps: HashSet<ComponentId>,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -34,7 +34,7 @@ impl TrackingScope {
         Self {
             owned: Vec::new(),
             component_deps: HashSet::default(),
-            resource_deps: HashMap::default(),
+            resource_deps: HashSet::default(),
             tick,
         }
     }
@@ -43,15 +43,9 @@ impl TrackingScope {
         self.owned.push(owned);
     }
 
-    fn add_resource<T: Resource>(&mut self, resource_id: ComponentId) {
-        self.resource_deps
-            .entry(resource_id)
-            .or_insert_with(|| TrackedResource::new::<T>());
-    }
-
     /// Convenience method for adding a resource dependency.
     pub(crate) fn track_resource<T: Resource>(&mut self, world: &World) {
-        self.add_resource::<T>(
+        self.resource_deps.insert(
             world
                 .components()
                 .get_resource_id(TypeId::of::<T>())
@@ -78,8 +72,7 @@ impl TrackingScope {
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
-        self.components_changed(world, tick)
-            || self.resource_deps.iter().any(|(_, c)| c.is_changed(world))
+        self.components_changed(world, tick) || self.resources_changed(world, tick)
     }
 
     fn components_changed(&self, world: &World, tick: Tick) -> bool {
@@ -87,6 +80,15 @@ impl TrackingScope {
             world
                 .entity(*e)
                 .get_change_ticks_by_id(*c)
+                .map(|ct| ct.is_changed(self.tick, tick))
+                .unwrap_or(false)
+        })
+    }
+
+    fn resources_changed(&self, world: &World, tick: Tick) -> bool {
+        self.resource_deps.iter().any(|c| {
+            world
+                .get_resource_change_ticks_by_id(*c)
                 .map(|ct| ct.is_changed(self.tick, tick))
                 .unwrap_or(false)
         })
@@ -119,22 +121,6 @@ impl DespawnScopes for World {
         for owned in owned_list {
             self.despawn_owned_recursive(owned);
         }
-    }
-}
-
-pub struct TrackedResource {
-    fn_is_changed: fn(&World) -> bool,
-}
-
-impl TrackedResource {
-    pub(crate) fn new<T: Resource>() -> Self {
-        Self {
-            fn_is_changed: |world| world.is_resource_changed::<T>(),
-        }
-    }
-
-    pub fn is_changed(&self, world: &World) -> bool {
-        (self.fn_is_changed)(world)
     }
 }
 
