@@ -1,6 +1,8 @@
 # TODO
 
-- Remove border radius material
+- Refactor Mutables (generic)
+- Resource timestamps.
+- Reaction cleanups
 - Scrollbar
 - Scroll view
 - Scoped values

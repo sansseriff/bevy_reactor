@@ -33,6 +33,7 @@ fn style_dialog_overlay(ss: &mut StyleBuilder) {
 
 fn style_dialog(ss: &mut StyleBuilder) {
     ss.background_color(colors::U2)
+        .border_radius(6.0)
         .position(PositionType::Relative)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
