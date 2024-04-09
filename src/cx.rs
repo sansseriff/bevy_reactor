@@ -9,7 +9,7 @@ use bevy::prelude::*;
 use crate::{
     callback::{Callback, CallbackFnCell, CallbackFnMutCell},
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
-    mutable::{MutableCell, MutableNextCell, ReadMutable, WriteMutable},
+    mutable::{MutableCell, ReadMutable, UpdateMutableCell, WriteMutable},
     tracking_scope::TrackingScope,
     Mutable, Reaction, ReactionHandle, Signal,
 };
@@ -79,12 +79,12 @@ pub trait RunContextSetup<'p> {
     where
         T: Send + Sync + 'static,
     {
-        let id = self.world_mut().spawn(MutableCell(Box::new(init))).id();
-        let component_id = self.world_mut().component_id::<MutableCell>().unwrap();
-        self.add_owned(id);
+        let cell = self.world_mut().spawn(MutableCell::<T>(init)).id();
+        let component = self.world_mut().init_component::<MutableCell<T>>();
+        self.add_owned(cell);
         Mutable {
-            cell_id: id,
-            component_id,
+            cell,
+            component,
             marker: PhantomData,
         }
     }
@@ -373,7 +373,7 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable(mutable)
     }
 
@@ -383,7 +383,7 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_clone(mutable)
     }
 
@@ -393,7 +393,7 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_as_ref(mutable)
     }
 
@@ -403,7 +403,7 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_map(mutable, f)
     }
 }
@@ -513,7 +513,7 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable(mutable)
     }
 
@@ -523,7 +523,7 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_clone(mutable)
     }
 
@@ -533,7 +533,7 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_as_ref(mutable)
     }
 
@@ -543,7 +543,7 @@ impl<'p, 'w> ReadMutable for Rcx<'p, 'w> {
     {
         self.tracking
             .borrow_mut()
-            .track_component_id(mutable.cell_id, mutable.component_id);
+            .track_component_id(mutable.cell, mutable.component);
         self.world.read_mutable_map(mutable, f)
     }
 }
@@ -593,53 +593,32 @@ impl ReadMutable for World {
     where
         T: Send + Sync + Copy + 'static,
     {
-        let mutable_entity = self.entity(mutable.cell_id);
-        *mutable_entity
-            .get::<MutableCell>()
-            .unwrap()
-            .0
-            .downcast_ref::<T>()
-            .unwrap()
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0
     }
 
     fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Clone + 'static,
     {
-        let mutable_entity = self.entity(mutable.cell_id);
-        mutable_entity
-            .get::<MutableCell>()
-            .unwrap()
-            .0
-            .downcast_ref::<T>()
-            .unwrap()
-            .clone()
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0.clone()
     }
 
     fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable.cell_id);
-        mutable_entity
-            .get::<MutableCell>()
-            .unwrap()
-            .0
-            .downcast_ref::<T>()
-            .unwrap()
+        let mutable_entity = self.entity(mutable.cell);
+        &mutable_entity.get::<MutableCell<T>>().unwrap().0
     }
 
     fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
     where
         T: Send + Sync + 'static,
     {
-        let mutable_entity = self.entity(mutable.cell_id);
-        f(mutable_entity
-            .get::<MutableCell>()
-            .unwrap()
-            .0
-            .downcast_ref::<T>()
-            .unwrap())
+        let mutable_entity = self.entity(mutable.cell);
+        f(&mutable_entity.get::<MutableCell<T>>().unwrap().0)
     }
 }
 
@@ -648,16 +627,9 @@ impl WriteMutable for World {
     /// the value being set matches the existing value.
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)
     where
-        T: Send + Sync + Copy + PartialEq + 'static,
+        T: Send + Sync + PartialEq + 'static,
     {
-        let mut mutable_entity = self.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
-            *next.0.as_mut().unwrap().downcast_mut::<T>().unwrap() = value;
-        } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
-            if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableNextCell(Some(Box::new(value))));
-            }
-        }
+        self.commands().add(UpdateMutableCell { mutable, value });
     }
 
     /// Write the value of a mutable variable using Clone semantics. Does nothing if the
@@ -666,14 +638,7 @@ impl WriteMutable for World {
     where
         T: Send + Sync + Clone + PartialEq + 'static,
     {
-        let mut mutable_entity = self.entity_mut(mutable);
-        if let Some(mut next) = mutable_entity.get_mut::<MutableNextCell>() {
-            *next.0.as_mut().unwrap().downcast_mut::<T>().unwrap() = value;
-        } else if let Some(current_value) = mutable_entity.get_mut::<MutableCell>() {
-            if *current_value.0.downcast_ref::<T>().unwrap() != value {
-                mutable_entity.insert(MutableNextCell(Some(Box::new(value.clone()))));
-            }
-        }
+        self.commands().add(UpdateMutableCell { mutable, value });
     }
 }
 

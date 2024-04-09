@@ -1,6 +1,5 @@
 # TODO
 
-- Refactor Mutables (generic)
 - Resource timestamps.
 - Reaction cleanups
 - Scrollbar

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     attach_child_views, build_added_view_roots, compositor::update_compositor_size,
-    mutable::commit_mutables, tracking_scope::run_reactions, update_text_styles,
+    tracking_scope::run_reactions, update_text_styles,
 };
 
 /// Plugin that adds the reactive UI system to the app.
@@ -18,7 +18,6 @@ impl Plugin for ReactorPlugin {
                 (
                     (
                         // run_deferred_callbacks::<f32>,
-                        commit_mutables,
                         build_added_view_roots,
                         run_reactions,
                         attach_child_views,

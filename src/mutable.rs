@@ -1,33 +1,17 @@
 use crate::{signal::Signal, RunContextWrite};
 use bevy::{ecs::component::ComponentId, ecs::world::Command, prelude::*};
-use std::any::Any;
-
-// TODO: We could make this component generic over the type of the value. This would mean:
-//
-// * We would have to use a different component for each type of mutable.
-// * No need to box the value.
-// * No need to use Any.
-// * The hard part is handling MutableValueNext, because that is processed via a query.
-// * What's missing: a way to issue commands from World. With that, we wouldn't need a system
-//   for each specialization, we wouldn't need a system at all.
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
-pub(crate) struct MutableCell(pub(crate) Box<dyn Any + Send + Sync + 'static>);
-
-/// Contains the value which will be written to the signal on the next update.
-/// This is used to avoid writing to the signal multiple times in a single frame, and also
-/// ensures that the signal values remain stable during a reaction.
-#[derive(Component)]
-pub(crate) struct MutableNextCell(pub(crate) Option<Box<dyn Any + Send + Sync + 'static>>);
+pub(crate) struct MutableCell<T>(pub(crate) T);
 
 /// Contains a reference to a reactive mutable variable.
 #[derive(PartialEq)]
 pub struct Mutable<T> {
     /// The entity that holds the mutable value.
-    pub(crate) cell_id: Entity,
+    pub(crate) cell: Entity,
     /// The component id for the mutable cell.
-    pub(crate) component_id: ComponentId,
+    pub(crate) component: ComponentId,
 
     /// Marker
     pub(crate) marker: std::marker::PhantomData<T>,
@@ -36,7 +20,7 @@ pub struct Mutable<T> {
 impl<T> Mutable<T> {
     /// The entity that holds the mutable value.
     pub fn id(&self) -> Entity {
-        self.cell_id
+        self.cell
     }
 }
 
@@ -54,8 +38,8 @@ where
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
     pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&self, cx: &mut R, updater: F) {
-        let value = cx.world_mut().get_mut::<MutableCell>(self.cell_id).unwrap();
-        let inner = value.map_unchanged(|v| v.0.downcast_mut::<T>().unwrap());
+        let value = cx.world_mut().get_mut::<MutableCell<T>>(self.cell).unwrap();
+        let inner = value.map_unchanged(|v| &mut v.0);
         (updater)(inner);
     }
 }
@@ -96,7 +80,7 @@ where
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
     pub fn set<R: WriteMutable>(&self, cx: &mut R, value: T) {
-        cx.write_mutable(self.cell_id, value);
+        cx.write_mutable(self.cell, value);
     }
 }
 
@@ -118,7 +102,7 @@ where
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
     pub fn set_clone<R: WriteMutable>(&self, cx: &mut R, value: T) {
-        cx.write_mutable_clone(self.cell_id, value);
+        cx.write_mutable_clone(self.cell, value);
     }
 }
 
@@ -162,37 +146,18 @@ pub trait WriteMutable {
         T: Send + Sync + Clone + PartialEq + 'static;
 }
 
-pub(crate) fn commit_mutables(world: &mut World) {
-    for (mut sig_val, mut sig_next) in world
-        .query::<(&mut MutableCell, &mut MutableNextCell)>()
-        .iter_mut(world)
-    {
-        // Transfer mutable data from next to current.
-        sig_val.0 = sig_next.0.take().unwrap();
-    }
-
-    // Remove all the MutableNext components.
-    let mutables: Vec<Entity> = world
-        .query_filtered::<Entity, With<MutableNextCell>>()
-        .iter(world)
-        .collect();
-    mutables.iter().for_each(|mutable| {
-        world.entity_mut(*mutable).remove::<MutableNextCell>();
-    });
-}
-
 /// Custom command which updates the state of a mutable cell.
 /// (Not used yet, waiting on changes in Bevy 0.14)
 pub(crate) struct UpdateMutableCell<T> {
-    mutable: Entity,
-    value: T,
+    pub(crate) mutable: Entity,
+    pub(crate) value: T,
 }
 
 impl<T: Send + Sync + 'static> Command for UpdateMutableCell<T> {
     fn apply(self, world: &mut World) {
         let mut mutable_ent = world.entity_mut(self.mutable);
-        let mut mutable = mutable_ent.get_mut::<MutableCell>().unwrap();
-        mutable.0 = Box::new(self.value);
+        let mut mutable = mutable_ent.get_mut::<MutableCell<T>>().unwrap();
+        mutable.0 = self.value;
     }
 }
 
@@ -224,7 +189,7 @@ mod tests {
         assert_eq!(reader2.get(&cx), 0);
 
         // Now commit the changes
-        commit_mutables(&mut world);
+        world.flush_commands();
 
         // Signals should have changed
         let cx = Cx::new(&(), &mut world, &mut scope);
@@ -254,7 +219,7 @@ mod tests {
         assert_eq!(reader2.get(&cx), 0);
 
         // Now commit the changes
-        commit_mutables(&mut world);
+        world.flush_commands();
 
         // Signals should have changed
         let cx = Cx::new(&(), &mut world, &mut scope);

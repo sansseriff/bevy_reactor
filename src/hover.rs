@@ -55,9 +55,9 @@ impl<'p, 'w, Props> CreateHoverSignal for Cx<'p, 'w, Props> {
         let mutable = self.create_mutable::<bool>(false);
         let mut reaction = HoverReaction { target };
         let mut tracking = TrackingScope::new(self.world_mut().change_tick());
-        reaction.react(mutable.cell_id, self.world_mut(), &mut tracking);
+        reaction.react(mutable.cell, self.world_mut(), &mut tracking);
         self.world_mut()
-            .entity_mut(mutable.cell_id)
+            .entity_mut(mutable.cell)
             .insert((ReactionHandle::new(reaction), tracking));
         mutable.signal()
     }
