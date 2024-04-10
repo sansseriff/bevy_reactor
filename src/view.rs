@@ -113,25 +113,18 @@ impl ViewHandle {
     /// and the view handle, and then calls [`View::build`] on the view. The resuling entity
     /// is part of the template invocation hierarchy, it is not a display node.
     pub fn spawn(view: &ViewHandle, parent: Entity, world: &mut World) -> Entity {
+        // TODO: This could be replaced with view.clone(). But we might want to use a different
+        // type instead.
         let mut child_ent = world.spawn(ViewHandle(view.0.clone()));
         child_ent.set_parent(parent);
         let id = child_ent.id();
-        view.build(child_ent.id(), world);
+        view.0.lock().unwrap().build(child_ent.id(), world);
         id
     }
 
     /// Returns the display nodes produced by this `View`.
     pub fn nodes(&self) -> NodeSpan {
         self.0.lock().unwrap().nodes()
-    }
-
-    /// Initialize the view, creating any entities needed.
-    ///
-    /// Arguments:
-    /// * `view_entity`: The entity that owns this view.
-    /// * `world`: The Bevy world.
-    pub fn build(&self, view_entity: Entity, world: &mut World) {
-        self.0.lock().unwrap().build(view_entity, world);
     }
 
     /// Destroy the view, including the display nodes, and all descendant views.

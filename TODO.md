@@ -1,7 +1,7 @@
 # TODO
 
-- Resource timestamps.
 - Reaction cleanups
+- Tracking scope cleanups.
 - Scrollbar
 - Scroll view
 - Scoped values
