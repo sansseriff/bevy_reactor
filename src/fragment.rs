@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes,
-    ViewHandle,
+    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes, ViewRef,
 };
 
 /// A `Fragment` represents a group of one or more child views which can be inserted inline
@@ -41,7 +40,7 @@ impl View for Fragment {
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         // Build child nodes.
         for child in self.children.iter_mut() {
-            child.entity = Some(ViewHandle::spawn(&child.view, view_entity, world));
+            child.entity = Some(ViewRef::spawn(&child.view, view_entity, world));
         }
     }
 

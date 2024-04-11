@@ -11,7 +11,7 @@ use bevy::{
 use crate::{
     node_span::NodeSpan, style::ApplyStylesEffect, view::View, ChildView, ChildViewTuple,
     DespawnScopes, DisplayNodeChanged, EffectTarget, EntityEffect, StyleTuple, TrackingScope,
-    ViewHandle, WithStyles,
+    ViewRef, WithStyles,
 };
 
 /// Marker component which indicates that the entity is a camera for the compositor.
@@ -79,7 +79,7 @@ impl View for Compositor {
         world.entity_mut(view_entity).insert(Name::new("Portal"));
         // Build child nodes.
         for child in self.children.iter_mut() {
-            child.entity = Some(ViewHandle::spawn(&child.view, view_entity, world));
+            child.entity = Some(ViewRef::spawn(&child.view, view_entity, world));
         }
 
         // Create offscreen buffer. Start with a default size, will resize later.
@@ -184,9 +184,9 @@ impl EffectTarget for Compositor {
     }
 }
 
-impl From<Compositor> for ViewHandle {
+impl From<Compositor> for ViewRef {
     fn from(value: Compositor) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }
 

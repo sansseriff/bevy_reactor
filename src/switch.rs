@@ -4,7 +4,7 @@ use bevy::ecs::world::World;
 use bevy::prelude::*;
 
 use crate::node_span::NodeSpan;
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewHandle};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewRef};
 
 #[doc(hidden)]
 pub trait CasePredicate: Send + Sync {
@@ -25,13 +25,13 @@ impl CasePredicate for bool {
 
 #[doc(hidden)]
 pub trait CaseBody: Send + Sync {
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity);
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity);
 }
 
-impl<V: Into<ViewHandle>, FV: Send + Sync + Fn() -> V> CaseBody for FV {
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity) {
+impl<V: Into<ViewRef>, FV: Send + Sync + Fn() -> V> CaseBody for FV {
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity) {
         let view = (self)().into();
-        let entity = ViewHandle::spawn(&view, parent, world);
+        let entity = ViewRef::spawn(&view, parent, world);
         world.entity_mut(parent).insert(DisplayNodeChanged);
         (view, entity)
     }
@@ -48,7 +48,7 @@ impl Case {
     /// Construct a new conditional case.
     pub fn new<
         F: Send + Sync + 'static + Fn(&Rcx) -> bool,
-        V: Into<ViewHandle>,
+        V: Into<ViewRef>,
         FV: Send + Sync + 'static + Fn() -> V,
     >(
         test: F,
@@ -61,7 +61,7 @@ impl Case {
     }
 
     /// Construct a default case, one which is always true.
-    pub fn default<V: Into<ViewHandle>, FV: Send + Sync + 'static + Fn() -> V>(view: FV) -> Self {
+    pub fn default<V: Into<ViewRef>, FV: Send + Sync + 'static + Fn() -> V>(view: FV) -> Self {
         Self {
             test: Arc::new(true),
             view: Arc::new(view),
@@ -72,7 +72,7 @@ impl Case {
         self.test.test(re)
     }
 
-    fn build(&self, parent: Entity, world: &mut World) -> (ViewHandle, Entity) {
+    fn build(&self, parent: Entity, world: &mut World) -> (ViewRef, Entity) {
         self.view.build(parent, world)
     }
 }
@@ -81,7 +81,7 @@ impl Case {
 pub struct Switch {
     cases: Vec<Case>,
     state_index: usize,
-    state: Option<(ViewHandle, Entity)>,
+    state: Option<(ViewRef, Entity)>,
 }
 
 impl Switch {
@@ -140,8 +140,8 @@ impl View for Switch {
     }
 }
 
-impl From<Switch> for ViewHandle {
+impl From<Switch> for ViewRef {
     fn from(value: Switch) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }

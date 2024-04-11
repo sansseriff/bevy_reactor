@@ -271,7 +271,7 @@ where
 
         // Build child nodes.
         for child in self.children.iter_mut() {
-            child.entity = Some(ViewHandle::spawn(&child.view, view_entity, world));
+            child.entity = Some(ViewRef::spawn(&child.view, view_entity, world));
         }
 
         self.attach_children(world);
@@ -307,12 +307,12 @@ where
     }
 }
 
-impl<SB> From<Overlay<SB>> for ViewHandle
+impl<SB> From<Overlay<SB>> for ViewRef
 where
     SB: MeshBuilder + Default + 'static,
 {
     fn from(value: Overlay<SB>) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }
 

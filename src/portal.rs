@@ -1,17 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{node_span::NodeSpan, view::View, DespawnScopes, ViewHandle};
+use crate::{node_span::NodeSpan, view::View, DespawnScopes, ViewRef};
 
 /// A `Portal` represents a view that is displayed with no parent, causing it's location to
 /// be relative to the window rather than any parent view.
 pub struct Portal {
-    view: ViewHandle,
+    view: ViewRef,
     entity: Option<Entity>,
 }
 
 impl Portal {
     /// Construct a new `Fragment`.
-    pub fn new(view: impl Into<ViewHandle>) -> Self {
+    pub fn new(view: impl Into<ViewRef>) -> Self {
         Self {
             view: view.into(),
             entity: None,
@@ -27,7 +27,7 @@ impl View for Portal {
     fn build(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.entity.is_none());
         world.entity_mut(view_entity).insert(Name::new("Portal"));
-        self.entity = Some(ViewHandle::spawn(&self.view, view_entity, world));
+        self.entity = Some(ViewRef::spawn(&self.view, view_entity, world));
     }
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
@@ -42,8 +42,8 @@ impl View for Portal {
     }
 }
 
-impl From<Portal> for ViewHandle {
+impl From<Portal> for ViewRef {
     fn from(value: Portal) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }

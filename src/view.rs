@@ -64,21 +64,21 @@ pub trait SyncView: View + Send + Sync + 'static {}
 //     }
 // }
 
-impl From<()> for ViewHandle {
+impl From<()> for ViewRef {
     fn from(_value: ()) -> Self {
-        ViewHandle::new(EmptyView)
+        ViewRef::new(EmptyView)
     }
 }
 
-impl From<&str> for ViewHandle {
+impl From<&str> for ViewRef {
     fn from(value: &str) -> Self {
-        ViewHandle::new(TextStatic::new(value.to_string()))
+        ViewRef::new(TextStatic::new(value.to_string()))
     }
 }
 
-impl From<String> for ViewHandle {
+impl From<String> for ViewRef {
     fn from(value: String) -> Self {
-        ViewHandle::new(TextStatic::new(value))
+        ViewRef::new(TextStatic::new(value))
     }
 }
 
@@ -99,12 +99,22 @@ impl ViewRoot {
     }
 }
 
-/// Component used to hold a reference to a child view.
-#[derive(Component)]
+/// Component used to hold a reference to a [`View`].
+#[derive(Component, Clone)]
 pub struct ViewHandle(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
 
 impl ViewHandle {
     /// Construct a new [`ViewHandle`] from a [`View`].
+    pub(crate) fn new(view: impl View + Sync + Send + 'static) -> Self {
+        Self(Arc::new(Mutex::new(view)))
+    }
+}
+
+/// A reference to a [`View`] which can be passed around as a parameter.
+pub struct ViewRef(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
+
+impl ViewRef {
+    /// Construct a new [`ViewRef`] from a [`View`].
     pub fn new(view: impl View + Sync + Send + 'static) -> Self {
         Self(Arc::new(Mutex::new(view)))
     }
@@ -112,9 +122,7 @@ impl ViewHandle {
     /// Given a view template, construct a new view. This creates an entity to hold the view
     /// and the view handle, and then calls [`View::build`] on the view. The resuling entity
     /// is part of the template invocation hierarchy, it is not a display node.
-    pub fn spawn(view: &ViewHandle, parent: Entity, world: &mut World) -> Entity {
-        // TODO: This could be replaced with view.clone(). But we might want to use a different
-        // type instead.
+    pub fn spawn(view: &ViewRef, parent: Entity, world: &mut World) -> Entity {
         let mut child_ent = world.spawn(ViewHandle(view.0.clone()));
         child_ent.set_parent(parent);
         let id = child_ent.id();
@@ -133,13 +141,13 @@ impl ViewHandle {
     }
 }
 
-impl Clone for ViewHandle {
+impl Clone for ViewRef {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl Default for ViewHandle {
+impl Default for ViewRef {
     fn default() -> Self {
         Self::new(EmptyView)
     }
@@ -225,19 +233,19 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         let mut entt = world.entity_mut(self.view_entity.unwrap());
         if let Some(handle) = entt.get_mut::<ViewHandle>() {
             // Despawn the inner view.
-            handle.clone().raze(entt.id(), world);
+            handle.0.clone().lock().unwrap().raze(entt.id(), world);
         };
         self.view_entity = None;
         world.despawn_owned_recursive(view_entity);
     }
 }
 
-impl<W: ViewTemplate> From<W> for ViewHandle
+impl<W: ViewTemplate> From<W> for ViewRef
 where
     W: Send + Sync + 'static,
 {
     fn from(value: W) -> Self {
-        ViewHandle::new(value.into_view())
+        ViewRef::new(value.into_view())
     }
 }
 

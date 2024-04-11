@@ -5,13 +5,13 @@ use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
 use crate::{lcs::lcs, View};
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewHandle};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewRef};
 
 use crate::node_span::NodeSpan;
 
 struct ListItem<Value: Clone> {
     id: Entity,
-    view: ViewHandle,
+    view: ViewRef,
     value: Value,
 }
 
@@ -19,7 +19,7 @@ impl<Value: Clone> Clone for ListItem<Value> {
     fn clone(&self) -> Self {
         Self {
             id: self.id,
-            view: ViewHandle(self.view.0.clone()),
+            view: ViewRef(self.view.0.clone()),
             value: self.value.clone(),
         }
     }
@@ -32,14 +32,14 @@ pub struct ForEach<
     ItemIter: Iterator<Item = Item>,
     ItemFn: Fn(&Rcx) -> ItemIter,
     Cmp: Fn(&Item, &Item) -> bool,
-    V: Into<ViewHandle>,
+    V: Into<ViewRef>,
     F: Fn(&Item) -> V + Send,
 > {
     item_fn: ItemFn,
     items: Vec<ListItem<Item>>,
     cmp: Cmp,
     each: F,
-    fallback: Option<ViewHandle>,
+    fallback: Option<ViewRef>,
     fallback_ent: Option<Entity>,
 }
 
@@ -49,7 +49,7 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: Into<ViewHandle>,
+        V: Into<ViewRef>,
         F: Fn(&Item) -> V + Send,
     > ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
@@ -65,7 +65,7 @@ impl<
     }
 
     /// Allow specifying a fallback view to render if there are no items.
-    pub fn with_fallback<FB: Into<ViewHandle>>(mut self, fallback: FB) -> Self {
+    pub fn with_fallback<FB: Into<ViewRef>>(mut self, fallback: FB) -> Self {
         self.fallback = Some(fallback.into());
         self
     }
@@ -114,7 +114,7 @@ impl<
                 changed = true;
                 let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
-                    id: ViewHandle::spawn(&view, view_entity, world),
+                    id: ViewRef::spawn(&view, view_entity, world),
                     view,
                     value: next_items[i].clone(),
                 });
@@ -152,7 +152,7 @@ impl<
             for i in next_range.start..next_start {
                 let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
-                    id: ViewHandle::spawn(&view, view_entity, world),
+                    id: ViewRef::spawn(&view, view_entity, world),
                     view,
                     value: next_items[i].clone(),
                 });
@@ -194,7 +194,7 @@ impl<
             for i in next_end..next_range.end {
                 let view = (self.each)(&next_items[i]).into();
                 out.push(ListItem {
-                    id: ViewHandle::spawn(&view, view_entity, world),
+                    id: ViewRef::spawn(&view, view_entity, world),
                     view,
                     value: next_items[i].clone(),
                 });
@@ -212,7 +212,7 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: Into<ViewHandle>,
+        V: Into<ViewRef>,
         F: Fn(&Item) -> V + Send,
     > View for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
@@ -262,7 +262,7 @@ impl<
 
                 // If there are no items, render fallback unless already rendered.
                 None if next_len == 0 => {
-                    self.fallback_ent = Some(ViewHandle::spawn(fallback, view_entity, world));
+                    self.fallback_ent = Some(ViewRef::spawn(fallback, view_entity, world));
                     changed = true;
                 }
 
@@ -291,12 +291,12 @@ impl<
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
         Cmp: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        V: 'static + Into<ViewHandle>,
+        V: 'static + Into<ViewRef>,
         F: Send + Sync + 'static + Fn(&Item) -> V + Send,
-    > From<ForEach<Item, ItemIter, ItemFn, Cmp, V, F>> for ViewHandle
+    > From<ForEach<Item, ItemIter, ItemFn, Cmp, V, F>> for ViewRef
 {
     fn from(value: ForEach<Item, ItemIter, ItemFn, Cmp, V, F>) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }
 

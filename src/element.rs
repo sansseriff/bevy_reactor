@@ -7,7 +7,7 @@ use crate::{
     node_span::NodeSpan,
     parent_view::{ChildView, ParentView},
     view::View,
-    DespawnScopes, TrackingScope, ViewHandle,
+    DespawnScopes, TrackingScope, ViewRef,
 };
 
 /// A basic UI element
@@ -144,7 +144,7 @@ impl<B: Bundle + Default> View for Element<B> {
 
         // Build child nodes.
         for child in self.children.iter_mut() {
-            child.entity = Some(ViewHandle::spawn(&child.view, view_entity, world));
+            child.entity = Some(ViewRef::spawn(&child.view, view_entity, world));
         }
 
         self.attach_children(world);
@@ -170,8 +170,8 @@ impl<B: Bundle + Default> View for Element<B> {
     }
 }
 
-impl<B: Bundle + Default> From<Element<B>> for ViewHandle {
+impl<B: Bundle + Default> From<Element<B>> for ViewRef {
     fn from(value: Element<B>) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }

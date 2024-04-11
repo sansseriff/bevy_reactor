@@ -2,20 +2,20 @@ use bevy::ecs::world::World;
 use bevy::prelude::*;
 
 use crate::node_span::NodeSpan;
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewHandle};
+use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewRef};
 
 pub enum CondState {
     Unset,
-    True((ViewHandle, Entity)),
-    False((ViewHandle, Entity)),
+    True((ViewRef, Entity)),
+    False((ViewRef, Entity)),
 }
 
 /// A conditional view which renders one of two children depending on the condition expression.
 pub struct Cond<
     Test: 'static,
-    Pos: Into<ViewHandle>,
+    Pos: Into<ViewRef>,
     PosFn: Fn() -> Pos,
-    Neg: Into<ViewHandle>,
+    Neg: Into<ViewRef>,
     NegFn: Fn() -> Neg,
 > {
     test: Test,
@@ -26,9 +26,9 @@ pub struct Cond<
 
 impl<
         Test: Fn(&Rcx) -> bool,
-        Pos: Into<ViewHandle>,
+        Pos: Into<ViewRef>,
         PosFn: Fn() -> Pos,
-        Neg: Into<ViewHandle>,
+        Neg: Into<ViewRef>,
         NegFn: Fn() -> Neg,
     > Cond<Test, Pos, PosFn, Neg, NegFn>
 {
@@ -42,14 +42,14 @@ impl<
         }
     }
 
-    fn build_branch_state<V: Into<ViewHandle>, Factory: Fn() -> V>(
+    fn build_branch_state<V: Into<ViewRef>, Factory: Fn() -> V>(
         &self,
         branch: &Factory,
         parent: Entity,
         world: &mut World,
-    ) -> (ViewHandle, Entity) {
+    ) -> (ViewRef, Entity) {
         let state_view = (branch)().into();
-        let state_entity = ViewHandle::spawn(&state_view, parent, world);
+        let state_entity = ViewRef::spawn(&state_view, parent, world);
         world.entity_mut(parent).insert(DisplayNodeChanged);
         // assert!(
         //     world.entity_mut(parent).get::<Parent>().is_some(),
@@ -61,9 +61,9 @@ impl<
 
 impl<
         Test: Fn(&Rcx) -> bool,
-        Pos: Into<ViewHandle>,
+        Pos: Into<ViewRef>,
         PosFn: Fn() -> Pos,
-        Neg: Into<ViewHandle>,
+        Neg: Into<ViewRef>,
         NegFn: Fn() -> Neg,
     > View for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
@@ -148,9 +148,9 @@ impl<
 /// Creates a conditional branch view.
 pub fn cond<
     Test: Send + Sync + Fn(&Rcx) -> bool,
-    Pos: 'static + Into<ViewHandle>,
+    Pos: 'static + Into<ViewRef>,
     PosFn: Send + Sync + 'static + Fn() -> Pos,
-    Neg: 'static + Into<ViewHandle>,
+    Neg: 'static + Into<ViewRef>,
     NegFn: Send + Sync + 'static + Fn() -> Neg,
 >(
     test: Test,
@@ -162,13 +162,13 @@ pub fn cond<
 
 impl<
         Test: Send + Sync + Fn(&Rcx) -> bool,
-        Pos: 'static + Into<ViewHandle>,
+        Pos: 'static + Into<ViewRef>,
         PosFn: Send + Sync + 'static + Fn() -> Pos,
-        Neg: 'static + Into<ViewHandle>,
+        Neg: 'static + Into<ViewRef>,
         NegFn: Send + Sync + 'static + Fn() -> Neg,
-    > From<Cond<Test, Pos, PosFn, Neg, NegFn>> for ViewHandle
+    > From<Cond<Test, Pos, PosFn, Neg, NegFn>> for ViewRef
 {
     fn from(value: Cond<Test, Pos, PosFn, Neg, NegFn>) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }

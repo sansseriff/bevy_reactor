@@ -3,7 +3,7 @@ use bevy::{
     hierarchy::BuildWorldChildren,
 };
 
-use crate::{node_span::NodeSpan, Cx, DespawnScopes, TrackingScope, View, ViewHandle};
+use crate::{node_span::NodeSpan, Cx, DespawnScopes, TrackingScope, View, ViewHandle, ViewRef};
 
 /// A trait that allows methods to be added to presenter function references.
 pub trait PresenterFn<F: 'static>: Sized + Send + Sync + Copy + 'static {
@@ -88,36 +88,15 @@ impl<F: 'static, P: PresenterFn<F>> View for Bind<F, P> {
         let mut entt = world.entity_mut(self.inner.unwrap());
         if let Some(handle) = entt.get_mut::<ViewHandle>() {
             // Despawn the inner view.
-            handle.clone().raze(entt.id(), world);
+            handle.0.clone().lock().unwrap().raze(entt.id(), world);
         };
         self.inner = None;
         world.despawn_owned_recursive(view_entity);
     }
 }
 
-impl<F: 'static, P: PresenterFn<F>> From<Bind<F, P>> for ViewHandle {
+impl<F: 'static, P: PresenterFn<F>> From<Bind<F, P>> for ViewRef {
     fn from(value: Bind<F, P>) -> Self {
-        ViewHandle::new(value)
+        ViewRef::new(value)
     }
 }
-
-// impl<
-//         V: View + Sync + Send + 'static,
-//         F: FnMut(&mut Cx<()>) -> V + Copy + Send + Sync + 'static,
-//     > From<F> for ViewHandle
-// {
-//     fn from(value: F) -> Self {
-//         ViewHandle::new(Bind::new(value, ()))
-//     }
-// }
-
-// impl<V: View + Send + Sync + 'static> From<fn(&mut Cx<()>) -> V> for ViewHandle {
-//     fn from(value: fn(&mut Cx<()>) -> V) -> ViewHandle {
-//         ViewHandle::new(Bind {
-//             presenter: value,
-//             props: None,
-//             inner: None,
-//             nodes: NodeSpan::Empty,
-//         })
-//     }
-// }

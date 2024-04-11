@@ -66,7 +66,7 @@ pub struct Dialog {
     pub open: Signal<bool>,
 
     /// The content of the dialog.
-    pub children: ViewHandle,
+    pub children: ViewRef,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<Callback>,
@@ -189,7 +189,7 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: ViewHandle,
+    pub children: ViewRef,
 }
 
 impl ViewTemplate for DialogHeader {
@@ -213,7 +213,7 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: ViewHandle,
+    pub children: ViewRef,
 }
 
 impl ViewTemplate for DialogBody {
@@ -239,7 +239,7 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: ViewHandle,
+    pub children: ViewRef,
 }
 
 impl ViewTemplate for DialogFooter {

@@ -67,7 +67,7 @@ fn style_scrollbar_y_thumb(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct ScrollViewProps {
     /// Views for the scrolling content
-    pub children: ViewHandle,
+    pub children: ViewRef,
     /// Style to be applied to the entire scroll view,
     pub style: StyleHandle,
     /// Style to be applied to the content region,

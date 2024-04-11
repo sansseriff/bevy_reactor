@@ -68,7 +68,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: ViewHandle,
+    pub children: ViewRef,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,

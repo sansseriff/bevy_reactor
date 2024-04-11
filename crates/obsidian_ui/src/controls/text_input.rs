@@ -42,10 +42,10 @@ pub struct TextInputProps {
     pub autofocus: bool,
 
     /// Adornments to be placed before the input field.
-    pub adornments_prefix: ViewHandle,
+    pub adornments_prefix: ViewRef,
 
     /// Adornments to be placed after the input field.
-    pub adornments_suffix: ViewHandle,
+    pub adornments_suffix: ViewRef,
 }
 
 fn style_text_input(ss: &mut StyleBuilder) {

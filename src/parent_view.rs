@@ -1,4 +1,4 @@
-use crate::{Fragment, ViewHandle};
+use crate::{Fragment, ViewRef};
 use bevy::ecs::{entity::Entity, world::World};
 use impl_trait_for_tuples::*;
 
@@ -39,7 +39,7 @@ pub trait ParentView: Sized {
     }
 
     /// Set a single child view for this element.
-    fn with_child(mut self, view: &ViewHandle) -> Self {
+    fn with_child(mut self, view: &ViewRef) -> Self {
         if !self.children().is_empty() {
             panic!("Children already set");
         }
@@ -51,7 +51,7 @@ pub trait ParentView: Sized {
     }
 
     /// Add a child views to this element.
-    fn append_child(mut self, view: &ViewHandle) -> Self {
+    fn append_child(mut self, view: &ViewRef) -> Self {
         self.children_mut().push(ChildView {
             view: view.clone(),
             entity: None,
@@ -73,53 +73,53 @@ pub trait ParentView: Sized {
 /// Used by widgets to track the entities created by their children.
 pub struct ChildView {
     /// The view handle for generating the child entity.
-    pub view: ViewHandle,
+    pub view: ViewRef,
     /// The entity id for the child entity.
     pub entity: Option<Entity>,
 }
 
-/// A tuple of [`View`]s which can be converted into a [`Vec<ViewHandle>`].
+/// A tuple of [`View`]s which can be converted into a [`Vec<ViewRef>`].
 #[doc(hidden)]
 pub trait ChildViewTuple {
     #[doc(hidden)]
-    fn get_handles(self, out: &mut Vec<ViewHandle>);
+    fn get_refs(self, out: &mut Vec<ViewRef>);
 
-    fn to_vec(self) -> Vec<ViewHandle>;
+    fn to_vec(self) -> Vec<ViewRef>;
 
-    /// Convert this tuple of views into a [`ViewHandle`] containing a [`Fragment`].
-    fn fragment(self) -> ViewHandle;
+    /// Convert this tuple of views into a [`ViewRef`] containing a [`Fragment`].
+    fn fragment(self) -> ViewRef;
 }
 
-impl<I: Into<ViewHandle>> ChildViewTuple for I {
-    fn get_handles(self, out: &mut Vec<ViewHandle>) {
+impl<I: Into<ViewRef>> ChildViewTuple for I {
+    fn get_refs(self, out: &mut Vec<ViewRef>) {
         out.push(self.into());
     }
 
-    fn to_vec(self) -> Vec<ViewHandle> {
+    fn to_vec(self) -> Vec<ViewRef> {
         let mut out = Vec::new();
-        self.get_handles(&mut out);
+        self.get_refs(&mut out);
         out
     }
 
-    fn fragment(self) -> ViewHandle {
-        ViewHandle::new(Fragment::new(self))
+    fn fragment(self) -> ViewRef {
+        ViewRef::new(Fragment::new(self))
     }
 }
 
 #[impl_for_tuples(1, 15)]
 #[tuple_types_custom_trait_bound(ChildViewTuple)]
 impl ChildViewTuple for Tuple {
-    fn get_handles(self, out: &mut Vec<ViewHandle>) {
-        for_tuples!(#( self.Tuple.get_handles(out); )*)
+    fn get_refs(self, out: &mut Vec<ViewRef>) {
+        for_tuples!(#( self.Tuple.get_refs(out); )*)
     }
 
-    fn to_vec(self) -> Vec<ViewHandle> {
+    fn to_vec(self) -> Vec<ViewRef> {
         let mut out = Vec::new();
-        self.get_handles(&mut out);
+        self.get_refs(&mut out);
         out
     }
 
-    fn fragment(self) -> ViewHandle {
-        ViewHandle::new(Fragment::new(self))
+    fn fragment(self) -> ViewRef {
+        ViewRef::new(Fragment::new(self))
     }
 }
