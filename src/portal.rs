@@ -37,7 +37,6 @@ impl View for Portal {
     }
 
     fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
-        // info!("children_changed handled");
         true
     }
 }

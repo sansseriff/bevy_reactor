@@ -301,7 +301,6 @@ where
     }
 
     fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {
-        // info!("children_changed handled");
         self.attach_children(world);
         true
     }
