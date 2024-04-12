@@ -10,7 +10,7 @@ pub struct Portal {
 }
 
 impl Portal {
-    /// Construct a new `Fragment`.
+    /// Construct a new `Portal`.
     pub fn new(view: impl Into<ViewRef>) -> Self {
         Self {
             view: view.into(),
