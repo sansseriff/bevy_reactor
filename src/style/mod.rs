@@ -70,7 +70,13 @@ pub struct ApplyStylesEffect<S: StyleTuple> {
 
 impl<S: StyleTuple> EntityEffect for ApplyStylesEffect<S> {
     // For a style builder, run the builder over the target entity.
-    fn start(&mut self, target: Entity, world: &mut World, _tracking: &mut TrackingScope) {
+    fn start(
+        &mut self,
+        _owner: Entity,
+        target: Entity,
+        world: &mut World,
+        _tracking: &mut TrackingScope,
+    ) {
         let mut target = world.entity_mut(target);
         let mut style = ui::Style::default();
         if let Some(s) = target.get::<ui::Style>() {

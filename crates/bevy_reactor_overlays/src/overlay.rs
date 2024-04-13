@@ -251,6 +251,7 @@ where
                 material: self.material.clone(),
                 underlay_material: self.underlay_material.clone(),
             },
+            view_entity,
             display,
             world,
             &mut tracking,
@@ -260,12 +261,13 @@ where
                 mesh: display,
                 transform: self.transform,
             },
+            view_entity,
             display,
             world,
             &mut tracking,
         );
         for effect in self.effects.iter_mut() {
-            effect.start(display, world, &mut tracking);
+            effect.start(view_entity, display, world, &mut tracking);
         }
         world.entity_mut(view_entity).insert(tracking);
 

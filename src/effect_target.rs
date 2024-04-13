@@ -1,6 +1,9 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::{bundle::Bundle, entity::Entity, world::World};
+use bevy::{
+    ecs::{bundle::Bundle, entity::Entity, world::World},
+    hierarchy::BuildWorldChildren,
+};
 
 use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle, ReactionTarget};
 
@@ -13,7 +16,14 @@ pub trait EntityEffect: Sync + Send {
     ///     will be deleted when the owner is deleted.
     /// - `display`: The display entity that will be modified.
     /// - `world`: The Bevy world.
-    fn start(&mut self, display: Entity, world: &mut World, tracking: &mut TrackingScope);
+    /// - `tracking`: Tracking scope attached to `owner`.
+    fn start(
+        &mut self,
+        owner: Entity,
+        display: Entity,
+        world: &mut World,
+        tracking: &mut TrackingScope,
+    );
 }
 
 /// An object which can have effects applied to it.
@@ -34,6 +44,7 @@ where
     fn start_reaction<R: Reaction + Send + Sync + 'static>(
         &mut self,
         reaction: R,
+        owner: Entity,
         target: Entity,
         world: &mut World,
         parent_scope: &mut TrackingScope,
@@ -49,6 +60,7 @@ where
         // Store the reaction in a handle and add it to the world.
         let reaction_id = world
             .spawn((ReactionHandle(reaction_arc.clone()), ReactionTarget(target)))
+            .set_parent(owner)
             .id();
 
         // Call `react` the first time, update the scope with initial deps.
@@ -106,7 +118,13 @@ pub struct InsertBundleEffect<B: Bundle> {
 
 impl<B: Bundle> EntityEffect for InsertBundleEffect<B> {
     // For a static bundle, we can just insert it once.
-    fn start(&mut self, target: Entity, world: &mut World, _tracking: &mut TrackingScope) {
+    fn start(
+        &mut self,
+        _owner: Entity,
+        target: Entity,
+        world: &mut World,
+        _tracking: &mut TrackingScope,
+    ) {
         world.entity_mut(target).insert(self.bundle.take().unwrap());
     }
 }
@@ -126,7 +144,13 @@ impl<R> RunReactionEffect<R> {
 
 impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> {
     // Start a reaction which updates the bundle.
-    fn start(&mut self, target: Entity, world: &mut World, parent_scope: &mut TrackingScope) {
+    fn start(
+        &mut self,
+        owner: Entity,
+        target: Entity,
+        world: &mut World,
+        parent_scope: &mut TrackingScope,
+    ) {
         // Create a tracking scope for the reaction.
         let mut scope = TrackingScope::new(world.change_tick());
 
@@ -140,6 +164,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
                 ReactionHandle(self.reaction.clone()),
                 ReactionTarget(target),
             ))
+            .set_parent(owner)
             .id();
 
         // Call `react` the first time, update the scope with initial deps.

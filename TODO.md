@@ -4,7 +4,6 @@
 - Tracking scope cleanups.
 - Scrollbar
 - Scroll view
-- Scoped values
 - Build a router that uses Bevy states.
 - Change tab handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
@@ -16,10 +15,18 @@
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Text Input
+
   - drag to select (requires text measurement)
   - correct rendering of selection rects and cursor
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
+
+- Scoped values:
+  - In order to make this efficient, we need some way to represent a map as components,
+    such that we can do change detection on a single key/value pair rather than the whole map.
+  - Cx will need to add the owner entity as a property.
+  - Every owner entity will need to be parented (most are already).
+  - This will let us start the search at the current Cx and walk up the tree of ancestors.
 
 # StyleBuilder
 

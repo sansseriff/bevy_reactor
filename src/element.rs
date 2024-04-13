@@ -137,7 +137,7 @@ impl<B: Bundle + Default> View for Element<B> {
         if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.change_tick());
             for effect in self.effects.iter_mut() {
-                effect.start(display, world, &mut tracking);
+                effect.start(view_entity, display, world, &mut tracking);
             }
             world.entity_mut(view_entity).insert(tracking);
         }

@@ -149,7 +149,7 @@ impl View for Compositor {
         if !self.effects.is_empty() {
             let mut tracking = TrackingScope::new(world.change_tick());
             for effect in self.effects.iter_mut() {
-                effect.start(image_entity, world, &mut tracking);
+                effect.start(view_entity, image_entity, world, &mut tracking);
             }
             world.entity_mut(view_entity).insert(tracking);
         }
