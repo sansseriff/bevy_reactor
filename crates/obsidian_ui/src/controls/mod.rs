@@ -7,6 +7,7 @@ mod slider;
 mod splitter;
 mod swatch;
 mod text_input;
+mod tool_palette;
 
 pub use button::*;
 pub use checkbox::*;
@@ -17,3 +18,4 @@ pub use slider::*;
 pub use splitter::*;
 pub use swatch::*;
 pub use text_input::*;
+pub use tool_palette::*;

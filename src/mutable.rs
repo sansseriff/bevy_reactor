@@ -171,7 +171,8 @@ mod tests {
     fn test_mutable_copy() {
         let mut world = World::default();
         let mut scope = TrackingScope::new(world.change_tick());
-        let mut cx = Cx::new(&(), &mut world, &mut scope);
+        let owner = world.spawn_empty().id();
+        let mut cx = Cx::new(&(), &mut world, owner, &mut scope);
 
         let mutable = cx.create_mutable::<i32>(0);
         let reader = mutable.signal();
@@ -192,7 +193,7 @@ mod tests {
         world.flush_commands();
 
         // Signals should have changed
-        let cx = Cx::new(&(), &mut world, &mut scope);
+        let cx = Cx::new(&(), &mut world, owner, &mut scope);
         assert_eq!(reader.get(&cx), 1);
         assert_eq!(reader2.get(&cx), 0);
     }
@@ -201,7 +202,8 @@ mod tests {
     fn test_mutable_clone() {
         let mut world = World::default();
         let mut scope = TrackingScope::new(world.change_tick());
-        let mut cx = Cx::new(&(), &mut world, &mut scope);
+        let owner = world.spawn_empty().id();
+        let mut cx = Cx::new(&(), &mut world, owner, &mut scope);
 
         let mutable = cx.create_mutable("Hello".to_string());
         let reader = mutable.signal();
@@ -222,7 +224,7 @@ mod tests {
         world.flush_commands();
 
         // Signals should have changed
-        let cx = Cx::new(&(), &mut world, &mut scope);
+        let cx = Cx::new(&(), &mut world, owner, &mut scope);
         assert_eq!(reader.get_clone(&cx), "Goodbye".to_string());
         assert_eq!(reader2.get(&cx), 0);
     }

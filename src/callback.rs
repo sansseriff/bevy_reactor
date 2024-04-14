@@ -1,6 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-use crate::{Cx, TrackingScope};
+use crate::Cx;
 
 pub(crate) trait CallbackFnRef<P> {
     fn call(&self, cx: &mut Cx<P>);
@@ -72,37 +72,37 @@ impl<'w, P: Send + Sync + 'static> CallDeferred<'w, P> {
     }
 }
 
-#[allow(dead_code)] // For now
-/// System that runs callbacks from an event listener.
-pub fn run_deferred_callbacks<P: 'static + Send + Sync>(world: &mut World) {
-    let tick = world.change_tick();
-    let mut events = world.get_resource_mut::<Events<DeferredCall<P>>>().unwrap();
-    let events = events.drain().collect::<Vec<_>>();
-    let mut tracking = TrackingScope::new(tick);
-    for event in events {
-        let mut callback_entity = world.entity_mut(event.receiver);
-        if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnCell<P>>() {
-            let mut callback_fn = callback_cmp.inner.take();
-            let callback_box = callback_fn.as_ref().expect("Callback is not present");
-            let mut cx = Cx::new(event.props, world, &mut tracking);
-            callback_box.call(&mut cx);
-            let mut callback_entity = world.entity_mut(event.receiver);
-            callback_entity
-                .get_mut::<CallbackFnCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
-            let mut callback_fn = callback_cmp.inner.take();
-            let callback_box = callback_fn.as_mut().expect("Callback is not present");
-            let mut cx = Cx::new(event.props, world, &mut tracking);
-            callback_box.call(&mut cx);
-            let mut callback_entity = world.entity_mut(event.receiver);
-            callback_entity
-                .get_mut::<CallbackFnMutCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else {
-            warn!("No callback found for {:?}", event.receiver);
-        }
-    }
-}
+// #[allow(dead_code)] // For now
+// /// System that runs callbacks from an event listener.
+// pub fn run_deferred_callbacks<P: 'static + Send + Sync>(world: &mut World) {
+//     let tick = world.change_tick();
+//     let mut events = world.get_resource_mut::<Events<DeferredCall<P>>>().unwrap();
+//     let events = events.drain().collect::<Vec<_>>();
+//     let mut tracking = TrackingScope::new(tick);
+//     for event in events {
+//         let mut callback_entity = world.entity_mut(event.receiver);
+//         if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnCell<P>>() {
+//             let mut callback_fn = callback_cmp.inner.take();
+//             let callback_box = callback_fn.as_ref().expect("Callback is not present");
+//             let mut cx = Cx::new(event.props, world, &mut tracking);
+//             callback_box.call(&mut cx);
+//             let mut callback_entity = world.entity_mut(event.receiver);
+//             callback_entity
+//                 .get_mut::<CallbackFnCell<P>>()
+//                 .unwrap()
+//                 .inner = callback_fn.take();
+//         } else if let Some(mut callback_cmp) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
+//             let mut callback_fn = callback_cmp.inner.take();
+//             let callback_box = callback_fn.as_mut().expect("Callback is not present");
+//             let mut cx = Cx::new(event.props, world, &mut tracking);
+//             callback_box.call(&mut cx);
+//             let mut callback_entity = world.entity_mut(event.receiver);
+//             callback_entity
+//                 .get_mut::<CallbackFnMutCell<P>>()
+//                 .unwrap()
+//                 .inner = callback_fn.take();
+//         } else {
+//             warn!("No callback found for {:?}", event.receiver);
+//         }
+//     }
+// }

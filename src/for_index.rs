@@ -83,7 +83,7 @@ impl<
         world: &mut World,
         tracking: &mut crate::TrackingScope,
     ) {
-        let iter = (self.item_fn)(&Rcx::new(world, tracking));
+        let iter = (self.item_fn)(&Rcx::new(world, view_entity, tracking));
         let mut prev_len = self.items.len();
         let mut changed = false;
 

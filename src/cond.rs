@@ -87,7 +87,7 @@ impl<
     }
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let re = Rcx::new(world, tracking);
+        let re = Rcx::new(world, view_entity, tracking);
         let cond = (self.test)(&re);
         if cond {
             match self.state {

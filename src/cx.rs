@@ -39,7 +39,7 @@ pub trait RunContextWrite: RunContextRead {
         let world = self.world_mut();
         let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
-        let mut cx = Cx::new(props, world, &mut tracking);
+        let mut cx = Cx::new(props, world, callback.id, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
         if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
             let mut callback_fn = cell.inner.take();
@@ -74,12 +74,20 @@ pub trait RunContextSetup<'p> {
     /// Add an owned entity to this tracking scope.
     fn add_owned(&self, mutable: Entity);
 
+    /// Entity that owns this context.
+    fn owner(&self) -> Entity;
+
     /// Create a new [`Mutable`] in this context.
     fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
     where
         T: Send + Sync + 'static,
     {
-        let cell = self.world_mut().spawn(MutableCell::<T>(init)).id();
+        let owner = self.owner();
+        let cell = self
+            .world_mut()
+            .spawn(MutableCell::<T>(init))
+            .set_parent(owner)
+            .id();
         let component = self.world_mut().init_component::<MutableCell<T>>();
         self.add_owned(cell);
         Mutable {
@@ -98,11 +106,13 @@ pub trait RunContextSetup<'p> {
         &mut self,
         callback: F,
     ) -> Callback<P> {
+        let owner = self.owner();
         let callback = self
             .world_mut()
             .spawn(CallbackFnCell::<P> {
                 inner: Some(Box::new(callback)),
             })
+            .set_parent(owner)
             .id();
         self.add_owned(callback);
         Callback {
@@ -120,11 +130,13 @@ pub trait RunContextSetup<'p> {
     where
         F: Send + Sync + 'static,
     {
+        let owner = self.owner();
         let callback = self
             .world_mut()
             .spawn(CallbackFnMutCell {
                 inner: Some(Box::new(callback)),
             })
+            .set_parent(owner)
             .id();
         self.add_owned(callback);
         Callback {
@@ -144,9 +156,11 @@ pub trait RunContextSetup<'p> {
         &mut self,
         compute: F,
     ) -> Signal<R> {
+        let owner = self.owner();
         let derived = self
             .world_mut()
             .spawn(DerivedCell::<R>(Arc::new(compute)))
+            .set_parent(owner)
             .id();
         self.add_owned(derived);
         Signal::Derived(Derived {
@@ -189,15 +203,16 @@ pub trait RunContextSetup<'p> {
     /// * `effect` - The function that computes the output. This will be called with a single
     ///    parameter, which is a [`Cx`] object.
     fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx<()>)>(&mut self, effect: F) {
+        let owner = self.owner();
         let ticks = self.world_mut().change_tick();
         let action = Arc::new(Mutex::new(effect));
         let mut scope = TrackingScope::new(ticks);
-        action.lock().unwrap()(&mut Cx::new((), self.world_mut(), &mut scope));
-        let entity = self
-            .world_mut()
-            .spawn((scope, ReactionHandle(action.clone())))
-            .id();
+        let entity = self.world_mut().spawn_empty().set_parent(owner).id();
         self.add_owned(entity);
+        action.lock().unwrap()(&mut Cx::new((), self.world_mut(), entity, &mut scope));
+        self.world_mut()
+            .entity_mut(entity)
+            .insert((scope, ReactionHandle(action.clone())));
     }
 
     // /// Register a cleanup function for the current tracking scope. This will be called when
@@ -212,8 +227,8 @@ pub trait RunContextSetup<'p> {
 }
 
 impl<F: Send + Sync + 'static + FnMut(&mut Cx<()>)> Reaction for F {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let mut cx = Cx::new((), world, tracking);
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let mut cx = Cx::new((), world, owner, tracking);
         (self)(&mut cx);
     }
 }
@@ -228,15 +243,24 @@ pub struct Cx<'p, 'w, Props = ()> {
     /// Bevy World
     world: &'w mut World,
 
+    /// The entity that owns the tracking scope (or will own it).
+    owner: Entity,
+
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
 
 impl<'p, 'w, Props> Cx<'p, 'w, Props> {
-    pub(crate) fn new(props: Props, world: &'w mut World, tracking: &'p mut TrackingScope) -> Self {
+    pub(crate) fn new(
+        props: Props,
+        world: &'w mut World,
+        owner: Entity,
+        tracking: &'p mut TrackingScope,
+    ) -> Self {
         Self {
             props,
             world,
+            owner,
             tracking: RefCell::new(tracking),
         }
     }
@@ -277,6 +301,23 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
         }
     }
 
+    /// Return a reference to the Component `C` on the owner entity of the current
+    /// context, or one of it's ancestors. This searches up the entity tree until it finds
+    /// a component of the given type.
+    pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
+        let mut entity = self.owner;
+        loop {
+            let ec = self.use_component(entity);
+            if ec.is_some() {
+                return ec;
+            }
+            match self.world.entity(entity).get::<Parent>() {
+                Some(parent) => entity = **parent,
+                _ => return None,
+            }
+        }
+    }
+
     // /// Return a reference to the Component `C` on the given entity. This version does not
     // /// add the component to the tracking scope, and is intended for components that update
     // /// frequently.
@@ -287,74 +328,12 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     //     }
     // }
 
-    // /// Return a reference to the Component `C` on the entity that contains the current
-    // /// presenter invocation.
-    // pub fn use_view_component<C: Component>(&self) -> Option<&C> {
-    //     self.add_tracked_component::<C>(self.bc.entity);
-    //     self.bc.world.entity(self.bc.entity).get::<C>()
-    // }
-
-    // /// Return a reference to the entity that holds the current presenter invocation.
-    // pub fn use_view_entity(&self) -> EntityRef<'_> {
-    //     self.bc.world.entity(self.bc.entity)
-    // }
-
-    // /// Return a mutable reference to the entity that holds the current presenter invocation.
-    // pub fn use_view_entity_mut(&mut self) -> EntityWorldMut<'_> {
-    //     self.bc.world.entity_mut(self.bc.entity)
-    // }
-
-    // /// Create a scoped value. This can be used to pass data to child presenters.
-    // /// The value is accessible by all child presenters.
-    // pub fn define_scoped_value<T: Clone + Send + Sync + PartialEq + 'static>(
-    //     &mut self,
-    //     key: ScopedValueKey<T>,
-    //     value: T,
-    // ) {
-    //     let mut ec = self.bc.world.entity_mut(self.bc.entity);
-    //     match ec.get_mut::<ScopedValueMap>() {
-    //         Some(mut ctx) => {
-    //             if let Some(v) = ctx.0.get(&key.id()) {
-    //                 // Don't update if value hasn't changed
-    //                 if v.downcast_ref::<T>() == Some(&value) {
-    //                     return;
-    //                 }
-    //             }
-    //             ctx.0.insert(key.id(), Box::new(value));
-    //         }
-    //         None => {
-    //             let mut map = ScopedValueMap::default();
-    //             map.0.insert(key.id(), Box::new(value));
-    //             ec.insert(map);
-    //         }
-    //     }
-    // }
-
-    // /// Retrieve the value of a context variable.
-    // pub fn get_scoped_value<T: Clone + Send + Sync + 'static>(
-    //     &self,
-    //     key: ScopedValueKey<T>,
-    // ) -> Option<T> {
-    //     let mut entity = self.bc.entity;
-    //     loop {
-    //         let ec = self.bc.world.entity(entity);
-    //         if let Some(ctx) = ec.get::<ScopedValueMap>() {
-    //             if let Some(val) = ctx.0.get(&key.id()) {
-    //                 let cid = self
-    //                     .bc
-    //                     .world
-    //                     .component_id::<ScopedValueMap>()
-    //                     .expect("ScopedValueMap component type is not registered");
-    //                 self.tracking.borrow_mut().components.insert((entity, cid));
-    //                 return val.downcast_ref::<T>().cloned();
-    //             }
-    //         }
-    //         match ec.get::<Parent>() {
-    //             Some(parent) => entity = **parent,
-    //             _ => return None,
-    //         }
-    //     }
-    // }
+    /// Insert a component on the owner entity of the current context. This component can
+    /// be accessed by this context any any child contexts via [`use_inherited_component`].
+    pub fn insert(&mut self, component: impl Component) {
+        let owner = self.owner;
+        self.world_mut().entity_mut(owner).insert(component);
+    }
 
     // fn add_tracked_component<C: Component>(&self, entity: Entity) {
     //     let cid = self
@@ -475,6 +454,10 @@ impl<'p, 'w, Props> RunContextSetup<'p> for Cx<'p, 'w, Props> {
         self.world
     }
 
+    fn owner(&self) -> Entity {
+        self.owner
+    }
+
     fn add_owned(&self, entity: Entity) {
         self.tracking.borrow_mut().add_owned(entity);
     }
@@ -487,15 +470,19 @@ pub struct Rcx<'p, 'w> {
     /// Bevy World
     pub(crate) world: &'w World,
 
+    /// The entity that owns the tracking scope (or will own it).
+    pub(crate) owner: Entity,
+
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
 
 impl<'p, 'w> Rcx<'p, 'w> {
     /// Create a new read-only reactive context.
-    pub fn new(world: &'w World, tracking: &'p mut TrackingScope) -> Self {
+    pub fn new(world: &'w World, owner: Entity, tracking: &'p mut TrackingScope) -> Self {
         Self {
             world,
+            owner,
             tracking: RefCell::new(tracking),
         }
     }
@@ -503,6 +490,23 @@ impl<'p, 'w> Rcx<'p, 'w> {
     /// Access to immutable world from reactive context.
     pub fn world(&self) -> &World {
         self.world
+    }
+
+    /// Return a reference to the Component `C` on the owner entity of the current
+    /// context, or one of it's ancestors. This searches up the entity tree until it finds
+    /// a component of the given type.
+    pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
+        let mut entity = self.owner;
+        loop {
+            let ec = self.use_component(entity);
+            if ec.is_some() {
+                return ec;
+            }
+            match self.world.entity(entity).get::<Parent>() {
+                Some(parent) => entity = **parent,
+                _ => return None,
+            }
+        }
     }
 }
 
@@ -680,7 +684,7 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, scope);
+                let mut cx = Rcx::new(self, derived, scope);
                 derived_fn.call(&mut cx)
             }
             _ => panic!("No derived found for {:?}", derived),
@@ -695,7 +699,7 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, scope);
+                let mut cx = Rcx::new(self, derived, scope);
                 derived_fn.call(&mut cx).clone()
             }
             _ => panic!("No derived found for {:?}", derived),
@@ -715,7 +719,7 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, scope);
+                let mut cx = Rcx::new(self, derived, scope);
                 f(&derived_fn.call(&mut cx))
             }
             _ => panic!("No derived found for {:?}", derived),

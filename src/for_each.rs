@@ -232,7 +232,7 @@ impl<
     }
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let iter = (self.item_fn)(&Rcx::new(world, tracking));
+        let iter = (self.item_fn)(&Rcx::new(world, view_entity, tracking));
         let hint = iter.size_hint().0;
         let items: Vec<Item> = iter.collect();
         let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(hint);

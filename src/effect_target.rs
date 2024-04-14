@@ -63,15 +63,15 @@ where
             .set_parent(owner)
             .id();
 
+        // Add the reaction id to the parent scope so that it can be despawned later.
+        parent_scope.add_owned(reaction_id);
+
         // Call `react` the first time, update the scope with initial deps.
         // Note that we need to insert the ReactionTarget first!
         reaction.react(reaction_id, world, &mut scope);
 
         // Store the scope in the reaction entity.
         world.entity_mut(reaction_id).insert(scope);
-
-        // Add the reaction id to the parent scope so that it can be despawned later.
-        parent_scope.add_owned(reaction_id);
     }
 
     /// Create a reactive effect which is attached to the element.
@@ -167,15 +167,15 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
             .set_parent(owner)
             .id();
 
+        // Add the reaction id to the parent scope so that it can be despawned later.
+        parent_scope.add_owned(reaction_id);
+
         // Call `react` the first time, update the scope with initial deps.
         // Note that we need to insert the ReactionTarget first!
         reaction.react(reaction_id, world, &mut scope);
 
         // Store the scope in the reaction entity.
         world.entity_mut(reaction_id).insert(scope);
-
-        // Add the reaction id to the parent scope so that it can be despawned later.
-        parent_scope.add_owned(reaction_id);
     }
 }
 
@@ -194,7 +194,7 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> ComputedBundleReaction<B,
 impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for ComputedBundleReaction<B, F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        let mut re = Rcx::new(world, tracking);
+        let mut re = Rcx::new(world, owner, tracking);
         let b = (self.factory)(&mut re);
         let mut entt = world.entity_mut(target);
         entt.insert(b);
@@ -277,7 +277,7 @@ impl<F: FnMut(&mut Cx, Entity)> UpdateReaction<F> {
 impl<F: FnMut(&mut Cx, Entity)> Reaction for UpdateReaction<F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        let mut cx = Cx::new((), world, tracking);
+        let mut cx = Cx::new((), world, owner, tracking);
         (self.effect)(&mut cx, target);
     }
 }

@@ -17,10 +17,11 @@ use obsidian_ui::{
     controls::{
         Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ScrollView,
         ScrollViewProps, Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps,
+        ToolButton, ToolPalette,
     },
     focus::TabGroup,
     size::Size,
-    typography, viewport, ObsidianUiPlugin,
+    typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 use transform_overlay::TransformOverlay;
 
@@ -341,6 +342,42 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         ..default()
                     }),
                     Element::<NodeBundle>::new().with_styles(style_color_edit),
+                    ToolPalette {
+                        size: Size::Xl,
+                        columns: 3,
+                        children: (
+                            ToolButton {
+                                children: "Tool 1".into(),
+                                corners: RoundedCorners::TopLeft,
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Tool 2".into(),
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Tool 3".into(),
+                                corners: RoundedCorners::TopRight,
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Tool 4".into(),
+                                corners: RoundedCorners::BottomLeft,
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Tool 5".into(),
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Tool 6".into(),
+                                corners: RoundedCorners::BottomRight,
+                                ..default()
+                            },
+                        )
+                            .fragment(),
+                        ..default()
+                    },
                     ScrollView::new(ScrollViewProps {
                         children: "Hello".into(),
                         style: StyleHandle::new(style_scroll_area),

@@ -23,9 +23,7 @@ pub struct TrackingScope {
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
     tick: Tick,
-    // contexts
-    // debug_name
-    // cleanups
+    // TODO: cleanups
 }
 
 impl TrackingScope {

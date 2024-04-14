@@ -114,7 +114,7 @@ impl View for Switch {
     }
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let re = Rcx::new(world, tracking);
+        let re = Rcx::new(world, view_entity, tracking);
         if let Some((index, case)) = self.cases.iter().enumerate().find(|(_, c)| c.test(&re)) {
             if index != self.state_index {
                 if let Some((ref mut state, entity)) = self.state {

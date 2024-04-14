@@ -279,9 +279,9 @@ where
         self.attach_children(world);
     }
 
-    fn react(&mut self, _view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
+    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         // Rebuild the overlay mesh.
-        let re = Rcx::new(world, tracking);
+        let re = Rcx::new(world, view_entity, tracking);
         let mut builder = SB::default();
         (self.draw)(&re, &mut builder);
         let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
@@ -326,8 +326,8 @@ pub struct ChangeColorReaction {
 }
 
 impl Reaction for ChangeColorReaction {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let re = Rcx::new(world, tracking);
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let re = Rcx::new(world, owner, tracking);
         let mut color = self.color.get(&re);
 
         let mut materials = world.get_resource_mut::<Assets<OverlayMaterial>>().unwrap();
@@ -351,8 +351,8 @@ pub struct ChangeTransformReaction {
 }
 
 impl Reaction for ChangeTransformReaction {
-    fn react(&mut self, _owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let re = Rcx::new(world, tracking);
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let re = Rcx::new(world, owner, tracking);
         let next_transform = self.transform.get(&re);
         let mut entt = world.entity_mut(self.mesh);
         let mut transform = entt.get_mut::<Transform>().unwrap();
