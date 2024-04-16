@@ -19,9 +19,6 @@ pub trait Reaction {
     /// - `world`: The Bevy world.
     /// - `tracking`: The tracking scope for the reaction.
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope);
-
-    /// Release any resources used by the reaction.
-    fn cleanup(&mut self, _owner: Entity, _world: &mut World) {}
 }
 
 /// A reference to a reaction.

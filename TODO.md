@@ -1,7 +1,5 @@
 # TODO
 
-- Reaction cleanups
-- Tracking scope cleanups.
 - Scrollbar
 - Scroll view
 - Build a router that uses Bevy states.
