@@ -214,16 +214,6 @@ pub trait RunContextSetup<'p> {
             .entity_mut(entity)
             .insert((scope, ReactionHandle(action.clone())));
     }
-
-    // /// Register a cleanup function for the current tracking scope. This will be called when
-    // /// the scope is dropped, or (if it's an effect) just before the effect is re-run.
-    // ///
-    // /// Arguments:
-    // /// * `cleanup` - The function that performs the cleanup.
-    // fn on_cleanup<F: Send + Sync + 'static + FnOnce(&mut Cx<()>)>(&mut self, cleanup: F) {
-    //     let cleanup_action = Arc::new(Mutex::new(cleanup));
-    //     self.add_cleanup(cleanup_action);
-    // }
 }
 
 impl<F: Send + Sync + 'static + FnMut(&mut Cx<()>)> Reaction for F {
@@ -343,6 +333,12 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     //         .expect("Unregistered component type");
     //     self.tracking.borrow_mut().components.insert((entity, cid));
     // }
+
+    /// Add a cleanup function which is run once before the next reaction, or when the owner
+    /// entity for this context is despawned.
+    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + Send + Sync + 'static) {
+        self.tracking.borrow_mut().add_cleanup(cleanup);
+    }
 }
 
 impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
@@ -507,6 +503,12 @@ impl<'p, 'w> Rcx<'p, 'w> {
                 _ => return None,
             }
         }
+    }
+
+    /// Add a cleanup function which is run once before the next reaction, or when the owner
+    /// entity for this context is despawned.
+    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + Send + Sync + 'static) {
+        self.tracking.borrow_mut().add_cleanup(cleanup);
     }
 }
 

@@ -23,7 +23,10 @@ pub struct TrackingScope {
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
     tick: Tick,
-    // TODO: cleanups
+
+    /// List of cleanup functions to call when the scope is dropped.
+    #[allow(clippy::type_complexity)]
+    cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
 }
 
 impl TrackingScope {
@@ -34,11 +37,17 @@ impl TrackingScope {
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
             tick,
+            cleanups: Vec::new(),
         }
     }
 
     pub(crate) fn add_owned(&mut self, owned: Entity) {
         self.owned.push(owned);
+    }
+
+    /// Add a cleanup function which will be run once before the next reaction.
+    pub(crate) fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
+        self.cleanups.push(Box::new(cleanup));
     }
 
     /// Convenience method for adding a resource dependency.
@@ -97,6 +106,7 @@ impl TrackingScope {
     pub(crate) fn take_deps(&mut self, other: &mut Self) {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
+        self.cleanups = std::mem::take(&mut other.cleanups);
     }
 }
 
@@ -114,8 +124,14 @@ impl DespawnScopes for World {
         let Some(mut scope) = entt.get_mut::<TrackingScope>() else {
             return;
         };
+        // Run any cleanups
+        let mut cleanups = std::mem::take(&mut scope.cleanups);
+        // Recursively despawn owned objects
         let owned_list = std::mem::take(&mut scope.owned);
         entt.despawn();
+        for cleanup_fn in cleanups.drain(..) {
+            cleanup_fn(self);
+        }
         for owned in owned_list {
             self.despawn_owned_recursive(owned);
         }
@@ -134,6 +150,16 @@ pub fn run_reactions(world: &mut World) {
     }
 
     for scope_entity in changed.iter() {
+        // Call registered cleanup functions
+        let mut cleanups = match scopes.get_mut(world, *scope_entity) {
+            Ok((_, mut scope)) => std::mem::take(&mut scope.cleanups),
+            Err(_) => Vec::new(),
+        };
+        for cleanup_fn in cleanups.drain(..) {
+            cleanup_fn(world);
+        }
+
+        // Run the reaction
         let mut next_scope = TrackingScope::new(tick);
         if let Some(mut entt) = world.get_entity_mut(*scope_entity) {
             if let Some(view_handle) = entt.get_mut::<ViewHandle>() {
@@ -150,6 +176,8 @@ pub fn run_reactions(world: &mut World) {
                     .react(*scope_entity, world, &mut next_scope);
             }
         }
+
+        // Replace deps and cleanups in the current scope with the next scope.
         if let Ok((_, mut scope)) = scopes.get_mut(world, *scope_entity) {
             // Swap the scopes so that the next scope becomes the current scope.
             // The old scopes will be dropped at the end of the loop block.

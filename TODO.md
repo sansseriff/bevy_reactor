@@ -5,7 +5,7 @@
 - Scrollbar
 - Scroll view
 - Build a router that uses Bevy states.
-- Change tab handling to use bubbled events.
+- Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
 - Memoized Signals
@@ -21,13 +21,6 @@
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
 
-- Scoped values:
-  - In order to make this efficient, we need some way to represent a map as components,
-    such that we can do change detection on a single key/value pair rather than the whole map.
-  - Cx will need to add the owner entity as a property.
-  - Every owner entity will need to be parented (most are already).
-  - This will let us start the search at the current Cx and walk up the tree of ancestors.
-
 # StyleBuilder
 
 - cursors
@@ -39,7 +32,6 @@
 - Multi-layered nine-patch button.
 - Menu
 - Focus Outlines (improve appearance)
-- Modal animation.
 
 ## Notes on fine-grained
 
