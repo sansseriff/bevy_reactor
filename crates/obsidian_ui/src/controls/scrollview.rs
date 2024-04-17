@@ -93,7 +93,7 @@ pub struct ScrollView {
 }
 
 impl ViewTemplate for ScrollView {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         // A widget which displays a scrolling view of its children.
         let enable_x = self.scroll_enable_x;
         let enable_y = self.scroll_enable_y;
@@ -176,7 +176,7 @@ impl Scrollbar {
 }
 
 impl ViewTemplate for Scrollbar {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let vertical = self.0.vertical;
         let drag_state = self.0.drag_state;
         let id_scroll_area = self.0.id_scroll_area;

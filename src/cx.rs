@@ -77,6 +77,14 @@ pub trait RunContextSetup<'p> {
     /// Entity that owns this context.
     fn owner(&self) -> Entity;
 
+    /// Set the debug name of the owner entity.
+    fn set_owner_name(&mut self, name: &str) {
+        let owner = self.owner();
+        self.world_mut()
+            .entity_mut(owner)
+            .insert(Name::new(name.to_string()));
+    }
+
     /// Create a new [`Mutable`] in this context.
     fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
     where

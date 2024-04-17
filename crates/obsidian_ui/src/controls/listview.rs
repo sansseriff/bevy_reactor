@@ -28,7 +28,7 @@ pub struct ListView {
 }
 
 impl ViewTemplate for ListView {
-    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         ScrollView {
             children: ViewRef::new(
                 Element::<NodeBundle>::new()
@@ -39,6 +39,5 @@ impl ViewTemplate for ListView {
             scroll_enable_y: true,
             ..default()
         }
-        .into_view()
     }
 }

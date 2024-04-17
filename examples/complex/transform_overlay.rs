@@ -26,7 +26,7 @@ struct DragState {
 }
 
 impl ViewTemplate for TransformOverlay {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let target_entity = self.target;
         let target_position = cx.create_derived(move |rcx| {
             if let Some(target) = target_entity.get(rcx) {

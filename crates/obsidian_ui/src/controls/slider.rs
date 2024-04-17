@@ -125,7 +125,7 @@ impl Default for Slider {
 }
 
 impl ViewTemplate for Slider {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let slider_id = cx.create_entity();
         let hovering = cx.create_hover_signal(slider_id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

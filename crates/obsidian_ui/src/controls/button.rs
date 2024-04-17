@@ -87,7 +87,7 @@ pub struct Button {
 }
 
 impl ViewTemplate for Button {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let id = cx.create_entity();
         let variant = self.variant;
         let pressed = cx.create_mutable::<bool>(false);

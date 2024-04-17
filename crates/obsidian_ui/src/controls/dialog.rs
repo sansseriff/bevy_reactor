@@ -76,7 +76,7 @@ pub struct Dialog {
 }
 
 impl ViewTemplate for Dialog {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
         let state = cx.create_bistable_transition(self.open, TRANSITION_DURATION);
@@ -193,7 +193,7 @@ pub struct DialogHeader {
 }
 
 impl ViewTemplate for DialogHeader {
-    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
             .with_child(&self.children)
@@ -217,7 +217,7 @@ pub struct DialogBody {
 }
 
 impl ViewTemplate for DialogBody {
-    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
             .with_child(&self.children)
@@ -243,7 +243,7 @@ pub struct DialogFooter {
 }
 
 impl ViewTemplate for DialogFooter {
-    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)
             .with_child(&self.children)

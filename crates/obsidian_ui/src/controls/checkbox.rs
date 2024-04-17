@@ -76,7 +76,7 @@ pub struct Checkbox {
 
 impl ViewTemplate for Checkbox {
     /// Construct a button widget.
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let id = cx.create_entity();
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);

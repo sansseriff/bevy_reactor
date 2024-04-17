@@ -403,9 +403,9 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
 struct ReactionsTable;
 
 impl ViewTemplate for ReactionsTable {
-    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         ListView {
-            children: (For::each(
+            children: For::each(
                 |cx| {
                     let tracing = cx.use_resource::<TrackingScopeTracing>();
                     tracing.0.clone().into_iter()
@@ -422,11 +422,10 @@ impl ViewTemplate for ReactionsTable {
                         }
                     })
                 },
-            ),)
-                .fragment(),
+            )
+            .fragment(),
             style: StyleHandle::new(style_scroll_area),
         }
-        .into_view()
     }
 }
 

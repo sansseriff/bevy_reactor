@@ -175,7 +175,7 @@ impl View for EmptyView {
 /// a function.
 pub trait ViewTemplate {
     /// Create the view for the control.
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static;
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef>;
 
     /// Associate this view template with a state object that tracks the nodes created by
     /// the view. Consumes the template.
@@ -220,11 +220,11 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         assert!(self.view_entity.is_none());
         let mut tracking = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new((), world, view_entity, &mut tracking);
-        let mut view = self.template.create(&mut cx);
+        let view = self.template.create(&mut cx).into();
         let inner = world.spawn(tracking).set_parent(view_entity).id();
-        view.build(inner, world);
+        view.0.lock().unwrap().build(inner, world);
         self.nodes = view.nodes();
-        world.entity_mut(inner).insert(ViewHandle::new(view));
+        world.entity_mut(inner).insert(ViewHandle(view.0));
         self.view_entity = Some(inner);
     }
 

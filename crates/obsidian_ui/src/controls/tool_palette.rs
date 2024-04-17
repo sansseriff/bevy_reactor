@@ -42,7 +42,7 @@ pub struct ToolPalette {
 }
 
 impl ViewTemplate for ToolPalette {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let columns = self.columns;
 
         cx.insert(ToolPaletteContext { size: self.size });
@@ -100,7 +100,7 @@ impl Default for ToolButton {
 }
 
 impl ViewTemplate for ToolButton {
-    fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let context = cx.use_inherited_component::<ToolPaletteContext>().unwrap();
         Button {
             size: context.size,
@@ -118,6 +118,5 @@ impl ViewTemplate for ToolButton {
             // corners: self.corners,
             ..default()
         }
-        .into_view()
     }
 }
