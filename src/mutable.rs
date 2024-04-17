@@ -153,11 +153,13 @@ pub(crate) struct UpdateMutableCell<T> {
     pub(crate) value: T,
 }
 
-impl<T: Send + Sync + 'static> Command for UpdateMutableCell<T> {
+impl<T: Send + Sync + 'static + PartialEq> Command for UpdateMutableCell<T> {
     fn apply(self, world: &mut World) {
         let mut mutable_ent = world.entity_mut(self.mutable);
         let mut mutable = mutable_ent.get_mut::<MutableCell<T>>().unwrap();
-        mutable.0 = self.value;
+        if mutable.0 != self.value {
+            mutable.0 = self.value;
+        }
     }
 }
 

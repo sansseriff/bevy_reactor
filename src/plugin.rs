@@ -12,12 +12,10 @@ impl Plugin for ReactorPlugin {
     fn build(&self, app: &mut App) {
         app
             //.register_asset_loader(TextureAtlasLoader)
-            // .add_event::<DeferredCall<f32>>()
             .add_systems(
                 Update,
                 (
                     (
-                        // run_deferred_callbacks::<f32>,
                         build_added_view_roots,
                         run_reactions,
                         attach_child_views,

@@ -15,9 +15,8 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ScrollView,
-        ScrollViewProps, Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps,
-        ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
+        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     size::Size,
@@ -136,6 +135,7 @@ fn main() {
                 .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
         )
         .init_resource::<SelectedShape>()
+        .init_resource::<TrackingScopeTracing>()
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,
@@ -378,13 +378,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             .fragment(),
                         ..default()
                     },
-                    ScrollView::new(ScrollViewProps {
-                        children: "Hello".into(),
-                        style: StyleHandle::new(style_scroll_area),
-                        scroll_enable_x: true,
-                        scroll_enable_y: true,
-                        ..default()
-                    }),
+                    ReactionsTable,
                 )),
             Splitter {
                 direction: SplitterDirection::Vertical,
@@ -404,6 +398,36 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         .with_children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
                 ),
         ))
+}
+
+struct ReactionsTable;
+
+impl ViewTemplate for ReactionsTable {
+    fn create(&self, _cx: &mut Cx) -> impl View + Send + Sync + 'static {
+        ListView {
+            children: (For::each(
+                |cx| {
+                    let tracing = cx.use_resource::<TrackingScopeTracing>();
+                    tracing.0.clone().into_iter()
+                },
+                |ent| {
+                    text_computed({
+                        let e = *ent;
+                        move |cx| {
+                            if let Some(name) = cx.world().get::<Name>(e) {
+                                name.to_string()
+                            } else {
+                                e.to_string()
+                            }
+                        }
+                    })
+                },
+            ),)
+                .fragment(),
+            style: StyleHandle::new(style_scroll_area),
+        }
+        .into_view()
+    }
 }
 
 fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {

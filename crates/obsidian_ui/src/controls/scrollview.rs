@@ -63,21 +63,6 @@ fn style_scrollbar_y_thumb(ss: &mut StyleBuilder) {
     // .selector(":hover > &,.drag", |ss| ss.background_color("#556"));
 }
 
-/// Properties for the `ScrollView` widget.
-#[derive(Clone, Default)]
-pub struct ScrollViewProps {
-    /// Views for the scrolling content
-    pub children: ViewRef,
-    /// Style to be applied to the entire scroll view,
-    pub style: StyleHandle,
-    /// Style to be applied to the content region,
-    pub content_style: StyleHandle,
-    /// Whether to enable horizontal scrolling.
-    pub scroll_enable_x: bool,
-    /// Whether to enable vertical scrolling.
-    pub scroll_enable_y: bool,
-}
-
 #[derive(Clone, PartialEq, Default, Copy)]
 enum DragMode {
     #[default]
@@ -93,26 +78,31 @@ struct DragState {
 }
 
 /// The scroll view widget.
-pub struct ScrollView(ScrollViewProps);
-
-impl ScrollView {
-    /// Create a new `ScrollView`.
-    pub fn new(props: ScrollViewProps) -> Self {
-        Self(props)
-    }
+#[derive(Default)]
+pub struct ScrollView {
+    /// Views for the scrolling content
+    pub children: ViewRef,
+    /// Style to be applied to the entire scroll view,
+    pub style: StyleHandle,
+    /// Style to be applied to the content region,
+    pub content_style: StyleHandle,
+    /// Whether to enable horizontal scrolling.
+    pub scroll_enable_x: bool,
+    /// Whether to enable vertical scrolling.
+    pub scroll_enable_y: bool,
 }
 
 impl ViewTemplate for ScrollView {
     fn create(&self, cx: &mut Cx) -> impl View + Send + Sync + 'static {
         // A widget which displays a scrolling view of its children.
-        let enable_x = self.0.scroll_enable_x;
-        let enable_y = self.0.scroll_enable_y;
+        let enable_x = self.scroll_enable_x;
+        let enable_y = self.scroll_enable_y;
         let id_scroll_area = cx.create_entity();
         let id_scrollbar_x = cx.create_entity();
         let id_scrollbar_y = cx.create_entity();
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
         Element::<NodeBundle>::new()
-            .with_styles((style_scroll_view, self.0.style.clone()))
+            .with_styles((style_scroll_view, self.style.clone()))
             .with_children((
                 // Scroll area
                 Element::<NodeBundle>::for_entity(id_scroll_area)
@@ -124,8 +114,7 @@ impl ViewTemplate for ScrollView {
                         },
                         On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
                             move |ev, scrolling| {
-                                // TODO: stop prop
-                                // ev.stop_propagation();
+                                ev.stop_propagation();
                                 scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
                             },
                         ),
@@ -134,8 +123,8 @@ impl ViewTemplate for ScrollView {
                     .with_children(
                         Element::<NodeBundle>::new()
                             .insert(ScrollContent)
-                            .with_styles((style_scroll_content, self.0.content_style.clone()))
-                            .with_children(self.0.children.clone()),
+                            .with_styles((style_scroll_content, self.content_style.clone()))
+                            .with_children(self.children.clone()),
                     ),
                 // Horizontal scroll bar
                 Cond::new(
@@ -192,11 +181,6 @@ impl ViewTemplate for Scrollbar {
         let drag_state = self.0.drag_state;
         let id_scroll_area = self.0.id_scroll_area;
         let id_thumb = cx.create_entity();
-        // let mode = if vertical {
-        //     DragMode::DragY
-        // } else {
-        //     DragMode::DragX
-        // };
         Element::<NodeBundle>::for_entity(self.0.id_scrollbar)
             .insert(
                 (
@@ -307,7 +291,7 @@ fn handle_thumb_drag(scroll_area: &mut ScrollArea, ds: &DragState, distance: Vec
     if ds.mode == DragMode::DragY {
         let left = scroll_area.scroll_left;
         let top = if scroll_area.visible_size.y > 0. {
-            ds.offset + distance.y * scroll_area.content_size.x / scroll_area.visible_size.y
+            ds.offset + distance.y * scroll_area.content_size.y / scroll_area.visible_size.y
         } else {
             0.
         };
@@ -315,7 +299,7 @@ fn handle_thumb_drag(scroll_area: &mut ScrollArea, ds: &DragState, distance: Vec
     } else if ds.mode == DragMode::DragX {
         let top = scroll_area.scroll_top;
         let left = if scroll_area.visible_size.x > 0. {
-            ds.offset + distance.x * scroll_area.content_size.y / scroll_area.visible_size.x
+            ds.offset + distance.x * scroll_area.content_size.x / scroll_area.visible_size.x
         } else {
             0.
         };

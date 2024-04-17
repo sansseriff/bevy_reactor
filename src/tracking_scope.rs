@@ -29,6 +29,16 @@ pub struct TrackingScope {
     cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
 }
 
+/// A resource which, if inserted, displays the view entities that have reacted this frame.
+#[derive(Resource)]
+pub struct TrackingScopeTracing(pub Vec<Entity>);
+
+impl FromWorld for TrackingScopeTracing {
+    fn from_world(_world: &mut World) -> Self {
+        Self(Vec::new())
+    }
+}
+
 impl TrackingScope {
     /// Create a new tracking scope.
     pub fn new(tick: Tick) -> Self {
@@ -147,6 +157,11 @@ pub fn run_reactions(world: &mut World) {
         if scope.dependencies_changed(world, tick) {
             changed.insert(entity);
         }
+    }
+
+    // Record the changed entities for debugging purposes.
+    if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
+        tracing.0 = changed.iter().copied().collect();
     }
 
     for scope_entity in changed.iter() {

@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::{
+    core::Name,
     ecs::{bundle::Bundle, entity::Entity, world::World},
     hierarchy::BuildWorldChildren,
 };
@@ -59,7 +60,11 @@ where
 
         // Store the reaction in a handle and add it to the world.
         let reaction_id = world
-            .spawn((ReactionHandle(reaction_arc.clone()), ReactionTarget(target)))
+            .spawn((
+                ReactionHandle(reaction_arc.clone()),
+                ReactionTarget(target),
+                Name::new("EffectTarget::start_reaction"),
+            ))
             .set_parent(owner)
             .id();
 
@@ -163,6 +168,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
             .spawn((
                 ReactionHandle(self.reaction.clone()),
                 ReactionTarget(target),
+                Name::new("RunReactionEffect"),
             ))
             .set_parent(owner)
             .id();

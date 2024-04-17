@@ -2,7 +2,7 @@ use bevy::{input::mouse::MouseWheel, prelude::*, ui};
 use bevy_mod_picking::{focus::HoverMap, pointer::PointerId, prelude::EntityEvent};
 
 /// Mouse wheel entity event
-#[derive(Clone, Event, EntityEvent)]
+#[derive(Clone, Event, EntityEvent, Debug)]
 pub struct ScrollWheel {
     /// Event target
     #[target]

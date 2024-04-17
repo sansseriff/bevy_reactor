@@ -1,4 +1,5 @@
 use bevy::{
+    core::Name,
     ecs::{entity::Entity, world::World},
     hierarchy::Parent,
 };
@@ -56,9 +57,11 @@ impl<'p, 'w, Props> CreateHoverSignal for Cx<'p, 'w, Props> {
         let mut reaction = HoverReaction { target };
         let mut tracking = TrackingScope::new(self.world_mut().change_tick());
         reaction.react(mutable.cell, self.world_mut(), &mut tracking);
-        self.world_mut()
-            .entity_mut(mutable.cell)
-            .insert((ReactionHandle::new(reaction), tracking));
+        self.world_mut().entity_mut(mutable.cell).insert((
+            ReactionHandle::new(reaction),
+            tracking,
+            Name::new("Hover"),
+        ));
         mutable.signal()
     }
 }

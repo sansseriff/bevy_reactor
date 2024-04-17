@@ -78,5 +78,6 @@ pub use switch::Switch;
 pub use text::*;
 pub use tracking_scope::DespawnScopes;
 pub use tracking_scope::TrackingScope;
+pub use tracking_scope::TrackingScopeTracing;
 pub use view::*;
 // pub use style::StyleBuilderTextureAtlas;

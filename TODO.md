@@ -6,10 +6,9 @@
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
-- Memoized Signals
+- Memoized Deriveds
 - Verify Razing / Despawning doesn't leak
 - No-arg .bind().
-- Cleanup Handlers - on_cleanup();
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Text Input
@@ -25,24 +24,7 @@
 
 # Obsidian
 
-- Radio
 - DisclosureTriangle - with transition
 - Multi-layered nine-patch button.
 - Menu
 - Focus Outlines (improve appearance)
-
-## Notes on fine-grained
-
-#[derive(Component)]
-struct Memo {
-value: Box<dyn Any>,
-deps_changed: bool,
-}
-
-create_memo:
-creates a tracking entity
-sets the current context to that entity
-attaches a "mark changed" action as the closure's action
-attaches the closure as the "recompute"
-runs the code
-restores the context

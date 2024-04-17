@@ -1,3 +1,4 @@
+use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
@@ -70,7 +71,9 @@ impl<
     fn build(&mut self, view_entity: bevy::prelude::Entity, world: &mut World) {
         let mut tracking = TrackingScope::new(world.change_tick());
         self.react(view_entity, world, &mut tracking);
-        world.entity_mut(view_entity).insert(tracking);
+        world
+            .entity_mut(view_entity)
+            .insert((tracking, Name::new("ForIndex")));
         assert!(
             world.entity_mut(view_entity).get::<Parent>().is_some(),
             "ForIndex should have a parent view"

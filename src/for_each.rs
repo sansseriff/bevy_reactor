@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
@@ -224,7 +225,9 @@ impl<
     fn build(&mut self, view_entity: bevy::prelude::Entity, world: &mut World) {
         let mut tracking = TrackingScope::new(world.change_tick());
         self.react(view_entity, world, &mut tracking);
-        world.entity_mut(view_entity).insert(tracking);
+        world
+            .entity_mut(view_entity)
+            .insert((tracking, Name::new("ForEach")));
         assert!(
             world.entity_mut(view_entity).get::<Parent>().is_some(),
             "ForKeyed should have a parent view"
@@ -238,9 +241,8 @@ impl<
         let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(hint);
         let next_len = items.len();
         let prev_len = self.items.len();
-        let mut changed = false;
 
-        self.build_recursive(
+        let mut changed = self.build_recursive(
             world,
             view_entity,
             &self.items,
