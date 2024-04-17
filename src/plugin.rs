@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     attach_child_views, build_added_view_roots, compositor::update_compositor_size,
-    tracking_scope::run_reactions, update_text_styles,
+    hover::update_hover_states, tracking_scope::run_reactions, update_text_styles,
 };
 
 /// Plugin that adds the reactive UI system to the app.
@@ -22,6 +22,7 @@ impl Plugin for ReactorPlugin {
                         update_text_styles,
                     )
                         .chain(),
+                    update_hover_states,
                     update_compositor_size,
                 ),
             );

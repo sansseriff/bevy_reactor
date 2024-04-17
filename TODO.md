@@ -1,7 +1,6 @@
 # TODO
 
-- Scrollbar
-- Scroll view
+- Figure out why wheel scrolling doesn't work.
 - Build a router that uses Bevy states.
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.

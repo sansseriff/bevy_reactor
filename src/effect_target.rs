@@ -156,6 +156,14 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
         world: &mut World,
         parent_scope: &mut TrackingScope,
     ) {
+        // Compute debug name for reaction.
+        let reaction_name = world
+            .entity(owner)
+            .get::<Name>()
+            .map_or(Name::new("RunReactionEffect"), |n| {
+                Name::new(format!("{}::RunReactionEffect", n))
+            });
+
         // Create a tracking scope for the reaction.
         let mut scope = TrackingScope::new(world.change_tick());
 
@@ -168,7 +176,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
             .spawn((
                 ReactionHandle(self.reaction.clone()),
                 ReactionTarget(target),
-                Name::new("RunReactionEffect"),
+                reaction_name,
             ))
             .set_parent(owner)
             .id();
