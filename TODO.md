@@ -1,13 +1,15 @@
 # TODO
 
 - Figure out why wheel scrolling doesn't work.
+  - This needs a scrolling area with overflow content.
+- Memoized Deriveds, with custom equality hook.
 - Build a router that uses Bevy states.
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
-- Memoized Deriveds
 - Verify Razing / Despawning doesn't leak
 - No-arg .bind().
+  - Or possibly get rid of function presenters altogether.
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Text Input
@@ -27,3 +29,4 @@
 - Multi-layered nine-patch button.
 - Menu
 - Focus Outlines (improve appearance)
+- Graph editor.

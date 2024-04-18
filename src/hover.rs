@@ -10,10 +10,11 @@ pub(crate) struct Hovering(pub bool);
 // Note: previously this was implemented as a Reaction, however it was reacting every frame
 // because HoverMap is mutated every frame regardless of whether or not it changed.
 pub(crate) fn update_hover_states(
-    hover_map: Res<HoverMap>,
+    hover_map: Option<Res<HoverMap>>,
     mut hovers: Query<(Entity, &mut Hovering)>,
     parent_query: Query<&Parent>,
 ) {
+    let Some(hover_map) = hover_map else { return };
     let hover_set = hover_map.get(&PointerId::Mouse);
     for (entity, mut hoverable) in hovers.iter_mut() {
         let is_hovering = match hover_set {
