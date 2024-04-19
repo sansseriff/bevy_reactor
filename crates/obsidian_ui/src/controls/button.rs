@@ -104,7 +104,7 @@ impl ViewTemplate for Button {
             .with_styles((
                 style_button,
                 move |ss: &mut StyleBuilder| {
-                    ss.min_height(size.height());
+                    ss.min_height(size.height()).font_size(size.font_size());
                 },
                 self.style.clone(),
             ))

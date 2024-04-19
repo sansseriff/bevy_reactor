@@ -6,7 +6,7 @@ use bevy::{
         component::Component,
         entity::Entity,
         query::{Added, With},
-        world::World,
+        world::{Command, World},
     },
     hierarchy::{BuildWorldChildren, Parent},
     log::warn,
@@ -96,6 +96,30 @@ impl ViewRoot {
     pub fn despawn(&mut self, root: Entity, world: &mut World) {
         self.0.lock().unwrap().raze(root, world);
         world.entity_mut(root).despawn();
+    }
+}
+
+/// Command which can be used to despawn a view root and all of it's contents.
+pub struct DespawnViewRoot(Entity);
+
+impl DespawnViewRoot {
+    /// Construct a new [`DespawnViewRoot`] command.
+    pub fn new(entity: Entity) -> Self {
+        Self(entity)
+    }
+}
+
+impl Command for DespawnViewRoot {
+    fn apply(self, world: &mut World) {
+        let entt = world.entity_mut(self.0);
+        let Some(root) = entt.get::<ViewRoot>() else {
+            return;
+        };
+        let handle = root.0.clone();
+        let mut view = handle.lock().unwrap();
+        view.raze(self.0, world);
+        let entt = world.entity_mut(self.0);
+        entt.despawn();
     }
 }
 

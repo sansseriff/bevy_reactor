@@ -127,6 +127,19 @@ pub struct PanelWidth(f32);
 #[derive(Resource, Default)]
 pub struct SelectedShape(Option<Entity>);
 
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub enum EditorState {
+    #[default]
+    Preview,
+    Graph,
+}
+
+#[derive(Resource)]
+pub struct PreviewEntities {
+    camera: Entity,
+    overlay: Entity,
+}
+
 fn main() {
     App::new()
         .register_asset_source(
@@ -146,6 +159,7 @@ fn main() {
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
+        .insert_state(EditorState::Preview)
         .insert_resource(DebugPickingMode::Disabled)
         .insert_resource(RaycastBackendSettings {
             require_markers: true,
@@ -164,22 +178,18 @@ fn main() {
             overlays::OverlaysPlugin,
             BackdropBackend,
         ))
-        .add_systems(
-            Startup,
-            (
-                setup.pipe(setup_view_overlays),
-                setup_ui.pipe(setup_view_root),
-            ),
-        )
+        .add_systems(Startup, (setup, setup_ui.pipe(setup_view_root)))
         .add_systems(
             Update,
             (
                 close_on_esc,
-                rotate,
-                viewport::update_viewport_inset,
-                viewport::update_camera_viewport,
+                rotate.run_if(in_state(EditorState::Preview)),
+                viewport::update_viewport_inset.run_if(in_state(EditorState::Preview)),
+                viewport::update_camera_viewport.run_if(in_state(EditorState::Preview)),
             ),
         )
+        .add_systems(OnEnter(EditorState::Preview), enter_preview_mode)
+        .add_systems(OnExit(EditorState::Preview), exit_preview_mode)
         .run();
 }
 
@@ -268,6 +278,53 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     style.width = ui::Val::Px(width);
                 })
                 .with_children((
+                    ToolPalette {
+                        columns: 3,
+                        children: (
+                            ToolButton {
+                                children: "Preview".into(),
+                                corners: RoundedCorners::Left,
+                                variant: cx.create_derived(|cx| {
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Preview {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                }),
+                                on_click: Some(cx.create_callback(|cx| {
+                                    if let Some(mut mode) =
+                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                                    {
+                                        mode.set(EditorState::Preview);
+                                    }
+                                })),
+                                ..default()
+                            },
+                            ToolButton {
+                                children: "Materials".into(),
+                                corners: RoundedCorners::Right,
+                                variant: cx.create_derived(|cx| {
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Graph {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                }),
+                                on_click: Some(cx.create_callback(|cx| {
+                                    if let Some(mut mode) =
+                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                                    {
+                                        mode.set(EditorState::Graph);
+                                    }
+                                })),
+                                ..default()
+                            },
+                        )
+                            .fragment(),
+                        ..default()
+                    },
                     Element::<NodeBundle>::new()
                         .with_styles(style_button_row)
                         .with_children((
@@ -429,10 +486,10 @@ impl ViewTemplate for ReactionsTable {
     }
 }
 
-fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
-    // commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
-    commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
-}
+// fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
+//     // commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
+//     commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
+// }
 
 fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
     let id = cx.create_entity();
@@ -491,7 +548,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-) -> Entity {
+) {
     let debug_material = materials.add(StandardMaterial {
         base_color_texture: Some(images.add(uv_debug_texture())),
         ..default()
@@ -568,19 +625,6 @@ fn setup(
         material: materials.add(Color::from(palettes::css::SILVER)),
         ..default()
     });
-
-    commands
-        .spawn((
-            Camera3dBundle {
-                transform: Transform::from_xyz(0.0, 6., 12.0)
-                    .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
-                ..default()
-            },
-            viewport::ViewportCamera,
-            RaycastPickable,
-            BackdropPickable,
-        ))
-        .id()
 }
 
 fn setup_ui(mut commands: Commands) -> Entity {
@@ -596,6 +640,32 @@ fn setup_ui(mut commands: Commands) -> Entity {
             ..default()
         },))
         .id()
+}
+
+fn enter_preview_mode(mut commands: Commands) {
+    let camera = commands
+        .spawn((
+            Camera3dBundle {
+                transform: Transform::from_xyz(0.0, 6., 12.0)
+                    .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+                ..default()
+            },
+            viewport::ViewportCamera,
+            RaycastPickable,
+            BackdropPickable,
+        ))
+        .id();
+
+    let overlay = commands
+        .spawn(ViewRoot::new(transform_overlay.bind(camera)))
+        .id();
+    commands.insert_resource(PreviewEntities { camera, overlay });
+}
+
+fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
+    commands.entity(preview.camera).despawn();
+    commands.add(DespawnViewRoot::new(preview.overlay));
+    commands.remove_resource::<PreviewEntities>()
 }
 
 fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
