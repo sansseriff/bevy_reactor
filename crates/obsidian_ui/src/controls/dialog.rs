@@ -97,6 +97,7 @@ impl ViewTemplate for Dialog {
             move || {
                 Portal::new(
                     Element::<NodeBundle>::new()
+                        .named("Dialog::Overlay")
                         .with_styles(style_dialog_overlay)
                         .insert((
                             // Click on backdrop sends close signal.

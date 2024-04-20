@@ -226,6 +226,7 @@ impl ViewTemplate for Slider {
                 material.value = pos;
             })
             .with_children((Element::<NodeBundle>::new()
+                .named("Slider")
                 .with_styles(style_overlay)
                 .with_children((
                     slider_button.bind(SliderButtonProps {

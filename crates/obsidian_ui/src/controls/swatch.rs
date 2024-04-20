@@ -38,7 +38,7 @@ impl ViewTemplate for Swatch {
         let size = self.size;
 
         Element::<NodeBundle>::new()
-            .named("color_swatch")
+            .named("Swatch")
             .with_styles((
                 style_swatch,
                 move |ss: &mut StyleBuilder| {

@@ -230,6 +230,7 @@ impl ViewTemplate for GradientSlider {
         });
 
         Element::<NodeBundle>::for_entity(slider_id)
+            .named("GradientSlider")
             .with_styles((style_slider, self.style.clone()))
             .insert((
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
@@ -311,9 +312,11 @@ impl ViewTemplate for GradientSlider {
                 //         }
                 //     }),
                 Element::<NodeBundle>::new()
+                    .named("GradientSlider::Track")
                     .with_styles(style_track)
                     .with_children(
                         Element::<NodeBundle>::new()
+                            .named("GradientSlider::Thumb")
                             .with_styles(style_thumb)
                             .create_effect(move |cx, ent| {
                                 let min = min.get(cx);

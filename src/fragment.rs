@@ -55,3 +55,9 @@ impl View for Fragment {
         world.despawn_owned_recursive(view_entity);
     }
 }
+
+impl From<Fragment> for ViewRef {
+    fn from(value: Fragment) -> Self {
+        ViewRef::new(value)
+    }
+}

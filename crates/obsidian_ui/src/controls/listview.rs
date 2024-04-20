@@ -32,6 +32,7 @@ impl ViewTemplate for ListView {
         ScrollView {
             children: ViewRef::new(
                 Element::<NodeBundle>::new()
+                    .named("ListView")
                     .with_styles(style_listview_inner)
                     .with_children(self.children.clone()),
             ),

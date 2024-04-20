@@ -83,6 +83,19 @@ impl<B: Bundle + Default> Element<B> {
     /// or none.
     fn attach_children(&self, world: &mut World) {
         let flat = self.child_nodes();
+        // for node in flat.iter() {
+        //     if world.get_entity(*node).is_none() {
+        //         error!("Node {:?} not found", *node);
+        //         info!(
+        //             "While attaching to {:?}",
+        //             world.entity(self.display.unwrap()).get::<Name>()
+        //         );
+        //         let flat = self.child_nodes();
+        //         for node in flat.iter() {
+        //             error!("Node {:?} not found", *node);
+        //         }
+        //     }
+        // }
         world
             .entity_mut(self.display.unwrap())
             .replace_children(&flat);
@@ -114,7 +127,13 @@ impl<B: Bundle + Default> View for Element<B> {
     }
 
     fn build(&mut self, view_entity: Entity, world: &mut World) {
-        world.entity_mut(view_entity).insert(Name::new("Element"));
+        if self.debug_name.is_empty() {
+            world.entity_mut(view_entity).insert(Name::new("Element"));
+        } else {
+            world
+                .entity_mut(view_entity)
+                .insert(Name::new(format!("Element::{}", self.debug_name)));
+        }
 
         // Build display entity if it doesn't already exist.
         let display = match self.display {

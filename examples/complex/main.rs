@@ -15,8 +15,9 @@ use color_edit::{color_edit, ColorEditState, ColorMode};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
-        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, NodeGraph,
+        Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton,
+        ToolPalette,
     },
     focus::TabGroup,
     size::Size,
@@ -73,7 +74,7 @@ fn style_slider(ss: &mut StyleBuilder) {
     ss.align_self(ui::AlignSelf::Stretch);
 }
 
-fn style_color_edit(ss: &mut StyleBuilder) {
+fn style_column_group(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::FlexStart)
@@ -88,6 +89,10 @@ fn style_viewport(ss: &mut StyleBuilder) {
         .border_left(1)
         .border_color(Color::BLACK)
         .pointer_events(false);
+}
+
+fn style_node_graph(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.);
 }
 
 fn style_log(ss: &mut StyleBuilder) {
@@ -231,6 +236,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
     });
 
     Element::<NodeBundle>::new()
+        .named("Main")
         .with_styles((typography::text_default, style_main))
         .insert((TabGroup::default(), TargetCamera(cx.props)))
         .with_children((
@@ -271,6 +277,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                 ..default()
             },
             Element::<NodeBundle>::new()
+                .named("ControlPalette")
                 .with_styles(style_aside)
                 .create_effect(move |cx, ent| {
                     let width = panel_width.get(cx);
@@ -342,7 +349,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             },
                         )),
                     Element::<NodeBundle>::new()
-                        .with_styles(style_color_edit)
+                        .with_styles(style_column_group)
                         .with_children((
                             Checkbox {
                                 label: "Include Author Name".into(),
@@ -366,7 +373,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             },
                         )),
                     Element::<NodeBundle>::new()
-                        .with_styles(style_color_edit)
+                        .with_styles(style_column_group)
                         .with_children((
                             Slider {
                                 min: Signal::Constant(0.),
@@ -398,7 +405,6 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         })),
                         ..default()
                     }),
-                    Element::<NodeBundle>::new().with_styles(style_color_edit),
                     ToolPalette {
                         size: Size::Xl,
                         columns: 3,
@@ -446,15 +452,37 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                     panel_width.0 = value.max(200.);
                 }),
             },
-            Element::<NodeBundle>::new()
-                .with_styles(style_viewport)
-                .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
-                .with_children(
-                    Element::<NodeBundle>::new()
-                        .with_styles(style_log)
-                        .with_children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
-                ),
+            CenterPanel,
         ))
+}
+
+struct CenterPanel;
+
+impl ViewTemplate for CenterPanel {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+        Cond::new(
+            |cx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Preview,
+            || {
+                Element::<NodeBundle>::new()
+                    .named("Preview")
+                    .with_styles(style_viewport)
+                    .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
+                    .with_children(
+                        Element::<NodeBundle>::new()
+                            .named("Log")
+                            .with_styles(style_log)
+                            .with_children(
+                                Element::<NodeBundle>::new().with_styles(style_log_inner),
+                            ),
+                    )
+            },
+            || NodeGraph {
+                children: "Hello".into(),
+                style: StyleHandle::new(style_node_graph),
+                // ..default()
+            },
+        )
+    }
 }
 
 struct ReactionsTable;
@@ -485,11 +513,6 @@ impl ViewTemplate for ReactionsTable {
         }
     }
 }
-
-// fn setup_view_overlays(camera: In<Entity>, mut commands: Commands) {
-//     // commands.spawn(ViewRoot::new(overlay_views.bind(*camera)));
-//     commands.spawn(ViewRoot::new(transform_overlay.bind(*camera)));
-// }
 
 fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
     let id = cx.create_entity();

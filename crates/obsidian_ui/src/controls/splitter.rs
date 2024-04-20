@@ -57,7 +57,7 @@ impl ViewTemplate for Splitter {
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
         let current_offset = self.value;
         Element::<NodeBundle>::for_entity(id)
-            .named("v_splitter")
+            .named("Splitter")
             // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
             .with_styles(style_vsplitter)
             .insert((

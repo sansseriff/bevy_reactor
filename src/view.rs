@@ -54,33 +54,12 @@ pub trait View {
     }
 }
 
-/// A [`View`] with all the trimmings.
-pub trait SyncView: View + Send + Sync + 'static {}
-
 // This From impl is commented out because it causes many conflicts with other From impls.
 // impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
 //     fn from(view: V) -> Self {
 //         ViewHandle::new(view)
 //     }
 // }
-
-impl From<()> for ViewRef {
-    fn from(_value: ()) -> Self {
-        ViewRef::new(EmptyView)
-    }
-}
-
-impl From<&str> for ViewRef {
-    fn from(value: &str) -> Self {
-        ViewRef::new(TextStatic::new(value.to_string()))
-    }
-}
-
-impl From<String> for ViewRef {
-    fn from(value: String) -> Self {
-        ViewRef::new(TextStatic::new(value))
-    }
-}
 
 #[derive(Component)]
 /// Component which holds the top level of the view hierarchy.
@@ -165,6 +144,24 @@ impl ViewRef {
     }
 }
 
+impl From<()> for ViewRef {
+    fn from(_value: ()) -> Self {
+        ViewRef::new(EmptyView)
+    }
+}
+
+impl From<&str> for ViewRef {
+    fn from(value: &str) -> Self {
+        ViewRef::new(TextStatic::new(value.to_string()))
+    }
+}
+
+impl From<String> for ViewRef {
+    fn from(value: String) -> Self {
+        ViewRef::new(TextStatic::new(value))
+    }
+}
+
 impl Clone for ViewRef {
     fn clone(&self) -> Self {
         Self(self.0.clone())
@@ -226,9 +223,9 @@ pub struct ViewTemplateState<VF: ViewTemplate> {
 
 impl<W: ViewTemplate> ViewTemplateState<W> {
     /// Construct a new `WidgetInstance`.
-    pub fn new(widget: W) -> Self {
+    pub fn new(template: W) -> Self {
         Self {
-            template: widget,
+            template,
             view_entity: None,
             nodes: NodeSpan::Empty,
         }
@@ -261,6 +258,14 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         };
         self.view_entity = None;
         world.despawn_owned_recursive(view_entity);
+    }
+
+    fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {
+        // Update cached nodes
+        if let Some(handle) = world.entity(self.view_entity.unwrap()).get::<ViewHandle>() {
+            self.nodes = handle.0.lock().unwrap().nodes();
+        };
+        false
     }
 }
 

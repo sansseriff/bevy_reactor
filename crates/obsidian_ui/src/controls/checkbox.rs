@@ -86,7 +86,7 @@ impl ViewTemplate for Checkbox {
         let checked = self.checked;
 
         Element::<NodeBundle>::for_entity(id)
-            .named("checkbox")
+            .named("Checkbox")
             .with_styles((style_checkbox, self.style.clone()))
             .insert((
                 TabIndex(self.tab_index),
@@ -153,6 +153,7 @@ impl ViewTemplate for Checkbox {
             ))
             .with_children((
                 Element::<NodeBundle>::new()
+                    .named("Checkbox::Border")
                     .with_styles(style_checkbox_border)
                     .create_effect(move |cx, ent| {
                         let is_checked = checked.get(cx);

@@ -100,7 +100,7 @@ impl ViewTemplate for Button {
         let size = self.size;
 
         Element::<NodeBundle>::for_entity(id)
-            .named("button")
+            .named("Button")
             .with_styles((
                 style_button,
                 move |ss: &mut StyleBuilder| {
@@ -172,6 +172,7 @@ impl ViewTemplate for Button {
             .insert_if(self.autofocus, AutoFocus)
             .with_children((
                 Element::<NodeBundle>::new()
+                    .named("Button::Background")
                     .with_styles(style_button_bg)
                     .insert(corners.to_border_radius(5.0))
                     .create_effect(move |cx, ent| {

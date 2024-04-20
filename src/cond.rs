@@ -50,7 +50,6 @@ impl<
     ) -> (ViewRef, Entity) {
         let state_view = (branch)().into();
         let state_entity = ViewRef::spawn(&state_view, parent, world);
-        world.entity_mut(parent).insert(DisplayNodeChanged);
         // assert!(
         //     world.entity_mut(parent).get::<Parent>().is_some(),
         //     "Cond should have a parent view"
@@ -89,49 +88,30 @@ impl<
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, view_entity, tracking);
         let cond = (self.test)(&re);
-        if cond {
-            match self.state {
-                CondState::True(_) => {
-                    // Already true, do nothing.
-                }
-                CondState::False((ref mut false_state, entity)) => {
-                    false_state.raze(entity, world);
-                    self.state = CondState::True(self.build_branch_state::<Pos, PosFn>(
-                        &self.pos,
-                        view_entity,
-                        world,
-                    ));
-                }
-                CondState::Unset => {
-                    self.state = CondState::True(self.build_branch_state::<Pos, PosFn>(
-                        &self.pos,
-                        view_entity,
-                        world,
-                    ));
-                }
+        // possibly raze previous state
+        match self.state {
+            CondState::True(_) if cond => {
+                return;
             }
-        } else {
-            match self.state {
-                CondState::False(_) => {
-                    // Already false, do nothing.
-                }
-                CondState::True((ref mut true_state, entity)) => {
-                    true_state.raze(entity, world);
-                    self.state = CondState::False(self.build_branch_state::<Neg, NegFn>(
-                        &self.neg,
-                        view_entity,
-                        world,
-                    ));
-                }
-                CondState::Unset => {
-                    self.state = CondState::False(self.build_branch_state::<Neg, NegFn>(
-                        &self.neg,
-                        view_entity,
-                        world,
-                    ));
-                }
+            CondState::False(_) if !cond => {
+                return;
             }
+            CondState::True((ref mut true_state, entity)) => {
+                true_state.raze(entity, world);
+            }
+            CondState::False((ref mut false_state, entity)) => {
+                false_state.raze(entity, world);
+            }
+            _ => {}
         }
+
+        self.state = if cond {
+            CondState::True(self.build_branch_state(&self.pos, view_entity, world))
+        } else {
+            CondState::False(self.build_branch_state(&self.neg, view_entity, world))
+        };
+
+        world.entity_mut(view_entity).insert(DisplayNodeChanged);
     }
 
     fn raze(&mut self, view_entity: Entity, world: &mut World) {

@@ -12,6 +12,7 @@
   - Or possibly get rid of function presenters altogether.
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
+- Don't execute dialog content if dialog not open.
 - Text Input
 
   - drag to select (requires text measurement)

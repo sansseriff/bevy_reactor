@@ -102,10 +102,12 @@ impl ViewTemplate for ScrollView {
         let id_scrollbar_y = cx.create_entity();
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
         Element::<NodeBundle>::new()
+            .named("ScrollView")
             .with_styles((style_scroll_view, self.style.clone()))
             .with_children((
                 // Scroll area
                 Element::<NodeBundle>::for_entity(id_scroll_area)
+                    .named("ScrollView::ScrollArea")
                     .insert((
                         ScrollArea {
                             id_scrollbar_x: if enable_x { Some(id_scrollbar_x) } else { None },
@@ -122,6 +124,7 @@ impl ViewTemplate for ScrollView {
                     .with_styles(style_scroll_region)
                     .with_children(
                         Element::<NodeBundle>::new()
+                            .named("ScrollView::ScrollRegion")
                             .insert(ScrollContent)
                             .with_styles((style_scroll_content, self.content_style.clone()))
                             .with_children(self.children.clone()),
@@ -182,6 +185,7 @@ impl ViewTemplate for Scrollbar {
         let id_scroll_area = self.0.id_scroll_area;
         let id_thumb = cx.create_entity();
         Element::<NodeBundle>::for_entity(self.0.id_scrollbar)
+            .named("Scrollbar")
             .insert(
                 (
                     ScrollBar {
