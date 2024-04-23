@@ -39,7 +39,7 @@ fn style_overlay(ss: &mut StyleBuilder) {
 }
 
 fn style_button(ss: &mut StyleBuilder) {
-    ss.width(16)
+    ss.width(12)
         .height(ui::Val::Percent(100.))
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
@@ -50,11 +50,7 @@ fn style_button(ss: &mut StyleBuilder) {
 }
 
 fn style_button_icon(ss: &mut StyleBuilder) {
-    ss.height(16)
-        .width(16)
-        .background_color(colors::FOREGROUND)
-        .background_image("obsidian_ui://icons/chevron_left.png")
-        .pointer_events(false);
+    ss.height(16).width(12).pointer_events(false);
 }
 
 fn style_button_icon_left(ss: &mut StyleBuilder) {
@@ -72,9 +68,14 @@ fn style_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .height(ui::Val::Percent(100.))
-        .border_color(colors::DESTRUCTIVE)
+        // .border_color(colors::DESTRUCTIVE)
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
-        .font_size(16);
+        .font_size(16)
+        .padding((6, 0));
+}
+
+fn style_label_spacer(ss: &mut StyleBuilder) {
+    ss.flex_grow(1.);
 }
 
 /// Horizontal slider widget
@@ -101,6 +102,9 @@ pub struct Slider {
     /// formatter will be used.
     pub formatted_value: Option<Signal<String>>,
 
+    /// Optional label to be displayed inside the slider.
+    pub label: Option<String>,
+
     /// Style handle for slider root element.
     pub style: StyleHandle,
 
@@ -119,6 +123,7 @@ impl Default for Slider {
             disabled: Signal::Constant(false),
             formatted_value: None,
             style: StyleHandle::default(),
+            label: None,
             on_change: None,
         }
     }
@@ -240,12 +245,32 @@ impl ViewTemplate for Slider {
                     },
                     Element::<NodeBundle>::new()
                         .with_styles(style_label)
-                        .with_children(text_computed({
-                            move |cx| {
-                                let value = value.get(cx);
-                                format!("{:.*}", precision, value)
-                            }
-                        })),
+                        .with_children((
+                            Cond::new(
+                                {
+                                    let label = self.label.clone();
+                                    move |_cx| label.is_some()
+                                },
+                                {
+                                    let label = self.label.clone();
+                                    move || {
+                                        (
+                                            label.clone().unwrap(),
+                                            Element::<NodeBundle>::new()
+                                                .with_styles(style_label_spacer),
+                                        )
+                                            .fragment()
+                                    }
+                                },
+                                || (),
+                            ),
+                            text_computed({
+                                move |cx| {
+                                    let value = value.get(cx);
+                                    format!("{:.*}", precision, value)
+                                }
+                            }),
+                        )),
                     SliderButton {
                         value,
                         min,
@@ -376,8 +401,8 @@ impl ViewTemplate for SliderButton {
                             (_, true, false) => colors::U4,
                             _ => colors::TRANSPARENT,
                         };
-                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                        bg.0 = color.into();
+                        let mut bg = cx.world_mut().get_mut::<UiImage>(ent).unwrap();
+                        bg.color = color.into();
                     }),
             )
     }

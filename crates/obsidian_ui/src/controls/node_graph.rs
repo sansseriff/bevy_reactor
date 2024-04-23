@@ -88,7 +88,11 @@ fn style_node_graph_node_title(ss: &mut StyleBuilder) {
 }
 
 fn style_node_graph_node_content(ss: &mut StyleBuilder) {
-    ss.border(1)
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .align_items(ui::AlignItems::Stretch)
+        .gap(2)
+        .border(1)
         .border_color(colors::U4)
         .border(ui::UiRect {
             left: ui::Val::Px(NODE_BORDER_WIDTH),
@@ -103,7 +107,7 @@ fn style_node_graph_node_content(ss: &mut StyleBuilder) {
             bottom_right: ui::Val::Px(NODE_BORDER_RADIUS),
         })
         .background_color(colors::U2)
-        .padding((6, 2));
+        .padding((0, 6));
 }
 
 fn style_node_graph_node_shadow(ss: &mut StyleBuilder) {
@@ -222,6 +226,97 @@ impl ViewTemplate for NodeGraphNode {
                     },
                     || (),
                 ),
+            ))
+    }
+}
+
+fn style_input_connector(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Column)
+        .padding((8, 0));
+}
+
+fn style_input_terminal(ss: &mut StyleBuilder) {
+    ss.position(ui::PositionType::Absolute)
+        .left(-4)
+        .top(6)
+        .width(8)
+        .height(8)
+        .border_radius(5)
+        .background_color(colors::U4);
+}
+
+/// Depicts an input connector on a node.
+#[derive(Default)]
+pub struct InputConnector {
+    /// Color of the connector terminal, which is typically used to indicate the data-type
+    /// of the connector.
+    pub color: Srgba,
+    /// Control rendered when the input is not connected.
+    pub control: ViewRef,
+}
+
+impl ViewTemplate for InputConnector {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+        let color = self.color;
+        Element::<NodeBundle>::new()
+            .named("InputConnector")
+            .with_styles(style_input_connector)
+            .with_children((
+                Element::<NodeBundle>::new().with_styles((
+                    style_input_terminal,
+                    move |sb: &mut StyleBuilder| {
+                        sb.background_color(color);
+                    },
+                )),
+                self.control.clone(),
+            ))
+    }
+}
+
+fn style_output_connector(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .align_items(ui::AlignItems::Center)
+        .justify_content(ui::JustifyContent::FlexEnd)
+        .min_height(20)
+        .padding((8, 0));
+}
+
+fn style_output_terminal(ss: &mut StyleBuilder) {
+    ss.position(ui::PositionType::Absolute)
+        .right(-4)
+        .top(6)
+        .width(8)
+        .height(8)
+        .border_radius(5)
+        .background_color(colors::U4);
+}
+
+/// Depicts an output connector on a node.
+#[derive(Default)]
+pub struct OutputConnector {
+    /// Color of the connector terminal, which is typically used to indicate the data-type
+    /// of the connector.
+    pub color: Srgba,
+    /// The name of the output.
+    pub label: String,
+}
+
+impl ViewTemplate for OutputConnector {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+        let color = self.color;
+        Element::<NodeBundle>::new()
+            .named("OutputConnector")
+            .with_styles(style_output_connector)
+            .with_children((
+                Element::<NodeBundle>::new().with_styles((
+                    style_output_terminal,
+                    move |sb: &mut StyleBuilder| {
+                        sb.background_color(color);
+                    },
+                )),
+                self.label.clone(),
             ))
     }
 }

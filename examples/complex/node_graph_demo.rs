@@ -1,6 +1,9 @@
-use bevy::prelude::*;
+use bevy::{color::palettes, prelude::*};
 use bevy_reactor::*;
-use obsidian_ui::controls::{NodeGraph, NodeGraphNode};
+use obsidian_ui::{
+    colors,
+    controls::{InputConnector, NodeGraph, NodeGraphNode, OutputConnector, Slider},
+};
 
 #[derive(Clone, Debug, PartialEq, Component)]
 pub struct NodePosition(pub Vec2);
@@ -29,7 +32,7 @@ impl FromWorld for DemoGraphRoot {
         nodes.push(
             world
                 .spawn((
-                    NodePosition(Vec2::new(200., 200.)),
+                    NodePosition(Vec2::new(200., 220.)),
                     NodeTitle("Node 2".to_string()),
                 ))
                 .id(),
@@ -50,6 +53,10 @@ pub struct NodeGraphDemo {}
 
 fn style_node_graph(ss: &mut StyleBuilder) {
     ss.flex_grow(1.).border_left(1).border_color(Color::BLACK);
+}
+
+fn style_slider(ss: &mut StyleBuilder) {
+    ss.min_width(150.);
 }
 
 impl ViewTemplate for NodeGraphDemo {
@@ -81,7 +88,39 @@ impl ViewTemplate for NodeTemplate {
         NodeGraphNode {
             position,
             title,
-            children: "Node Content".into(),
+            children: (
+                OutputConnector {
+                    label: "RGB".to_string(),
+                    color: colors::RESOURCE,
+                },
+                InputConnector {
+                    color: colors::LIGHT,
+                    control: Slider {
+                        value: Signal::Constant(50.),
+                        min: Signal::Constant(0.),
+                        max: Signal::Constant(100.),
+                        label: Some("Base".to_string()),
+                        style: StyleHandle::new(style_slider),
+                        // on_change: todo!(),
+                        ..default()
+                    }
+                    .into(),
+                },
+                InputConnector {
+                    color: colors::LIGHT,
+                    control: Slider {
+                        value: Signal::Constant(80.),
+                        min: Signal::Constant(0.),
+                        max: Signal::Constant(100.),
+                        label: Some("Mask".to_string()),
+                        style: StyleHandle::new(style_slider),
+                        // on_change: todo!(),
+                        ..default()
+                    }
+                    .into(),
+                },
+            )
+                .fragment(),
             selected: Signal::Constant(false),
             on_drag: Some(cx.create_callback(move |cx, new_pos| {
                 let mut entt = cx.world_mut().entity_mut(id);
