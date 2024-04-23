@@ -1,4 +1,5 @@
 use bevy::{prelude::*, ui};
+use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
 use crate::{colors, materials::DotGridMaterial};
@@ -57,22 +58,6 @@ impl ViewTemplate for NodeGraph {
     }
 }
 
-/// A node within a node graph.
-#[derive(Default)]
-pub struct NodeGraphNode {
-    /// The coordinates of the node's upper-left corner.
-    pub position: Signal<Vec2>,
-    /// The title of the node.
-    pub title: Signal<String>,
-    /// Whether the node is currently selected.
-    pub selected: Signal<bool>,
-    /// The content of the node.
-    pub children: ViewRef,
-
-    /// Callback called when the title bar is dragged.
-    pub on_drag: Option<Callback<Vec2>>,
-}
-
 fn style_node_graph_node(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
@@ -128,7 +113,8 @@ fn style_node_graph_node_shadow(ss: &mut StyleBuilder) {
         .right(-3)
         .bottom(-3)
         .border_radius(NODE_BORDER_RADIUS + 3.)
-        .background_color(Srgba::new(0., 0., 0., 0.7));
+        .background_color(Srgba::new(0., 0., 0., 0.7))
+        .pointer_events(false);
 }
 
 fn style_node_graph_node_outline(ss: &mut StyleBuilder) {
@@ -139,7 +125,30 @@ fn style_node_graph_node_outline(ss: &mut StyleBuilder) {
         .bottom(-3)
         .border(2)
         .border_color(colors::FOCUS)
-        .border_radius(NODE_BORDER_RADIUS + 3.);
+        .border_radius(NODE_BORDER_RADIUS + 3.)
+        .pointer_events(false);
+}
+
+#[derive(Clone, PartialEq, Default, Copy)]
+struct DragState {
+    dragging: bool,
+    offset: Vec2,
+}
+
+/// A node within a node graph.
+#[derive(Default)]
+pub struct NodeGraphNode {
+    /// The coordinates of the node's upper-left corner.
+    pub position: Signal<Vec2>,
+    /// The title of the node.
+    pub title: Signal<String>,
+    /// Whether the node is currently selected.
+    pub selected: Signal<bool>,
+    /// The content of the node.
+    pub children: ViewRef,
+
+    /// Callback called when the title bar is dragged.
+    pub on_drag: Option<Callback<Vec2>>,
 }
 
 impl ViewTemplate for NodeGraphNode {
@@ -147,6 +156,7 @@ impl ViewTemplate for NodeGraphNode {
         let position = self.position;
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);
+        let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
         Element::<NodeBundle>::for_entity(id)
             .named("NodeGraph::Node")
@@ -165,6 +175,40 @@ impl ViewTemplate for NodeGraphNode {
                 Element::<NodeBundle>::new()
                     .named("NodeGraph::Node::Title")
                     .with_styles(style_node_graph_node_title)
+                    .insert((
+                        On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                            // Save initial value to use as drag offset.
+                            drag_state.set(
+                                world,
+                                DragState {
+                                    dragging: true,
+                                    offset: position.get(world),
+                                },
+                            );
+                        }),
+                        On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                            drag_state.set(
+                                world,
+                                DragState {
+                                    dragging: false,
+                                    offset: position.get(world),
+                                },
+                            );
+                        }),
+                        On::<Pointer<Drag>>::run({
+                            let on_drag = self.on_drag.unwrap();
+                            move |world: &mut World| {
+                                let event = world
+                                    .get_resource::<ListenerInput<Pointer<Drag>>>()
+                                    .unwrap();
+                                let ev = event.distance;
+                                let ds = drag_state.get(world);
+                                if ds.dragging {
+                                    world.run_callback(on_drag, Vec2::new(ev.x, ev.y) + ds.offset);
+                                }
+                            }
+                        }),
+                    ))
                     .with_children(self.title.clone()),
                 Element::<NodeBundle>::new()
                     .with_styles(style_node_graph_node_content)
