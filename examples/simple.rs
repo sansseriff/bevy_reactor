@@ -66,7 +66,7 @@ fn setup_view_root(mut commands: Commands) {
                     format!("{}", counter.count)
                 }),
                 ", ",
-                nested_presenter.bind(()),
+                NestedView,
                 ": ",
                 Cond::new(
                     |cx| {
@@ -87,17 +87,15 @@ fn setup_view_root(mut commands: Commands) {
     ));
 }
 
-fn nested_presenter(_: &mut Cx) -> impl View {
-    text_computed(|cx| {
-        let counter = cx.use_resource::<Counter>();
-        format!("{}", counter.count)
-    })
-    // .with_children((
-    //     "Root Presenter: ",
-    // |cx: &mut Cx| Element::new(),
-    //     format!("{}", counter.count),
-    //     If::new(counter.count & 1 == 0, " [even]", " [odd]"),
-    // ))
+struct NestedView;
+
+impl ViewTemplate for NestedView {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+        text_computed(|cx| {
+            let counter = cx.use_resource::<Counter>();
+            format!("{}", counter.count)
+        })
+    }
 }
 
 #[derive(Resource, Default)]

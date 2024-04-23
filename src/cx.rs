@@ -39,12 +39,12 @@ pub trait RunContextWrite: RunContextRead {
         let world = self.world_mut();
         let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
-        let mut cx = Cx::new(props, world, callback.id, &mut tracking);
+        let mut cx = Cx::new((), world, callback.id, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
         if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
             let mut callback_fn = cell.inner.take();
             let callback_box = callback_fn.as_ref().expect("Callback is not present");
-            callback_box.call(&mut cx);
+            callback_box.call(&mut cx, props);
             let mut callback_entity = cx.world.entity_mut(callback.id);
             callback_entity
                 .get_mut::<CallbackFnCell<P>>()
@@ -53,7 +53,7 @@ pub trait RunContextWrite: RunContextRead {
         } else if let Some(mut cell) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
             let mut callback_fn = cell.inner.take();
             let callback_box = callback_fn.as_mut().expect("Callback is not present");
-            callback_box.call(&mut cx);
+            callback_box.call(&mut cx, props);
             let mut callback_entity = cx.world.entity_mut(callback.id);
             callback_entity
                 .get_mut::<CallbackFnMutCell<P>>()
@@ -110,7 +110,7 @@ pub trait RunContextSetup<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback<P: 'static, F: Send + Sync + 'static + Fn(&mut Cx<P>)>(
+    fn create_callback<P: 'static, F: Send + Sync + 'static + Fn(&mut Cx, P)>(
         &mut self,
         callback: F,
     ) -> Callback<P> {
@@ -134,7 +134,7 @@ pub trait RunContextSetup<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx<P>)>(&mut self, callback: F) -> Callback<P>
+    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx, P)>(&mut self, callback: F) -> Callback<P>
     where
         F: Send + Sync + 'static,
     {

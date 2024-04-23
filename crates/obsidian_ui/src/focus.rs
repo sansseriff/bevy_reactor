@@ -21,6 +21,7 @@ use bevy_mod_picking::prelude::{EntityEvent, EventListenerPlugin};
 
 /// Bubbling event for key character input.
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct KeyCharEvent {
     /// The target of the event
     #[target]
@@ -32,6 +33,7 @@ pub struct KeyCharEvent {
 
 /// Bubbling event for key press.
 #[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
 pub struct KeyPressEvent {
     /// The target of the event
     #[target]

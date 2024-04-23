@@ -1,5 +1,6 @@
 //! Example of a simple UI layout
 mod color_edit;
+mod node_graph_demo;
 mod transform_overlay;
 
 use bevy_mod_picking::{
@@ -11,13 +12,13 @@ use bevy_mod_picking::{
 };
 use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 use bevy_reactor_overlays as overlays;
-use color_edit::{color_edit, ColorEditState, ColorMode};
+use color_edit::{ColorEdit, ColorEditState, ColorMode};
+use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, NodeGraph,
-        Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton,
-        ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
+        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     size::Size,
@@ -91,10 +92,6 @@ fn style_viewport(ss: &mut StyleBuilder) {
         .pointer_events(false);
 }
 
-fn style_node_graph(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.);
-}
-
 fn style_log(ss: &mut StyleBuilder) {
     ss.background_color("#0008")
         .display(ui::Display::Flex)
@@ -154,6 +151,7 @@ fn main() {
         )
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
+        .init_resource::<DemoGraphRoot>()
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,
@@ -211,11 +209,11 @@ fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
 fn ui_main(cx: &mut Cx<Entity>) -> impl View {
     let mut inc_count = 0;
     let mut dec_count = 0;
-    let clicked_increment = cx.create_callback_mut(move |_cx| {
+    let clicked_increment = cx.create_callback_mut(move |_cx, _| {
         inc_count += 1;
         println!("Increment clicked: {} times", inc_count);
     });
-    let clicked_decrement = cx.create_callback_mut(move |_cx| {
+    let clicked_decrement = cx.create_callback_mut(move |_cx, _| {
         dec_count += 1;
         println!("Decrement clicked: {} times", dec_count);
     });
@@ -242,7 +240,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
         .with_children((
             Dialog {
                 open: checked_1.signal(),
-                on_close: Some(cx.create_callback(move |cx| {
+                on_close: Some(cx.create_callback(move |cx, _| {
                     checked_1.set(cx, false);
                 })),
                 children: (
@@ -254,7 +252,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                         children: (
                             Button {
                                 children: "Cancel".into(),
-                                on_click: Some(cx.create_callback(move |cx| {
+                                on_click: Some(cx.create_callback(move |cx, _| {
                                     checked_1.set(cx, false);
                                 })),
                                 ..default()
@@ -263,7 +261,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                 children: "Close".into(),
                                 variant: Signal::Constant(ButtonVariant::Primary),
                                 autofocus: true,
-                                on_click: Some(cx.create_callback(move |cx| {
+                                on_click: Some(cx.create_callback(move |cx, _| {
                                     checked_1.set(cx, false);
                                 })),
                                 ..default()
@@ -299,7 +297,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                         ButtonVariant::Default
                                     }
                                 }),
-                                on_click: Some(cx.create_callback(|cx| {
+                                on_click: Some(cx.create_callback(|cx, _| {
                                     if let Some(mut mode) =
                                         cx.world_mut().get_resource_mut::<NextState<EditorState>>()
                                     {
@@ -319,7 +317,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                         ButtonVariant::Default
                                     }
                                 }),
-                                on_click: Some(cx.create_callback(|cx| {
+                                on_click: Some(cx.create_callback(|cx, _| {
                                     if let Some(mut mode) =
                                         cx.world_mut().get_resource_mut::<NextState<EditorState>>()
                                     {
@@ -354,8 +352,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             Checkbox {
                                 label: "Include Author Name".into(),
                                 checked: checked_1.signal(),
-                                on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
-                                    let checked = cx.props;
+                                on_change: Some(cx.create_callback(move |cx, checked| {
                                     println!("Include Author Name: {}", checked);
                                     checked_1.set(cx, checked);
                                 })),
@@ -364,8 +361,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                             Checkbox {
                                 label: "Include Metadata".into(),
                                 checked: checked_2.signal(),
-                                on_change: Some(cx.create_callback(move |cx: &mut Cx<bool>| {
-                                    let checked = cx.props;
+                                on_change: Some(cx.create_callback(move |cx, checked| {
                                     println!("Include Metadata: {}", checked);
                                     checked_2.set(cx, checked);
                                 })),
@@ -381,8 +377,8 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                 value: red.signal(),
                                 style: StyleHandle::new(style_slider),
                                 precision: 1,
-                                on_change: Some(cx.create_callback(move |cx| {
-                                    red.set(cx, cx.props);
+                                on_change: Some(cx.create_callback(move |cx, value| {
+                                    red.set(cx, value);
                                 })),
                                 ..default()
                             },
@@ -397,11 +393,11 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
                                 color.to_hex()
                             }),
                         )),
-                    color_edit.bind(()),
+                    ColorEdit,
                     TextInput::new(TextInputProps {
                         value: name.signal(),
-                        on_change: Some(cx.create_callback(move |cx: &mut Cx<String>| {
-                            name.set_clone(cx, cx.props.clone());
+                        on_change: Some(cx.create_callback(move |cx: &mut Cx, value: String| {
+                            name.set_clone(cx, value.clone());
                         })),
                         ..default()
                     }),
@@ -446,8 +442,7 @@ fn ui_main(cx: &mut Cx<Entity>) -> impl View {
             Splitter {
                 direction: SplitterDirection::Vertical,
                 value: panel_width,
-                on_change: cx.create_callback(|cx: &mut Cx<f32>| {
-                    let value = cx.props;
+                on_change: cx.create_callback(|cx: &mut Cx, value: f32| {
                     let mut panel_width = cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
                     panel_width.0 = value.max(200.);
                 }),
@@ -476,11 +471,7 @@ impl ViewTemplate for CenterPanel {
                             ),
                     )
             },
-            || NodeGraph {
-                children: "Hello".into(),
-                style: StyleHandle::new(style_node_graph),
-                // ..default()
-            },
+            || NodeGraphDemo {},
         )
     }
 }
@@ -550,8 +541,7 @@ fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
 fn transform_overlay(cx: &mut Cx<Entity>) -> impl View {
     let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
 
-    let on_change = Some(cx.create_callback(move |cx: &mut Cx<Vec3>| {
-        let new_pos = cx.props;
+    let on_change = Some(cx.create_callback(move |cx, new_pos| {
         let selected = selected.get(cx).unwrap();
         let mut entity = cx.world_mut().entity_mut(selected);
         let mut transform = entity.get_mut::<Transform>().unwrap();

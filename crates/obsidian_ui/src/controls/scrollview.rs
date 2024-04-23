@@ -45,7 +45,8 @@ fn style_scrollbar_x_thumb(ss: &mut StyleBuilder) {
     ss.background_color("#334")
         .position(ui::PositionType::Absolute)
         .top(1)
-        .bottom(1);
+        .bottom(1)
+        .border_radius(3);
     // .selector(":hover > &,.drag", |ss| ss.background_color("#556"));
 }
 
@@ -59,7 +60,8 @@ fn style_scrollbar_y_thumb(ss: &mut StyleBuilder) {
     ss.background_color("#334")
         .position(ui::PositionType::Absolute)
         .left(1)
-        .right(1);
+        .right(1)
+        .border_radius(3);
     // .selector(":hover > &,.drag", |ss| ss.background_color("#556"));
 }
 

@@ -14,6 +14,7 @@ use bevy::{
 
 use crate::{
     node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope, Cx, DespawnScopes,
+    Signal, TextComputed,
 };
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
@@ -159,6 +160,12 @@ impl From<&str> for ViewRef {
 impl From<String> for ViewRef {
     fn from(value: String) -> Self {
         ViewRef::new(TextStatic::new(value))
+    }
+}
+
+impl From<Signal<String>> for ViewRef {
+    fn from(value: Signal<String>) -> Self {
+        ViewRef::new(TextComputed::new(move |rcx| value.get_clone(rcx)))
     }
 }
 

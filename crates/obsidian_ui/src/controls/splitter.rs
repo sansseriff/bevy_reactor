@@ -27,7 +27,8 @@ fn style_vsplitter(ss: &mut StyleBuilder) {
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .gap(8)
-        .width(9);
+        .width(9)
+        .background_color(colors::U2);
 }
 
 // The decorative handle inside the splitter.

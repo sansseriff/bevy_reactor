@@ -229,7 +229,7 @@ impl ViewTemplate for Slider {
                 .named("Slider")
                 .with_styles(style_overlay)
                 .with_children((
-                    slider_button.bind(SliderButtonProps {
+                    SliderButton {
                         value,
                         min,
                         max,
@@ -237,7 +237,7 @@ impl ViewTemplate for Slider {
                         hovering,
                         on_change,
                         drag_state,
-                    }),
+                    },
                     Element::<NodeBundle>::new()
                         .with_styles(style_label)
                         .with_children(text_computed({
@@ -246,7 +246,7 @@ impl ViewTemplate for Slider {
                                 format!("{:.*}", precision, value)
                             }
                         })),
-                    slider_button.bind(SliderButtonProps {
+                    SliderButton {
                         value,
                         min,
                         max,
@@ -254,12 +254,12 @@ impl ViewTemplate for Slider {
                         hovering,
                         on_change,
                         drag_state,
-                    }),
+                    },
                 )),))
     }
 }
 
-struct SliderButtonProps {
+struct SliderButton {
     value: Signal<f32>,
     min: Signal<f32>,
     max: Signal<f32>,
@@ -269,63 +269,30 @@ struct SliderButtonProps {
     drag_state: Mutable<DragState>,
 }
 
-fn slider_button(cx: &mut Cx<SliderButtonProps>) -> Element<NodeBundle> {
-    let button_id = cx.create_entity();
-    let button_hovering = cx.create_hover_signal(button_id);
-    let hovering = cx.props.hovering;
-    let min = cx.props.min;
-    let max = cx.props.max;
-    let value = cx.props.value;
-    let step = cx.props.step;
-    let on_change = cx.props.on_change;
-    let drag_state = cx.props.drag_state;
-    let drag_type = if step > 0.0 {
-        DragType::HoldIncrement
-    } else {
-        DragType::HoldDecrement
-    };
+impl ViewTemplate for SliderButton {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let button_id = cx.create_entity();
+        let button_hovering = cx.create_hover_signal(button_id);
+        let hovering = self.hovering;
+        let min = self.min;
+        let max = self.max;
+        let value = self.value;
+        let step = self.step;
+        let on_change = self.on_change;
+        let drag_state = self.drag_state;
+        let drag_type = if step > 0.0 {
+            DragType::HoldIncrement
+        } else {
+            DragType::HoldDecrement
+        };
 
-    Element::<NodeBundle>::for_entity(button_id)
-        .with_styles(style_button)
-        .insert((
-            On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                let mut event = world
-                    .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
-                    .unwrap();
-                event.stop_propagation();
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: drag_type,
-                        offset: value.get(world),
-                    },
-                );
-                let min = min.get(world);
-                let max = max.get(world);
-                let value = value.get(world) + step;
-                if let Some(on_change) = on_change {
-                    world.run_callback(on_change, value.clamp(min, max));
-                }
-            }),
-            On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                let mut event = world
-                    .get_resource_mut::<ListenerInput<Pointer<DragEnd>>>()
-                    .unwrap();
-                event.stop_propagation();
-                drag_state.set(
-                    world,
-                    DragState {
-                        dragging: DragType::None,
-                        offset: value.get(world),
-                    },
-                );
-            }),
-            On::<Pointer<DragEnter>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                let mut event = world
-                    .get_resource_mut::<ListenerInput<Pointer<DragEnter>>>()
-                    .unwrap();
-                if ds.dragging == DragType::None {
+        Element::<NodeBundle>::for_entity(button_id)
+            .with_styles(style_button)
+            .insert((
+                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
+                        .unwrap();
                     event.stop_propagation();
                     drag_state.set(
                         world,
@@ -334,13 +301,16 @@ fn slider_button(cx: &mut Cx<SliderButtonProps>) -> Element<NodeBundle> {
                             offset: value.get(world),
                         },
                     );
-                }
-            }),
-            On::<Pointer<DragLeave>>::run(move |world: &mut World| {
-                let ds = drag_state.get(world);
-                if ds.dragging == drag_type {
+                    let min = min.get(world);
+                    let max = max.get(world);
+                    let value = value.get(world) + step;
+                    if let Some(on_change) = on_change {
+                        world.run_callback(on_change, value.clamp(min, max));
+                    }
+                }),
+                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
                     let mut event = world
-                        .get_resource_mut::<ListenerInput<Pointer<DragLeave>>>()
+                        .get_resource_mut::<ListenerInput<Pointer<DragEnd>>>()
                         .unwrap();
                     event.stop_propagation();
                     drag_state.set(
@@ -350,33 +320,65 @@ fn slider_button(cx: &mut Cx<SliderButtonProps>) -> Element<NodeBundle> {
                             offset: value.get(world),
                         },
                     );
-                }
-            }),
-        ))
-        .with_children(
-            Element::<NodeBundle>::new()
-                .with_styles((
-                    style_button_icon,
-                    if step > 0.0 {
-                        style_button_icon_right
-                    } else {
-                        style_button_icon_left
-                    },
-                ))
-                .create_effect(move |cx, ent| {
-                    let ds = drag_state.get(cx);
-                    let is_hovering = hovering.get(cx) && step != 0.0;
-                    let is_hovering_inc = button_hovering.get(cx);
-                    let color = match (ds.dragging, is_hovering, is_hovering_inc) {
-                        (DragType::HoldIncrement, _, _) if step > 0.0 => colors::FOREGROUND,
-                        (DragType::HoldDecrement, _, _) if step < 0.0 => colors::FOREGROUND,
-                        (DragType::Dragging, _, _) => colors::TRANSPARENT,
-                        (_, true, true) => colors::U4.lighter(0.1),
-                        (_, true, false) => colors::U4,
-                        _ => colors::TRANSPARENT,
-                    };
-                    let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                    bg.0 = color.into();
                 }),
-        )
+                On::<Pointer<DragEnter>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<DragEnter>>>()
+                        .unwrap();
+                    if ds.dragging == DragType::None {
+                        event.stop_propagation();
+                        drag_state.set(
+                            world,
+                            DragState {
+                                dragging: drag_type,
+                                offset: value.get(world),
+                            },
+                        );
+                    }
+                }),
+                On::<Pointer<DragLeave>>::run(move |world: &mut World| {
+                    let ds = drag_state.get(world);
+                    if ds.dragging == drag_type {
+                        let mut event = world
+                            .get_resource_mut::<ListenerInput<Pointer<DragLeave>>>()
+                            .unwrap();
+                        event.stop_propagation();
+                        drag_state.set(
+                            world,
+                            DragState {
+                                dragging: DragType::None,
+                                offset: value.get(world),
+                            },
+                        );
+                    }
+                }),
+            ))
+            .with_children(
+                Element::<NodeBundle>::new()
+                    .with_styles((
+                        style_button_icon,
+                        if step > 0.0 {
+                            style_button_icon_right
+                        } else {
+                            style_button_icon_left
+                        },
+                    ))
+                    .create_effect(move |cx, ent| {
+                        let ds = drag_state.get(cx);
+                        let is_hovering = hovering.get(cx) && step != 0.0;
+                        let is_hovering_inc = button_hovering.get(cx);
+                        let color = match (ds.dragging, is_hovering, is_hovering_inc) {
+                            (DragType::HoldIncrement, _, _) if step > 0.0 => colors::FOREGROUND,
+                            (DragType::HoldDecrement, _, _) if step < 0.0 => colors::FOREGROUND,
+                            (DragType::Dragging, _, _) => colors::TRANSPARENT,
+                            (_, true, true) => colors::U4.lighter(0.1),
+                            (_, true, false) => colors::U4,
+                            _ => colors::TRANSPARENT,
+                        };
+                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
+                        bg.0 = color.into();
+                    }),
+            )
+    }
 }
