@@ -1,8 +1,8 @@
-use bevy::{color::palettes, prelude::*};
+use bevy::prelude::*;
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
-    controls::{InputConnector, NodeGraph, NodeGraphNode, OutputConnector, Slider},
+    controls::{InputConnector, NodeGraph, NodeGraphEdge, NodeGraphNode, OutputConnector, Slider},
 };
 
 #[derive(Clone, Debug, PartialEq, Component)]
@@ -10,6 +10,17 @@ pub struct NodePosition(pub Vec2);
 
 #[derive(Clone, Debug, PartialEq, Component)]
 pub struct NodeTitle(pub String);
+
+#[derive(Clone, Debug, PartialEq, Component)]
+pub struct EdgeTerminals {
+    pub src: Option<Entity>,
+    pub dst: Option<Entity>,
+}
+
+// pub struct DemoGraph {
+//     pub nodes: HashMap<i32, DemoGraphNode>,
+//     pub edges: Vec<DemoGraphEdge>,
+// }
 
 #[derive(Debug, Resource)]
 pub struct DemoGraphRoot {
@@ -45,6 +56,16 @@ impl FromWorld for DemoGraphRoot {
                 ))
                 .id(),
         );
+
+        edges.push(
+            world
+                .spawn(EdgeTerminals {
+                    src: Some(nodes[0]),
+                    dst: Some(nodes[1]),
+                })
+                .id(),
+        );
+
         Self { nodes, edges }
     }
 }
@@ -62,13 +83,22 @@ fn style_slider(ss: &mut StyleBuilder) {
 impl ViewTemplate for NodeGraphDemo {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         NodeGraph {
-            children: (For::each(
-                |cx| {
-                    let graph = cx.use_resource::<DemoGraphRoot>();
-                    graph.nodes.clone().into_iter()
-                },
-                |id| NodeTemplate { id: *id },
-            ),)
+            children: (
+                For::each(
+                    |cx| {
+                        let graph = cx.use_resource::<DemoGraphRoot>();
+                        graph.edges.clone().into_iter()
+                    },
+                    |id| EdgeTemplate { id: *id },
+                ),
+                For::each(
+                    |cx| {
+                        let graph = cx.use_resource::<DemoGraphRoot>();
+                        graph.nodes.clone().into_iter()
+                    },
+                    |id| NodeTemplate { id: *id },
+                ),
+            )
                 .fragment(),
             style: StyleHandle::new(style_node_graph),
         }
@@ -127,6 +157,21 @@ impl ViewTemplate for NodeTemplate {
                 let mut pos = entt.get_mut::<NodePosition>().unwrap();
                 pos.0 = new_pos;
             })),
+        }
+    }
+}
+
+pub struct EdgeTemplate {
+    id: Entity,
+}
+
+impl ViewTemplate for EdgeTemplate {
+    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+        // let id = self.id;
+        // let position = cx.create_derived(move |cx| cx.use_component::<NodePosition>(id).unwrap().0);
+        NodeGraphEdge {
+            src_pos: Signal::Constant(Vec2::new(150., 150.)),
+            dst_pos: Signal::Constant(Vec2::new(350., 350.)),
         }
     }
 }

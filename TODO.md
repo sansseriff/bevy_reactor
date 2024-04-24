@@ -1,9 +1,7 @@
 # TODO
 
-- Figure out why wheel scrolling doesn't work.
-  - This needs a scrolling area with overflow content.
 - Memoized Deriveds, with custom equality hook.
-- Build a router that uses Bevy states.
+- Components and Resources as signals.
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.

@@ -8,8 +8,7 @@ var<uniform> color_fg: vec4<f32>;
 
 @fragment
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
-    let uv = in.uv - 0.5;
     let size = vec2<f32>(in.size.x, in.size.y);
-    let cell = fract(uv * size /  16.) * 16.;
+    let cell = fract(in.uv * size /  16.) * 16.;
     return select(color_bg, color_fg, cell.x <= 1.5 && cell.y <= 1.5);
 }
