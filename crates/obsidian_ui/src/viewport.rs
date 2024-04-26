@@ -27,24 +27,20 @@ pub fn update_viewport_inset(
     query: Query<(&Node, &GlobalTransform), With<ViewportInsetElement>>,
     mut viewport_inset: ResMut<ViewportInset>,
 ) {
+    // `physical_pixels = logical_pixels * scale_factor`
     let mut inset = ViewportInset::default();
     match query.get_single() {
         Ok((node, transform)) => {
-            let position = transform.translation();
-            let ui_position = position.truncate();
-            let extents = node.size() / 2.0;
-            let min = ui_position - extents;
-            let max = ui_position + extents;
-
+            let rect = node.logical_rect(transform);
             let window = windows.single();
             let ww = window.resolution.physical_width() as f32;
             let wh = window.resolution.physical_height() as f32;
             let sf = window.resolution.scale_factor();
 
-            inset.left = min.x;
-            inset.top = min.y;
-            inset.right = ww / sf - max.x;
-            inset.bottom = wh / sf - max.y;
+            inset.left = rect.min.x;
+            inset.top = rect.min.y;
+            inset.right = ww / sf - rect.max.x;
+            inset.bottom = wh / sf - rect.max.y;
         }
         Err(_) => {
             if query.iter().count() > 1 {
@@ -69,14 +65,14 @@ pub fn update_camera_viewport(
     let ww = window.resolution.physical_width() as f32;
     let wh = window.resolution.physical_height() as f32;
     let sf = window.resolution.scale_factor();
-    let left = viewport_inset.left * sf;
-    let right = viewport_inset.right * sf;
-    let top = viewport_inset.top * sf;
-    let bottom = viewport_inset.bottom * sf;
+    let left = (viewport_inset.left * sf).clamp(0., ww);
+    let right = (viewport_inset.right * sf).clamp(0., ww);
+    let top = (viewport_inset.top * sf).clamp(0., wh);
+    let bottom = (viewport_inset.bottom * sf).clamp(0., wh);
     let vw = (ww - left - right).max(1.);
     let vh = (wh - top - bottom).max(1.);
 
-    let (mut camera, mut _projection) = camera_query.single_mut();
+    let (mut camera, _) = camera_query.single_mut();
     camera.viewport = Some(Viewport {
         physical_position: UVec2::new(left as u32, top as u32),
         physical_size: UVec2::new(vw as u32, vh as u32),
