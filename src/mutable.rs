@@ -6,7 +6,7 @@ use bevy::{ecs::component::ComponentId, ecs::world::Command, prelude::*};
 pub(crate) struct MutableCell<T>(pub(crate) T);
 
 /// Contains a reference to a reactive mutable variable.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Mutable<T> {
     /// The entity that holds the mutable value.
     pub(crate) cell: Entity,

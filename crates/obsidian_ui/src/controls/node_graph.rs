@@ -28,7 +28,7 @@ fn style_node_graph_scroll(ss: &mut StyleBuilder) {
 
 /// An editable graph of nodes, connected by edges.
 #[derive(Default)]
-pub struct NodeGraph {
+pub struct GraphDisplay {
     /// Nodes within the node graph.
     pub children: ViewRef,
 
@@ -36,7 +36,7 @@ pub struct NodeGraph {
     pub style: StyleHandle,
 }
 
-impl ViewTemplate for NodeGraph {
+impl ViewTemplate for GraphDisplay {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let mut ui_materials = cx
             .world_mut()
@@ -146,7 +146,7 @@ struct DragState {
 
 /// A node within a node graph.
 #[derive(Default)]
-pub struct NodeGraphNode {
+pub struct NodeDisplay {
     /// The coordinates of the node's upper-left corner.
     pub position: Signal<Vec2>,
     /// The title of the node.
@@ -160,7 +160,7 @@ pub struct NodeGraphNode {
     pub on_drag: Option<Callback<Vec2>>,
 }
 
-impl ViewTemplate for NodeGraphNode {
+impl ViewTemplate for NodeDisplay {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let position = self.position;
         let id = cx.create_entity();
@@ -252,8 +252,9 @@ fn style_input_terminal(ss: &mut StyleBuilder) {
 }
 
 /// Depicts an input connector on a node.
-#[derive(Default)]
-pub struct InputConnector {
+pub struct InputTerminalDisplay {
+    /// Entity id of the connector.
+    pub id: Entity,
     /// Color of the connector terminal, which is typically used to indicate the data-type
     /// of the connector.
     pub color: Srgba,
@@ -261,10 +262,10 @@ pub struct InputConnector {
     pub control: ViewRef,
 }
 
-impl ViewTemplate for InputConnector {
+impl ViewTemplate for InputTerminalDisplay {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         let color = self.color;
-        Element::<NodeBundle>::new()
+        Element::<NodeBundle>::for_entity(self.id)
             .named("InputConnector")
             .with_styles(style_input_connector)
             .with_children((
@@ -299,8 +300,9 @@ fn style_output_terminal(ss: &mut StyleBuilder) {
 }
 
 /// Depicts an output connector on a node.
-#[derive(Default)]
-pub struct OutputConnector {
+pub struct OutputTerminalDisplay {
+    /// Entity id of the connector.
+    pub id: Entity,
     /// Color of the connector terminal, which is typically used to indicate the data-type
     /// of the connector.
     pub color: Srgba,
@@ -308,10 +310,10 @@ pub struct OutputConnector {
     pub label: String,
 }
 
-impl ViewTemplate for OutputConnector {
+impl ViewTemplate for OutputTerminalDisplay {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         let color = self.color;
-        Element::<NodeBundle>::new()
+        Element::<NodeBundle>::for_entity(self.id)
             .named("OutputConnector")
             .with_styles(style_output_connector)
             .with_children((
@@ -327,7 +329,7 @@ impl ViewTemplate for OutputConnector {
 }
 
 /// Displays a stroked path between two nodes.
-pub struct NodeGraphEdge {
+pub struct EdgeDisplay {
     /// Pixel position of the source terminal.
     pub src_pos: Signal<Vec2>,
 
@@ -335,7 +337,7 @@ pub struct NodeGraphEdge {
     pub dst_pos: Signal<Vec2>,
 }
 
-impl ViewTemplate for NodeGraphEdge {
+impl ViewTemplate for EdgeDisplay {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let mut ui_materials = cx
             .world_mut()

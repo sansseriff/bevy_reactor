@@ -1,6 +1,7 @@
 # TODO
 
 - Memoized Deriveds, with custom equality hook.
+  - Needed to make Dynamic work with sliders
 - Components and Resources as signals.
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.

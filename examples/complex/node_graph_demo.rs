@@ -1,8 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui};
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
-    controls::{InputConnector, NodeGraph, NodeGraphEdge, NodeGraphNode, OutputConnector, Slider},
+    controls::{
+        EdgeDisplay, GraphDisplay, InputTerminalDisplay, NodeDisplay, OutputTerminalDisplay,
+        Slider, Swatch,
+    },
 };
 
 #[derive(Clone, Debug, PartialEq, Component)]
@@ -12,15 +15,60 @@ pub struct NodePosition(pub Vec2);
 pub struct NodeTitle(pub String);
 
 #[derive(Clone, Debug, PartialEq, Component)]
-pub struct EdgeTerminals {
-    pub src: Option<Entity>,
-    pub dst: Option<Entity>,
+pub struct NodeOutputs(pub Vec<Entity>);
+
+#[derive(Clone, Debug, PartialEq, Component)]
+pub struct NodeInputs(pub Vec<Entity>);
+
+#[derive(Clone, Debug, PartialEq, Component)]
+pub struct Edge {
+    pub src: Entity,
+    pub dst: Entity,
 }
 
-// pub struct DemoGraph {
-//     pub nodes: HashMap<i32, DemoGraphNode>,
-//     pub edges: Vec<DemoGraphEdge>,
-// }
+pub trait DataType {
+    fn color(&self) -> Srgba;
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum DemoDataType {
+    Float((f32, f32)),
+    Rgb,
+}
+
+impl DataType for DemoDataType {
+    fn color(&self) -> Srgba {
+        match self {
+            DemoDataType::Float(_) => colors::U4,
+            DemoDataType::Rgb => colors::RESOURCE,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum DemoValueType {
+    Float(f32),
+    Rgb(Srgba),
+}
+
+#[derive(Debug, Component)]
+pub struct InputTerminal<DataType, ValueType>
+where
+    ValueType: Send + Sync,
+{
+    pub label: String,
+    pub data_type: DataType,
+    pub value: ValueType,
+    pub connection: Option<Entity>,
+}
+
+#[derive(Debug, Component)]
+pub struct OutputTerminal<DataType, ValueType> {
+    pub label: String,
+    pub data_type: DataType,
+    pub value: ValueType,
+    pub connections: Vec<Entity>,
+}
 
 #[derive(Debug, Resource)]
 pub struct DemoGraphRoot {
@@ -32,36 +80,131 @@ impl FromWorld for DemoGraphRoot {
     fn from_world(world: &mut World) -> Self {
         let mut nodes = Vec::new();
         let mut edges = Vec::new();
-        nodes.push(
+        let node1 = world
+            .spawn((
+                NodePosition(Vec2::new(100., 100.)),
+                NodeTitle("Node 1".to_string()),
+            ))
+            .id();
+        nodes.push(node1);
+        let outputs = vec![world
+            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
+                label: "Color".to_string(),
+                data_type: DemoDataType::Rgb,
+                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                connections: Vec::new(),
+            })
+            .set_parent(node1)
+            .id()];
+        let edge_out1 = outputs[0];
+        world.entity_mut(node1).insert(NodeOutputs(outputs));
+
+        let inputs = vec![
             world
-                .spawn((
-                    NodePosition(Vec2::new(100., 100.)),
-                    NodeTitle("Node 1".to_string()),
-                ))
+                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
+                    label: "Base".to_string(),
+                    data_type: DemoDataType::Float((0., 100.)),
+                    value: DemoValueType::Float(50.),
+                    connection: None,
+                })
+                .set_parent(node1)
                 .id(),
-        );
-        nodes.push(
             world
-                .spawn((
-                    NodePosition(Vec2::new(200., 220.)),
-                    NodeTitle("Node 2".to_string()),
-                ))
+                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
+                    label: "Mask".to_string(),
+                    data_type: DemoDataType::Float((0., 100.)),
+                    value: DemoValueType::Float(80.),
+                    connection: None,
+                })
+                .set_parent(node1)
                 .id(),
-        );
-        nodes.push(
+        ];
+        world.entity_mut(node1).insert(NodeInputs(inputs));
+
+        let node2 = world
+            .spawn((
+                NodePosition(Vec2::new(300., 220.)),
+                NodeTitle("Node 2".to_string()),
+            ))
+            .id();
+        nodes.push(node2);
+        let outputs = vec![world
+            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
+                label: "Color".to_string(),
+                data_type: DemoDataType::Rgb,
+                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                connections: Vec::new(),
+            })
+            .set_parent(node2)
+            .id()];
+        world.entity_mut(node2).insert(NodeOutputs(outputs));
+
+        let inputs = vec![
             world
-                .spawn((
-                    NodePosition(Vec2::new(300., 100.)),
-                    NodeTitle("Node 3".to_string()),
-                ))
+                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
+                    label: "A".to_string(),
+                    data_type: DemoDataType::Float((0., 1.0)),
+                    value: DemoValueType::Float(0.3),
+                    connection: None,
+                })
+                .set_parent(node2)
                 .id(),
-        );
+            world
+                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
+                    label: "B".to_string(),
+                    data_type: DemoDataType::Float((0., 1.0)),
+                    value: DemoValueType::Float(0.2),
+                    connection: None,
+                })
+                .set_parent(node2)
+                .id(),
+        ];
+        let edge_in1 = inputs[0];
+        world.entity_mut(node2).insert(NodeInputs(inputs));
+
+        let node3 = world
+            .spawn((
+                NodePosition(Vec2::new(400., 100.)),
+                NodeTitle("Node 3".to_string()),
+            ))
+            .id();
+        nodes.push(node3);
+        let outputs = vec![world
+            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
+                label: "Out".to_string(),
+                data_type: DemoDataType::Rgb,
+                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                connections: Vec::new(),
+            })
+            .set_parent(node3)
+            .id()];
+        world.entity_mut(node3).insert(NodeOutputs(outputs));
+
+        let inputs = vec![world
+            .spawn(InputTerminal::<DemoDataType, DemoValueType> {
+                label: "In".to_string(),
+                data_type: DemoDataType::Float((0., 1.0)),
+                value: DemoValueType::Float(0.3),
+                connection: None,
+            })
+            .set_parent(node3)
+            .id()];
+        let edge_in2 = inputs[0];
+        world.entity_mut(node3).insert(NodeInputs(inputs));
 
         edges.push(
             world
-                .spawn(EdgeTerminals {
-                    src: Some(nodes[0]),
-                    dst: Some(nodes[1]),
+                .spawn(Edge {
+                    src: edge_out1,
+                    dst: edge_in1,
+                })
+                .id(),
+        );
+        edges.push(
+            world
+                .spawn(Edge {
+                    src: edge_out1,
+                    dst: edge_in2,
                 })
                 .id(),
         );
@@ -80,9 +223,17 @@ fn style_slider(ss: &mut StyleBuilder) {
     ss.min_width(150.);
 }
 
+fn style_input_label(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Flex)
+        .flex_direction(ui::FlexDirection::Row)
+        .justify_content(ui::JustifyContent::FlexStart)
+        .align_items(ui::AlignItems::Center)
+        .min_height(20.);
+}
+
 impl ViewTemplate for NodeGraphDemo {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        NodeGraph {
+        GraphDisplay {
             children: (
                 For::each(
                     |cx| {
@@ -115,40 +266,26 @@ impl ViewTemplate for NodeTemplate {
         let position = cx.create_derived(move |cx| cx.use_component::<NodePosition>(id).unwrap().0);
         let title =
             cx.create_derived(move |cx| cx.use_component::<NodeTitle>(id).unwrap().0.clone());
-        NodeGraphNode {
+        NodeDisplay {
             position,
             title,
             children: (
-                OutputConnector {
-                    label: "RGB".to_string(),
-                    color: colors::RESOURCE,
-                },
-                InputConnector {
-                    color: colors::LIGHT,
-                    control: Slider {
-                        value: Signal::Constant(50.),
-                        min: Signal::Constant(0.),
-                        max: Signal::Constant(100.),
-                        label: Some("Base".to_string()),
-                        style: StyleHandle::new(style_slider),
-                        // on_change: todo!(),
-                        ..default()
-                    }
-                    .into(),
-                },
-                InputConnector {
-                    color: colors::LIGHT,
-                    control: Slider {
-                        value: Signal::Constant(80.),
-                        min: Signal::Constant(0.),
-                        max: Signal::Constant(100.),
-                        label: Some("Mask".to_string()),
-                        style: StyleHandle::new(style_slider),
-                        // on_change: todo!(),
-                        ..default()
-                    }
-                    .into(),
-                },
+                For::each(
+                    move |cx| {
+                        cx.use_component::<NodeOutputs>(id)
+                            .map_or(Vec::new(), |c| c.0.clone())
+                            .into_iter()
+                    },
+                    |en| OutputTemplate { id: *en },
+                ),
+                For::each(
+                    move |cx| {
+                        cx.use_component::<NodeInputs>(id)
+                            .map_or(Vec::new(), |c| c.0.clone())
+                            .into_iter()
+                    },
+                    |en| InputTemplate { id: *en },
+                ),
             )
                 .fragment(),
             selected: Signal::Constant(false),
@@ -161,17 +298,195 @@ impl ViewTemplate for NodeTemplate {
     }
 }
 
+pub struct OutputTemplate {
+    id: Entity,
+}
+
+impl ViewTemplate for OutputTemplate {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let id = self.id;
+        let label = cx.create_derived(move |rcx| {
+            rcx.use_component::<OutputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .label
+                .clone()
+        });
+        let color = cx.create_derived(move |rcx| {
+            rcx.use_component::<OutputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .data_type
+                .color()
+        });
+        OutputTerminalDisplay {
+            id,
+            label: label.get_clone(cx),
+            color: color.get(cx),
+        }
+    }
+}
+
+pub struct InputTemplate {
+    id: Entity,
+}
+
+impl ViewTemplate for InputTemplate {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let id = self.id;
+        let label = cx.create_derived(move |rcx| {
+            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .label
+                .clone()
+        });
+        let is_connected = cx.create_derived(move |rcx| {
+            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .connection
+                .is_some()
+        });
+        let color = cx.create_derived(move |rcx| {
+            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .data_type
+                .color()
+        });
+        InputTerminalDisplay {
+            id,
+            color: color.get(cx),
+            control: Cond::new(
+                move |cx| is_connected.get(cx),
+                move || {
+                    Element::<NodeBundle>::new()
+                        .with_styles(style_input_label)
+                        .with_children(label.clone())
+                },
+                move || {
+                    Dynamic::new(move |cx| {
+                        let data_type = cx
+                            .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                            .unwrap()
+                            .data_type;
+                        let label = cx
+                            .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                            .unwrap()
+                            .label
+                            .clone();
+                        match data_type {
+                            DemoDataType::Float(_) => FloatInputEdit { id, label }.to_ref(),
+                            DemoDataType::Rgb => Swatch {
+                                color: Signal::Constant(Srgba::new(1., 0., 0., 1.)),
+                                // on_change: todo!(),
+                                ..default()
+                            }
+                            .to_ref(),
+                        }
+                    })
+                },
+            )
+            .into(),
+        }
+    }
+}
+
+pub struct FloatInputEdit {
+    id: Entity,
+    label: String,
+}
+
+impl ViewTemplate for FloatInputEdit {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let id = self.id;
+        let value = cx.create_derived(move |rcx| {
+            if let DemoValueType::Float(value) = rcx
+                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .value
+            {
+                value
+            } else {
+                0.
+            }
+        });
+        let min = cx.create_derived(move |rcx| {
+            if let DemoDataType::Float((min, _)) = rcx
+                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .data_type
+            {
+                min
+            } else {
+                0.
+            }
+        });
+        let max = cx.create_derived(move |rcx| {
+            if let DemoDataType::Float((_, max)) = rcx
+                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .unwrap()
+                .data_type
+            {
+                max
+            } else {
+                1.
+            }
+        });
+
+        Slider {
+            value,
+            min,
+            max,
+            label: Some(self.label.clone()),
+            style: StyleHandle::new(style_slider),
+            on_change: Some(cx.create_callback(move |cx: &mut Cx, value: f32| {
+                let mut entt = cx.world_mut().entity_mut(id);
+                let mut val = entt
+                    .get_mut::<InputTerminal<DemoDataType, DemoValueType>>()
+                    .unwrap();
+                val.value = DemoValueType::Float(value);
+            })),
+            ..default()
+        }
+    }
+}
+
 pub struct EdgeTemplate {
     id: Entity,
 }
 
 impl ViewTemplate for EdgeTemplate {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        // let id = self.id;
-        // let position = cx.create_derived(move |cx| cx.use_component::<NodePosition>(id).unwrap().0);
-        NodeGraphEdge {
-            src_pos: Signal::Constant(Vec2::new(150., 150.)),
-            dst_pos: Signal::Constant(Vec2::new(350., 350.)),
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let edge = cx.use_component::<Edge>(self.id).unwrap().clone();
+        let src_pos = cx.create_derived(move |cx| {
+            let Some(node_rect) = get_relative_rect(cx, edge.src, 3) else {
+                return Vec2::default();
+            };
+            Vec2::new(node_rect.max.x, node_rect.min.y + 10.)
+        });
+        let dst_pos = cx.create_derived(move |cx| {
+            let Some(node_rect) = get_relative_rect(cx, edge.dst, 3) else {
+                return Vec2::default();
+            };
+            Vec2::new(node_rect.min.x, node_rect.min.y + 10.)
+        });
+        EdgeDisplay { src_pos, dst_pos }
+    }
+}
+
+fn get_relative_rect(cx: &Rcx, id: Entity, levels: usize) -> Option<Rect> {
+    let node = cx.use_component::<Node>(id)?;
+    let transform = cx.use_component::<GlobalTransform>(id)?;
+    let mut rect = node.logical_rect(transform);
+    let mut current = id;
+    for _ in 0..levels {
+        if let Some(parent) = cx.use_component::<Parent>(current) {
+            current = parent.get();
+        } else {
+            return None;
         }
     }
+    let node = cx.use_component::<Node>(current)?;
+    let transform = cx.use_component::<GlobalTransform>(current)?;
+    let ancestor_rect = node.logical_rect(transform);
+    rect.min -= ancestor_rect.min;
+    rect.max -= ancestor_rect.min;
+    Some(rect)
 }

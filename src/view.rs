@@ -213,6 +213,14 @@ pub trait ViewTemplate {
     {
         ViewTemplateState::new(self)
     }
+
+    /// Convert this template into a `ViewRef`
+    fn to_ref(self) -> ViewRef
+    where
+        Self: Sized + Send + Sync + 'static,
+    {
+        ViewRef::new(ViewTemplateState::new(self))
+    }
 }
 
 /// Holds a [`ViewTemplate`], and the entity and output nodes created by the [`View`] produced

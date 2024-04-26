@@ -190,7 +190,7 @@ fn get_intersect_point(world: &mut World, target_origin: Vec3) -> Vec3 {
         .get(&RayId::new(camera_entity, PointerId::Mouse))
         .unwrap();
     let intersect = ray
-        .intersect_plane(target_origin, Plane3d::new(Vec3::new(0., 1., 0.)))
+        .intersect_plane(target_origin, InfinitePlane3d::new(Vec3::new(0., 1., 0.)))
         .unwrap();
     ray.origin + ray.direction * intersect
 }

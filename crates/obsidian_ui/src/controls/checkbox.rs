@@ -70,12 +70,12 @@ pub struct Checkbox {
     /// Callback called when clicked
     pub on_change: Option<Callback<bool>>,
 
-    /// The tab index of the button (default 0).
+    /// The tab index of the checkbox (default 0).
     pub tab_index: i32,
 }
 
 impl ViewTemplate for Checkbox {
-    /// Construct a button widget.
+    /// Construct a checkbox widget.
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let id = cx.create_entity();
         let pressed = cx.create_mutable::<bool>(false);
