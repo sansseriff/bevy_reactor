@@ -331,6 +331,9 @@ pub struct OutputTemplate {
 impl ViewTemplate for OutputTemplate {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let display_id = cx.create_entity();
+        // Make sure the display entity is updated when the terminal is updated.
+        // This normally doesn't happen because the terminal display and the edge display are
+        // created in the same tick.
         cx.world_mut().increment_change_tick();
         if let Some(mut td) = cx
             .world_mut()
