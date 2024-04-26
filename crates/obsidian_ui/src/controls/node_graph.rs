@@ -253,7 +253,7 @@ fn style_input_terminal(ss: &mut StyleBuilder) {
 
 /// Depicts an input connector on a node.
 pub struct InputTerminalDisplay {
-    /// Entity id of the connector.
+    /// Entity id for the terminal.
     pub id: Entity,
     /// Color of the connector terminal, which is typically used to indicate the data-type
     /// of the connector.
@@ -301,7 +301,7 @@ fn style_output_terminal(ss: &mut StyleBuilder) {
 
 /// Depicts an output connector on a node.
 pub struct OutputTerminalDisplay {
-    /// Entity id of the connector.
+    /// Entity id for the terminal.
     pub id: Entity,
     /// Color of the connector terminal, which is typically used to indicate the data-type
     /// of the connector.

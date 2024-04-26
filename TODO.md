@@ -1,5 +1,6 @@
 # TODO
 
+- Graph crashes when you enter a second time, due to edges being despawned.
 - Memoized Deriveds, with custom equality hook.
   - Needed to make Dynamic work with sliders
 - Components and Resources as signals.
@@ -12,6 +13,7 @@
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Don't execute dialog content if dialog not open.
+- Can we make ForEach not require cloning the iterator?
 - Text Input
 
   - drag to select (requires text measurement)

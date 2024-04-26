@@ -52,15 +52,14 @@ pub enum DemoValueType {
 }
 
 #[derive(Debug, Component)]
-pub struct InputTerminal<DataType, ValueType>
-where
-    ValueType: Send + Sync,
-{
+pub struct InputTerminal<DataType> {
     pub label: String,
     pub data_type: DataType,
-    pub value: ValueType,
     pub connection: Option<Entity>,
 }
+
+#[derive(Debug, Component)]
+pub struct InputTerminalValue<ValueType>(ValueType);
 
 #[derive(Debug, Component)]
 pub struct OutputTerminal<DataType, ValueType> {
@@ -69,6 +68,9 @@ pub struct OutputTerminal<DataType, ValueType> {
     pub value: ValueType,
     pub connections: Vec<Entity>,
 }
+
+#[derive(Debug, Component)]
+pub struct TerminalDisplay(pub Option<Entity>);
 
 #[derive(Debug, Resource)]
 pub struct DemoGraphRoot {
@@ -88,12 +90,15 @@ impl FromWorld for DemoGraphRoot {
             .id();
         nodes.push(node1);
         let outputs = vec![world
-            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
-                label: "Color".to_string(),
-                data_type: DemoDataType::Rgb,
-                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
-                connections: Vec::new(),
-            })
+            .spawn((
+                OutputTerminal::<DemoDataType, DemoValueType> {
+                    label: "Color".to_string(),
+                    data_type: DemoDataType::Rgb,
+                    value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                    connections: Vec::new(),
+                },
+                TerminalDisplay(None),
+            ))
             .set_parent(node1)
             .id()];
         let edge_out1 = outputs[0];
@@ -101,21 +106,27 @@ impl FromWorld for DemoGraphRoot {
 
         let inputs = vec![
             world
-                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
-                    label: "Base".to_string(),
-                    data_type: DemoDataType::Float((0., 100.)),
-                    value: DemoValueType::Float(50.),
-                    connection: None,
-                })
+                .spawn((
+                    InputTerminal::<DemoDataType> {
+                        label: "Base".to_string(),
+                        data_type: DemoDataType::Float((0., 100.)),
+                        connection: None,
+                    },
+                    InputTerminalValue(DemoValueType::Float(50.)),
+                    TerminalDisplay(None),
+                ))
                 .set_parent(node1)
                 .id(),
             world
-                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
-                    label: "Mask".to_string(),
-                    data_type: DemoDataType::Float((0., 100.)),
-                    value: DemoValueType::Float(80.),
-                    connection: None,
-                })
+                .spawn((
+                    InputTerminal::<DemoDataType> {
+                        label: "Mask".to_string(),
+                        data_type: DemoDataType::Float((0., 100.)),
+                        connection: None,
+                    },
+                    InputTerminalValue(DemoValueType::Float(80.)),
+                    TerminalDisplay(None),
+                ))
                 .set_parent(node1)
                 .id(),
         ];
@@ -129,33 +140,42 @@ impl FromWorld for DemoGraphRoot {
             .id();
         nodes.push(node2);
         let outputs = vec![world
-            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
-                label: "Color".to_string(),
-                data_type: DemoDataType::Rgb,
-                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
-                connections: Vec::new(),
-            })
+            .spawn((
+                OutputTerminal::<DemoDataType, DemoValueType> {
+                    label: "Color".to_string(),
+                    data_type: DemoDataType::Rgb,
+                    value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                    connections: Vec::new(),
+                },
+                TerminalDisplay(None),
+            ))
             .set_parent(node2)
             .id()];
         world.entity_mut(node2).insert(NodeOutputs(outputs));
 
         let inputs = vec![
             world
-                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
-                    label: "A".to_string(),
-                    data_type: DemoDataType::Float((0., 1.0)),
-                    value: DemoValueType::Float(0.3),
-                    connection: None,
-                })
+                .spawn((
+                    InputTerminal::<DemoDataType> {
+                        label: "A".to_string(),
+                        data_type: DemoDataType::Float((0., 1.0)),
+                        connection: None,
+                    },
+                    InputTerminalValue(DemoValueType::Float(0.3)),
+                    TerminalDisplay(None),
+                ))
                 .set_parent(node2)
                 .id(),
             world
-                .spawn(InputTerminal::<DemoDataType, DemoValueType> {
-                    label: "B".to_string(),
-                    data_type: DemoDataType::Float((0., 1.0)),
-                    value: DemoValueType::Float(0.2),
-                    connection: None,
-                })
+                .spawn((
+                    InputTerminal::<DemoDataType> {
+                        label: "B".to_string(),
+                        data_type: DemoDataType::Float((0., 1.0)),
+                        connection: None,
+                    },
+                    InputTerminalValue(DemoValueType::Float(0.2)),
+                    TerminalDisplay(None),
+                ))
                 .set_parent(node2)
                 .id(),
         ];
@@ -170,23 +190,29 @@ impl FromWorld for DemoGraphRoot {
             .id();
         nodes.push(node3);
         let outputs = vec![world
-            .spawn(OutputTerminal::<DemoDataType, DemoValueType> {
-                label: "Out".to_string(),
-                data_type: DemoDataType::Rgb,
-                value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
-                connections: Vec::new(),
-            })
+            .spawn((
+                OutputTerminal::<DemoDataType, DemoValueType> {
+                    label: "Out".to_string(),
+                    data_type: DemoDataType::Rgb,
+                    value: DemoValueType::Rgb(Srgba::new(1., 0., 0., 1.)),
+                    connections: Vec::new(),
+                },
+                TerminalDisplay(None),
+            ))
             .set_parent(node3)
             .id()];
         world.entity_mut(node3).insert(NodeOutputs(outputs));
 
         let inputs = vec![world
-            .spawn(InputTerminal::<DemoDataType, DemoValueType> {
-                label: "In".to_string(),
-                data_type: DemoDataType::Float((0., 1.0)),
-                value: DemoValueType::Float(0.3),
-                connection: None,
-            })
+            .spawn((
+                InputTerminal::<DemoDataType> {
+                    label: "In".to_string(),
+                    data_type: DemoDataType::Float((0., 1.0)),
+                    connection: None,
+                },
+                InputTerminalValue(DemoValueType::Float(0.3)),
+                TerminalDisplay(None),
+            ))
             .set_parent(node3)
             .id()];
         let edge_in2 = inputs[0];
@@ -304,6 +330,15 @@ pub struct OutputTemplate {
 
 impl ViewTemplate for OutputTemplate {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let display_id = cx.create_entity();
+        cx.world_mut().increment_change_tick();
+        if let Some(mut td) = cx
+            .world_mut()
+            .entity_mut(self.id)
+            .get_mut::<TerminalDisplay>()
+        {
+            td.0 = Some(display_id);
+        }
         let id = self.id;
         let label = cx.create_derived(move |rcx| {
             rcx.use_component::<OutputTerminal<DemoDataType, DemoValueType>>(id)
@@ -318,7 +353,7 @@ impl ViewTemplate for OutputTemplate {
                 .color()
         });
         OutputTerminalDisplay {
-            id,
+            id: display_id,
             label: label.get_clone(cx),
             color: color.get(cx),
         }
@@ -331,27 +366,35 @@ pub struct InputTemplate {
 
 impl ViewTemplate for InputTemplate {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        let display_id = cx.create_entity();
+        if let Some(mut td) = cx
+            .world_mut()
+            .entity_mut(self.id)
+            .get_mut::<TerminalDisplay>()
+        {
+            td.0 = Some(display_id);
+        }
         let id = self.id;
         let label = cx.create_derived(move |rcx| {
-            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+            rcx.use_component::<InputTerminal<DemoDataType>>(id)
                 .unwrap()
                 .label
                 .clone()
         });
         let is_connected = cx.create_derived(move |rcx| {
-            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+            rcx.use_component::<InputTerminal<DemoDataType>>(id)
                 .unwrap()
                 .connection
                 .is_some()
         });
         let color = cx.create_derived(move |rcx| {
-            rcx.use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+            rcx.use_component::<InputTerminal<DemoDataType>>(id)
                 .unwrap()
                 .data_type
                 .color()
         });
         InputTerminalDisplay {
-            id,
+            id: display_id,
             color: color.get(cx),
             control: Cond::new(
                 move |cx| is_connected.get(cx),
@@ -363,11 +406,11 @@ impl ViewTemplate for InputTemplate {
                 move || {
                     Dynamic::new(move |cx| {
                         let data_type = cx
-                            .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                            .use_component::<InputTerminal<DemoDataType>>(id)
                             .unwrap()
                             .data_type;
                         let label = cx
-                            .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                            .use_component::<InputTerminal<DemoDataType>>(id)
                             .unwrap()
                             .label
                             .clone();
@@ -398,9 +441,9 @@ impl ViewTemplate for FloatInputEdit {
         let id = self.id;
         let value = cx.create_derived(move |rcx| {
             if let DemoValueType::Float(value) = rcx
-                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .use_component::<InputTerminalValue<DemoValueType>>(id)
                 .unwrap()
-                .value
+                .0
             {
                 value
             } else {
@@ -409,7 +452,7 @@ impl ViewTemplate for FloatInputEdit {
         });
         let min = cx.create_derived(move |rcx| {
             if let DemoDataType::Float((min, _)) = rcx
-                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .use_component::<InputTerminal<DemoDataType>>(id)
                 .unwrap()
                 .data_type
             {
@@ -420,7 +463,7 @@ impl ViewTemplate for FloatInputEdit {
         });
         let max = cx.create_derived(move |rcx| {
             if let DemoDataType::Float((_, max)) = rcx
-                .use_component::<InputTerminal<DemoDataType, DemoValueType>>(id)
+                .use_component::<InputTerminal<DemoDataType>>(id)
                 .unwrap()
                 .data_type
             {
@@ -438,10 +481,8 @@ impl ViewTemplate for FloatInputEdit {
             style: StyleHandle::new(style_slider),
             on_change: Some(cx.create_callback(move |cx: &mut Cx, value: f32| {
                 let mut entt = cx.world_mut().entity_mut(id);
-                let mut val = entt
-                    .get_mut::<InputTerminal<DemoDataType, DemoValueType>>()
-                    .unwrap();
-                val.value = DemoValueType::Float(value);
+                let mut val = entt.get_mut::<InputTerminalValue<DemoValueType>>().unwrap();
+                val.0 = DemoValueType::Float(value);
             })),
             ..default()
         }
@@ -456,22 +497,33 @@ impl ViewTemplate for EdgeTemplate {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let edge = cx.use_component::<Edge>(self.id).unwrap().clone();
         let src_pos = cx.create_derived(move |cx| {
-            let Some(node_rect) = get_relative_rect(cx, edge.src, 3) else {
+            let Some(TerminalDisplay(Some(display_id))) =
+                cx.use_component::<TerminalDisplay>(edge.src)
+            else {
                 return Vec2::default();
             };
-            Vec2::new(node_rect.max.x, node_rect.min.y + 10.)
+            let Some(node_rect) = get_relative_rect(cx, *display_id, 3) else {
+                return Vec2::default();
+            };
+            Vec2::new(node_rect.max.x, node_rect.min.y.lerp(node_rect.max.y, 0.5))
         });
         let dst_pos = cx.create_derived(move |cx| {
-            let Some(node_rect) = get_relative_rect(cx, edge.dst, 3) else {
+            let Some(TerminalDisplay(Some(display_id))) =
+                cx.use_component::<TerminalDisplay>(edge.dst)
+            else {
                 return Vec2::default();
             };
-            Vec2::new(node_rect.min.x, node_rect.min.y + 10.)
+            let Some(node_rect) = get_relative_rect(cx, *display_id, 3) else {
+                return Vec2::default();
+            };
+            Vec2::new(node_rect.min.x, node_rect.min.y.lerp(node_rect.max.y, 0.5))
         });
         EdgeDisplay { src_pos, dst_pos }
     }
 }
 
 fn get_relative_rect(cx: &Rcx, id: Entity, levels: usize) -> Option<Rect> {
+    cx.world().get_entity(id)?;
     let node = cx.use_component::<Node>(id)?;
     let transform = cx.use_component::<GlobalTransform>(id)?;
     let mut rect = node.logical_rect(transform);
