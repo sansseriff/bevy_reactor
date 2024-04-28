@@ -7,24 +7,37 @@ use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewRef};
 
 use crate::node_span::NodeSpan;
 
-/// A dynamic view which can change its content based on a function. The inner view is razed
-/// and rebuilt whenever the function reacts.
-pub struct Dynamic<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> {
+/// A dynamic view which computes a value reactively, then (non-reactively) constructs
+/// a [`View`] from that value. This is useful in cases where we want to control precisely
+/// which dependencies we are reacting to.
+#[doc(hidden)]
+pub struct DynamicKeyed<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> {
     state: Option<(ViewRef, Entity)>,
+    key: KeyFn,
     factory: F,
 }
 
-impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> Dynamic<V, F> {
-    /// Construct a new dynamic view.
-    pub fn new(factory: F) -> Self {
+impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send>
+    DynamicKeyed<Key, KeyFn, V, F>
+{
+    /// Construct a new `DynamicKeyed` view.
+    ///
+    /// # Arguments
+    /// * key - A function which reactively computes a value which will be passed to the
+    ///   factory function.
+    /// * factory - A function which non-reactively constructs a view from the key value.
+    pub fn new(key: KeyFn, factory: F) -> Self {
         Self {
             state: None,
+            key,
             factory,
         }
     }
 }
 
-impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
+impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> View
+    for DynamicKeyed<Key, KeyFn, V, F>
+{
     fn nodes(&self) -> NodeSpan {
         match self.state {
             None => NodeSpan::Empty,
@@ -37,7 +50,7 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
         self.react(view_entity, world, &mut tracking);
         world
             .entity_mut(view_entity)
-            .insert((tracking, Name::new("Dynamic")));
+            .insert((tracking, Name::new("DynamicKeyed")));
     }
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
@@ -45,7 +58,8 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
             view.raze(entity, world);
         }
 
-        let view = (self.factory)(&Rcx::new(world, view_entity, tracking)).into();
+        let key = (self.key)(&Rcx::new(world, view_entity, tracking));
+        let view = (self.factory)(key).into();
         let entity = ViewRef::spawn(&view, view_entity, world);
         world.entity_mut(view_entity).insert(DisplayNodeChanged);
         self.state = Some((view, entity));
@@ -60,17 +74,14 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
     }
 }
 
-impl<V: Into<ViewRef> + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> From<Dynamic<V, F>>
-    for ViewRef
+impl<
+        Key: 'static,
+        KeyFn: Send + Sync + 'static + Fn(&Rcx) -> Key,
+        V: Into<ViewRef> + 'static,
+        F: Send + Sync + 'static + Fn(Key) -> V,
+    > From<DynamicKeyed<Key, KeyFn, V, F>> for ViewRef
 {
-    fn from(value: Dynamic<V, F>) -> Self {
+    fn from(value: DynamicKeyed<Key, KeyFn, V, F>) -> Self {
         ViewRef::new(value)
     }
 }
-
-// Commented out because it conflicts with the ViewTemplate -> ViewRef conversion.
-// impl<V: Into<ViewRef> + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> From<F> for ViewRef {
-//     fn from(value: F) -> Self {
-//         ViewRef::new(Dynamic::new(value))
-//     }
-// }

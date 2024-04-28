@@ -1,9 +1,11 @@
 # TODO
 
-- Graph crashes when you enter a second time, due to edges being despawned.
+- Property Editor.
+- Popup menus
 - Memoized Deriveds, with custom equality hook.
   - Needed to make Dynamic work with sliders
-- Components and Resources as signals.
+- Components and Resources as signals?
+  - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
@@ -21,6 +23,18 @@
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
 
+# Node Graph
+
+- split into its own crate
+- color editor
+- bug in shader when quadratics are straight
+- input should be a polyline
+- line colors should match terminal colors
+- better shadows
+- connecting and disconnecting
+- line should appear above when dragging, and have rounded ends.
+  - gesture
+
 # StyleBuilder
 
 - cursors
@@ -28,7 +42,13 @@
 # Obsidian
 
 - DisclosureTriangle - with transition
-- Multi-layered nine-patch button.
 - Menu
 - Focus Outlines (improve appearance)
 - Graph editor.
+
+# Possible crate structure
+
+- obsidian_ui_core
+- obsidian_ui_controls
+- obsidian_ui_reflect
+- obsidian_ui_graph
