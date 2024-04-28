@@ -1,5 +1,3 @@
-use std::any::TypeId;
-
 use bevy::{
     ecs::component::{ComponentId, Tick},
     prelude::*,
@@ -65,7 +63,7 @@ impl TrackingScope {
         self.resource_deps.insert(
             world
                 .components()
-                .get_resource_id(TypeId::of::<T>())
+                .resource_id::<T>()
                 .expect("Unknown resource type"),
         );
     }

@@ -48,6 +48,10 @@
 
 # Possible crate structure
 
+- bevy_reactor_signals
+- bevy_reactor_views
+- bevy_reactor_styles
+
 - obsidian_ui_core
 - obsidian_ui_controls
 - obsidian_ui_reflect
