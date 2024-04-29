@@ -10,8 +10,7 @@
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
 - Verify Razing / Despawning doesn't leak
-- No-arg .bind().
-  - Or possibly get rid of function presenters altogether.
+- Get rid of function presenters altogether.
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Don't execute dialog content if dialog not open.

@@ -107,13 +107,6 @@ impl Command for DespawnViewRoot {
 #[derive(Component, Clone)]
 pub struct ViewHandle(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
 
-impl ViewHandle {
-    /// Construct a new [`ViewHandle`] from a [`View`].
-    pub(crate) fn new(view: impl View + Sync + Send + 'static) -> Self {
-        Self(Arc::new(Mutex::new(view)))
-    }
-}
-
 /// A reference to a [`View`] which can be passed around as a parameter.
 pub struct ViewRef(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
 
@@ -205,21 +198,21 @@ pub trait ViewTemplate {
     /// Create the view for the control.
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef>;
 
-    /// Associate this view template with a state object that tracks the nodes created by
-    /// the view. Consumes the template.
-    fn into_view(self) -> ViewTemplateState<Self>
-    where
-        Self: Sized,
-    {
-        ViewTemplateState::new(self)
-    }
-
     /// Convert this template into a `ViewRef`
     fn to_ref(self) -> ViewRef
     where
         Self: Sized + Send + Sync + 'static,
     {
         ViewRef::new(ViewTemplateState::new(self))
+    }
+
+    /// Associate this view template with a state object that tracks the nodes created by
+    /// the view. Consumes the template.
+    fn to_root(self) -> ViewRoot
+    where
+        Self: Sized + Send + Sync + 'static,
+    {
+        ViewRoot::new(ViewTemplateState::new(self))
     }
 }
 
@@ -289,7 +282,7 @@ where
     W: Send + Sync + 'static,
 {
     fn from(value: W) -> Self {
-        ViewRef::new(value.into_view())
+        ViewRef::new(ViewTemplateState::new(value))
     }
 }
 

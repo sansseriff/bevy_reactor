@@ -265,8 +265,6 @@ Element::<NodeBundle>::new()
             let counter = cx.use_resource::<Counter>();
             format!("{}", counter.count)
         }),
-        ", ",
-        nested_presenter.bind(()),
         ": ",
     )),
 ```
@@ -327,24 +325,38 @@ element.with_children(
 There is also `For::index` which doesn't do this diffing, and operates strictly by array
 index.
 
-## Presenters
+## Custom View Templates
 
-A "presenter" is a function which can be called as a child view. Call `.bind()` to associate
-the presenter with a set of properties. The function will not be called right away, but only
-during the build phase.
+An object that implements the `ViewTemplate` trait represents a re-usable factory or template
+for views.
+
+```rust
+struct MyWidget {
+    label: String,
+}
+
+impl ViewTemplate for MyWidget {
+    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+        Element::new().with_children(self.label.clone())
+    }
+}
+```
+
+To invoke the template, simply include it as a child widget:
+
+```rust
+Element::<NodeBundle>::new()
+    .with_children((
+        MyWidget { label: "Hello" },
+        ": ",
+    )),
+```
+
+Alternatively, you can create spawn the template as a UI root by calling `.to_root()`:
 
 ```rust
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewRoot::new(
-        Element::<NodeBundle>::new()
-            .with_children((
-                nested_presenter.bind(()),
-            )),
-    ));
-}
-
-fn nested_presenter(cx: &mut Cx) -> impl View {
-    Element::<NodeBundle>::new()
+    commands.spawn(MyWidget.to_root());
 }
 ```
 
@@ -422,7 +434,7 @@ the entity id before creating the view nodes.
 # Examples
 
 Here's an example showing a complex example of using derived signals and callbacks.
-The `gradient` widget displays a horizontal slider that has a gradient background, and can
+The `GradientSlider` widget displays a horizontal slider that has a gradient background, and can
 be used for building a color editor. The inputs to the slider are signals:
 
 - The `gradient` signal tells the slider what colors to display in the background. In this
@@ -447,7 +459,7 @@ The derived signals and callbacks are automatically added as children of the cur
 and will be despawned when the scope is destroyed.
 
 ```rust
-gradient_slider.bind(GradientSliderProps {
+GradientSlider {
     gradient: cx.create_derived(|cx| {
         let rgb = cx.use_resource::<ColorEditState>().rgb;
         ColorGradient::new(&[
@@ -467,5 +479,5 @@ gradient_slider.bind(GradientSliderProps {
             cx.props / 255.0;
     })),
     ..default()
-}),
+}
 ```
