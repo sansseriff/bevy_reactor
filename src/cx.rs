@@ -39,7 +39,7 @@ pub trait RunContextWrite: RunContextRead {
         let world = self.world_mut();
         let tick = world.change_tick();
         let mut tracking = TrackingScope::new(tick);
-        let mut cx = Cx::new((), world, callback.id, &mut tracking);
+        let mut cx = Cx::new(world, callback.id, &mut tracking);
         let mut callback_entity = cx.world.entity_mut(callback.id);
         if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
             let mut callback_fn = cell.inner.take();
@@ -210,23 +210,23 @@ pub trait RunContextSetup<'p> {
     /// Arguments:
     /// * `effect` - The function that computes the output. This will be called with a single
     ///    parameter, which is a [`Cx`] object.
-    fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx<()>)>(&mut self, effect: F) {
+    fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx)>(&mut self, effect: F) {
         let owner = self.owner();
         let ticks = self.world_mut().change_tick();
         let action = Arc::new(Mutex::new(effect));
         let mut scope = TrackingScope::new(ticks);
         let entity = self.world_mut().spawn_empty().set_parent(owner).id();
         self.add_owned(entity);
-        action.lock().unwrap()(&mut Cx::new((), self.world_mut(), entity, &mut scope));
+        action.lock().unwrap()(&mut Cx::new(self.world_mut(), entity, &mut scope));
         self.world_mut()
             .entity_mut(entity)
             .insert((scope, ReactionHandle(action.clone())));
     }
 }
 
-impl<F: Send + Sync + 'static + FnMut(&mut Cx<()>)> Reaction for F {
+impl<F: Send + Sync + 'static + FnMut(&mut Cx)> Reaction for F {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let mut cx = Cx::new((), world, owner, tracking);
+        let mut cx = Cx::new(world, owner, tracking);
         (self)(&mut cx);
     }
 }
@@ -234,10 +234,7 @@ impl<F: Send + Sync + 'static + FnMut(&mut Cx<()>)> Reaction for F {
 /// Cx is a context parameter that is passed to presenters and callbacks. It contains the
 /// presenter's properties (passed from the parent presenter), plus a reactive scope and
 /// access to reactive data sources in the world.
-pub struct Cx<'p, 'w, Props = ()> {
-    /// The properties that were passed to the presenter from it's parent.
-    pub props: Props,
-
+pub struct Cx<'p, 'w> {
     /// Bevy World
     world: &'w mut World,
 
@@ -248,15 +245,13 @@ pub struct Cx<'p, 'w, Props = ()> {
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
 }
 
-impl<'p, 'w, Props> Cx<'p, 'w, Props> {
+impl<'p, 'w> Cx<'p, 'w> {
     pub(crate) fn new(
-        props: Props,
         world: &'w mut World,
         owner: Entity,
         tracking: &'p mut TrackingScope,
     ) -> Self {
         Self {
-            props,
             world,
             owner,
             tracking: RefCell::new(tracking),
@@ -349,7 +344,7 @@ impl<'p, 'w, Props> Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
+impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
     where
         T: Send + Sync + Copy + 'static,
@@ -391,7 +386,7 @@ impl<'p, 'w, Props> ReadMutable for Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> WriteMutable for Cx<'p, 'w, Props> {
+impl<'p, 'w> WriteMutable for Cx<'p, 'w> {
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)
     where
         T: Send + Sync + Copy + PartialEq + 'static,
@@ -407,7 +402,7 @@ impl<'p, 'w, Props> WriteMutable for Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> ReadDerived for Cx<'p, 'w, Props> {
+impl<'p, 'w> ReadDerived for Cx<'p, 'w> {
     fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
         R: Send + Sync + Copy + 'static,
@@ -433,7 +428,7 @@ impl<'p, 'w, Props> ReadDerived for Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> RunContextRead for Cx<'p, 'w, Props> {
+impl<'p, 'w> RunContextRead for Cx<'p, 'w> {
     fn use_resource<T: Resource>(&self) -> &T {
         self.tracking.borrow_mut().track_resource::<T>(self.world);
         self.world.resource::<T>()
@@ -447,13 +442,13 @@ impl<'p, 'w, Props> RunContextRead for Cx<'p, 'w, Props> {
     }
 }
 
-impl<'p, 'w, Props> RunContextWrite for Cx<'p, 'w, Props> {
+impl<'p, 'w> RunContextWrite for Cx<'p, 'w> {
     fn world_mut(&mut self) -> &mut World {
         self.world
     }
 }
 
-impl<'p, 'w, Props> RunContextSetup<'p> for Cx<'p, 'w, Props> {
+impl<'p, 'w> RunContextSetup<'p> for Cx<'p, 'w> {
     fn world_mut(&mut self) -> &mut World {
         self.world
     }

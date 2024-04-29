@@ -37,7 +37,7 @@ pub trait CreateFocusSignal {
     fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool>;
 }
 
-impl<'p, 'w, Props> CreateFocusSignal for Cx<'p, 'w, Props> {
+impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
     fn create_focus_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
             let focus = cx.use_resource::<Focus>();

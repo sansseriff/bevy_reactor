@@ -80,10 +80,7 @@ pub trait CreateBistableTransition {
     ) -> Signal<BistableTransitionState>;
 }
 
-impl<'w, 'p, Props> CreateBistableTransition for Cx<'w, 'p, Props>
-where
-    Props: Sync + Send + 'static,
-{
+impl<'w, 'p> CreateBistableTransition for Cx<'w, 'p> {
     fn create_bistable_transition(
         &mut self,
         open: Signal<bool>,

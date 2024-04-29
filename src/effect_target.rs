@@ -291,7 +291,7 @@ impl<F: FnMut(&mut Cx, Entity)> UpdateReaction<F> {
 impl<F: FnMut(&mut Cx, Entity)> Reaction for UpdateReaction<F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        let mut cx = Cx::new((), world, owner, tracking);
+        let mut cx = Cx::new(world, owner, tracking);
         (self.effect)(&mut cx, target);
     }
 }

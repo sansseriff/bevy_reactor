@@ -35,7 +35,7 @@ pub trait CreateHoverSignal {
     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool>;
 }
 
-impl<'p, 'w, Props> CreateHoverSignal for Cx<'p, 'w, Props> {
+impl<'p, 'w> CreateHoverSignal for Cx<'p, 'w> {
     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
         self.world_mut().entity_mut(target).insert(Hovering(false));
         let hovering = self.create_derived(move |cx| {

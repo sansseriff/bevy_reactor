@@ -30,7 +30,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
-    color::{palettes, LinearRgba, Srgba},
+    color::{palettes, Srgba},
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -514,38 +514,38 @@ impl ViewTemplate for ReactionsTable {
     }
 }
 
-fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
-    let id = cx.create_entity();
-    let hovering = cx.create_hover_signal(id);
-    // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
-    let color: Signal<LinearRgba> = cx.create_derived(move |cx| {
-        if hovering.get(cx) {
-            colors::ACCENT.into()
-        } else {
-            colors::U1.into()
-        }
-    });
+// fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
+//     let id = cx.create_entity();
+//     let hovering = cx.create_hover_signal(id);
+//     // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
+//     let color: Signal<LinearRgba> = cx.create_derived(move |cx| {
+//         if hovering.get(cx) {
+//             colors::ACCENT.into()
+//         } else {
+//             colors::U1.into()
+//         }
+//     });
 
-    overlays::OverlayShape::for_entity(id, |_cx, sb| {
-        sb.with_stroke_width(0.3)
-            .stroke_circle(Vec2::new(0., 0.), 5., 64)
-            .stroke_polygon(
-                &[Vec2::new(-4., -4.), Vec2::new(0., -4.), Vec2::new(-4., 0.)],
-                overlays::PolygonOptions {
-                    start_marker: overlays::StrokeMarker::Arrowhead,
-                    end_marker: overlays::StrokeMarker::Arrowhead,
-                    // dash_length: 0.1,
-                    // gap_length: 0.1,
-                    closed: true,
-                    ..default()
-                },
-            );
-    })
-    .with_color_signal(color)
-    .with_pickable(true)
-    // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
-    .insert(TargetCamera(cx.props))
-}
+//     overlays::OverlayShape::for_entity(id, |_cx, sb| {
+//         sb.with_stroke_width(0.3)
+//             .stroke_circle(Vec2::new(0., 0.), 5., 64)
+//             .stroke_polygon(
+//                 &[Vec2::new(-4., -4.), Vec2::new(0., -4.), Vec2::new(-4., 0.)],
+//                 overlays::PolygonOptions {
+//                     start_marker: overlays::StrokeMarker::Arrowhead,
+//                     end_marker: overlays::StrokeMarker::Arrowhead,
+//                     // dash_length: 0.1,
+//                     // gap_length: 0.1,
+//                     closed: true,
+//                     ..default()
+//                 },
+//             );
+//     })
+//     .with_color_signal(color)
+//     .with_pickable(true)
+//     // .with_transform(Transform::from_rotation(Quat::from_rotation_y(PI * 0.5)))
+//     .insert(TargetCamera(cx.props))
+// }
 
 struct TransformOverlayDemo;
 
