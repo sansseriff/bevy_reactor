@@ -1,6 +1,11 @@
 # TODO
 
 - Property Editor.
+  - Group:
+    - Disclosure
+    - Icon
+    - Title
+    - Dropdown
 - Popup menus
 - Memoized Deriveds, with custom equality hook.
   - Needed to make Dynamic work with sliders
@@ -10,7 +15,6 @@
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
 - Verify Razing / Despawning doesn't leak
-- Get rid of function presenters altogether.
 - use_element_rect hook - needed for popup menus
 - Composite buffers.
 - Don't execute dialog content if dialog not open.
@@ -55,3 +59,14 @@
 - obsidian_ui_controls
 - obsidian_ui_reflect
 - obsidian_ui_graph
+
+# Sticking Points
+
+- Figure out how to decouple Views from generic reactions. This would allow the low-level signal
+  code to live in a separate crate.
+- Currently For::each() requires cloning the iterator, but it shouldn't need to since only the
+  closure is long-lived, not the iterator itself. Is there some way I can use Rust lifetimes to
+  reduce the amount of cloning?
+- A long-standing request is the ability to use Bevy queries, but I have never figured out how
+  to do change detection on a query (that is, you can write a query that detects changes to
+  components, but there's no way to detect a change to query results).

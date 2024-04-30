@@ -17,8 +17,9 @@ use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
-        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, InspectorGroup,
+        ListView, Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps,
+        ToolButton, ToolPalette,
     },
     focus::TabGroup,
     size::Size,
@@ -408,42 +409,46 @@ impl ViewTemplate for DemoUi {
                             )),
                             ..default()
                         }),
-                        ToolPalette {
-                            size: Size::Xl,
-                            columns: 3,
-                            children: (
-                                ToolButton {
-                                    children: "Tool 1".into(),
-                                    corners: RoundedCorners::TopLeft,
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Tool 2".into(),
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Tool 3".into(),
-                                    corners: RoundedCorners::TopRight,
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Tool 4".into(),
-                                    corners: RoundedCorners::BottomLeft,
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Tool 5".into(),
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Tool 6".into(),
-                                    corners: RoundedCorners::BottomRight,
-                                    ..default()
-                                },
-                            )
-                                .fragment(),
-                            ..default()
+                        InspectorGroup {
+                            title: "Title".into(),
+                            body: "Hello".into(),
                         },
+                        // ToolPalette {
+                        //     size: Size::Xl,
+                        //     columns: 3,
+                        //     children: (
+                        //         ToolButton {
+                        //             children: "Tool 1".into(),
+                        //             corners: RoundedCorners::TopLeft,
+                        //             ..default()
+                        //         },
+                        //         ToolButton {
+                        //             children: "Tool 2".into(),
+                        //             ..default()
+                        //         },
+                        //         ToolButton {
+                        //             children: "Tool 3".into(),
+                        //             corners: RoundedCorners::TopRight,
+                        //             ..default()
+                        //         },
+                        //         ToolButton {
+                        //             children: "Tool 4".into(),
+                        //             corners: RoundedCorners::BottomLeft,
+                        //             ..default()
+                        //         },
+                        //         ToolButton {
+                        //             children: "Tool 5".into(),
+                        //             ..default()
+                        //         },
+                        //         ToolButton {
+                        //             children: "Tool 6".into(),
+                        //             corners: RoundedCorners::BottomRight,
+                        //             ..default()
+                        //         },
+                        //     )
+                        //         .fragment(),
+                        //     ..default()
+                        // },
                         ReactionsTable,
                     )),
                 Splitter {
