@@ -199,3 +199,40 @@ pub fn run_reactions(world: &mut World) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Resource, Default)]
+    struct TestResource(bool);
+
+    #[test]
+    fn test_resource_deps_changed() {
+        let mut world = World::default();
+        let tick = world.change_tick();
+        let mut scope = TrackingScope::new(tick);
+
+        // No dependencies, so the result should be false
+        assert!(!scope.dependencies_changed(&world, tick));
+
+        world.increment_change_tick();
+        world.insert_resource(TestResource(false));
+        scope.track_resource::<TestResource>(&world);
+        assert!(scope.resource_deps.len() == 1);
+
+        // Resource added
+        let tick = world.change_tick();
+        assert!(scope.dependencies_changed(&world, tick));
+
+        // Reset scope tick
+        scope.tick = tick;
+        assert!(!scope.dependencies_changed(&world, tick));
+
+        // Mutate the resource
+        world.increment_change_tick();
+        world.get_resource_mut::<TestResource>().unwrap().0 = true;
+        let tick = world.change_tick();
+        assert!(scope.dependencies_changed(&world, tick));
+    }
+}
