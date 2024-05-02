@@ -258,6 +258,11 @@ impl<'p, 'w> Cx<'p, 'w> {
         }
     }
 
+    /// Access to world from reactive context.
+    pub fn world(&self) -> &World {
+        self.world
+    }
+
     /// Access to mutable world from reactive context.
     pub fn world_mut(&mut self) -> &mut World {
         self.world
