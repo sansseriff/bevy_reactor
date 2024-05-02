@@ -70,3 +70,70 @@
 - A long-standing request is the ability to use Bevy queries, but I have never figured out how
   to do change detection on a query (that is, you can write a query that detects changes to
   components, but there's no way to detect a change to query results).
+
+# Reflection Notes
+
+- Starts with a Reflect object.
+- For the root object, we treat container types (structs, lists, tuples) transparently, meaning
+  that the contents of the inspector are the contents of the container. For value types,
+  the contents of the container are the type itself.
+- We need some way to register factories that can inspect the Reflect trait object and decide
+  which widget to instantiate.
+- Ultimately, this needs to return a ViewRef, or possibly Some(ViewRef).
+- We also need to track which items are Optional/None and add them to the undefined fields list.
+- We also need to sort the field names (maybe this should be a preference).
+- Nested structs:
+  - remove an optional item
+  - add an optional item with a default value.
+  - notify container that its contents have changed.
+- Each widget has a path which allows access to the specific field. Yay!
+
+```ts
+/** Abstract interface that allows access to a single object field. */
+export interface IFieldAccessors<FieldType = unknown, Key = KeyType> {
+  /** Set the current value of the field. */
+  getValue(key: Key): FieldType;
+
+  /** Set the current value of the field. */
+  setValue?(key: Key, newValue: FieldType): void;
+
+  /** Lets us know that the value was mutated. */
+  mutateValue?(key: Key): void;
+
+  /** Remove the field from it's parent. */
+  remove?(key: Key): void;
+
+  /** For array fields, move the element up. */
+  moveUp?(key: Key): void;
+
+  /** For array fields, move the element down. */
+  moveDown?(key: Key): void;
+
+  /** For array fields, whether the element can move up. */
+  canMoveUp?(key: Key): boolean;
+
+  /** For array fields, whether the element can move down. */
+  canMoveDown?(key: Key): boolean;
+
+  /** Whether this field can be removed. */
+  canRemove?(key: Key): boolean;
+}
+
+/** Defines callbacks that provide access to a field within an object or array. */
+export interface IPropertyEditProps<
+  Cls = unknown,
+  DescriptorType = ITypeDescriptor<Cls>
+> {
+  /** Type fieldDescriptor for this field. */
+  descriptor: DescriptorType;
+
+  /** Name of this field. */
+  fieldKey: keyof Cls;
+
+  /** Current value of the field. Presumed to be immutable. */
+  fieldAccess: IPropertyAccessors<Cls>;
+
+  /** If true, this field is inherited from the object's prototype. */
+  inherited?: boolean;
+}
+```

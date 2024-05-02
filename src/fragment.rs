@@ -28,6 +28,19 @@ impl Fragment {
                 .collect(),
         }
     }
+
+    /// Construct a new `Fragment` from an array of `ViewRef`s.
+    pub fn from_slice(views: &[ViewRef]) -> Self {
+        Self {
+            children: views
+                .iter()
+                .map(|v| ChildView {
+                    view: v.clone(),
+                    entity: None,
+                })
+                .collect(),
+        }
+    }
 }
 
 impl View for Fragment {

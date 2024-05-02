@@ -10,6 +10,7 @@ pub const U4: Srgba = Srgba::new(0.486, 0.486, 0.529, 1.0);
 pub const U5: Srgba = Srgba::new(1.0, 1.0, 1.0, 1.0);
 pub const BACKGROUND: Srgba = Srgba::new(0.118, 0.118, 0.133, 1.0);
 pub const FOREGROUND: Srgba = Srgba::new(0.925, 0.925, 0.925, 1.0);
+pub const LABEL: Srgba = Srgba::new(0.7, 0.7, 0.7, 1.0);
 pub const ACCENT: Srgba = Srgba::new(0.055, 0.647, 0.914, 1.0);
 pub const ANIMATION: Srgba = Srgba::new(0.514, 0.094, 0.263, 1.0);
 pub const ASSET: Srgba = Srgba::new(0.576, 0.200, 0.918, 1.0);

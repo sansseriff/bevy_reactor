@@ -389,19 +389,19 @@ impl<'a, 'w> StyleBuilderLayout for StyleBuilder<'a, 'w> {
     }
 
     fn grid_row_start(&mut self, val: i16) -> &mut Self {
-        self.style.grid_row.set_start(val);
+        self.style.grid_row = self.style.grid_row.set_start(val);
         self.style_changed = true;
         self
     }
 
     fn grid_row_span(&mut self, val: u16) -> &mut Self {
-        self.style.grid_row.set_span(val);
+        self.style.grid_row = self.style.grid_row.set_span(val);
         self.style_changed = true;
         self
     }
 
     fn grid_row_end(&mut self, val: i16) -> &mut Self {
-        self.style.grid_row.set_end(val);
+        self.style.grid_row = self.style.grid_row.set_end(val);
         self.style_changed = true;
         self
     }
@@ -413,19 +413,19 @@ impl<'a, 'w> StyleBuilderLayout for StyleBuilder<'a, 'w> {
     }
 
     fn grid_column_start(&mut self, val: i16) -> &mut Self {
-        self.style.grid_column.set_start(val);
+        self.style.grid_column = self.style.grid_column.set_start(val);
         self.style_changed = true;
         self
     }
 
     fn grid_column_span(&mut self, val: u16) -> &mut Self {
-        self.style.grid_column.set_span(val);
+        self.style.grid_column = self.style.grid_column.set_span(val);
         self.style_changed = true;
         self
     }
 
     fn grid_column_end(&mut self, val: i16) -> &mut Self {
-        self.style.grid_column.set_end(val);
+        self.style.grid_column = self.style.grid_column.set_end(val);
         self.style_changed = true;
         self
     }

@@ -8,7 +8,7 @@ use super::ScrollView;
 fn style_listview(ss: &mut StyleBuilder) {
     ss.background_color(colors::U1)
         .border_radius(5.0)
-        .padding(4);
+        .padding(3);
 }
 
 fn style_listview_inner(ss: &mut StyleBuilder) {

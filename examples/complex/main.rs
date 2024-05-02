@@ -1,6 +1,7 @@
 //! Example of a simple UI layout
 mod color_edit;
 mod node_graph_demo;
+mod reflect_demo;
 mod transform_overlay;
 
 use bevy_mod_picking::{
@@ -17,14 +18,14 @@ use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 use obsidian_ui::{
     colors,
     controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, InspectorGroup,
-        ListView, Slider, Splitter, SplitterDirection, Swatch, TextInput, TextInputProps,
-        ToolButton, ToolPalette,
+        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
+        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
     },
     focus::TabGroup,
     size::Size,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
+use reflect_demo::{InspectorPlugin, ResourcePropertyInspector, TestStruct};
 use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
@@ -153,6 +154,7 @@ fn main() {
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
         .init_resource::<DemoGraphRoot>()
+        .init_resource::<TestStruct>()
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,
@@ -176,6 +178,7 @@ fn main() {
         //     BevyUiBackend,
         //     RaycastBackend,
         // ))
+        .add_plugins(InspectorPlugin)
         .add_plugins((
             ReactorPlugin,
             ObsidianUiPlugin,
@@ -409,10 +412,7 @@ impl ViewTemplate for DemoUi {
                             )),
                             ..default()
                         }),
-                        InspectorGroup {
-                            title: "Title".into(),
-                            body: "Hello".into(),
-                        },
+                        ResourcePropertyInspector::<TestStruct>::new(),
                         // ToolPalette {
                         //     size: Size::Xl,
                         //     columns: 3,

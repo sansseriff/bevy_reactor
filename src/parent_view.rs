@@ -106,6 +106,20 @@ impl<I: Into<ViewRef>> ChildViewTuple for I {
     }
 }
 
+impl ChildViewTuple for Vec<ViewRef> {
+    fn get_refs(self, out: &mut Vec<ViewRef>) {
+        out.extend(self);
+    }
+
+    fn to_vec(self) -> Vec<ViewRef> {
+        self
+    }
+
+    fn fragment(self) -> ViewRef {
+        ViewRef::new(Fragment::from_slice(self.as_slice()))
+    }
+}
+
 #[impl_for_tuples(1, 15)]
 #[tuple_types_custom_trait_bound(ChildViewTuple)]
 impl ChildViewTuple for Tuple {
