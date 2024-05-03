@@ -39,6 +39,19 @@ impl Size {
         }
     }
 
+    /// Returns the height of the widget in pixels.
+    pub fn border_radius(&self) -> f32 {
+        match self {
+            Size::Xl => 8.0,
+            Size::Lg => 6.0,
+            Size::Md => 5.0,
+            Size::Sm => 4.0,
+            Size::Xs => 3.0,
+            Size::Xxs => 3.0,
+            Size::Xxxs => 3.0,
+        }
+    }
+
     /// Returns the desired font size for the widget.
     pub fn font_size(&self) -> f32 {
         match self {

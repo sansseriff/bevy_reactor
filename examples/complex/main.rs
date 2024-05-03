@@ -154,7 +154,10 @@ fn main() {
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
         .init_resource::<DemoGraphRoot>()
-        .init_resource::<TestStruct>()
+        .insert_resource(TestStruct {
+            unlit: Some(true),
+            ..default()
+        })
         .insert_resource(PanelWidth(200.))
         .insert_resource(ColorEditState {
             mode: ColorMode::Rgb,

@@ -9,6 +9,7 @@ use bevy::{
         AccessibilityNode, Focus,
     },
     color::Luminance,
+    math::VectorSpace,
     prelude::*,
     ui,
 };
@@ -84,6 +85,9 @@ pub struct Button {
 
     /// If true, set focus to this button when it's added to the UI.
     pub autofocus: bool,
+
+    /// If true, render the button in a 'minimal' style with no background and reduced padding.
+    pub minimal: bool,
 }
 
 impl ViewTemplate for Button {
@@ -96,6 +100,7 @@ impl ViewTemplate for Button {
 
         let disabled = self.disabled;
         let corners = self.corners;
+        let minimal = self.minimal;
 
         let size = self.size;
 
@@ -105,6 +110,9 @@ impl ViewTemplate for Button {
                 style_button,
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height()).font_size(size.font_size());
+                    if minimal {
+                        ss.padding(0);
+                    }
                 },
                 self.style.clone(),
             ))
@@ -174,7 +182,7 @@ impl ViewTemplate for Button {
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
                     .with_styles(style_button_bg)
-                    .insert(corners.to_border_radius(5.0))
+                    .insert(corners.to_border_radius(self.size.border_radius()))
                     .create_effect(move |cx, ent| {
                         let is_pressed = pressed.get(cx);
                         let is_hovering = hovering.get(cx);
@@ -186,8 +194,14 @@ impl ViewTemplate for Button {
                         };
                         let color = match (is_pressed, is_hovering) {
                             (true, _) => base_color.lighter(0.05),
-                            (false, true) => base_color.lighter(0.01),
-                            (false, false) => base_color,
+                            (false, true) => base_color.lighter(0.02),
+                            (false, false) => {
+                                if minimal {
+                                    Srgba::ZERO
+                                } else {
+                                    base_color
+                                }
+                            }
                         };
                         let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                         bg.0 = color.into();

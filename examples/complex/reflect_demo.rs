@@ -3,19 +3,43 @@ use bevy::{
     reflect::{ReflectKind, ReflectRef},
 };
 use bevy_reactor::*;
-use obsidian_ui::controls::{
-    Checkbox, InspectorFieldLabel, InspectorFieldReadonlyValue, InspectorGroup,
+use obsidian_ui::{
+    colors,
+    controls::{
+        Button, Checkbox, InspectorFieldLabel, InspectorFieldReadonlyValue, InspectorGroup, Spacer,
+    },
+    size::Size,
 };
+
+// fn style_button_icon(ss: &mut StyleBuilder) {
+//     ss.height(16).width(12).pointer_events(false);
+// }
+
+fn style_close_icon(ss: &mut StyleBuilder) {
+    ss.height(12)
+        .width(12)
+        .background_image("obsidian_ui://icons/close.png")
+        .background_image_color(colors::DIM)
+        .margin((4, 0));
+}
+
+fn style_close_icon_small(ss: &mut StyleBuilder) {
+    ss.height(10)
+        .width(10)
+        .background_image("obsidian_ui://icons/close.png")
+        .background_image_color(colors::DIM)
+        .margin((2, 0));
+}
 
 #[derive(Resource, Debug, Reflect, Clone, Default)]
 pub struct TestStruct {
-    selected: bool,
-    scale: f32,
-    color: Srgba,
-    position: Vec3,
+    pub selected: bool,
+    pub scale: f32,
+    pub color: Srgba,
+    pub position: Vec3,
 
-    unlit: Option<bool>,
-    roughness: Option<f32>,
+    pub unlit: Option<bool>,
+    pub roughness: Option<f32>,
 }
 
 trait Inspectable: Send + Sync {
@@ -38,6 +62,7 @@ impl PropertyInspector {
                 for findex in 0..num_fields {
                     // let name = str.name_at(findex).unwrap();
                     let field = str.field_at(findex).unwrap();
+                    let name = str.name_at(findex).unwrap();
                     if field.reflect_kind() == ReflectKind::Enum
                         && field
                             .reflect_type_path()
@@ -46,17 +71,23 @@ impl PropertyInspector {
                         let ReflectRef::Enum(enum_ref) = field.reflect_ref() else {
                             panic!("Expected ReflectRef::Enum");
                         };
+                        let inner = enum_ref.field_at(0);
                         if enum_ref.variant_name() == "None" {
-                            // println!("Skipping None for {}", name);
+                            println!("Skipping None for {}", name);
                             continue;
+                        } else {
+                            for factory in factories.0.iter().rev() {
+                                if factory.create_inspector(name, inner.unwrap(), &mut fields) {
+                                    break;
+                                }
+                            }
                         }
-                    }
-
-                    let name = str.name_at(findex).unwrap();
-                    let field = str.field_at(findex).unwrap();
-                    for factory in factories.0.iter().rev() {
-                        if factory.create_inspector(name, field, &mut fields) {
-                            break;
+                    } else {
+                        let field = str.field_at(findex).unwrap();
+                        for factory in factories.0.iter().rev() {
+                            if factory.create_inspector(name, field, &mut fields) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -76,7 +107,19 @@ impl PropertyInspector {
 impl ViewTemplate for PropertyInspector {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         InspectorGroup {
-            title: self.target.name(cx).into(),
+            title: (
+                self.target.name(cx),
+                Spacer,
+                Button {
+                    children: Element::<NodeBundle>::new()
+                        .with_styles(style_close_icon)
+                        .into(),
+                    size: Size::Xxs,
+                    minimal: true,
+                    ..default()
+                },
+            )
+                .fragment(),
             body: self.create_fields(cx, self.target.as_ref(), ""),
             expanded: Signal::Constant(true),
         }
@@ -153,7 +196,19 @@ impl InspectorFactory for DefaultInspectorFactory {
             ReflectRef::Struct(_) => {
                 views.push(
                     InspectorFieldLabel {
-                        children: name.into(),
+                        children: (
+                            name,
+                            Spacer,
+                            Button {
+                                children: Element::<NodeBundle>::new()
+                                    .with_styles(style_close_icon_small)
+                                    .into(),
+                                size: Size::Xxxs,
+                                minimal: true,
+                                ..default()
+                            },
+                        )
+                            .fragment(),
                         ..default()
                     }
                     .to_ref(),

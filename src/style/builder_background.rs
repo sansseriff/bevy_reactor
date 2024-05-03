@@ -22,6 +22,9 @@ pub trait StyleBuilderBackground {
 
     /// Set the background color, or `None` for transparent.
     fn background_color(&mut self, color: impl ColorParam) -> &mut Self;
+
+    /// Set the background color, or `None` for transparent.
+    fn background_image_color(&mut self, color: impl ColorParam) -> &mut Self;
 }
 
 impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
@@ -80,6 +83,22 @@ impl<'a, 'w> StyleBuilderBackground for StyleBuilder<'a, 'w> {
         } else {
             self.target.remove::<ui::BackgroundColor>();
         }
+        self
+    }
+
+    fn background_image_color(&mut self, color: impl ColorParam) -> &mut Self {
+        match (color.to_val(), self.target.get_mut::<UiImage>()) {
+            (Some(color), Some(mut uii)) => {
+                uii.color = color;
+            }
+            (Some(color), None) => {
+                self.target.insert(UiImage { color, ..default() });
+            }
+            (None, Some(_)) => {
+                self.target.remove::<UiImage>();
+            }
+            _ => (),
+        };
         self
     }
 }

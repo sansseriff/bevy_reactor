@@ -23,7 +23,8 @@ fn style_inspector_group_header(ss: &mut StyleBuilder) {
             bottom_right: ui::Val::Px(0.0),
         })
         .color(colors::FOREGROUND)
-        .padding((8, 0));
+        .padding_left(8)
+        .padding_right(3);
 }
 
 fn style_inspector_group_body(ss: &mut StyleBuilder) {
@@ -97,7 +98,7 @@ fn style_inspector_field_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::FlexStart)
         .font_size(16)
-        .color(colors::LABEL);
+        .color(colors::DIM);
 }
 
 /// Label for editable field in an inspector.
@@ -129,7 +130,7 @@ fn style_inspector_field_readonly_value(ss: &mut StyleBuilder) {
         .border(1)
         .border_color(colors::U3)
         .font_size(16)
-        .color(colors::LABEL)
+        .color(colors::DIM)
         .padding((4, 1));
 }
 
