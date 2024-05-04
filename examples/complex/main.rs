@@ -25,7 +25,8 @@ use obsidian_ui::{
     size::Size,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
-use reflect_demo::{InspectorPlugin, ResourcePropertyInspector, TestStruct};
+use obsidian_ui_inspect::InspectorPlugin;
+use reflect_demo::{ResourcePropertyInspector, TestStruct};
 use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;

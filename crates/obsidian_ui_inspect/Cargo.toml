@@ -1,0 +1,9 @@
+[package]
+name = "obsidian_ui_inspect"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy.git" }
+obsidian_ui = { path = "../obsidian_ui" }
+bevy_reactor = { path = "../.." }
