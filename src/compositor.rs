@@ -34,7 +34,7 @@ pub struct Compositor {
 impl Compositor {
     /// Construct a new `Compositor`.
     pub fn new<V: ChildViewTuple>(views: V) -> Self {
-        let child_views = views.to_vec();
+        let child_views = views.to_child_array().0;
         Self {
             children: child_views
                 .iter()

@@ -83,7 +83,7 @@ struct DragState {
 #[derive(Default)]
 pub struct ScrollView {
     /// Views for the scrolling content
-    pub children: ViewRef,
+    pub children: ChildArray,
     /// Style to be applied to the entire scroll view,
     pub style: StyleHandle,
     /// Style to be applied to the content region,
@@ -102,7 +102,7 @@ impl ScrollView {
 
     /// Set the child views for this element.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 

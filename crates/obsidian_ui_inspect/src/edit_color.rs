@@ -26,18 +26,14 @@ impl ViewTemplate for FieldEditSrgba {
             FieldLabel {
                 field: self.field.clone(),
             },
-            InspectorFieldReadonlyValue {
-                children: (
-                    Swatch::new(value).size(Size::Xxxs),
-                    Spacer,
-                    text_computed(move |cx| {
-                        let value = value.get(cx);
-                        value.to_hex()
-                    }),
-                )
-                    .to_ref(),
-                ..default()
-            },
+            InspectorFieldReadonlyValue::new().children((
+                Swatch::new(value).size(Size::Xxxs),
+                Spacer,
+                text_computed(move |cx| {
+                    let value = value.get(cx);
+                    value.to_hex()
+                }),
+            )),
         ))
     }
 }

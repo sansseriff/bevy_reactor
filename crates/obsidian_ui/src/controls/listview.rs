@@ -24,7 +24,7 @@ pub struct ListView {
     pub style: StyleHandle,
 
     /// The content of the dialog header.
-    pub children: ViewRef,
+    pub children: ChildArray,
 }
 
 impl ListView {
@@ -41,7 +41,7 @@ impl ListView {
 
     /// Set the child views for this element.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 }

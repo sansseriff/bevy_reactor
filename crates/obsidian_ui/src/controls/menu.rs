@@ -62,13 +62,13 @@ pub struct MenuButton {
     pub minimal: bool,
 
     /// The content to display inside the button.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
 
     /// The popup to display when the button is clicked.
-    pub popup: ViewRef,
+    pub popup: ChildArray,
 
     /// The tab index of the button (default 0).
     pub tab_index: i32,
@@ -124,7 +124,7 @@ impl MenuButton {
 
     /// Set the button children.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 
@@ -136,7 +136,7 @@ impl MenuButton {
 
     /// Set the button popup.
     pub fn popup<V: ChildViewTuple>(mut self, popup: V) -> Self {
-        self.popup = popup.to_ref();
+        self.popup = popup.to_child_array();
         self
     }
 
@@ -317,7 +317,7 @@ fn style_popup(ss: &mut StyleBuilder) {
 #[derive(Default)]
 pub struct MenuPopup {
     /// The children of the popup.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Additional styles to apply to the popup.
     pub style: StyleHandle,
@@ -334,7 +334,7 @@ impl MenuPopup {
 
     /// Set the children of the popup.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 
@@ -393,7 +393,7 @@ fn style_menu_item(ss: &mut StyleBuilder) {
 #[derive(Default)]
 pub struct MenuItem {
     /// The label of the menu item.
-    pub label: ViewRef,
+    pub label: ChildArray,
 
     /// Additional styles to apply to the menu item.
     pub style: StyleHandle,
@@ -418,7 +418,7 @@ impl MenuItem {
 
     /// Set the label of the menu item.
     pub fn label<V: ChildViewTuple>(mut self, label: V) -> Self {
-        self.label = label.to_ref();
+        self.label = label.to_child_array();
         self
     }
 

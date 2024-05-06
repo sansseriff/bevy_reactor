@@ -1,24 +1,29 @@
-use crate::{Fragment, ViewRef};
+use crate::ViewRef;
 use bevy::ecs::{entity::Entity, world::World};
 use impl_trait_for_tuples::*;
+use smallvec::SmallVec;
+
+/// A reference to an array of child views.
+#[derive(Default, Clone)]
+pub struct ChildArray(pub(crate) SmallVec<[ViewRef; 4]>);
 
 /// A view which can contain child views. This will generate child entities when spawned.
 pub trait ParentView: Sized {
     /// Get the child views for this element.
-    fn children(&self) -> &Vec<ChildView>;
+    fn get_children(&self) -> &Vec<ChildView>;
 
     /// Get a mutable reference to the child views for this element.
-    fn children_mut(&mut self) -> &mut Vec<ChildView>;
+    fn get_children_mut(&mut self) -> &mut Vec<ChildView>;
 
     /// Return a flat list of child entities derived from the child views.
-    fn child_nodes(&self) -> Vec<Entity> {
+    fn child_entities(&self) -> Vec<Entity> {
         let mut count: usize = 0;
-        for child in self.children().iter() {
+        for child in self.get_children().iter() {
             count += child.view.nodes().count();
         }
 
         let mut flat: Vec<Entity> = Vec::with_capacity(count);
-        for child in self.children().iter() {
+        for child in self.get_children().iter() {
             child.view.nodes().flatten(&mut flat);
         }
 
@@ -27,11 +32,11 @@ pub trait ParentView: Sized {
 
     /// Set the child views for this element.
     fn with_children<V: ChildViewTuple>(mut self, views: V) -> Self {
-        if !self.children().is_empty() {
+        if !self.get_children().is_empty() {
             panic!("Children already set");
         }
-        self.children_mut()
-            .extend(views.to_vec().iter().map(|v| ChildView {
+        self.get_children_mut()
+            .extend(views.to_child_array().0.iter().map(|v| ChildView {
                 view: v.clone(),
                 entity: None,
             }));
@@ -40,10 +45,10 @@ pub trait ParentView: Sized {
 
     /// Set a single child view for this element.
     fn with_child(mut self, view: &ViewRef) -> Self {
-        if !self.children().is_empty() {
+        if !self.get_children().is_empty() {
             panic!("Children already set");
         }
-        self.children_mut().push(ChildView {
+        self.get_children_mut().push(ChildView {
             view: view.clone(),
             entity: None,
         });
@@ -52,7 +57,7 @@ pub trait ParentView: Sized {
 
     /// Add a child views to this element.
     fn append_child(mut self, view: &ViewRef) -> Self {
-        self.children_mut().push(ChildView {
+        self.get_children_mut().push(ChildView {
             view: view.clone(),
             entity: None,
         });
@@ -62,7 +67,7 @@ pub trait ParentView: Sized {
     /// Raze all child views.
     fn raze_children(&mut self, world: &mut World) {
         // Raze all child views
-        for child in self.children_mut().drain(..) {
+        for child in self.get_children_mut().drain(..) {
             // Calling `raze` on the child view will despawn the child entity.
             let inner = child.view;
             inner.raze(child.entity.unwrap(), world);
@@ -82,67 +87,54 @@ pub struct ChildView {
 #[doc(hidden)]
 pub trait ChildViewTuple {
     #[doc(hidden)]
-    fn get_refs(self, out: &mut Vec<ViewRef>);
+    fn flatten(self, out: &mut ChildArray);
 
     /// Convert this tuple of views into a flat array.
-    fn to_vec(self) -> Vec<ViewRef>;
-
-    /// Convert this tuple of views into a [`ViewRef`], either as a reference to a single view
-    /// or as a [`Fragment`] if there are multiple views.
-    fn to_ref(self) -> ViewRef;
+    fn to_child_array(self) -> ChildArray;
 }
 
 impl<I: Into<ViewRef>> ChildViewTuple for I {
-    fn get_refs(self, out: &mut Vec<ViewRef>) {
-        out.push(self.into());
+    fn flatten(self, out: &mut ChildArray) {
+        out.0.push(self.into());
     }
 
-    fn to_vec(self) -> Vec<ViewRef> {
-        let mut out = Vec::new();
-        self.get_refs(&mut out);
+    fn to_child_array(self) -> ChildArray {
+        let mut out = ChildArray::default();
+        self.flatten(&mut out);
         out
-    }
-
-    fn to_ref(self) -> ViewRef {
-        self.into()
     }
 }
 
 impl ChildViewTuple for Vec<ViewRef> {
-    fn get_refs(self, out: &mut Vec<ViewRef>) {
-        out.extend(self);
+    fn flatten(self, out: &mut ChildArray) {
+        out.0.extend(self);
     }
 
-    fn to_vec(self) -> Vec<ViewRef> {
+    fn to_child_array(self) -> ChildArray {
+        ChildArray(SmallVec::from_vec(self))
+    }
+}
+
+impl ChildViewTuple for ChildArray {
+    fn flatten(self, out: &mut ChildArray) {
+        out.0.extend(self.0);
+    }
+
+    fn to_child_array(self) -> ChildArray {
         self
-    }
-
-    fn to_ref(self) -> ViewRef {
-        if self.len() == 1 {
-            self[0].clone()
-        } else {
-            ViewRef::new(Fragment::from_slice(self.as_slice()))
-        }
     }
 }
 
 #[impl_for_tuples(1, 15)]
 #[tuple_types_custom_trait_bound(ChildViewTuple)]
 impl ChildViewTuple for Tuple {
-    fn get_refs(self, out: &mut Vec<ViewRef>) {
-        for_tuples!(#( self.Tuple.get_refs(out); )*)
+    fn flatten(self, out: &mut ChildArray) {
+        for_tuples!(#( self.Tuple.flatten(out); )*)
     }
 
-    fn to_vec(self) -> Vec<ViewRef> {
-        let mut out = Vec::new();
-        self.get_refs(&mut out);
+    fn to_child_array(self) -> ChildArray {
+        let mut out = ChildArray::default();
+        self.flatten(&mut out);
         out
-    }
-
-    fn to_ref(self) -> ViewRef {
-        /// TODO: I don't like that this creates a temporary Vec when there's only one child.
-        let mut out = Vec::new();
-        self.get_refs(&mut out);
-        out.to_ref()
     }
 }

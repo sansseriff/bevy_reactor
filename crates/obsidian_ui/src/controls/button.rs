@@ -68,7 +68,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -128,7 +128,7 @@ impl Button {
 
     /// Set the child views for this element.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 

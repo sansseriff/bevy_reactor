@@ -111,9 +111,9 @@ impl ViewTemplate for ColorEdit {
                 DynamicKeyed::new(
                     |cx| cx.use_resource::<ColorEditState>().mode,
                     |mode| match mode {
-                        ColorMode::Rgb => RgbSliders.to_ref(),
-                        ColorMode::Hsl => HslSliders.to_ref(),
-                        ColorMode::Recent => "Recent".to_ref(),
+                        ColorMode::Rgb => RgbSliders.to_view_ref(),
+                        ColorMode::Hsl => HslSliders.to_view_ref(),
+                        ColorMode::Recent => TextStatic::new("Recent".to_string()).into(),
                     },
                 ),
             ))

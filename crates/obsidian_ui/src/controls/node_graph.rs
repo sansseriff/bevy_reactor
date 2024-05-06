@@ -30,10 +30,29 @@ fn style_node_graph_scroll(ss: &mut StyleBuilder) {
 #[derive(Default)]
 pub struct GraphDisplay {
     /// Nodes within the node graph.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Additional styles to be applied to the graph element.
     pub style: StyleHandle,
+}
+
+impl GraphDisplay {
+    /// Create a new graph display.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_child_array();
+        self
+    }
+
+    /// Set the additional styles for the button.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
 }
 
 impl ViewTemplate for GraphDisplay {
@@ -153,10 +172,53 @@ pub struct NodeDisplay {
     /// Whether the node is currently selected.
     pub selected: Signal<bool>,
     /// The content of the node.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Callback called when the title bar is dragged.
     pub on_drag: Option<Callback<Vec2>>,
+}
+
+impl NodeDisplay {
+    /// Create a new node display.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the seletion state of the node.
+    pub fn selected(mut self, selected: Signal<bool>) -> Self {
+        self.selected = selected;
+        self
+    }
+
+    /// Set the position of the node.
+    pub fn position(mut self, position: Signal<Vec2>) -> Self {
+        self.position = position;
+        self
+    }
+
+    /// Set the title of the node.
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = Signal::Constant(title.to_string());
+        self
+    }
+
+    /// Set the title of the node.
+    pub fn title_signal(mut self, title: Signal<String>) -> Self {
+        self.title = title;
+        self
+    }
+
+    /// Set the children of the node.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_child_array();
+        self
+    }
+
+    /// Set the callback called when the title bar is dragged.
+    pub fn on_drag(mut self, on_drag: Callback<Vec2>) -> Self {
+        self.on_drag = Some(on_drag);
+        self
+    }
 }
 
 impl ViewTemplate for NodeDisplay {

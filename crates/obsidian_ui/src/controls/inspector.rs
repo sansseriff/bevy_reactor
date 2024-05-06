@@ -62,11 +62,36 @@ fn style_inspector_group_body(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct InspectorGroup {
     /// The content of the title section.
-    pub title: ViewRef,
+    pub title: ChildArray,
     /// The content of the body section.
-    pub body: ViewRef,
+    pub body: ChildArray,
     /// Whether the group is expanded or not. When collapsed, only the title is shown.
     pub expanded: Signal<bool>,
+}
+
+impl InspectorGroup {
+    /// Create a new inspector group with the given title and body.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the title of the inspector group.
+    pub fn title<V: ChildViewTuple>(mut self, title: V) -> Self {
+        self.title = title.to_child_array();
+        self
+    }
+
+    /// Set the body of the inspector group.
+    pub fn body<V: ChildViewTuple>(mut self, body: V) -> Self {
+        self.body = body.to_child_array();
+        self
+    }
+
+    /// Set the expanded signal of the inspector group.
+    pub fn expanded(mut self, expanded: Signal<bool>) -> Self {
+        self.expanded = expanded;
+        self
+    }
 }
 
 impl ViewTemplate for InspectorGroup {
@@ -138,9 +163,28 @@ fn style_inspector_field_readonly_value(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct InspectorFieldReadonlyValue {
     /// The text representation of the value.
-    pub children: ViewRef,
+    pub children: ChildArray,
     /// Additional styles for the label.
     pub style: StyleHandle,
+}
+
+impl InspectorFieldReadonlyValue {
+    /// Create a new readonly value with the given text.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_child_array();
+        self
+    }
+
+    /// Set the additional styles for the button.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
 }
 
 impl ViewTemplate for InspectorFieldReadonlyValue {
@@ -151,6 +195,6 @@ impl ViewTemplate for InspectorFieldReadonlyValue {
                 style_inspector_field_readonly_value,
                 self.style.clone(),
             ))
-            .with_child(&self.children)
+            .with_children(self.children.clone())
     }
 }

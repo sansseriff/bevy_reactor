@@ -25,13 +25,13 @@ impl InspectorFactory for DefaultInspectorFactory {
                             FieldEditSrgba {
                                 field: field.clone(),
                             }
-                            .to_ref(),
+                            .to_view_ref(),
                         );
                         return true;
                     }
 
                     _ => {
-                        views.push(FieldEditFallback(field.clone()).to_ref());
+                        views.push(FieldEditFallback(field.clone()).to_view_ref());
                     }
                 }
                 // println!("Struct: {}", s.reflect_type_path());
@@ -68,14 +68,12 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "TupleStruct:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("TupleStruct:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::Tuple(_) => {
@@ -84,14 +82,12 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "Tuple:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("Tuple:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::List(_) => {
@@ -100,14 +96,12 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "List:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("List:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::Array(_) => {
@@ -116,14 +110,12 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "Array:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("Array:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::Map(_) => {
@@ -132,14 +124,12 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "Map:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("Map:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::Enum(_) => {
@@ -148,23 +138,21 @@ impl InspectorFactory for DefaultInspectorFactory {
                         children: name.into(),
                         ..default()
                     }
-                    .to_ref(),
+                    .to_view_ref(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue {
-                        children: "Enum:TODO".into(),
-                        ..default()
-                    }
-                    .to_ref(),
+                    InspectorFieldReadonlyValue::new()
+                        .children("Enum:TODO")
+                        .to_view_ref(),
                 );
             }
             ReflectRef::Value(v) => match v.reflect_type_path() {
                 "bool" => {
-                    views.push(FieldEditBool(field.clone()).to_ref());
+                    views.push(FieldEditBool(field.clone()).to_view_ref());
                 }
 
                 _ => {
-                    views.push(FieldEditFallback(field.clone()).to_ref());
+                    views.push(FieldEditFallback(field.clone()).to_view_ref());
                 }
             },
         }

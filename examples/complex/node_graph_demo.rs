@@ -259,8 +259,8 @@ fn style_input_label(ss: &mut StyleBuilder) {
 
 impl ViewTemplate for NodeGraphDemo {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        GraphDisplay {
-            children: (
+        GraphDisplay::new()
+            .children((
                 For::each(
                     |cx| {
                         let graph = cx.use_resource::<DemoGraphRoot>();
@@ -275,10 +275,8 @@ impl ViewTemplate for NodeGraphDemo {
                     },
                     |id| NodeTemplate { id: *id },
                 ),
-            )
-                .to_ref(),
-            style: StyleHandle::new(style_node_graph),
-        }
+            ))
+            .style(style_node_graph)
     }
 }
 
@@ -292,10 +290,10 @@ impl ViewTemplate for NodeTemplate {
         let position = cx.create_derived(move |cx| cx.use_component::<NodePosition>(id).unwrap().0);
         let title =
             cx.create_derived(move |cx| cx.use_component::<NodeTitle>(id).unwrap().0.clone());
-        NodeDisplay {
-            position,
-            title,
-            children: (
+        NodeDisplay::new()
+            .position(position)
+            .title_signal(title)
+            .children((
                 For::each(
                     move |cx| {
                         cx.use_component::<NodeOutputs>(id)
@@ -312,15 +310,13 @@ impl ViewTemplate for NodeTemplate {
                     },
                     |en| InputTemplate { id: *en },
                 ),
-            )
-                .to_ref(),
-            selected: Signal::Constant(false),
-            on_drag: Some(cx.create_callback(move |cx, new_pos| {
+            ))
+            .selected(Signal::Constant(false))
+            .on_drag(cx.create_callback(move |cx, new_pos| {
                 let mut entt = cx.world_mut().entity_mut(id);
                 let mut pos = entt.get_mut::<NodePosition>().unwrap();
                 pos.0 = new_pos;
-            })),
-        }
+            }))
     }
 }
 
@@ -418,10 +414,11 @@ impl ViewTemplate for InputTemplate {
                             .label
                             .clone();
                         match data_type {
-                            DemoDataType::Float(_) => FloatInputEdit { id, label }.to_ref(),
+                            DemoDataType::Float(_) => FloatInputEdit { id, label }.to_view_ref(),
                             DemoDataType::Rgb => {
                                 // TODO: Replace with ColorInputEdit.
-                                Swatch::new(Signal::Constant(Srgba::new(1., 0., 0., 1.))).to_ref()
+                                Swatch::new(Signal::Constant(Srgba::new(1., 0., 0., 1.)))
+                                    .to_view_ref()
                             }
                         }
                     })

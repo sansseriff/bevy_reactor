@@ -322,12 +322,11 @@ impl ViewTemplate for Slider {
                                 {
                                     let label = self.label.clone();
                                     move || {
-                                        (
+                                        Fragment::new((
                                             label.clone().unwrap(),
                                             Element::<NodeBundle>::new()
                                                 .with_styles(style_label_spacer),
-                                        )
-                                            .to_ref()
+                                        ))
                                     }
                                 },
                                 || (),

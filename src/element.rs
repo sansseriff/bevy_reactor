@@ -82,20 +82,7 @@ impl<B: Bundle + Default> Element<B> {
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
     fn attach_children(&self, world: &mut World) {
-        let flat = self.child_nodes();
-        // for node in flat.iter() {
-        //     if world.get_entity(*node).is_none() {
-        //         error!("Node {:?} not found", *node);
-        //         info!(
-        //             "While attaching to {:?}",
-        //             world.entity(self.display.unwrap()).get::<Name>()
-        //         );
-        //         let flat = self.child_nodes();
-        //         for node in flat.iter() {
-        //             error!("Node {:?} not found", *node);
-        //         }
-        //     }
-        // }
+        let flat = self.child_entities();
         world
             .entity_mut(self.display.unwrap())
             .replace_children(&flat);
@@ -109,11 +96,11 @@ impl<B: Bundle + Default> EffectTarget for Element<B> {
 }
 
 impl<B: Bundle + Default> ParentView for Element<B> {
-    fn children(&self) -> &Vec<ChildView> {
+    fn get_children(&self) -> &Vec<ChildView> {
         self.children.as_ref()
     }
 
-    fn children_mut(&mut self) -> &mut Vec<ChildView> {
+    fn get_children_mut(&mut self) -> &mut Vec<ChildView> {
         self.children.as_mut()
     }
 }

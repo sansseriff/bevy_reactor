@@ -32,7 +32,7 @@ pub struct ToolPalette {
     pub size: Size,
 
     /// The buttons to display.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
@@ -55,13 +55,13 @@ impl ToolPalette {
 
     /// Set the child views for this element.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 
     /// Set additional styles to be applied to the palette.
-    pub fn style(mut self, style: StyleHandle) -> Self {
-        self.style = style;
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
         self
     }
 
@@ -101,7 +101,7 @@ pub struct ToolButton {
     pub(crate) disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub(crate) children: ViewRef,
+    pub(crate) children: ChildArray,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<Callback>,
@@ -143,7 +143,7 @@ impl ToolButton {
 
     /// Set the child views for this element.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 

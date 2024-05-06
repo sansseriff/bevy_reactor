@@ -1,4 +1,3 @@
-use bevy::prelude::*;
 use bevy_reactor::*;
 use obsidian_ui::controls::InspectorFieldReadonlyValue;
 
@@ -24,10 +23,8 @@ impl ViewTemplate for FieldEditFallback {
             FieldLabel {
                 field: self.0.clone(),
             },
-            InspectorFieldReadonlyValue {
-                children: format!("TODO: {}", reflect.reflect_type_path()).into(),
-                ..default()
-            },
+            InspectorFieldReadonlyValue::new()
+                .children(format!("TODO: {}", reflect.reflect_type_path())),
         ))
     }
 }

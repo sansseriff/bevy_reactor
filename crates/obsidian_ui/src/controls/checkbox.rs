@@ -62,7 +62,7 @@ pub struct Checkbox {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub label: ViewRef,
+    pub label: ChildArray,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -94,7 +94,7 @@ impl Checkbox {
 
     /// Set the label of the checkbox.
     pub fn label<V: ChildViewTuple>(mut self, label: V) -> Self {
-        self.label = label.to_ref();
+        self.label = label.to_child_array();
         self
     }
 
@@ -236,7 +236,7 @@ impl ViewTemplate for Checkbox {
                     )),
                 Element::<NodeBundle>::new()
                     .with_styles(style_checkbox_label)
-                    .with_child(&self.label),
+                    .with_children(self.label.clone()),
             ))
     }
 }

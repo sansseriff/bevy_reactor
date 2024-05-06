@@ -12,6 +12,7 @@ bevy = { git = "https://github.com/bevyengine/bevy.git" }
 # bevy = "0.13.2"
 bevy_mod_picking = "0.18"
 impl-trait-for-tuples = "0.2.2"
+smallvec = "1.13.2"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]

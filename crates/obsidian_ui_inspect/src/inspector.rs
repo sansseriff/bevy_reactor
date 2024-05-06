@@ -80,8 +80,8 @@ impl Inspector {
 
 impl ViewTemplate for Inspector {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
-        InspectorGroup {
-            title: (
+        InspectorGroup::new()
+            .title((
                 self.target.name(cx),
                 Spacer,
                 MenuButton::new()
@@ -98,12 +98,9 @@ impl ViewTemplate for Inspector {
                     )))
                     .size(Size::Xxs)
                     .minimal(true),
-            )
-                .to_ref(),
-
-            body: self.create_fields(cx, self.target.clone()),
-            expanded: Signal::Constant(true),
-        }
+            ))
+            .body(self.create_fields(cx, self.target.clone()))
+            .expanded(Signal::Constant(true))
     }
 }
 

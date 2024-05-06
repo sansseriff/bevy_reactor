@@ -107,7 +107,7 @@ where
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
     fn attach_children(&self, world: &mut World) {
-        let flat = self.child_nodes();
+        let flat = self.child_entities();
         world
             .entity_mut(self.display.unwrap())
             .replace_children(&flat);
@@ -159,11 +159,11 @@ impl<SB> EffectTarget for Overlay<SB> {
 }
 
 impl<SB> ParentView for Overlay<SB> {
-    fn children(&self) -> &Vec<ChildView> {
+    fn get_children(&self) -> &Vec<ChildView> {
         &self.children
     }
 
-    fn children_mut(&mut self) -> &mut Vec<ChildView> {
+    fn get_children_mut(&mut self) -> &mut Vec<ChildView> {
         &mut self.children
     }
 }

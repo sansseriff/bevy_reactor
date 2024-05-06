@@ -54,6 +54,7 @@ pub use mutable::Mutable;
 pub use mutable::ReadMutable;
 pub use mutable::WriteMutable;
 pub use node_span::NodeSpan;
+pub use parent_view::ChildArray;
 pub use parent_view::ChildView;
 pub use parent_view::ChildViewTuple;
 pub use parent_view::ParentView;

@@ -66,7 +66,7 @@ pub struct Dialog {
     pub open: Signal<bool>,
 
     /// The content of the dialog.
-    pub children: ViewRef,
+    pub children: ChildArray,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<Callback>,
@@ -95,7 +95,7 @@ impl Dialog {
 
     /// Sets the content of the dialog.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 
@@ -204,7 +204,7 @@ impl ViewTemplate for Dialog {
                                         TRANSITION_DURATION,
                                     );
                                 })
-                                .with_child(&children),
+                                .with_children(children.clone()),
                         ),
                 )
             },
@@ -227,7 +227,7 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: ViewRef,
+    pub children: ChildArray,
 }
 
 impl DialogHeader {
@@ -238,7 +238,7 @@ impl DialogHeader {
 
     /// Set the content of the dialog header.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 }
@@ -247,7 +247,7 @@ impl ViewTemplate for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
-            .with_child(&self.children)
+            .with_children(self.children.clone())
     }
 }
 
@@ -264,7 +264,7 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: ViewRef,
+    pub children: ChildArray,
 }
 
 impl DialogBody {
@@ -275,7 +275,7 @@ impl DialogBody {
 
     /// Set the content of the dialog body.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 }
@@ -284,7 +284,7 @@ impl ViewTemplate for DialogBody {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
-            .with_child(&self.children)
+            .with_children(self.children.clone())
     }
 }
 
@@ -303,7 +303,7 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
 #[derive(Clone, Default)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: ViewRef,
+    pub children: ChildArray,
 }
 
 impl DialogFooter {
@@ -314,7 +314,7 @@ impl DialogFooter {
 
     /// Set the content of the dialog footer.
     pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_ref();
+        self.children = children.to_child_array();
         self
     }
 }
@@ -323,6 +323,6 @@ impl ViewTemplate for DialogFooter {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)
-            .with_child(&self.children)
+            .with_children(self.children.clone())
     }
 }
