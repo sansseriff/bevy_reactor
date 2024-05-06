@@ -58,7 +58,7 @@ fn setup_view_root(mut commands: Commands) {
                     palettes::css::RED.into()
                 };
             })
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new(),
                 text("Count: "),
                 text_computed(|cx| {

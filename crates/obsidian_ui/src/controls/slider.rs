@@ -298,10 +298,10 @@ impl ViewTemplate for Slider {
                 let material = ui_materials.get_mut(material.id()).unwrap();
                 material.value = pos;
             })
-            .with_children((Element::<NodeBundle>::new()
+            .children((Element::<NodeBundle>::new()
                 .named("Slider")
                 .with_styles(style_overlay)
-                .with_children((
+                .children((
                     SliderButton {
                         value,
                         min,
@@ -313,7 +313,7 @@ impl ViewTemplate for Slider {
                     },
                     Element::<NodeBundle>::new()
                         .with_styles(style_label)
-                        .with_children((
+                        .children((
                             Cond::new(
                                 {
                                     let label = self.label.clone();
@@ -446,7 +446,7 @@ impl ViewTemplate for SliderButton {
                     }
                 }),
             ))
-            .with_children(
+            .children(
                 Element::<NodeBundle>::new()
                     .with_styles((
                         style_button_icon,

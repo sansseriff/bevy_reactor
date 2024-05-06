@@ -72,7 +72,7 @@ impl ViewTemplate for GraphDisplay {
                     .named("NodeGraph::Scroll")
                     .insert(material.clone())
                     .with_styles(style_node_graph_scroll)
-                    .with_children(self.children.clone()),
+                    .children(self.children.clone()),
             )
             .style((style_node_graph, self.style.clone()))
             .content_style(style_node_graph_content)
@@ -238,7 +238,7 @@ impl ViewTemplate for NodeDisplay {
                 style.left = ui::Val::Px(pos.x);
                 style.top = ui::Val::Px(pos.y);
             })
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .named("NodeGraph::Node::Shadow")
                     .with_styles(style_node_graph_node_shadow),
@@ -279,10 +279,10 @@ impl ViewTemplate for NodeDisplay {
                             }
                         }),
                     ))
-                    .with_children(self.title.clone()),
+                    .children(self.title.clone()),
                 Element::<NodeBundle>::new()
                     .with_styles(style_node_graph_node_content)
-                    .with_children(self.children.clone()),
+                    .children(self.children.clone()),
                 Cond::new(
                     move |cx| hovering.get(cx),
                     || {
@@ -329,7 +329,7 @@ impl ViewTemplate for InputTerminalDisplay {
         Element::<NodeBundle>::for_entity(self.id)
             .named("InputConnector")
             .with_styles(style_input_connector)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new().with_styles((
                     style_input_terminal,
                     move |sb: &mut StyleBuilder| {
@@ -377,7 +377,7 @@ impl ViewTemplate for OutputTerminalDisplay {
         Element::<NodeBundle>::for_entity(self.id)
             .named("OutputConnector")
             .with_styles(style_output_connector)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new().with_styles((
                     style_output_terminal,
                     move |sb: &mut StyleBuilder| {

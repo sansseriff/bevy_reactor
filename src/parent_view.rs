@@ -31,7 +31,7 @@ pub trait ParentView: Sized {
     }
 
     /// Set the child views for this element.
-    fn with_children<V: ChildViewTuple>(mut self, views: V) -> Self {
+    fn children<V: ChildViewTuple>(mut self, views: V) -> Self {
         if !self.get_children().is_empty() {
             panic!("Children already set");
         }
@@ -44,10 +44,7 @@ pub trait ParentView: Sized {
     }
 
     /// Set a single child view for this element.
-    fn with_child(mut self, view: &ViewRef) -> Self {
-        if !self.get_children().is_empty() {
-            panic!("Children already set");
-        }
+    fn child(mut self, view: &ViewRef) -> Self {
         self.get_children_mut().push(ChildView {
             view: view.clone(),
             entity: None,

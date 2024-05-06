@@ -400,7 +400,7 @@ impl ViewTemplate for InputTemplate {
                 move || {
                     Element::<NodeBundle>::new()
                         .with_styles(style_input_label)
-                        .with_children(label.clone())
+                        .children(label.clone())
                 },
                 move || {
                     Dynamic::new(move |cx| {

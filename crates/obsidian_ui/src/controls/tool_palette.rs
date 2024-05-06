@@ -88,7 +88,7 @@ impl ViewTemplate for ToolPalette {
                 self.style.clone(),
             ))
             .insert(AccessibilityNode::from(NodeBuilder::new(Role::Group)))
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }
 

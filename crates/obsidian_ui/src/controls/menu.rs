@@ -220,7 +220,7 @@ impl ViewTemplate for MenuButton {
                 })
             })
             .insert_if(self.autofocus, AutoFocus)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .named("MenuButton::Background")
                     .with_styles(style_button_bg)
@@ -291,7 +291,7 @@ impl ViewTemplate for MenuButton {
                                     }),
                                     ZIndex::Global(100),
                                 ))
-                                .with_children(popup.clone()),
+                                .children(popup.clone()),
                         )
                     },
                     || (),
@@ -375,7 +375,7 @@ impl ViewTemplate for MenuPopup {
                     },
                 ],
             })
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }
 
@@ -530,7 +530,7 @@ impl ViewTemplate for MenuItem {
                 let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                 bg.0 = color.into();
             })
-            .with_children(self.label.clone())
+            .children(self.label.clone())
     }
 }
 

@@ -227,7 +227,7 @@ any kind of entity, although they are most often used to create UI nodes:
 
 ```rust
 Element::<NodeBundle>::new()
-    .with_children((
+    .children((
         Element::<NodeBundle>::new(),
         Element::<NodeBundle>::new(),
     ))
@@ -251,14 +251,14 @@ All views, including elements, have a lifecycle:
 
 ## Element Children
 
-The `Element` object has a method `.with_children()` which accepts either a single child, or
+The `Element` object has a method `.children()` which accepts either a single child, or
 a variable-length tuple of children. Any object that implements the `Into<ViewRef>` trait can
 be passed as a child view, so for example text strings implement `Into<ViewRef>` and automatically
 generate a text node.
 
 ```rust
 Element::<NodeBundle>::new()
-    .with_children((
+    .children((
         Element::<NodeBundle>::new(),
         text("Count: "),
         text_computed(|cx| {
@@ -289,7 +289,7 @@ such as `.insert_computed()` and `.styled()` which remove some of the boilerplat
 Conditional rendering is accomplished using the `Cond` struct:
 
 ```rust
-element.with_children(
+element.children(
     Cond::new(
         |cx| {
             let counter = cx.use_resource::<Counter>();
@@ -312,7 +312,7 @@ of the array elements, and does a `diff` when the array changes, so that only th
 that actually changed are re-rendered.
 
 ```rust
-element.with_children(
+element.children(
     For::each(
         |cx| {
             let counter = cx.use_resource::<Counter>();
@@ -337,7 +337,7 @@ struct MyWidget {
 
 impl ViewTemplate for MyWidget {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
-        Element::new().with_children(self.label.clone())
+        Element::new().children(self.label.clone())
     }
 }
 ```
@@ -346,7 +346,7 @@ To invoke the template, simply include it as a child widget:
 
 ```rust
 Element::<NodeBundle>::new()
-    .with_children((
+    .children((
         MyWidget { label: "Hello" },
         ": ",
     )),

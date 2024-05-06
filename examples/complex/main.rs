@@ -248,7 +248,7 @@ impl ViewTemplate for DemoUi {
             .named("Main")
             .with_styles((typography::text_default, style_main))
             .insert((TabGroup::default(), TargetCamera(self.0)))
-            .with_children((
+            .children((
                 Dialog::new()
                     .width(ui::Val::Px(400.))
                     .open(checked_1.signal())
@@ -281,7 +281,7 @@ impl ViewTemplate for DemoUi {
                         let mut style = cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
                         style.width = ui::Val::Px(width);
                     })
-                    .with_children((
+                    .children((
                         ToolPalette::new().columns(3).children((
                             ToolButton::new()
                                 .children("Preview")
@@ -322,7 +322,7 @@ impl ViewTemplate for DemoUi {
                         )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_button_row)
-                            .with_children((
+                            .children((
                                 Button::new()
                                     .children("Open…")
                                     .on_click(clicked_increment)
@@ -334,7 +334,7 @@ impl ViewTemplate for DemoUi {
                             )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_column_group)
-                            .with_children((
+                            .children((
                                 Checkbox::new()
                                     .label("Include Author Name")
                                     .checked(checked_1.signal())
@@ -352,7 +352,7 @@ impl ViewTemplate for DemoUi {
                             )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_column_group)
-                            .with_children((
+                            .children((
                                 Slider::new()
                                     .min(Signal::Constant(0.))
                                     .max(Signal::Constant(255.))
@@ -405,13 +405,11 @@ impl ViewTemplate for CenterPanel {
                     .named("Preview")
                     .with_styles(style_viewport)
                     .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
-                    .with_children(
+                    .children(
                         Element::<NodeBundle>::new()
                             .named("Log")
                             .with_styles(style_log)
-                            .with_children(
-                                Element::<NodeBundle>::new().with_styles(style_log_inner),
-                            ),
+                            .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
                     )
             },
             || NodeGraphDemo {},

@@ -76,7 +76,7 @@ impl ViewTemplate for TransformOverlay {
                 })
                 .with_transform_signal(target_position)
                 .with_pickable(true)
-                .with_children((
+                .children((
                     OverlayShape::for_entity(x_arrow, |_cx, sb| {
                         sb.with_stroke_width(0.3)
                             .stroke_polygon(

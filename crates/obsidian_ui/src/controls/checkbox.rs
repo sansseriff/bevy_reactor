@@ -194,7 +194,7 @@ impl ViewTemplate for Checkbox {
                     }
                 }),
             ))
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .named("Checkbox::Border")
                     .with_styles(style_checkbox_border)
@@ -229,14 +229,14 @@ impl ViewTemplate for Checkbox {
                             }
                         };
                     })
-                    .with_children(cond(
+                    .children(cond(
                         move |cx| checked.get(cx),
                         move || Element::<NodeBundle>::new().with_styles(style_checkbox_inner),
                         || (),
                     )),
                 Element::<NodeBundle>::new()
                     .with_styles(style_checkbox_label)
-                    .with_children(self.label.clone()),
+                    .children(self.label.clone()),
             ))
     }
 }

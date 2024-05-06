@@ -142,7 +142,7 @@ impl ViewTemplate for Splitter {
                     );
                 }),
             ))
-            .with_children(
+            .children(
                 Element::<NodeBundle>::new()
                     .with_styles(style_vsplitter_inner)
                     .create_effect(move |cx, ent| {

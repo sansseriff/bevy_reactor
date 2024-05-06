@@ -64,10 +64,10 @@ impl ViewTemplate for ColorEdit {
 
         Element::<NodeBundle>::new()
             .with_styles(style_color_edit)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .with_styles(style_mode_selector)
-                    .with_children((
+                    .children((
                         Button::new()
                             .children("RGB")
                             .corners(RoundedCorners::Left)
@@ -126,7 +126,7 @@ impl ViewTemplate for RgbSliders {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_sliders)
-            .with_children((
+            .children((
                 GradientSlider::new()
                     .gradient(cx.create_derived(|cx| {
                         let rgb = cx.use_resource::<ColorEditState>().rgb;
@@ -211,7 +211,7 @@ impl ViewTemplate for HslSliders {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_sliders)
-            .with_children((
+            .children((
                 GradientSlider::new()
                     .gradient(Signal::Constant(ColorGradient::new(&[
                         Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),

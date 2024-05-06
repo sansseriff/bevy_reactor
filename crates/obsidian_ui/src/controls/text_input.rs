@@ -375,7 +375,7 @@ impl ViewTemplate for TextInput {
                 }),
             ))
             .insert_if(self.0.autofocus, AutoFocus)
-            .with_children((
+            .children((
                 // Background
                 Element::<NodeBundle>::new()
                     .with_styles(style_text_input_border)
@@ -412,10 +412,10 @@ impl ViewTemplate for TextInput {
                 // Scrolling content
                 Element::<NodeBundle>::new()
                     .with_styles(style_text_scroll)
-                    .with_children(
+                    .children(
                         Element::<NodeBundle>::new()
                             .with_styles(style_text_inner)
-                            .with_children((
+                            .children((
                                 // Selection rects
                                 For::index(
                                     move |cx| selection_rects.get_clone(cx).into_iter(),

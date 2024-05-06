@@ -252,7 +252,7 @@ impl ViewTemplate for Button {
                 }),
             ))
             .insert_if(self.autofocus, AutoFocus)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
                     .with_styles(style_button_bg)

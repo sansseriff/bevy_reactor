@@ -53,7 +53,7 @@ impl ViewTemplate for ListView {
                 Element::<NodeBundle>::new()
                     .named("ListView")
                     .with_styles(style_listview_inner)
-                    .with_children(self.children.clone()),
+                    .children(self.children.clone()),
             )
             .style((style_listview, self.style.clone()))
             .scroll_enable_y(true)

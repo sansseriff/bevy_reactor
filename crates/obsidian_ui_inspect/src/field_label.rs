@@ -23,6 +23,6 @@ impl ViewTemplate for FieldLabel {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles((typography::text_default, style_inspector_field_label))
-            .with_children((self.field.name(), Spacer))
+            .children((self.field.name(), Spacer))
     }
 }

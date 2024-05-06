@@ -100,16 +100,16 @@ impl ViewTemplate for InspectorGroup {
         let body = self.body.clone();
         Element::<NodeBundle>::new()
             .with_styles(style_inspector_group)
-            .with_children((
+            .children((
                 Element::<NodeBundle>::new()
                     .with_styles((typography::text_default, style_inspector_group_header))
-                    .with_children(self.title.clone()),
+                    .children(self.title.clone()),
                 Cond::new(
                     move |cx| expanded.get(cx),
                     move || {
                         Element::<NodeBundle>::new()
                             .with_styles(style_inspector_group_body)
-                            .with_children(body.clone())
+                            .children(body.clone())
                     },
                     || (),
                 ),
@@ -143,7 +143,7 @@ impl ViewTemplate for InspectorFieldLabel {
                 style_inspector_field_label,
                 self.style.clone(),
             ))
-            .with_child(&self.children)
+            .child(&self.children)
     }
 }
 
@@ -195,6 +195,6 @@ impl ViewTemplate for InspectorFieldReadonlyValue {
                 style_inspector_field_readonly_value,
                 self.style.clone(),
             ))
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }

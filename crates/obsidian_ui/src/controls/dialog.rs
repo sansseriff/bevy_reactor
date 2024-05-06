@@ -174,7 +174,7 @@ impl ViewTemplate for Dialog {
                                 TRANSITION_DURATION,
                             );
                         })
-                        .with_children(
+                        .children(
                             Element::<NodeBundle>::new()
                                 .insert(TabGroup {
                                     order: 0,
@@ -204,7 +204,7 @@ impl ViewTemplate for Dialog {
                                         TRANSITION_DURATION,
                                     );
                                 })
-                                .with_children(children.clone()),
+                                .children(children.clone()),
                         ),
                 )
             },
@@ -247,7 +247,7 @@ impl ViewTemplate for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_header)
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }
 
@@ -284,7 +284,7 @@ impl ViewTemplate for DialogBody {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_body)
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }
 
@@ -323,6 +323,6 @@ impl ViewTemplate for DialogFooter {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .with_styles(style_dialog_footer)
-            .with_children(self.children.clone())
+            .children(self.children.clone())
     }
 }

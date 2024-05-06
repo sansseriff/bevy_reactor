@@ -1,5 +1,8 @@
 # TODO
 
+- need something like IntoView.
+- need something line IntoSignal.
+- Change StyleHandle to something else.
 - Move 'inspector' widgets from obsidian_ui to obsidian_ui_inspect
 - Menus:
   - Close on click
