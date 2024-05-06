@@ -18,6 +18,40 @@ pub struct Icon {
     pub style: StyleHandle,
 }
 
+impl Icon {
+    /// Create a new icon.
+    pub fn new(icon: &str) -> Self {
+        Self {
+            icon: icon.to_string(),
+            ..default()
+        }
+    }
+
+    /// Set the size of the icon.
+    pub fn size(mut self, size: Vec2) -> Self {
+        self.size = size;
+        self
+    }
+
+    /// Set the color of the icon.
+    pub fn color(mut self, color: Color) -> Self {
+        self.color = Signal::Constant(color);
+        self
+    }
+
+    /// Set the color of the icon.
+    pub fn color_signal(mut self, color: Signal<Color>) -> Self {
+        self.color = color;
+        self
+    }
+
+    /// Set the style of the icon.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+}
+
 impl Default for Icon {
     fn default() -> Self {
         Self {

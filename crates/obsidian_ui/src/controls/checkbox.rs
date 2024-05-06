@@ -74,6 +74,49 @@ pub struct Checkbox {
     pub tab_index: i32,
 }
 
+impl Checkbox {
+    /// Create a new checkbox.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the checked state of the checkbox.
+    pub fn checked(mut self, checked: Signal<bool>) -> Self {
+        self.checked = checked;
+        self
+    }
+
+    /// Set the disabled state of the checkbox.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the label of the checkbox.
+    pub fn label<V: ChildViewTuple>(mut self, label: V) -> Self {
+        self.label = label.to_ref();
+        self
+    }
+
+    /// Set the style of the checkbox.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set the on_change callback of the checkbox.
+    pub fn on_change(mut self, on_change: Callback<bool>) -> Self {
+        self.on_change = Some(on_change);
+        self
+    }
+
+    /// Set the tab index of the checkbox.
+    pub fn tab_index(mut self, tab_index: i32) -> Self {
+        self.tab_index = tab_index;
+        self
+    }
+}
+
 impl ViewTemplate for Checkbox {
     /// Construct a checkbox widget.
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {

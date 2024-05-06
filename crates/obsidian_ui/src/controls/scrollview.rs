@@ -94,6 +94,43 @@ pub struct ScrollView {
     pub scroll_enable_y: bool,
 }
 
+impl ScrollView {
+    /// Create a new `ScrollView`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set additional styles to be applied to the scroll view.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set additional styles to be applied to the scroll content.
+    pub fn content_style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.content_style = StyleHandle::new(style);
+        self
+    }
+
+    /// Enable horizontal scrolling.
+    pub fn scroll_enable_x(mut self, enable: bool) -> Self {
+        self.scroll_enable_x = enable;
+        self
+    }
+
+    /// Enable vertical scrolling.
+    pub fn scroll_enable_y(mut self, enable: bool) -> Self {
+        self.scroll_enable_y = enable;
+        self
+    }
+}
+
 impl ViewTemplate for ScrollView {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         // A widget which displays a scrolling view of its children.

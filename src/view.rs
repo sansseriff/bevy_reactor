@@ -199,12 +199,12 @@ pub trait ViewTemplate {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef>;
 
     /// Convert this template into a `ViewRef`
-    fn to_ref(self) -> ViewRef
-    where
-        Self: Sized + Send + Sync + 'static,
-    {
-        ViewRef::new(ViewTemplateState::new(self))
-    }
+    // fn to_ref(self) -> ViewRef
+    // where
+    //     Self: Sized + Send + Sync + 'static,
+    // {
+    //     ViewRef::new(ViewTemplateState::new(self))
+    // }
 
     /// Associate this view template with a state object that tracks the nodes created by
     /// the view. Consumes the template.

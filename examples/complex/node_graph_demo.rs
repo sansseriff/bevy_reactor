@@ -276,7 +276,7 @@ impl ViewTemplate for NodeGraphDemo {
                     |id| NodeTemplate { id: *id },
                 ),
             )
-                .fragment(),
+                .to_ref(),
             style: StyleHandle::new(style_node_graph),
         }
     }
@@ -313,7 +313,7 @@ impl ViewTemplate for NodeTemplate {
                     |en| InputTemplate { id: *en },
                 ),
             )
-                .fragment(),
+                .to_ref(),
             selected: Signal::Constant(false),
             on_drag: Some(cx.create_callback(move |cx, new_pos| {
                 let mut entt = cx.world_mut().entity_mut(id);
@@ -419,12 +419,10 @@ impl ViewTemplate for InputTemplate {
                             .clone();
                         match data_type {
                             DemoDataType::Float(_) => FloatInputEdit { id, label }.to_ref(),
-                            DemoDataType::Rgb => Swatch {
-                                color: Signal::Constant(Srgba::new(1., 0., 0., 1.)),
-                                // on_change: todo!(),
-                                ..default()
+                            DemoDataType::Rgb => {
+                                // TODO: Replace with ColorInputEdit.
+                                Swatch::new(Signal::Constant(Srgba::new(1., 0., 0., 1.))).to_ref()
                             }
-                            .to_ref(),
                         }
                     })
                 },
@@ -476,19 +474,17 @@ impl ViewTemplate for FloatInputEdit {
             }
         });
 
-        Slider {
-            value,
-            min,
-            max,
-            label: Some(self.label.clone()),
-            style: StyleHandle::new(style_slider),
-            on_change: Some(cx.create_callback(move |cx: &mut Cx, value: f32| {
+        Slider::new()
+            .value(value)
+            .min(min)
+            .max(max)
+            .label(self.label.clone())
+            .style(style_slider)
+            .on_change(cx.create_callback(move |cx: &mut Cx, value: f32| {
                 let mut entt = cx.world_mut().entity_mut(id);
                 let mut val = entt.get_mut::<InputTerminalValue<DemoValueType>>().unwrap();
                 val.0 = DemoValueType::Float(value);
-            })),
-            ..default()
-        }
+            }))
     }
 }
 

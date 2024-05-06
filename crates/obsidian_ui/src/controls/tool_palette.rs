@@ -41,6 +41,37 @@ pub struct ToolPalette {
     pub columns: u16,
 }
 
+impl ToolPalette {
+    /// Create a new tool palette.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the button size.
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set additional styles to be applied to the palette.
+    pub fn style(mut self, style: StyleHandle) -> Self {
+        self.style = style;
+        self
+    }
+
+    /// Set the number of button columns.
+    pub fn columns(mut self, columns: u16) -> Self {
+        self.columns = columns;
+        self
+    }
+}
+
 impl ViewTemplate for ToolPalette {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let columns = self.columns;
@@ -64,25 +95,81 @@ impl ViewTemplate for ToolPalette {
 /// A button in a ToolPalette.
 pub struct ToolButton {
     /// Color variant - default, primary or danger.
-    pub variant: Signal<ButtonVariant>,
+    pub(crate) variant: Signal<ButtonVariant>,
 
     /// Whether the button is disabled.
-    pub disabled: Signal<bool>,
+    pub(crate) disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: ViewRef,
+    pub(crate) children: ViewRef,
 
     /// Callback called when clicked
-    pub on_click: Option<Callback>,
+    pub(crate) on_click: Option<Callback>,
 
     /// The tab index of the button (default 0).
-    pub tab_index: i32,
+    pub(crate) tab_index: i32,
 
     /// Which corners to render rounded.
-    pub corners: RoundedCorners,
+    pub(crate) corners: RoundedCorners,
 
     /// If true, set focus to this button when it's added to the UI.
-    pub autofocus: bool,
+    pub(crate) autofocus: bool,
+}
+
+impl ToolButton {
+    /// Create a new tool button.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the button color variant.
+    pub fn variant(mut self, variant: ButtonVariant) -> Self {
+        self.variant = Signal::Constant(variant);
+        self
+    }
+
+    /// Set the button color variant.
+    pub fn variant_signal(mut self, variant: Signal<ButtonVariant>) -> Self {
+        self.variant = variant;
+        self
+    }
+
+    /// Set the button disabled state.
+    /// TODO: Come up with some kind of IntoSignal conversion for this.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set callback when clicked
+    pub fn on_click(mut self, callback: Callback) -> Self {
+        self.on_click = Some(callback);
+        self
+    }
+
+    /// Set the tab index of the button.
+    pub fn tab_index(mut self, tab_index: i32) -> Self {
+        self.tab_index = tab_index;
+        self
+    }
+
+    /// Set which corners to render rounded.
+    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+        self.corners = corners;
+        self
+    }
+
+    /// Set whether to autofocus the button when it's added to the UI.
+    pub fn autofocus(mut self, autofocus: bool) -> Self {
+        self.autofocus = autofocus;
+        self
+    }
 }
 
 impl Default for ToolButton {
@@ -102,21 +189,16 @@ impl Default for ToolButton {
 impl ViewTemplate for ToolButton {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let context = cx.use_inherited_component::<ToolPaletteContext>().unwrap();
-        Button {
-            size: context.size,
-            variant: self.variant,
-            disabled: self.disabled,
-            children: self.children.clone(),
-            on_click: self.on_click,
-            tab_index: self.tab_index,
-            autofocus: self.autofocus,
-            corners: self.corners,
-            // style: StyleHandle::new(move |ss: &mut StyleBuilder| {
-            //     println!("Index: {:?}", ss.child_index());
-            //     // ss.grid_template_columns(vec![ui::RepeatedGridTrack::auto(columns)]);
-            // }),
-            // corners: self.corners,
-            ..default()
-        }
+        let mut btn = Button::new()
+            .size(context.size)
+            .variant_signal(self.variant)
+            .disabled(self.disabled)
+            .children(self.children.clone())
+            // .on_click(self.on_click)
+            .tab_index(self.tab_index)
+            .autofocus(self.autofocus)
+            .corners(self.corners);
+        btn.on_click = self.on_click;
+        btn
     }
 }

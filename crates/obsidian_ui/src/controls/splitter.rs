@@ -48,7 +48,42 @@ pub struct Splitter {
     pub direction: SplitterDirection,
 
     /// Callback involved with the new split value.
-    pub on_change: Callback<f32>,
+    pub on_change: Option<Callback<f32>>,
+}
+
+impl Splitter {
+    /// Create a new splitter.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the current split value.
+    pub fn value(mut self, value: Signal<f32>) -> Self {
+        self.value = value;
+        self
+    }
+
+    /// Set the direction of the splitter.
+    pub fn direction(mut self, direction: SplitterDirection) -> Self {
+        self.direction = direction;
+        self
+    }
+
+    /// Set the callback to be invoked when the split value changes.
+    pub fn on_change(mut self, on_change: Callback<f32>) -> Self {
+        self.on_change = Some(on_change);
+        self
+    }
+}
+
+impl Default for Splitter {
+    fn default() -> Self {
+        Self {
+            value: Signal::Constant(0.),
+            direction: SplitterDirection::Vertical,
+            on_change: None,
+        }
+    }
 }
 
 impl ViewTemplate for Splitter {
@@ -89,8 +124,10 @@ impl ViewTemplate for Splitter {
                             .unwrap();
                         let ev = event.distance;
                         let ds = drag_state.get(world);
-                        if ds.dragging {
-                            world.run_callback(on_change, ev.x + ds.offset);
+                        if let Some(on_change) = on_change {
+                            if ds.dragging {
+                                world.run_callback(on_change, ev.x + ds.offset);
+                            }
                         }
                     }
                 }),

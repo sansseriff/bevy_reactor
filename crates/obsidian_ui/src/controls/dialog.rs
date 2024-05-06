@@ -75,6 +75,43 @@ pub struct Dialog {
     pub on_exited: Option<Callback>,
 }
 
+impl Dialog {
+    /// Creates a new `Dialog`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the width of the dialog.
+    pub fn width(mut self, width: ui::Val) -> Self {
+        self.width = width;
+        self
+    }
+
+    /// Sets the signal that controls whether the dialog is open.
+    pub fn open(mut self, open: Signal<bool>) -> Self {
+        self.open = open;
+        self
+    }
+
+    /// Sets the content of the dialog.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Sets the callback called when the dialog's close button is clicked.
+    pub fn on_close(mut self, on_close: Callback) -> Self {
+        self.on_close = Some(on_close);
+        self
+    }
+
+    /// Sets the callback called when the dialog has completed it's closing animation.
+    pub fn on_exited(mut self, on_exited: Callback) -> Self {
+        self.on_exited = Some(on_exited);
+        self
+    }
+}
+
 impl ViewTemplate for Dialog {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let on_close = self.on_close;
@@ -193,6 +230,19 @@ pub struct DialogHeader {
     pub children: ViewRef,
 }
 
+impl DialogHeader {
+    /// Create a new dialog header.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the content of the dialog header.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+}
+
 impl ViewTemplate for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
@@ -215,6 +265,19 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
 pub struct DialogBody {
     /// The content of the dialog header.
     pub children: ViewRef,
+}
+
+impl DialogBody {
+    /// Create a new dialog body.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the content of the dialog body.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
 }
 
 impl ViewTemplate for DialogBody {
@@ -241,6 +304,19 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
 pub struct DialogFooter {
     /// The content of the dialog header.
     pub children: ViewRef,
+}
+
+impl DialogFooter {
+    /// Create a new dialog footer.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the content of the dialog footer.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
 }
 
 impl ViewTemplate for DialogFooter {

@@ -32,6 +32,37 @@ pub struct Swatch {
     pub on_click: Option<Callback>,
 }
 
+impl Swatch {
+    /// Create a new swatch.
+    pub fn new(color: Signal<Srgba>) -> Self {
+        Self::default().color(color)
+    }
+
+    /// Set the color to display.
+    pub fn color(mut self, color: impl Into<Signal<Srgba>>) -> Self {
+        self.color = color.into();
+        self
+    }
+
+    /// Set the size of the swatch.
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+
+    /// Set additional styles to be applied to the button.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set the callback called when clicked.
+    pub fn on_click(mut self, on_click: Callback) -> Self {
+        self.on_click = Some(on_click);
+        self
+    }
+}
+
 impl ViewTemplate for Swatch {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         let color = self.color;

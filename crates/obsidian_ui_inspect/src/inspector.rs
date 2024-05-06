@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use bevy::{
-    prelude::*,
-    reflect::{ParsedPath, ReflectKind, ReflectRef},
-};
+use bevy::reflect::{ParsedPath, ReflectKind, ReflectRef};
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
@@ -87,41 +84,23 @@ impl ViewTemplate for Inspector {
             title: (
                 self.target.name(cx),
                 Spacer,
-                MenuButton {
-                    children: Icon {
-                        icon: "obsidian_ui://icons/add_box.png".to_string(),
-                        color: Signal::Constant(colors::DIM.into()),
-                        style: StyleHandle::new(style_close_icon),
-                        ..default()
-                    }
-                    .to_ref(),
-                    popup: MenuPopup {
-                        children: (
-                            MenuItem {
-                                label: "Open".into(),
-                                ..default()
-                            },
-                            MenuItem {
-                                label: "Close".into(),
-                                ..default()
-                            },
-                            MenuDivider,
-                            MenuItem {
-                                label: "Quit...".into(),
-                                ..default()
-                            },
-                        )
-                            .fragment(),
-                        align: FloatAlign::End,
-                        ..default()
-                    }
-                    .to_ref(),
-                    size: Size::Xxs,
-                    minimal: true,
-                    ..default()
-                },
+                MenuButton::new()
+                    .children(
+                        Icon::new("obsidian_ui://icons/add_box.png")
+                            .color(colors::DIM.into())
+                            .style(style_close_icon),
+                    )
+                    .popup(MenuPopup::new().align(FloatAlign::End).children((
+                        MenuItem::new().label("Open"),
+                        MenuItem::new().label("Close"),
+                        MenuDivider,
+                        MenuItem::new().label("Quit..."),
+                    )))
+                    .size(Size::Xxs)
+                    .minimal(true),
             )
-                .fragment(),
+                .to_ref(),
+
             body: self.create_fields(cx, self.target.clone()),
             expanded: Signal::Constant(true),
         }

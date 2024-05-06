@@ -459,25 +459,23 @@ The derived signals and callbacks are automatically added as children of the cur
 and will be despawned when the scope is destroyed.
 
 ```rust
-GradientSlider {
-    gradient: cx.create_derived(|cx| {
+GradientSlider::new()
+    .gradient(cx.create_derived(|cx| {
         let rgb = cx.use_resource::<ColorEditState>().rgb;
         ColorGradient::new(&[
             Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
             Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
         ])
-    }),
-    min: Signal::Constant(0.),
-    max: Signal::Constant(255.),
-    value: cx.create_derived(|cx| {
+    }))
+    .min(Signal::Constant(0.))
+    .max(Signal::Constant(255.))
+    .value(cx.create_derived(|cx| {
         cx.use_resource::<ColorEditState>().rgb.red * 255.0
-    }),
-    style: StyleHandle::new(style_slider),
-    precision: 1,
-    on_change: Some(cx.create_callback(move |cx| {
+    })),
+    .style(style_slider)
+    .precision(1)
+    .on_change(cx.create_callback(move |cx| {
         cx.world_mut().resource_mut::<ColorEditState>().rgb.red =
             cx.props / 255.0;
     })),
-    ..default()
-}
 ```

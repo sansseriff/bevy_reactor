@@ -74,6 +74,79 @@ pub struct MenuButton {
     pub tab_index: i32,
 }
 
+impl MenuButton {
+    /// Create a new menu button.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the button color variant.
+    pub fn variant(mut self, variant: ButtonVariant) -> Self {
+        self.variant = Signal::Constant(variant);
+        self
+    }
+
+    /// Set the button color variant.
+    pub fn variant_signal(mut self, variant: Signal<ButtonVariant>) -> Self {
+        self.variant = variant;
+        self
+    }
+
+    /// Set the button size.
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+
+    /// Set the button disabled state.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the button corners.
+    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+        self.corners = corners;
+        self
+    }
+
+    /// Set the button autofocus state.
+    pub fn autofocus(mut self, autofocus: bool) -> Self {
+        self.autofocus = autofocus;
+        self
+    }
+
+    /// Set the button minimal state.
+    pub fn minimal(mut self, minimal: bool) -> Self {
+        self.minimal = minimal;
+        self
+    }
+
+    /// Set the button children.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set the button style.
+    pub fn style(mut self, style: StyleHandle) -> Self {
+        self.style = style;
+        self
+    }
+
+    /// Set the button popup.
+    pub fn popup<V: ChildViewTuple>(mut self, popup: V) -> Self {
+        self.popup = popup.to_ref();
+        self
+    }
+
+    /// Set the button tab index.
+    pub fn tab_index(mut self, tab_index: i32) -> Self {
+        self.tab_index = tab_index;
+        self
+    }
+}
+
 impl ViewTemplate for MenuButton {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let id_anchor = self.anchor.unwrap_or_else(|| cx.create_entity());
@@ -193,14 +266,11 @@ impl ViewTemplate for MenuButton {
                     }),
                 self.children.clone(),
                 Spacer,
-                Icon {
-                    icon: "obsidian_ui://icons/chevron_down.png".to_string(),
-                    color: Signal::Constant(colors::DIM.into()),
-                    style: StyleHandle::new(|ss: &mut StyleBuilder| {
+                Icon::new("obsidian_ui://icons/chevron_down.png")
+                    .color(colors::DIM.into())
+                    .style(|ss: &mut StyleBuilder| {
                         ss.margin_right(4);
                     }),
-                    ..default()
-                },
                 Cond::new(
                     move |cx| open.get(cx),
                     move || {
@@ -254,6 +324,31 @@ pub struct MenuPopup {
 
     /// Whether to align the popup to the left or right side of the anchor.
     pub align: FloatAlign,
+}
+
+impl MenuPopup {
+    /// Create a new menu popup.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the children of the popup.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set additional styles to apply to the popup.
+    pub fn style(mut self, style: StyleHandle) -> Self {
+        self.style = style;
+        self
+    }
+
+    /// Set the alignment of the popup.
+    pub fn align(mut self, align: FloatAlign) -> Self {
+        self.align = align;
+        self
+    }
 }
 
 impl ViewTemplate for MenuPopup {
@@ -313,6 +408,43 @@ pub struct MenuItem {
     pub on_click: Option<Callback>,
     // icon
     // shortcut
+}
+
+impl MenuItem {
+    /// Create a new menu item.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the label of the menu item.
+    pub fn label<V: ChildViewTuple>(mut self, label: V) -> Self {
+        self.label = label.to_ref();
+        self
+    }
+
+    /// Set additional styles to apply to the menu item.
+    pub fn style(mut self, style: StyleHandle) -> Self {
+        self.style = style;
+        self
+    }
+
+    /// Set the checked state of the menu item.
+    pub fn checked(mut self, checked: Signal<bool>) -> Self {
+        self.checked = checked;
+        self
+    }
+
+    /// Set the disabled state of the menu item.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the callback to be called when the menu item is clicked.
+    pub fn on_click(mut self, on_click: Callback) -> Self {
+        self.on_click = Some(on_click);
+        self
+    }
 }
 
 impl ViewTemplate for MenuItem {

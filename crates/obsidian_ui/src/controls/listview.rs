@@ -27,18 +27,35 @@ pub struct ListView {
     pub children: ViewRef,
 }
 
+impl ListView {
+    /// Create a new list view.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set additional styles to be applied to the list view.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+}
+
 impl ViewTemplate for ListView {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        ScrollView {
-            children: ViewRef::new(
+        ScrollView::new()
+            .children(
                 Element::<NodeBundle>::new()
                     .named("ListView")
                     .with_styles(style_listview_inner)
                     .with_children(self.children.clone()),
-            ),
-            style: StyleHandle::new((style_listview, self.style.clone())),
-            scroll_enable_y: true,
-            ..default()
-        }
+            )
+            .style((style_listview, self.style.clone()))
+            .scroll_enable_y(true)
     }
 }

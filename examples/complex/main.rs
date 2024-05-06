@@ -249,42 +249,30 @@ impl ViewTemplate for DemoUi {
             .with_styles((typography::text_default, style_main))
             .insert((TabGroup::default(), TargetCamera(self.0)))
             .with_children((
-                Dialog {
-                    open: checked_1.signal(),
-                    on_close: Some(cx.create_callback(move |cx, _| {
+                Dialog::new()
+                    .width(ui::Val::Px(400.))
+                    .open(checked_1.signal())
+                    .on_close(cx.create_callback(move |cx, _| {
                         checked_1.set(cx, false);
-                    })),
-                    children: (
-                        DialogHeader {
-                            children: "Dialog Header".into(),
-                        },
+                    }))
+                    .children((
+                        DialogHeader::new().children("Dialog Header"),
                         "Dialog Body",
-                        DialogFooter {
-                            children: (
-                                Button {
-                                    children: "Cancel".into(),
-                                    on_click: Some(cx.create_callback(move |cx, _| {
-                                        checked_1.set(cx, false);
-                                    })),
-                                    ..default()
-                                },
-                                Button {
-                                    children: "Close".into(),
-                                    variant: Signal::Constant(ButtonVariant::Primary),
-                                    autofocus: true,
-                                    on_click: Some(cx.create_callback(move |cx, _| {
-                                        checked_1.set(cx, false);
-                                    })),
-                                    ..default()
-                                },
-                            )
-                                .fragment(),
-                        },
-                    )
-                        .fragment(),
-                    width: ui::Val::Px(400.),
-                    ..default()
-                },
+                        DialogFooter::new().children((
+                            Button::new()
+                                .children("Cancel")
+                                .on_click(cx.create_callback(move |cx, _| {
+                                    checked_1.set(cx, false);
+                                })),
+                            Button::new()
+                                .children("Close")
+                                .variant(ButtonVariant::Primary)
+                                .autofocus(true)
+                                .on_click(cx.create_callback(move |cx, _| {
+                                    checked_1.set(cx, false);
+                                })),
+                        )),
+                    )),
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
                     .with_styles(style_aside)
@@ -294,113 +282,87 @@ impl ViewTemplate for DemoUi {
                         style.width = ui::Val::Px(width);
                     })
                     .with_children((
-                        ToolPalette {
-                            columns: 3,
-                            children: (
-                                ToolButton {
-                                    children: "Preview".into(),
-                                    corners: RoundedCorners::Left,
-                                    variant: cx.create_derived(|cx| {
-                                        let st = cx.use_resource::<State<EditorState>>();
-                                        if *st.get() == EditorState::Preview {
-                                            ButtonVariant::Selected
-                                        } else {
-                                            ButtonVariant::Default
-                                        }
-                                    }),
-                                    on_click: Some(cx.create_callback(|cx, _| {
-                                        if let Some(mut mode) = cx
-                                            .world_mut()
-                                            .get_resource_mut::<NextState<EditorState>>()
-                                        {
-                                            mode.set(EditorState::Preview);
-                                        }
-                                    })),
-                                    ..default()
-                                },
-                                ToolButton {
-                                    children: "Materials".into(),
-                                    corners: RoundedCorners::Right,
-                                    variant: cx.create_derived(|cx| {
-                                        let st = cx.use_resource::<State<EditorState>>();
-                                        if *st.get() == EditorState::Graph {
-                                            ButtonVariant::Selected
-                                        } else {
-                                            ButtonVariant::Default
-                                        }
-                                    }),
-                                    on_click: Some(cx.create_callback(|cx, _| {
-                                        if let Some(mut mode) = cx
-                                            .world_mut()
-                                            .get_resource_mut::<NextState<EditorState>>()
-                                        {
-                                            mode.set(EditorState::Graph);
-                                        }
-                                    })),
-                                    ..default()
-                                },
-                            )
-                                .fragment(),
-                            ..default()
-                        },
+                        ToolPalette::new().columns(3).children((
+                            ToolButton::new()
+                                .children("Preview")
+                                .corners(RoundedCorners::Left)
+                                .variant_signal(cx.create_derived(|cx| {
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Preview {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                }))
+                                .on_click(cx.create_callback(|cx, _| {
+                                    if let Some(mut mode) =
+                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                                    {
+                                        mode.set(EditorState::Preview);
+                                    }
+                                })),
+                            ToolButton::new()
+                                .children("Materials")
+                                .corners(RoundedCorners::Right)
+                                .variant_signal(cx.create_derived(|cx| {
+                                    let st = cx.use_resource::<State<EditorState>>();
+                                    if *st.get() == EditorState::Graph {
+                                        ButtonVariant::Selected
+                                    } else {
+                                        ButtonVariant::Default
+                                    }
+                                }))
+                                .on_click(cx.create_callback(|cx, _| {
+                                    if let Some(mut mode) =
+                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                                    {
+                                        mode.set(EditorState::Graph);
+                                    }
+                                })),
+                        )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_button_row)
                             .with_children((
-                                Button {
-                                    children: "Open…".into(),
-                                    on_click: Some(clicked_increment),
-                                    style: StyleHandle::new(style_button_flex),
-                                    ..default()
-                                },
-                                Button {
-                                    children: "Save".into(),
-                                    on_click: Some(clicked_decrement),
-                                    style: StyleHandle::new(style_button_flex),
-                                    ..default()
-                                },
+                                Button::new()
+                                    .children("Open…")
+                                    .on_click(clicked_increment)
+                                    .style(style_button_flex),
+                                Button::new()
+                                    .children("Save")
+                                    .on_click(clicked_decrement)
+                                    .style(style_button_flex),
                             )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_column_group)
                             .with_children((
-                                Checkbox {
-                                    label: "Include Author Name".into(),
-                                    checked: checked_1.signal(),
-                                    on_change: Some(cx.create_callback(move |cx, checked| {
+                                Checkbox::new()
+                                    .label("Include Author Name")
+                                    .checked(checked_1.signal())
+                                    .on_change(cx.create_callback(move |cx, checked| {
                                         println!("Include Author Name: {}", checked);
                                         checked_1.set(cx, checked);
                                     })),
-                                    ..default()
-                                },
-                                Checkbox {
-                                    label: "Include Metadata".into(),
-                                    checked: checked_2.signal(),
-                                    on_change: Some(cx.create_callback(move |cx, checked| {
+                                Checkbox::new()
+                                    .label("Include Metadata")
+                                    .checked(checked_2.signal())
+                                    .on_change(cx.create_callback(move |cx, checked| {
                                         println!("Include Metadata: {}", checked);
                                         checked_2.set(cx, checked);
                                     })),
-                                    ..default()
-                                },
                             )),
                         Element::<NodeBundle>::new()
                             .with_styles(style_column_group)
                             .with_children((
-                                Slider {
-                                    min: Signal::Constant(0.),
-                                    max: Signal::Constant(255.),
-                                    value: red.signal(),
-                                    style: StyleHandle::new(style_slider),
-                                    precision: 1,
-                                    on_change: Some(cx.create_callback(move |cx, value| {
+                                Slider::new()
+                                    .min(Signal::Constant(0.))
+                                    .max(Signal::Constant(255.))
+                                    .value(red.signal())
+                                    .style(style_slider)
+                                    .precision(1)
+                                    .on_change(cx.create_callback(move |cx, value| {
                                         red.set(cx, value);
                                     })),
-                                    ..default()
-                                },
-                                Swatch {
-                                    color: rgb_color,
-                                    size: Size::Md,
-                                    // style: StyleHandle::new(style_slider),
-                                    ..default()
-                                },
+                                Swatch::new(rgb_color).size(Size::Md),
                                 text_computed(move |cx| {
                                     let color = rgb_color.get(cx);
                                     color.to_hex()
@@ -417,53 +379,16 @@ impl ViewTemplate for DemoUi {
                             ..default()
                         }),
                         ResourcePropertyInspector::<TestStruct>::new(),
-                        // ToolPalette {
-                        //     size: Size::Xl,
-                        //     columns: 3,
-                        //     children: (
-                        //         ToolButton {
-                        //             children: "Tool 1".into(),
-                        //             corners: RoundedCorners::TopLeft,
-                        //             ..default()
-                        //         },
-                        //         ToolButton {
-                        //             children: "Tool 2".into(),
-                        //             ..default()
-                        //         },
-                        //         ToolButton {
-                        //             children: "Tool 3".into(),
-                        //             corners: RoundedCorners::TopRight,
-                        //             ..default()
-                        //         },
-                        //         ToolButton {
-                        //             children: "Tool 4".into(),
-                        //             corners: RoundedCorners::BottomLeft,
-                        //             ..default()
-                        //         },
-                        //         ToolButton {
-                        //             children: "Tool 5".into(),
-                        //             ..default()
-                        //         },
-                        //         ToolButton {
-                        //             children: "Tool 6".into(),
-                        //             corners: RoundedCorners::BottomRight,
-                        //             ..default()
-                        //         },
-                        //     )
-                        //         .fragment(),
-                        //     ..default()
-                        // },
                         ReactionsTable,
                     )),
-                Splitter {
-                    direction: SplitterDirection::Vertical,
-                    value: panel_width,
-                    on_change: cx.create_callback(|cx: &mut Cx, value: f32| {
+                Splitter::new()
+                    .direction(SplitterDirection::Vertical)
+                    .value(panel_width)
+                    .on_change(cx.create_callback(|cx: &mut Cx, value: f32| {
                         let mut panel_width =
                             cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
                         panel_width.0 = value.max(200.);
-                    }),
-                },
+                    })),
                 CenterPanel,
             ))
     }
@@ -498,8 +423,8 @@ struct ReactionsTable;
 
 impl ViewTemplate for ReactionsTable {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        ListView {
-            children: For::each(
+        ListView::new()
+            .children(For::each(
                 |cx| {
                     let tracing = cx.use_resource::<TrackingScopeTracing>();
                     tracing.0.clone().into_iter()
@@ -516,10 +441,8 @@ impl ViewTemplate for ReactionsTable {
                         }
                     })
                 },
-            )
-            .fragment(),
-            style: StyleHandle::new(style_scroll_area),
-        }
+            ))
+            .style(style_scroll_area)
     }
 }
 

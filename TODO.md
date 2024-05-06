@@ -1,5 +1,6 @@
 # TODO
 
+- Move 'inspector' widgets from obsidian_ui to obsidian_ui_inspect
 - Menus:
   - Close on click
   - Keyboard navigation

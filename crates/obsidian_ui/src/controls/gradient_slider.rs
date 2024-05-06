@@ -147,6 +147,61 @@ pub struct GradientSlider {
     pub on_change: Option<Callback<f32>>,
 }
 
+impl GradientSlider {
+    /// Create a new gradient slider.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the gradient to display.
+    pub fn gradient(mut self, gradient: Signal<ColorGradient>) -> Self {
+        self.gradient = gradient;
+        self
+    }
+
+    /// Set the current slider value.
+    pub fn value(mut self, value: Signal<f32>) -> Self {
+        self.value = value;
+        self
+    }
+
+    /// Set the minimum slider value.
+    pub fn min(mut self, min: Signal<f32>) -> Self {
+        self.min = min;
+        self
+    }
+
+    /// Set the maximum slider value.
+    pub fn max(mut self, max: Signal<f32>) -> Self {
+        self.max = max;
+        self
+    }
+
+    /// Set the number of decimal places to round to (0 = integer).
+    pub fn precision(mut self, precision: usize) -> Self {
+        self.precision = precision;
+        self
+    }
+
+    /// Set whether the slider is disabled.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the style handle for the slider root element.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set the callback called when the value changes.
+    pub fn on_change(mut self, on_change: Callback<f32>) -> Self {
+        self.on_change = Some(on_change);
+        self
+    }
+}
+
 impl Default for GradientSlider {
     fn default() -> Self {
         Self {

@@ -89,6 +89,80 @@ pub struct Button {
     pub minimal: bool,
 }
 
+impl Button {
+    /// Construct a new `Button`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the button color variant.
+    pub fn variant(mut self, variant: ButtonVariant) -> Self {
+        self.variant = Signal::Constant(variant);
+        self
+    }
+
+    /// Set the button color variant.
+    pub fn variant_signal(mut self, variant: Signal<ButtonVariant>) -> Self {
+        self.variant = variant;
+        self
+    }
+
+    /// Set whether to render the button in a 'minimal' style with no background and reduced padding.
+    pub fn minimal(mut self, minimal: bool) -> Self {
+        self.minimal = minimal;
+        self
+    }
+
+    /// Set the button size.
+    pub fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+
+    /// Set the button disabled state.
+    /// TODO: Come up with some kind of IntoSignal conversion for this.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the child views for this element.
+    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
+        self.children = children.to_ref();
+        self
+    }
+
+    /// Set the additional styles for the button.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set callback when clicked
+    pub fn on_click(mut self, callback: Callback) -> Self {
+        self.on_click = Some(callback);
+        self
+    }
+
+    /// Set the tab index of the button.
+    pub fn tab_index(mut self, tab_index: i32) -> Self {
+        self.tab_index = tab_index;
+        self
+    }
+
+    /// Set which corners to render rounded.
+    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+        self.corners = corners;
+        self
+    }
+
+    /// Set whether to autofocus the button when it's added to the UI.
+    pub fn autofocus(mut self, autofocus: bool) -> Self {
+        self.autofocus = autofocus;
+        self
+    }
+}
+
 impl ViewTemplate for Button {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         let id = cx.create_entity();

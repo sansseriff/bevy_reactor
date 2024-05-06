@@ -112,6 +112,74 @@ pub struct Slider {
     pub on_change: Option<Callback<f32>>,
 }
 
+impl Slider {
+    /// Create a new slider.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the current slider value.
+    pub fn value(mut self, value: Signal<f32>) -> Self {
+        self.value = value;
+        self
+    }
+
+    /// Set the minimum slider value.
+    pub fn min(mut self, min: Signal<f32>) -> Self {
+        self.min = min;
+        self
+    }
+
+    /// Set the maximum slider value.
+    pub fn max(mut self, max: Signal<f32>) -> Self {
+        self.max = max;
+        self
+    }
+
+    /// Set the number of decimal places to round to (0 = integer).
+    pub fn precision(mut self, precision: usize) -> Self {
+        self.precision = precision;
+        self
+    }
+
+    /// Set the amount to increment when using arrow buttons.
+    pub fn step(mut self, step: f32) -> Self {
+        self.step = step;
+        self
+    }
+
+    /// Set whether the slider is disabled.
+    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
+        self.disabled = disabled;
+        self
+    }
+
+    /// Set the signal which returns the value formatted as a string. If `None`, then a default
+    /// formatter will be used.
+    pub fn formatted_value(mut self, formatted_value: Signal<String>) -> Self {
+        self.formatted_value = Some(formatted_value);
+        self
+    }
+
+    /// Set the optional label to be displayed inside the slider.
+    pub fn label(mut self, label: String) -> Self {
+        self.label = Some(label);
+        self
+    }
+
+    /// Set the style handle for the slider root element.
+    pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
+        self.style = StyleHandle::new(style);
+        self
+    }
+
+    /// Set the callback called when value changes.
+    pub fn on_change(mut self, on_change: Callback<f32>) -> Self {
+        self.on_change = Some(on_change);
+        self
+    }
+}
+
 impl Default for Slider {
     fn default() -> Self {
         Self {
@@ -259,7 +327,7 @@ impl ViewTemplate for Slider {
                                             Element::<NodeBundle>::new()
                                                 .with_styles(style_label_spacer),
                                         )
-                                            .fragment()
+                                            .to_ref()
                                     }
                                 },
                                 || (),

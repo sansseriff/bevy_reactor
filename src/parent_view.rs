@@ -84,10 +84,12 @@ pub trait ChildViewTuple {
     #[doc(hidden)]
     fn get_refs(self, out: &mut Vec<ViewRef>);
 
+    /// Convert this tuple of views into a flat array.
     fn to_vec(self) -> Vec<ViewRef>;
 
-    /// Convert this tuple of views into a [`ViewRef`] containing a [`Fragment`].
-    fn fragment(self) -> ViewRef;
+    /// Convert this tuple of views into a [`ViewRef`], either as a reference to a single view
+    /// or as a [`Fragment`] if there are multiple views.
+    fn to_ref(self) -> ViewRef;
 }
 
 impl<I: Into<ViewRef>> ChildViewTuple for I {
@@ -101,8 +103,8 @@ impl<I: Into<ViewRef>> ChildViewTuple for I {
         out
     }
 
-    fn fragment(self) -> ViewRef {
-        ViewRef::new(Fragment::new(self))
+    fn to_ref(self) -> ViewRef {
+        self.into()
     }
 }
 
@@ -115,8 +117,12 @@ impl ChildViewTuple for Vec<ViewRef> {
         self
     }
 
-    fn fragment(self) -> ViewRef {
-        ViewRef::new(Fragment::from_slice(self.as_slice()))
+    fn to_ref(self) -> ViewRef {
+        if self.len() == 1 {
+            self[0].clone()
+        } else {
+            ViewRef::new(Fragment::from_slice(self.as_slice()))
+        }
     }
 }
 
@@ -133,7 +139,10 @@ impl ChildViewTuple for Tuple {
         out
     }
 
-    fn fragment(self) -> ViewRef {
-        ViewRef::new(Fragment::new(self))
+    fn to_ref(self) -> ViewRef {
+        /// TODO: I don't like that this creates a temporary Vec when there's only one child.
+        let mut out = Vec::new();
+        self.get_refs(&mut out);
+        out.to_ref()
     }
 }

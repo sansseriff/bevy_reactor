@@ -47,19 +47,18 @@ impl ViewTemplate for GraphDisplay {
             color_fg: LinearRgba::from(colors::U3).into(),
         });
 
-        ScrollView {
-            children: Element::<MaterialNodeBundle<DotGridMaterial>>::new()
-                .named("NodeGraph::Scroll")
-                .insert(material.clone())
-                .with_styles(style_node_graph_scroll)
-                .with_children(self.children.clone())
-                .into(),
-            style: StyleHandle::new((style_node_graph, self.style.clone())),
-            content_style: StyleHandle::new(style_node_graph_content),
-            scroll_enable_x: true,
-            scroll_enable_y: true,
-            // ..default()
-        }
+        ScrollView::new()
+            .children(
+                Element::<MaterialNodeBundle<DotGridMaterial>>::new()
+                    .named("NodeGraph::Scroll")
+                    .insert(material.clone())
+                    .with_styles(style_node_graph_scroll)
+                    .with_children(self.children.clone()),
+            )
+            .style((style_node_graph, self.style.clone()))
+            .content_style(style_node_graph_content)
+            .scroll_enable_x(true)
+            .scroll_enable_y(true)
     }
 }
 

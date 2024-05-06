@@ -28,18 +28,14 @@ impl ViewTemplate for FieldEditSrgba {
             },
             InspectorFieldReadonlyValue {
                 children: (
-                    Swatch {
-                        color: value,
-                        size: Size::Xxxs,
-                        ..default()
-                    },
+                    Swatch::new(value).size(Size::Xxxs),
                     Spacer,
                     text_computed(move |cx| {
                         let value = value.get(cx);
                         value.to_hex()
                     }),
                 )
-                    .fragment(),
+                    .to_ref(),
                 ..default()
             },
         ))

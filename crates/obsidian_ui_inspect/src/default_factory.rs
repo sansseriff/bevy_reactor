@@ -49,7 +49,7 @@ impl InspectorFactory for DefaultInspectorFactory {
                 //             //     ..default()
                 //             // },
                 //         )
-                //             .fragment(),
+                //             .to_ref(),
                 //         ..default()
                 //     }
                 //     .to_ref(),
