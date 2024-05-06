@@ -7,7 +7,8 @@ use bevy::{
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
-    controls::{Button, InspectorGroup, Spacer},
+    controls::{Icon, InspectorGroup, MenuButton, MenuDivider, MenuItem, MenuPopup, Spacer},
+    floating::FloatAlign,
     size::Size,
 };
 
@@ -86,10 +87,35 @@ impl ViewTemplate for Inspector {
             title: (
                 self.target.name(cx),
                 Spacer,
-                Button {
-                    children: Element::<NodeBundle>::new()
-                        .with_styles(style_close_icon)
-                        .into(),
+                MenuButton {
+                    children: Icon {
+                        icon: "obsidian_ui://icons/add_box.png".to_string(),
+                        color: Signal::Constant(colors::DIM.into()),
+                        style: StyleHandle::new(style_close_icon),
+                        ..default()
+                    }
+                    .to_ref(),
+                    popup: MenuPopup {
+                        children: (
+                            MenuItem {
+                                label: "Open".into(),
+                                ..default()
+                            },
+                            MenuItem {
+                                label: "Close".into(),
+                                ..default()
+                            },
+                            MenuDivider,
+                            MenuItem {
+                                label: "Quit...".into(),
+                                ..default()
+                            },
+                        )
+                            .fragment(),
+                        align: FloatAlign::End,
+                        ..default()
+                    }
+                    .to_ref(),
                     size: Size::Xxs,
                     minimal: true,
                     ..default()
@@ -103,11 +129,7 @@ impl ViewTemplate for Inspector {
 }
 
 fn style_close_icon(ss: &mut StyleBuilder) {
-    ss.height(12)
-        .width(12)
-        .background_image("obsidian_ui://icons/close.png")
-        .background_image_color(colors::DIM)
-        .margin((4, 0));
+    ss.margin((4, 0));
 }
 
 // fn style_close_icon_small(ss: &mut StyleBuilder) {

@@ -16,6 +16,12 @@ pub mod colors;
 /// Module containing interactive and layout control widgets.
 pub mod controls;
 
+/// Utilities for tabbing between widgets.
+pub mod focus;
+
+/// Utilities for floating popups.
+pub mod floating;
+
 /// Module containing extensions to `Cx`.
 pub mod hooks;
 
@@ -30,9 +36,6 @@ pub mod size;
 
 /// Module of utilities for embedding a 3D viewport in the 2D UI.
 pub mod viewport;
-
-/// Utilities for tabbing between widgets.
-pub mod focus;
 
 /// Standard styles for fonts.
 pub mod typography;
@@ -64,6 +67,7 @@ impl Plugin for ObsidianUiPlugin {
                 scrolling::handle_scroll_events,
                 scrolling::update_scroll_positions,
             ),
-        );
+        )
+        .add_systems(PostUpdate, floating::position_floating);
     }
 }

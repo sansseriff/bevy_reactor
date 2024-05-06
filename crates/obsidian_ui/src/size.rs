@@ -13,19 +13,6 @@ pub enum Size {
 }
 
 impl Size {
-    /// Class name for Size.
-    pub fn class_name(&self) -> &'static str {
-        match self {
-            Size::Xl => "size-xl",
-            Size::Lg => "size-lg",
-            Size::Md => "size-md",
-            Size::Sm => "size-sm",
-            Size::Xs => "size-xs",
-            Size::Xxs => "size-xxs",
-            Size::Xxxs => "size-xxxs",
-        }
-    }
-
     /// Returns the height of the widget in pixels.
     pub fn height(&self) -> f32 {
         match self {

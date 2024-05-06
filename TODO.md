@@ -1,12 +1,19 @@
 # TODO
 
+- Menus:
+  - Close on click
+  - Keyboard navigation
+  - Focus indicator
+  - Restore Focus
+  - Shortcuts
+  - Checkmarks and checkmark spacing
 - Property Editor.
   - Group:
     - Disclosure
     - Icon
     - Title
     - Dropdown
-- Popup menus
+  - Undefined Fields
 - Memoized Deriveds, with custom equality hook.
   - Needed to make Dynamic work with sliders
 - Components and Resources as signals?

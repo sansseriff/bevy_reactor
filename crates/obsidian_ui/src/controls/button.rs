@@ -1,7 +1,9 @@
 use crate::{
+    colors,
     focus::{AutoFocus, KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
-    RoundedCorners,
+    size::Size,
+    typography, RoundedCorners,
 };
 use bevy::{
     a11y::{
@@ -9,14 +11,11 @@ use bevy::{
         AccessibilityNode, Focus,
     },
     color::Luminance,
-    math::VectorSpace,
     prelude::*,
     ui,
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
-
-use crate::{colors, size::Size};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -35,7 +34,7 @@ pub enum ButtonVariant {
     Selected,
 }
 
-fn style_button(ss: &mut StyleBuilder) {
+pub(crate) fn style_button(ss: &mut StyleBuilder) {
     ss.border(1)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
@@ -47,7 +46,7 @@ fn style_button(ss: &mut StyleBuilder) {
         .color(colors::FOREGROUND);
 }
 
-fn style_button_bg(ss: &mut StyleBuilder) {
+pub(crate) fn style_button_bg(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Grid)
         .position(ui::PositionType::Absolute)
         .left(0)
@@ -107,6 +106,7 @@ impl ViewTemplate for Button {
         Element::<NodeBundle>::for_entity(id)
             .named("Button")
             .with_styles((
+                typography::text_default,
                 style_button,
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height()).font_size(size.font_size());
@@ -197,7 +197,7 @@ impl ViewTemplate for Button {
                             (false, true) => base_color.lighter(0.02),
                             (false, false) => {
                                 if minimal {
-                                    Srgba::ZERO
+                                    Srgba::NONE
                                 } else {
                                     base_color
                                 }

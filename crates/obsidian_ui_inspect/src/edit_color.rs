@@ -1,4 +1,4 @@
-use bevy::{math::VectorSpace, prelude::*};
+use bevy::prelude::*;
 use bevy_reactor::*;
 use obsidian_ui::{
     controls::{InspectorFieldReadonlyValue, Spacer, Swatch},
@@ -19,7 +19,7 @@ impl ViewTemplate for FieldEditSrgba {
             if value.is::<Srgba>() {
                 return *value.downcast_ref::<Srgba>().unwrap();
             }
-            Srgba::ZERO
+            Srgba::NONE
         });
 
         Fragment::new((
