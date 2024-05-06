@@ -115,20 +115,14 @@ impl ViewTemplate for ColorEdit {
                             ..default()
                         },
                     )),
-                Switch::new(&[
-                    Case::new(
-                        |cx| cx.use_resource::<ColorEditState>().mode == ColorMode::Rgb,
-                        || RgbSliders,
-                    ),
-                    Case::new(
-                        |cx| cx.use_resource::<ColorEditState>().mode == ColorMode::Hsl,
-                        || HslSliders,
-                    ),
-                    Case::new(
-                        |cx| cx.use_resource::<ColorEditState>().mode == ColorMode::Recent,
-                        || "Recent",
-                    ),
-                ]),
+                DynamicKeyed::new(
+                    |cx| cx.use_resource::<ColorEditState>().mode,
+                    |mode| match mode {
+                        ColorMode::Rgb => RgbSliders.to_ref(),
+                        ColorMode::Hsl => HslSliders.to_ref(),
+                        ColorMode::Recent => "Recent".fragment(),
+                    },
+                ),
             ))
     }
 }

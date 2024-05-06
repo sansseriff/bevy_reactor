@@ -76,10 +76,10 @@ fn setup_view_root(mut commands: Commands) {
                     || "[Even]",
                     || "[Odd]",
                 ),
-                Dynamic::new(|cx| {
-                    let counter = cx.use_resource::<Counter>();
-                    format!(":{}:", counter.count)
-                }),
+                DynamicKeyed::new(
+                    |cx| cx.use_resource::<Counter>().count,
+                    |count| format!(":{}:", count),
+                ),
                 For::each(
                     |cx| {
                         let counter = cx.use_resource::<Counter>();
