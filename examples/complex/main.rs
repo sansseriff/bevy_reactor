@@ -217,7 +217,7 @@ fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
 struct DemoUi(Entity);
 
 impl ViewTemplate for DemoUi {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let mut inc_count = 0;
         let mut dec_count = 0;
         let clicked_increment = cx.create_callback_mut(move |_cx, _| {
@@ -397,7 +397,7 @@ impl ViewTemplate for DemoUi {
 struct CenterPanel;
 
 impl ViewTemplate for CenterPanel {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Cond::new(
             |cx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Preview,
             || {
@@ -420,7 +420,7 @@ impl ViewTemplate for CenterPanel {
 struct ReactionsTable;
 
 impl ViewTemplate for ReactionsTable {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         ListView::new()
             .children(For::each(
                 |cx| {
@@ -480,7 +480,7 @@ impl ViewTemplate for ReactionsTable {
 struct TransformOverlayDemo;
 
 impl ViewTemplate for TransformOverlayDemo {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
 
         let on_change = Some(cx.create_callback(move |cx, new_pos| {

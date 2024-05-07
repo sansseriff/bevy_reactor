@@ -55,13 +55,6 @@ pub trait View {
     }
 }
 
-// This From impl is commented out because it causes many conflicts with other From impls.
-// impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
-//     fn from(view: V) -> Self {
-//         ViewHandle::new(view)
-//     }
-// }
-
 #[derive(Component)]
 /// Component which holds the top level of the view hierarchy.
 pub struct ViewRoot(pub(crate) Arc<Mutex<dyn View + Sync + Send + 'static>>);
@@ -138,30 +131,6 @@ impl ViewRef {
     }
 }
 
-impl From<()> for ViewRef {
-    fn from(_value: ()) -> Self {
-        ViewRef::new(EmptyView)
-    }
-}
-
-impl From<&str> for ViewRef {
-    fn from(value: &str) -> Self {
-        ViewRef::new(TextStatic::new(value.to_string()))
-    }
-}
-
-impl From<String> for ViewRef {
-    fn from(value: String) -> Self {
-        ViewRef::new(TextStatic::new(value))
-    }
-}
-
-impl From<Signal<String>> for ViewRef {
-    fn from(value: Signal<String>) -> Self {
-        ViewRef::new(TextComputed::new(move |rcx| value.get_clone(rcx)))
-    }
-}
-
 impl Clone for ViewRef {
     fn clone(&self) -> Self {
         Self(self.0.clone())
@@ -173,6 +142,58 @@ impl Default for ViewRef {
         Self::new(EmptyView)
     }
 }
+
+/// Trait that allows a type to be converted into a [`ViewRef`].
+pub trait IntoView {
+    /// Convert the type into a [`ViewRef`].
+    fn into_view(self) -> ViewRef;
+}
+
+impl IntoView for ViewRef {
+    fn into_view(self) -> ViewRef {
+        self
+    }
+}
+
+impl IntoView for () {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(EmptyView)
+    }
+}
+
+impl IntoView for &str {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(TextStatic::new(self.to_string()))
+    }
+}
+
+impl IntoView for Signal<String> {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(TextComputed::new(move |rcx| self.get_clone(rcx)))
+    }
+}
+
+impl IntoView for String {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(TextStatic::new(self))
+    }
+}
+
+impl<V: IntoView> IntoView for Option<V> {
+    fn into_view(self) -> ViewRef {
+        match self {
+            Some(v) => v.into_view(),
+            None => ViewRef::new(EmptyView),
+        }
+    }
+}
+
+// This From impl is commented out because it causes many conflicts with other From impls.
+// impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
+//     fn from(view: V) -> Self {
+//         ViewHandle::new(view)
+//     }
+// }
 
 #[derive(Component)]
 /// Marker component used to signal that a view's output nodes have changed.
@@ -196,15 +217,7 @@ impl View for EmptyView {
 /// a function.
 pub trait ViewTemplate {
     /// Create the view for the control.
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef>;
-
-    /// Convert this template into a `ViewRef`
-    fn to_view_ref(self) -> ViewRef
-    where
-        Self: Sized + Send + Sync + 'static,
-    {
-        ViewRef::new(ViewTemplateState::new(self))
-    }
+    fn create(&self, cx: &mut Cx) -> impl IntoView;
 
     /// Associate this view template with a state object that tracks the nodes created by
     /// the view. Consumes the template.
@@ -213,6 +226,12 @@ pub trait ViewTemplate {
         Self: Sized + Send + Sync + 'static,
     {
         ViewRoot::new(ViewTemplateState::new(self))
+    }
+}
+
+impl<VT: ViewTemplate + Send + Sync + 'static> IntoView for VT {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(ViewTemplateState::new(self))
     }
 }
 
@@ -249,7 +268,7 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         assert!(self.view_entity.is_none());
         let mut tracking = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(world, view_entity, &mut tracking);
-        let view = self.template.create(&mut cx).into();
+        let view = self.template.create(&mut cx).into_view();
         let inner = world.spawn(tracking).set_parent(view_entity).id();
         view.0.lock().unwrap().build(inner, world);
         self.nodes = view.nodes();
@@ -274,15 +293,6 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
             self.nodes = handle.0.lock().unwrap().nodes();
         };
         false
-    }
-}
-
-impl<W: ViewTemplate> From<W> for ViewRef
-where
-    W: Send + Sync + 'static,
-{
-    fn from(value: W) -> Self {
-        ViewRef::new(ViewTemplateState::new(value))
     }
 }
 

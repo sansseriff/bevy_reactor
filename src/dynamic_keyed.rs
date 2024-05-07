@@ -2,8 +2,8 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 
-use crate::View;
 use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewRef};
+use crate::{IntoView, View};
 
 use crate::node_span::NodeSpan;
 
@@ -11,13 +11,13 @@ use crate::node_span::NodeSpan;
 /// a [`View`] from that value. This is useful in cases where we want to control precisely
 /// which dependencies we are reacting to.
 #[doc(hidden)]
-pub struct DynamicKeyed<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> {
+pub struct DynamicKeyed<Key, KeyFn: Fn(&Rcx) -> Key, V: IntoView, F: Fn(Key) -> V + Send> {
     state: Option<(ViewRef, Entity)>,
     key: KeyFn,
     factory: F,
 }
 
-impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send>
+impl<Key, KeyFn: Fn(&Rcx) -> Key, V: IntoView, F: Fn(Key) -> V + Send>
     DynamicKeyed<Key, KeyFn, V, F>
 {
     /// Construct a new `DynamicKeyed` view.
@@ -35,7 +35,7 @@ impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send>
     }
 }
 
-impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> View
+impl<Key, KeyFn: Fn(&Rcx) -> Key, V: IntoView, F: Fn(Key) -> V + Send> View
     for DynamicKeyed<Key, KeyFn, V, F>
 {
     fn nodes(&self) -> NodeSpan {
@@ -59,7 +59,7 @@ impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> View
         }
 
         let key = (self.key)(&Rcx::new(world, view_entity, tracking));
-        let view = (self.factory)(key).into();
+        let view = (self.factory)(key).into_view();
         let entity = ViewRef::spawn(&view, view_entity, world);
         world.entity_mut(view_entity).insert(DisplayNodeChanged);
         self.state = Some((view, entity));
@@ -77,11 +77,11 @@ impl<Key, KeyFn: Fn(&Rcx) -> Key, V: Into<ViewRef>, F: Fn(Key) -> V + Send> View
 impl<
         Key: 'static,
         KeyFn: Send + Sync + 'static + Fn(&Rcx) -> Key,
-        V: Into<ViewRef> + 'static,
+        V: IntoView + 'static,
         F: Send + Sync + 'static + Fn(Key) -> V,
-    > From<DynamicKeyed<Key, KeyFn, V, F>> for ViewRef
+    > IntoView for DynamicKeyed<Key, KeyFn, V, F>
 {
-    fn from(value: DynamicKeyed<Key, KeyFn, V, F>) -> Self {
-        ViewRef::new(value)
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

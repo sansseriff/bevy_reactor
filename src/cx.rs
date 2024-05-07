@@ -11,7 +11,7 @@ use crate::{
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
     mutable::{MutableCell, ReadMutable, UpdateMutableCell, WriteMutable},
     tracking_scope::TrackingScope,
-    Mutable, Reaction, ReactionHandle, Signal,
+    Mutable, Reaction, ReactionCell, Signal,
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
@@ -206,7 +206,7 @@ pub trait RunContextSetup<'p> {
         }));
         self.world_mut()
             .entity_mut(mutable.cell)
-            .insert((ReactionHandle(reaction), scope));
+            .insert((ReactionCell(reaction), scope));
 
         signal
     }
@@ -227,7 +227,7 @@ pub trait RunContextSetup<'p> {
         action.lock().unwrap()(&mut Cx::new(self.world_mut(), entity, &mut scope));
         self.world_mut()
             .entity_mut(entity)
-            .insert((scope, ReactionHandle(action)));
+            .insert((scope, ReactionCell(action)));
     }
 }
 

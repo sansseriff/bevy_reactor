@@ -95,7 +95,7 @@ impl InspectorGroup {
 }
 
 impl ViewTemplate for InspectorGroup {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let expanded = self.expanded;
         let body = self.body.clone();
         Element::<NodeBundle>::new()
@@ -136,7 +136,7 @@ pub struct InspectorFieldLabel {
 }
 
 impl ViewTemplate for InspectorFieldLabel {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style((
                 typography::text_default,
@@ -182,13 +182,13 @@ impl InspectorFieldReadonlyValue {
 
     /// Set the additional styles for the button.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 }
 
 impl ViewTemplate for InspectorFieldReadonlyValue {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style((
                 typography::text_default,

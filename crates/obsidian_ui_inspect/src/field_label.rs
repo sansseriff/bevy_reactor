@@ -20,7 +20,7 @@ pub struct FieldLabel {
 }
 
 impl ViewTemplate for FieldLabel {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style((typography::text_default, style_inspector_field_label))
             .children((self.field.name(), Spacer))

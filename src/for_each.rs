@@ -6,7 +6,7 @@ use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
 use crate::{lcs::lcs, View};
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewRef};
+use crate::{DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, ViewRef};
 
 use crate::node_span::NodeSpan;
 
@@ -33,7 +33,7 @@ pub struct ForEach<
     ItemIter: Iterator<Item = Item>,
     ItemFn: Fn(&Rcx) -> ItemIter,
     Cmp: Fn(&Item, &Item) -> bool,
-    V: Into<ViewRef>,
+    V: IntoView,
     F: Fn(&Item) -> V + Send,
 > {
     item_fn: ItemFn,
@@ -50,7 +50,7 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item) -> V + Send,
     > ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
@@ -66,8 +66,8 @@ impl<
     }
 
     /// Allow specifying a fallback view to render if there are no items.
-    pub fn with_fallback<FB: Into<ViewRef>>(mut self, fallback: FB) -> Self {
-        self.fallback = Some(fallback.into());
+    pub fn with_fallback<FB: IntoView>(mut self, fallback: FB) -> Self {
+        self.fallback = Some(fallback.into_view());
         self
     }
 
@@ -113,7 +113,7 @@ impl<
             // Build new elements
             for i in next_range {
                 changed = true;
-                let view = (self.each)(&next_items[i]).into();
+                let view = (self.each)(&next_items[i]).into_view();
                 out.push(ListItem {
                     id: ViewRef::spawn(&view, view_entity, world),
                     view,
@@ -151,7 +151,7 @@ impl<
         } else if next_start > next_range.start {
             // Insertions
             for i in next_range.start..next_start {
-                let view = (self.each)(&next_items[i]).into();
+                let view = (self.each)(&next_items[i]).into_view();
                 out.push(ListItem {
                     id: ViewRef::spawn(&view, view_entity, world),
                     view,
@@ -193,7 +193,7 @@ impl<
         } else if next_end < next_range.end {
             // Insertions
             for i in next_end..next_range.end {
-                let view = (self.each)(&next_items[i]).into();
+                let view = (self.each)(&next_items[i]).into_view();
                 out.push(ListItem {
                     id: ViewRef::spawn(&view, view_entity, world),
                     view,
@@ -213,7 +213,7 @@ impl<
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item) -> V + Send,
     > View for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
@@ -293,12 +293,12 @@ impl<
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
         Cmp: Send + Sync + 'static + Fn(&Item, &Item) -> bool,
-        V: 'static + Into<ViewRef>,
+        V: 'static + IntoView,
         F: Send + Sync + 'static + Fn(&Item) -> V + Send,
-    > From<ForEach<Item, ItemIter, ItemFn, Cmp, V, F>> for ViewRef
+    > IntoView for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
 {
-    fn from(value: ForEach<Item, ItemIter, ItemFn, Cmp, V, F>) -> Self {
-        ViewRef::new(value)
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 

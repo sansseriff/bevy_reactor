@@ -6,7 +6,7 @@ use bevy::{
     hierarchy::BuildWorldChildren,
 };
 
-use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionHandle, ReactionTarget};
+use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionCell, ReactionTarget};
 
 /// A reactive effect that modifies a target entity.
 pub trait EntityEffect: Sync + Send {
@@ -61,7 +61,7 @@ where
         // Store the reaction in a handle and add it to the world.
         let reaction_id = world
             .spawn((
-                ReactionHandle(reaction_arc.clone()),
+                ReactionCell(reaction_arc.clone()),
                 ReactionTarget(target),
                 Name::new("EffectTarget::start_reaction"),
             ))
@@ -174,7 +174,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
         // Store the reaction in a handle and add it to the world.
         let reaction_id = world
             .spawn((
-                ReactionHandle(self.reaction.clone()),
+                ReactionCell(self.reaction.clone()),
                 ReactionTarget(target),
                 reaction_name,
             ))

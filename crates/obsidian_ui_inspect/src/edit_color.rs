@@ -12,7 +12,7 @@ pub struct FieldEditSrgba {
 }
 
 impl ViewTemplate for FieldEditSrgba {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
         let value = cx.create_derived(move |cx| {
             let value = field.get_value(cx);

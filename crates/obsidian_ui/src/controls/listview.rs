@@ -35,7 +35,7 @@ impl ListView {
 
     /// Set additional styles to be applied to the list view.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -47,7 +47,7 @@ impl ListView {
 }
 
 impl ViewTemplate for ListView {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         ScrollView::new()
             .children(
                 Element::<NodeBundle>::new()

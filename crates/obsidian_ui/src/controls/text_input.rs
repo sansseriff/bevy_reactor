@@ -154,7 +154,7 @@ impl TextInput {
 
 impl ViewTemplate for TextInput {
     #[allow(clippy::vec_init_then_push)]
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let text_id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);

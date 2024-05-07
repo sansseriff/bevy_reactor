@@ -94,7 +94,7 @@ fn setup_view_root(mut commands: Commands) {
 struct NestedView;
 
 impl ViewTemplate for NestedView {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         text_computed(|cx| {
             let counter = cx.use_resource::<Counter>();
             format!("{}", counter.count)

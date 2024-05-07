@@ -61,7 +61,7 @@ impl ToolPalette {
 
     /// Set additional styles to be applied to the palette.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -73,7 +73,7 @@ impl ToolPalette {
 }
 
 impl ViewTemplate for ToolPalette {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let columns = self.columns;
 
         cx.insert(ToolPaletteContext { size: self.size });
@@ -181,7 +181,7 @@ impl Default for ToolButton {
 }
 
 impl ViewTemplate for ToolButton {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let context = cx.use_inherited_component::<ToolPaletteContext>().unwrap();
         let mut btn = Button::new()
             .size(context.size)

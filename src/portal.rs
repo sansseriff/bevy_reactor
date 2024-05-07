@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{node_span::NodeSpan, view::View, DespawnScopes, ViewRef};
+use crate::{node_span::NodeSpan, view::View, DespawnScopes, IntoView, ViewRef};
 
 /// A `Portal` represents a view that is displayed with no parent, causing it's location to
 /// be relative to the window rather than any parent view.
@@ -11,9 +11,9 @@ pub struct Portal {
 
 impl Portal {
     /// Construct a new `Portal`.
-    pub fn new(view: impl Into<ViewRef>) -> Self {
+    pub fn new(view: impl IntoView) -> Self {
         Self {
-            view: view.into(),
+            view: view.into_view(),
             entity: None,
         }
     }
@@ -41,8 +41,8 @@ impl View for Portal {
     }
 }
 
-impl From<Portal> for ViewRef {
-    fn from(value: Portal) -> Self {
-        ViewRef::new(value)
+impl IntoView for Portal {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

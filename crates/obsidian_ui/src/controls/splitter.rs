@@ -87,7 +87,7 @@ impl Default for Splitter {
 }
 
 impl ViewTemplate for Splitter {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

@@ -100,7 +100,7 @@ impl Checkbox {
 
     /// Set the style of the checkbox.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -119,7 +119,7 @@ impl Checkbox {
 
 impl ViewTemplate for Checkbox {
     /// Construct a checkbox widget.
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);
@@ -229,7 +229,7 @@ impl ViewTemplate for Checkbox {
                             }
                         };
                     })
-                    .children(cond(
+                    .children(Cond::new(
                         move |cx| checked.get(cx),
                         move || Element::<NodeBundle>::new().style(style_checkbox_inner),
                         || (),

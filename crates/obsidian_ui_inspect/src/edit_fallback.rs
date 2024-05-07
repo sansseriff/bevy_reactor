@@ -7,7 +7,7 @@ use crate::{field_label::FieldLabel, InspectableField};
 pub struct FieldEditFallback(pub(crate) InspectableField);
 
 impl ViewTemplate for FieldEditFallback {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let reflect = field.reflect(cx);
         // let is_checked = cx.create_derived(move |cx| {

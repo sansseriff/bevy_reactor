@@ -52,7 +52,7 @@ impl Swatch {
 
     /// Set additional styles to be applied to the button.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -64,7 +64,7 @@ impl Swatch {
 }
 
 impl ViewTemplate for Swatch {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
         let size = self.size;
 

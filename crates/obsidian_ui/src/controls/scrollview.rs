@@ -108,13 +108,13 @@ impl ScrollView {
 
     /// Set additional styles to be applied to the scroll view.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
     /// Set additional styles to be applied to the scroll content.
     pub fn content_style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.content_style = StyleHandle::new(style);
+        self.content_style = style.into_handle();
         self
     }
 
@@ -132,7 +132,7 @@ impl ScrollView {
 }
 
 impl ViewTemplate for ScrollView {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         // A widget which displays a scrolling view of its children.
         let enable_x = self.scroll_enable_x;
         let enable_y = self.scroll_enable_y;
@@ -218,7 +218,7 @@ impl Scrollbar {
 }
 
 impl ViewTemplate for Scrollbar {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let vertical = self.0.vertical;
         let drag_state = self.0.drag_state;
         let id_scroll_area = self.0.id_scroll_area;

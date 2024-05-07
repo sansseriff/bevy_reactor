@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes, ViewRef,
+    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes,
+    IntoView, ViewRef,
 };
 
 /// A `Fragment` represents a group of one or more child views which can be inserted inline
@@ -69,8 +70,8 @@ impl View for Fragment {
     }
 }
 
-impl From<Fragment> for ViewRef {
-    fn from(value: Fragment) -> Self {
-        ViewRef::new(value)
+impl IntoView for Fragment {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

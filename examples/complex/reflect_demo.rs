@@ -28,7 +28,7 @@ impl<T: Resource> ResourcePropertyInspector<T> {
 }
 
 impl<T: Resource + Reflect> ViewTemplate for ResourcePropertyInspector<T> {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Inspector::new(Arc::<InspectableResource<T>>::default())
     }
 }

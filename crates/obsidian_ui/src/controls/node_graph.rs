@@ -50,13 +50,13 @@ impl GraphDisplay {
 
     /// Set the additional styles for the button.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 }
 
 impl ViewTemplate for GraphDisplay {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let mut ui_materials = cx
             .world_mut()
             .get_resource_mut::<Assets<DotGridMaterial>>()
@@ -216,7 +216,7 @@ impl NodeDisplay {
 }
 
 impl ViewTemplate for NodeDisplay {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let position = self.position;
         let id = cx.create_entity();
         let hovering = cx.create_hover_signal(id);
@@ -318,7 +318,7 @@ pub struct InputTerminalDisplay {
 }
 
 impl ViewTemplate for InputTerminalDisplay {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
         Element::<NodeBundle>::for_entity(self.id)
             .named("InputConnector")
@@ -366,7 +366,7 @@ pub struct OutputTerminalDisplay {
 }
 
 impl ViewTemplate for OutputTerminalDisplay {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
         Element::<NodeBundle>::for_entity(self.id)
             .named("OutputConnector")
@@ -393,7 +393,7 @@ pub struct EdgeDisplay {
 }
 
 impl ViewTemplate for EdgeDisplay {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let mut ui_materials = cx
             .world_mut()
             .get_resource_mut::<Assets<DrawPathMaterial>>()

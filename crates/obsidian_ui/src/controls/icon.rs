@@ -41,7 +41,7 @@ impl Icon {
 
     /// Set the style of the icon.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 }
@@ -58,7 +58,7 @@ impl Default for Icon {
 }
 
 impl ViewTemplate for Icon {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
         let icon = self.icon.clone();
         let size = self.size;

@@ -4,7 +4,7 @@ use bevy::{
     utils::HashSet,
 };
 
-use crate::{reaction::ReactionHandle, ViewHandle};
+use crate::{reaction::ReactionCell, ViewHandle};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -181,7 +181,7 @@ pub fn run_reactions(world: &mut World) {
                     .lock()
                     .unwrap()
                     .react(*scope_entity, world, &mut next_scope);
-            } else if let Some(reaction) = entt.get_mut::<ReactionHandle>() {
+            } else if let Some(reaction) = entt.get_mut::<ReactionCell>() {
                 let inner = reaction.0.clone();
                 inner
                     .lock()

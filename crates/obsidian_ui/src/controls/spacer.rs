@@ -10,7 +10,7 @@ fn style_spacer(ss: &mut StyleBuilder) {
 pub struct Spacer;
 
 impl ViewTemplate for Spacer {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new().style(style_spacer)
     }
 }

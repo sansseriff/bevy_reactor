@@ -5,7 +5,7 @@ use crate::{
     style::{InheritableFontStyles, TextStyleChanged},
     tracking_scope::TrackingScope,
     view::View,
-    DespawnScopes, Rcx, ViewRef,
+    DespawnScopes, IntoView, Rcx, ViewRef,
 };
 
 /// A UI element that displays text
@@ -58,9 +58,9 @@ pub fn text(text: &str) -> TextStatic {
     TextStatic::new(text.to_string())
 }
 
-impl From<TextStatic> for ViewRef {
-    fn from(value: TextStatic) -> Self {
-        ViewRef::new(value)
+impl IntoView for TextStatic {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 
@@ -129,9 +129,9 @@ pub fn text_computed<F: FnMut(&Rcx) -> String>(text: F) -> TextComputed<F> {
     TextComputed::new(text)
 }
 
-impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> From<TextComputed<F>> for ViewRef {
-    fn from(value: TextComputed<F>) -> Self {
-        ViewRef::new(value)
+impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> IntoView for TextComputed<F> {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 

@@ -27,10 +27,10 @@ pub type ReactionRef = Arc<Mutex<dyn Reaction + Sync + Send + 'static>>;
 /// Component which contains a reference to a reaction. Generally the entity will also
 /// have a [`TrackingScope`] component.
 #[derive(Component)]
-pub struct ReactionHandle(pub(crate) ReactionRef);
+pub struct ReactionCell(pub(crate) ReactionRef);
 
-impl ReactionHandle {
-    /// Construct a new [`ReactionHandle`].
+impl ReactionCell {
+    /// Construct a new [`ReactionCell`].
     pub fn new(view: impl Reaction + Sync + Send + 'static) -> Self {
         Self(Arc::new(Mutex::new(view)))
     }

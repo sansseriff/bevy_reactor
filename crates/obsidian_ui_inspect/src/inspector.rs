@@ -68,7 +68,7 @@ impl Inspector {
                         }
                     }
                 }
-                Fragment::from_slice(&fields).into()
+                Fragment::from_slice(&fields).into_view()
             }
             ReflectRef::TupleStruct(_) => todo!(),
             ReflectRef::Tuple(_) => todo!(),
@@ -82,7 +82,7 @@ impl Inspector {
 }
 
 impl ViewTemplate for Inspector {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         InspectorGroup::new()
             .title((
                 self.target.name(cx),

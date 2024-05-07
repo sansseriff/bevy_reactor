@@ -7,7 +7,7 @@ use crate::{
     node_span::NodeSpan,
     parent_view::{ChildView, ParentView},
     view::View,
-    DespawnScopes, TrackingScope, ViewRef,
+    DespawnScopes, IntoView, TrackingScope, ViewRef,
 };
 
 /// A basic UI element
@@ -175,8 +175,8 @@ impl<B: Bundle + Default> View for Element<B> {
     }
 }
 
-impl<B: Bundle + Default> From<Element<B>> for ViewRef {
-    fn from(value: Element<B>) -> Self {
-        ViewRef::new(value)
+impl<B: Bundle + Default> IntoView for Element<B> {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

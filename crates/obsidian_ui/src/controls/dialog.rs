@@ -113,7 +113,7 @@ impl Dialog {
 }
 
 impl ViewTemplate for Dialog {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
         let state = cx.create_bistable_transition(self.open, TRANSITION_DURATION);
@@ -244,7 +244,7 @@ impl DialogHeader {
 }
 
 impl ViewTemplate for DialogHeader {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style(style_dialog_header)
             .children(self.children.clone())
@@ -281,7 +281,7 @@ impl DialogBody {
 }
 
 impl ViewTemplate for DialogBody {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style(style_dialog_body)
             .children(self.children.clone())
@@ -320,7 +320,7 @@ impl DialogFooter {
 }
 
 impl ViewTemplate for DialogFooter {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .style(style_dialog_footer)
             .children(self.children.clone())

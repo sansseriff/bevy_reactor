@@ -142,7 +142,7 @@ impl MenuButton {
 }
 
 impl ViewTemplate for MenuButton {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id_anchor = self.anchor.unwrap_or_else(|| cx.create_entity());
         let variant = self.variant;
         let open = cx.create_mutable::<bool>(false);
@@ -346,7 +346,7 @@ impl MenuPopup {
 }
 
 impl ViewTemplate for MenuPopup {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let context = cx.use_inherited_component::<MenuAnchor>().unwrap();
 
         Element::<NodeBundle>::new()
@@ -442,7 +442,7 @@ impl MenuItem {
 }
 
 impl ViewTemplate for MenuItem {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);
@@ -516,7 +516,8 @@ impl ViewTemplate for MenuItem {
             .create_effect(move |cx, ent| {
                 let is_pressed = pressed.get(cx);
                 let is_hovering = hovering.get(cx);
-                let color = match (is_pressed, is_hovering) {
+                let is_focused = focused.get(cx);
+                let color = match (is_pressed || is_focused, is_hovering) {
                     (true, _) => colors::U3.lighter(0.05),
                     (false, true) => colors::U3.lighter(0.02),
                     (false, false) => Srgba::NONE,
@@ -623,7 +624,7 @@ fn style_menu_divider(ss: &mut StyleBuilder) {
 pub struct MenuDivider;
 
 impl ViewTemplate for MenuDivider {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
             .named("MenuDivider")
             .style(style_menu_divider)

@@ -3,7 +3,7 @@ use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
 
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewRef};
+use crate::{DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewRef};
 
 use crate::node_span::NodeSpan;
 
@@ -18,7 +18,7 @@ pub struct ForIndex<
     Item: PartialEq + Clone + 'static,
     ItemIter: Iterator<Item = Item>,
     ItemFn: Fn(&Rcx) -> ItemIter,
-    V: Into<ViewRef>,
+    V: IntoView,
     F: Fn(&Item, usize) -> V,
 > {
     item_fn: ItemFn,
@@ -33,7 +33,7 @@ impl<
         Item: PartialEq + Clone + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item, usize) -> V,
     > ForIndex<Item, ItemIter, ItemFn, V, F>
 {
@@ -49,8 +49,8 @@ impl<
     }
 
     /// Allow specifying a fallback view to render if there are no items.
-    pub fn with_fallback<FB: Into<ViewRef>>(mut self, fallback: FB) -> Self {
-        self.fallback = Some(fallback.into());
+    pub fn with_fallback<FB: IntoView>(mut self, fallback: FB) -> Self {
+        self.fallback = Some(fallback.into_view());
         self
     }
 }
@@ -59,7 +59,7 @@ impl<
         Item: PartialEq + Clone + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item, usize) -> V,
     > View for ForIndex<Item, ItemIter, ItemFn, V, F>
 {
@@ -98,13 +98,13 @@ impl<
                 if item != entry.value {
                     entry.view.raze(entry.id, world);
                     entry.value = item.clone();
-                    entry.view = (self.each_fn)(&entry.value, index).into();
+                    entry.view = (self.each_fn)(&entry.value, index).into_view();
                     entry.id = ViewRef::spawn(&entry.view, view_entity, world);
                     changed = true;
                 }
             } else {
                 // Append new items.
-                let view = (self.each_fn)(&item, index).into();
+                let view = (self.each_fn)(&item, index).into_view();
                 let id = ViewRef::spawn(&view, view_entity, world);
                 self.items.push(IndexedListItem {
                     id,
@@ -162,11 +162,11 @@ impl<
         Item: Send + Sync + Clone + PartialEq + 'static,
         ItemIter: 'static + Iterator<Item = Item>,
         ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
-        V: 'static + Into<ViewRef>,
+        V: 'static + IntoView,
         F: Send + Sync + 'static + Fn(&Item, usize) -> V,
-    > From<ForIndex<Item, ItemIter, ItemFn, V, F>> for ViewRef
+    > IntoView for ForIndex<Item, ItemIter, ItemFn, V, F>
 {
-    fn from(value: ForIndex<Item, ItemIter, ItemFn, V, F>) -> Self {
-        ViewRef::new(value)
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

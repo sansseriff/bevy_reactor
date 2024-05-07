@@ -32,7 +32,6 @@ mod view;
 pub use callback::CallDeferred;
 pub use callback::Callback;
 pub use compositor::Compositor;
-pub use cond::cond;
 pub use cond::Cond;
 pub use cx::Cx;
 pub use cx::Rcx;

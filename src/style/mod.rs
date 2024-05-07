@@ -33,16 +33,27 @@ pub(crate) use builder_font::{InheritableFontStyles, TextStyleChanged};
 pub trait StyleTuple: Sync + Send {
     /// Method to apply the style to a target entity.
     fn apply(&self, ctx: &mut StyleBuilder);
+
+    /// Wrap the tuple in a [`StyleHandle`].
+    fn into_handle(self) -> StyleHandle;
 }
 
 /// Empty tuple.
 impl StyleTuple for () {
     fn apply(&self, _ctx: &mut StyleBuilder) {}
+
+    fn into_handle(self) -> StyleHandle {
+        StyleHandle::none()
+    }
 }
 
 impl<F: Fn(&mut StyleBuilder) + Send + Sync + 'static> StyleTuple for F {
     fn apply(&self, ctx: &mut StyleBuilder) {
         (self)(ctx);
+    }
+
+    fn into_handle(self) -> StyleHandle {
+        StyleHandle::new(self)
     }
 }
 
@@ -52,14 +63,22 @@ impl StyleTuple for StyleHandle {
             s.apply(ctx);
         }
     }
+
+    fn into_handle(self) -> StyleHandle {
+        StyleHandle::new(self)
+    }
 }
 
 #[impl_for_tuples(1, 16)]
 impl StyleTuple for Tuple {
-    for_tuples!( where #( Tuple: StyleTuple )* );
+    for_tuples!( where #( Tuple: StyleTuple + 'static )* );
 
     fn apply(&self, ctx: &mut StyleBuilder) {
         for_tuples!( #( self.Tuple.apply(ctx); )* );
+    }
+
+    fn into_handle(self) -> StyleHandle {
+        StyleHandle::new(self)
     }
 }
 

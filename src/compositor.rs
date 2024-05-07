@@ -10,8 +10,8 @@ use bevy::{
 
 use crate::{
     node_span::NodeSpan, style::ApplyStylesEffect, view::View, ChildView, ChildViewTuple,
-    DespawnScopes, DisplayNodeChanged, EffectTarget, EntityEffect, StyleTuple, TrackingScope,
-    ViewRef, WithStyles,
+    DespawnScopes, DisplayNodeChanged, EffectTarget, EntityEffect, IntoView, StyleTuple,
+    TrackingScope, ViewRef, WithStyles,
 };
 
 /// Marker component which indicates that the entity is a camera for the compositor.
@@ -183,9 +183,9 @@ impl EffectTarget for Compositor {
     }
 }
 
-impl From<Compositor> for ViewRef {
-    fn from(value: Compositor) -> Self {
-        ViewRef::new(value)
+impl IntoView for Compositor {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 

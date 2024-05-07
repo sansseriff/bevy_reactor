@@ -2,7 +2,7 @@ use bevy::ecs::world::World;
 use bevy::prelude::*;
 
 use crate::node_span::NodeSpan;
-use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, View, ViewRef};
+use crate::{DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewRef};
 
 pub enum CondState {
     Unset,
@@ -11,13 +11,8 @@ pub enum CondState {
 }
 
 /// A conditional view which renders one of two children depending on the condition expression.
-pub struct Cond<
-    Test: 'static,
-    Pos: Into<ViewRef>,
-    PosFn: Fn() -> Pos,
-    Neg: Into<ViewRef>,
-    NegFn: Fn() -> Neg,
-> {
+pub struct Cond<Test: 'static, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegFn: Fn() -> Neg>
+{
     test: Test,
     pos: PosFn,
     neg: NegFn,
@@ -26,9 +21,9 @@ pub struct Cond<
 
 impl<
         Test: Fn(&Rcx) -> bool,
-        Pos: Into<ViewRef>,
+        Pos: IntoView,
         PosFn: Fn() -> Pos,
-        Neg: Into<ViewRef>,
+        Neg: IntoView,
         NegFn: Fn() -> Neg,
     > Cond<Test, Pos, PosFn, Neg, NegFn>
 {
@@ -42,13 +37,13 @@ impl<
         }
     }
 
-    fn build_branch_state<V: Into<ViewRef>, Factory: Fn() -> V>(
+    fn build_branch_state<V: IntoView, Factory: Fn() -> V>(
         &self,
         branch: &Factory,
         parent: Entity,
         world: &mut World,
     ) -> (ViewRef, Entity) {
-        let state_view = (branch)().into();
+        let state_view = (branch)().into_view();
         let state_entity = ViewRef::spawn(&state_view, parent, world);
         // assert!(
         //     world.entity_mut(parent).get::<Parent>().is_some(),
@@ -60,9 +55,9 @@ impl<
 
 impl<
         Test: Fn(&Rcx) -> bool,
-        Pos: Into<ViewRef>,
+        Pos: IntoView,
         PosFn: Fn() -> Pos,
-        Neg: Into<ViewRef>,
+        Neg: IntoView,
         NegFn: Fn() -> Neg,
     > View for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
@@ -125,30 +120,15 @@ impl<
     }
 }
 
-/// Creates a conditional branch view.
-pub fn cond<
-    Test: Send + Sync + Fn(&Rcx) -> bool,
-    Pos: 'static + Into<ViewRef>,
-    PosFn: Send + Sync + 'static + Fn() -> Pos,
-    Neg: 'static + Into<ViewRef>,
-    NegFn: Send + Sync + 'static + Fn() -> Neg,
->(
-    test: Test,
-    pos: PosFn,
-    neg: NegFn,
-) -> Cond<Test, Pos, PosFn, Neg, NegFn> {
-    Cond::new(test, pos, neg)
-}
-
 impl<
         Test: Send + Sync + Fn(&Rcx) -> bool,
-        Pos: 'static + Into<ViewRef>,
+        Pos: 'static + IntoView,
         PosFn: Send + Sync + 'static + Fn() -> Pos,
-        Neg: 'static + Into<ViewRef>,
+        Neg: 'static + IntoView,
         NegFn: Send + Sync + 'static + Fn() -> Neg,
-    > From<Cond<Test, Pos, PosFn, Neg, NegFn>> for ViewRef
+    > IntoView for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
-    fn from(value: Cond<Test, Pos, PosFn, Neg, NegFn>) -> Self {
-        ViewRef::new(value)
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }

@@ -128,7 +128,7 @@ impl Button {
 
     /// Set the additional styles for the button.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -158,7 +158,7 @@ impl Button {
 }
 
 impl ViewTemplate for Button {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let variant = self.variant;
         let pressed = cx.create_mutable::<bool>(false);

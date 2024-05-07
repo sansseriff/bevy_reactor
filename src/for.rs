@@ -1,4 +1,4 @@
-use crate::ViewRef;
+use crate::IntoView;
 
 use super::{ForEach, ForIndex, Rcx};
 
@@ -17,7 +17,7 @@ impl For {
         Item: Send + Sync + Clone + PartialEq + 'static,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Send + Sync + 'static + Fn(&Rcx) -> ItemIter,
-        V: 'static + Into<ViewRef>,
+        V: 'static + IntoView,
         F: Send + Sync + 'static + Fn(&Item, usize) -> V,
     >(
         item_fn: ItemFn,
@@ -35,7 +35,7 @@ impl For {
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
         Cmp: Fn(&Item, &Item) -> bool,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item) -> V + Send,
     >(
         item_fn: ItemFn,
@@ -53,7 +53,7 @@ impl For {
         Item: Clone + PartialEq,
         ItemIter: Iterator<Item = Item>,
         ItemFn: Fn(&Rcx) -> ItemIter,
-        V: Into<ViewRef>,
+        V: IntoView,
         F: Fn(&Item) -> V + Send,
     >(
         item_fn: ItemFn,

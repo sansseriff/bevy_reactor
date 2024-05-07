@@ -308,12 +308,12 @@ where
     }
 }
 
-impl<SB> From<Overlay<SB>> for ViewRef
+impl<SB> IntoView for Overlay<SB>
 where
     SB: MeshBuilder + Default + 'static,
 {
-    fn from(value: Overlay<SB>) -> Self {
-        ViewRef::new(value)
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 

@@ -2,19 +2,19 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 
-use crate::View;
 use crate::{DespawnScopes, DisplayNodeChanged, Rcx, TrackingScope, ViewRef};
+use crate::{IntoView, View};
 
 use crate::node_span::NodeSpan;
 
 /// A dynamic view which can change its content based on a function. The inner view is razed
 /// and rebuilt whenever the function reacts.
-pub struct Dynamic<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> {
+pub struct Dynamic<V: IntoView, F: Fn(&Rcx) -> V + Send> {
     state: Option<(ViewRef, Entity)>,
     factory: F,
 }
 
-impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> Dynamic<V, F> {
+impl<V: IntoView, F: Fn(&Rcx) -> V + Send> Dynamic<V, F> {
     /// Construct a new dynamic view.
     pub fn new(factory: F) -> Self {
         Self {
@@ -24,7 +24,7 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> Dynamic<V, F> {
     }
 }
 
-impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
+impl<V: IntoView, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
     fn nodes(&self) -> NodeSpan {
         match self.state {
             None => NodeSpan::Empty,
@@ -45,7 +45,7 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
             view.raze(entity, world);
         }
 
-        let view = (self.factory)(&Rcx::new(world, view_entity, tracking)).into();
+        let view = (self.factory)(&Rcx::new(world, view_entity, tracking)).into_view();
         let entity = ViewRef::spawn(&view, view_entity, world);
         world.entity_mut(view_entity).insert(DisplayNodeChanged);
         self.state = Some((view, entity));
@@ -60,17 +60,15 @@ impl<V: Into<ViewRef>, F: Fn(&Rcx) -> V + Send> View for Dynamic<V, F> {
     }
 }
 
-impl<V: Into<ViewRef> + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> From<Dynamic<V, F>>
-    for ViewRef
-{
-    fn from(value: Dynamic<V, F>) -> Self {
-        ViewRef::new(value)
+impl<V: IntoView + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> IntoView for Dynamic<V, F> {
+    fn into_view(self) -> ViewRef {
+        ViewRef::new(self)
     }
 }
 
-// Commented out because it conflicts with the ViewTemplate -> ViewRef conversion.
-// impl<V: Into<ViewRef> + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> From<F> for ViewRef {
-//     fn from(value: F) -> Self {
-//         ViewRef::new(Dynamic::new(value))
+// // Commented out because it conflicts with the ViewTemplate -> ViewRef conversion.
+// impl<V: IntoView + 'static, F: Fn(&Rcx) -> V + Sync + Send + 'static> IntoView for F {
+//     fn into_view(self) -> Self {
+//         ViewRef::new(Dynamic::new(self))
 //     }
 // }

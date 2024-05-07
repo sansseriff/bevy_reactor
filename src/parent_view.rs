@@ -1,4 +1,4 @@
-use crate::ViewRef;
+use crate::{IntoView, ViewRef};
 use bevy::ecs::{entity::Entity, world::World};
 use impl_trait_for_tuples::*;
 use smallvec::SmallVec;
@@ -90,9 +90,9 @@ pub trait ChildViewTuple {
     fn to_child_array(self) -> ChildArray;
 }
 
-impl<I: Into<ViewRef>> ChildViewTuple for I {
+impl<I: IntoView> ChildViewTuple for I {
     fn flatten(self, out: &mut ChildArray) {
-        out.0.push(self.into());
+        out.0.push(self.into_view());
     }
 
     fn to_child_array(self) -> ChildArray {

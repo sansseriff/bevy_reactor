@@ -191,7 +191,7 @@ impl GradientSlider {
 
     /// Set the style handle for the slider root element.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -218,7 +218,7 @@ impl Default for GradientSlider {
 }
 
 impl ViewTemplate for GradientSlider {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let slider_id = cx.create_entity();
         // let hovering = cx.create_hover_signal(slider_id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());

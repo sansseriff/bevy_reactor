@@ -169,7 +169,7 @@ impl Slider {
 
     /// Set the style handle for the slider root element.
     pub fn style<S: StyleTuple + 'static>(mut self, style: S) -> Self {
-        self.style = StyleHandle::new(style);
+        self.style = style.into_handle();
         self
     }
 
@@ -198,7 +198,7 @@ impl Default for Slider {
 }
 
 impl ViewTemplate for Slider {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let slider_id = cx.create_entity();
         let hovering = cx.create_hover_signal(slider_id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
@@ -359,7 +359,7 @@ struct SliderButton {
 }
 
 impl ViewTemplate for SliderButton {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let button_id = cx.create_entity();
         let button_hovering = cx.create_hover_signal(button_id);
         let hovering = self.hovering;

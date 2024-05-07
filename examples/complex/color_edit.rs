@@ -59,7 +59,7 @@ fn style_slider(ss: &mut StyleBuilder) {
 pub struct ColorEdit;
 
 impl ViewTemplate for ColorEdit {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         // let state = cx.use_resource::<ColorEditState>();
 
         let mode = cx.create_memo(|cx| cx.use_resource::<ColorEditState>().mode);
@@ -113,9 +113,9 @@ impl ViewTemplate for ColorEdit {
                 DynamicKeyed::new(
                     move |cx| mode.get(cx),
                     |mode| match mode {
-                        ColorMode::Rgb => RgbSliders.to_view_ref(),
-                        ColorMode::Hsl => HslSliders.to_view_ref(),
-                        ColorMode::Recent => TextStatic::new("Recent".to_string()).into(),
+                        ColorMode::Rgb => RgbSliders.into_view(),
+                        ColorMode::Hsl => HslSliders.into_view(),
+                        ColorMode::Recent => "Recent".into_view(),
                     },
                 ),
             ))
@@ -125,7 +125,7 @@ impl ViewTemplate for ColorEdit {
 struct RgbSliders;
 
 impl ViewTemplate for RgbSliders {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new().style(style_sliders).children((
             GradientSlider::new()
                 .gradient(cx.create_derived(|cx| {
@@ -200,7 +200,7 @@ impl ViewTemplate for RgbSliders {
 struct HslSliders;
 
 impl ViewTemplate for HslSliders {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new().style(style_sliders).children((
             GradientSlider::new()
                 .gradient(ColorGradient::new(&[
@@ -289,7 +289,7 @@ impl ViewTemplate for HslSliders {
 struct AlphaSlider;
 
 impl ViewTemplate for AlphaSlider {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         Fragment::new((
             GradientSlider::new()
                 .gradient(cx.create_derived(|cx| {

@@ -258,7 +258,7 @@ fn style_input_label(ss: &mut StyleBuilder) {
 }
 
 impl ViewTemplate for NodeGraphDemo {
-    fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
         GraphDisplay::new()
             .children((
                 For::each(
@@ -285,7 +285,7 @@ pub struct NodeTemplate {
 }
 
 impl ViewTemplate for NodeTemplate {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = self.id;
         let position = cx.create_derived(move |cx| cx.use_component::<NodePosition>(id).unwrap().0);
         let title =
@@ -325,7 +325,7 @@ pub struct OutputTemplate {
 }
 
 impl ViewTemplate for OutputTemplate {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let display_id = cx.create_entity();
         // Make sure the display entity is updated when the terminal is updated.
         // This normally doesn't happen because the terminal display and the edge display are
@@ -364,7 +364,7 @@ pub struct InputTemplate {
 }
 
 impl ViewTemplate for InputTemplate {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let display_id = cx.create_entity();
         if let Some(mut td) = cx
             .world_mut()
@@ -414,16 +414,16 @@ impl ViewTemplate for InputTemplate {
                             .label
                             .clone();
                         match data_type {
-                            DemoDataType::Float(_) => FloatInputEdit { id, label }.to_view_ref(),
+                            DemoDataType::Float(_) => FloatInputEdit { id, label }.into_view(),
                             DemoDataType::Rgb => {
                                 // TODO: Replace with ColorInputEdit.
-                                Swatch::new(Srgba::new(1., 0., 0., 1.)).to_view_ref()
+                                Swatch::new(Srgba::new(1., 0., 0., 1.)).into_view()
                             }
                         }
                     })
                 },
             )
-            .into(),
+            .into_view(),
         }
     }
 }
@@ -434,7 +434,7 @@ pub struct FloatInputEdit {
 }
 
 impl ViewTemplate for FloatInputEdit {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = self.id;
         let value = cx.create_derived(move |rcx| {
             if let DemoValueType::Float(value) = rcx
@@ -489,7 +489,7 @@ pub struct EdgeTemplate {
 }
 
 impl ViewTemplate for EdgeTemplate {
-    fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let edge = cx.use_component::<Edge>(self.id).unwrap().clone();
         let src_pos = cx.create_derived(move |cx| {
             let Some(TerminalDisplay(Some(display_id))) =
