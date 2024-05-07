@@ -81,14 +81,8 @@ impl MenuButton {
     }
 
     /// Set the button color variant.
-    pub fn variant(mut self, variant: ButtonVariant) -> Self {
-        self.variant = Signal::Constant(variant);
-        self
-    }
-
-    /// Set the button color variant.
-    pub fn variant_signal(mut self, variant: Signal<ButtonVariant>) -> Self {
-        self.variant = variant;
+    pub fn variant(mut self, variant: impl IntoSignal<ButtonVariant>) -> Self {
+        self.variant = variant.into_signal();
         self
     }
 
@@ -99,8 +93,8 @@ impl MenuButton {
     }
 
     /// Set the button disabled state.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 
@@ -267,7 +261,7 @@ impl ViewTemplate for MenuButton {
                 self.children.clone(),
                 Spacer,
                 Icon::new("obsidian_ui://icons/chevron_down.png")
-                    .color(colors::DIM.into())
+                    .color(Color::from(colors::DIM))
                     .style(|ss: &mut StyleBuilder| {
                         ss.margin_right(4);
                     }),
@@ -429,14 +423,14 @@ impl MenuItem {
     }
 
     /// Set the checked state of the menu item.
-    pub fn checked(mut self, checked: Signal<bool>) -> Self {
-        self.checked = checked;
+    pub fn checked(mut self, checked: impl IntoSignal<bool>) -> Self {
+        self.checked = checked.into_signal();
         self
     }
 
     /// Set the disabled state of the menu item.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 

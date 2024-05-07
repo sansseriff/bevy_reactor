@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use bevy::reflect::{ParsedPath, ReflectKind, ReflectRef};
+use bevy::{
+    color::Color,
+    reflect::{ParsedPath, ReflectKind, ReflectRef},
+};
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
@@ -87,7 +90,7 @@ impl ViewTemplate for Inspector {
                 MenuButton::new()
                     .children(
                         Icon::new("obsidian_ui://icons/add_box.png")
-                            .color(colors::DIM.into())
+                            .color(Color::from(colors::DIM))
                             .style(style_close_icon),
                     )
                     .popup(MenuPopup::new().align(FloatAlign::End).children((
@@ -100,7 +103,7 @@ impl ViewTemplate for Inspector {
                     .minimal(true),
             ))
             .body(self.create_fields(cx, self.target.clone()))
-            .expanded(Signal::Constant(true))
+            .expanded(true)
     }
 }
 

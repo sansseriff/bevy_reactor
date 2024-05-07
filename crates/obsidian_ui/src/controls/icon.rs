@@ -34,14 +34,8 @@ impl Icon {
     }
 
     /// Set the color of the icon.
-    pub fn color(mut self, color: Color) -> Self {
-        self.color = Signal::Constant(color);
-        self
-    }
-
-    /// Set the color of the icon.
-    pub fn color_signal(mut self, color: Signal<Color>) -> Self {
-        self.color = color;
+    pub fn color(mut self, color: impl IntoSignal<Color>) -> Self {
+        self.color = color.into_signal();
         self
     }
 

@@ -81,14 +81,14 @@ impl Checkbox {
     }
 
     /// Set the checked state of the checkbox.
-    pub fn checked(mut self, checked: Signal<bool>) -> Self {
-        self.checked = checked;
+    pub fn checked(mut self, checked: impl IntoSignal<bool>) -> Self {
+        self.checked = checked.into_signal();
         self
     }
 
     /// Set the disabled state of the checkbox.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 

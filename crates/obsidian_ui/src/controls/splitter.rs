@@ -58,8 +58,8 @@ impl Splitter {
     }
 
     /// Set the current split value.
-    pub fn value(mut self, value: Signal<f32>) -> Self {
-        self.value = value;
+    pub fn value(mut self, value: impl IntoSignal<f32>) -> Self {
+        self.value = value.into_signal();
         self
     }
 

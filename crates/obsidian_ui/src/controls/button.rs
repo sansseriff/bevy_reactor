@@ -96,14 +96,8 @@ impl Button {
     }
 
     /// Set the button color variant.
-    pub fn variant(mut self, variant: ButtonVariant) -> Self {
-        self.variant = Signal::Constant(variant);
-        self
-    }
-
-    /// Set the button color variant.
-    pub fn variant_signal(mut self, variant: Signal<ButtonVariant>) -> Self {
-        self.variant = variant;
+    pub fn variant(mut self, variant: impl IntoSignal<ButtonVariant>) -> Self {
+        self.variant = variant.into_signal();
         self
     }
 
@@ -121,8 +115,8 @@ impl Button {
 
     /// Set the button disabled state.
     /// TODO: Come up with some kind of IntoSignal conversion for this.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 

@@ -292,7 +292,7 @@ impl ViewTemplate for NodeTemplate {
             cx.create_derived(move |cx| cx.use_component::<NodeTitle>(id).unwrap().0.clone());
         NodeDisplay::new()
             .position(position)
-            .title_signal(title)
+            .title(title)
             .children((
                 For::each(
                     move |cx| {
@@ -417,8 +417,7 @@ impl ViewTemplate for InputTemplate {
                             DemoDataType::Float(_) => FloatInputEdit { id, label }.to_view_ref(),
                             DemoDataType::Rgb => {
                                 // TODO: Replace with ColorInputEdit.
-                                Swatch::new(Signal::Constant(Srgba::new(1., 0., 0., 1.)))
-                                    .to_view_ref()
+                                Swatch::new(Srgba::new(1., 0., 0., 1.)).to_view_ref()
                             }
                         }
                     })

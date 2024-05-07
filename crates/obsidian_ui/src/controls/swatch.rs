@@ -34,8 +34,8 @@ pub struct Swatch {
 
 impl Swatch {
     /// Create a new swatch.
-    pub fn new(color: Signal<Srgba>) -> Self {
-        Self::default().color(color)
+    pub fn new(color: impl IntoSignal<Srgba>) -> Self {
+        Self::default().color(color.into_signal())
     }
 
     /// Set the color to display.

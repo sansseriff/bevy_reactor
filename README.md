@@ -467,8 +467,8 @@ GradientSlider::new()
             Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
         ])
     }))
-    .min(Signal::Constant(0.))
-    .max(Signal::Constant(255.))
+    .min(0.)
+    .max(255.)
     .value(cx.create_derived(|cx| {
         cx.use_resource::<ColorEditState>().rgb.red * 255.0
     })),

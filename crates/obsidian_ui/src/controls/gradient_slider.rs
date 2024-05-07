@@ -154,26 +154,26 @@ impl GradientSlider {
     }
 
     /// Set the gradient to display.
-    pub fn gradient(mut self, gradient: Signal<ColorGradient>) -> Self {
-        self.gradient = gradient;
+    pub fn gradient(mut self, gradient: impl IntoSignal<ColorGradient>) -> Self {
+        self.gradient = gradient.into_signal();
         self
     }
 
     /// Set the current slider value.
-    pub fn value(mut self, value: Signal<f32>) -> Self {
-        self.value = value;
+    pub fn value(mut self, value: impl IntoSignal<f32>) -> Self {
+        self.value = value.into_signal();
         self
     }
 
     /// Set the minimum slider value.
-    pub fn min(mut self, min: Signal<f32>) -> Self {
-        self.min = min;
+    pub fn min(mut self, min: impl IntoSignal<f32>) -> Self {
+        self.min = min.into_signal();
         self
     }
 
     /// Set the maximum slider value.
-    pub fn max(mut self, max: Signal<f32>) -> Self {
-        self.max = max;
+    pub fn max(mut self, max: impl IntoSignal<f32>) -> Self {
+        self.max = max.into_signal();
         self
     }
 
@@ -184,8 +184,8 @@ impl GradientSlider {
     }
 
     /// Set whether the slider is disabled.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 

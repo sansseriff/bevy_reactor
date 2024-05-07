@@ -73,7 +73,7 @@ impl ViewTemplate for ColorEdit {
                         Button::new()
                             .children("RGB")
                             .corners(RoundedCorners::Left)
-                            .variant_signal(cx.create_derived(|cx| {
+                            .variant(cx.create_derived(|cx| {
                                 match cx.use_resource::<ColorEditState>().mode {
                                     ColorMode::Rgb => ButtonVariant::Selected,
                                     _ => ButtonVariant::Default,
@@ -86,7 +86,7 @@ impl ViewTemplate for ColorEdit {
                         Button::new()
                             .children("HSL")
                             .corners(RoundedCorners::None)
-                            .variant_signal(cx.create_derived(|cx| {
+                            .variant(cx.create_derived(|cx| {
                                 match cx.use_resource::<ColorEditState>().mode {
                                     ColorMode::Hsl => ButtonVariant::Selected,
                                     _ => ButtonVariant::Default,
@@ -99,7 +99,7 @@ impl ViewTemplate for ColorEdit {
                         Button::new()
                             .children("Recent")
                             .corners(RoundedCorners::Right)
-                            .variant_signal(cx.create_derived(|cx| {
+                            .variant(cx.create_derived(|cx| {
                                 match cx.use_resource::<ColorEditState>().mode {
                                     ColorMode::Recent => ButtonVariant::Selected,
                                     _ => ButtonVariant::Default,
@@ -135,8 +135,8 @@ impl ViewTemplate for RgbSliders {
                         Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(255.))
+                .min(0.)
+                .max(255.)
                 .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.red * 255.0))
                 .style(style_slider)
                 .precision(1)
@@ -154,8 +154,8 @@ impl ViewTemplate for RgbSliders {
                         Srgba::new(rgb.red, 1.0, rgb.blue, 1.0),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(255.))
+                .min(0.)
+                .max(255.)
                 .value(
                     cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.green * 255.0),
                 )
@@ -178,8 +178,8 @@ impl ViewTemplate for RgbSliders {
                         Srgba::new(rgb.red, rgb.green, 1.0, 1.0),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(255.))
+                .min(0.)
+                .max(255.)
                 .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.blue * 255.0))
                 .style(style_slider)
                 .precision(1)
@@ -203,7 +203,7 @@ impl ViewTemplate for HslSliders {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new().style(style_sliders).children((
             GradientSlider::new()
-                .gradient(Signal::Constant(ColorGradient::new(&[
+                .gradient(ColorGradient::new(&[
                     Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
                     Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
                     Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
@@ -211,9 +211,9 @@ impl ViewTemplate for HslSliders {
                     Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
                     Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
                     Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
-                ])))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(360.))
+                ]))
+                .min(0.)
+                .max(360.)
                 .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().hsl.hue * 360.0))
                 .style(style_slider)
                 .precision(1)
@@ -232,8 +232,8 @@ impl ViewTemplate for HslSliders {
                         Srgba::from(Hsla::new(hsl.hue, 1.0, hsl.lightness, 1.0)),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(100.))
+                .min(0.)
+                .max(100.)
                 .value(cx.create_derived(|cx| {
                     cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
                 }))
@@ -260,8 +260,8 @@ impl ViewTemplate for HslSliders {
                         Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 1.0, 1.0)),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(100.))
+                .min(0.)
+                .max(100.)
                 .value(
                     cx.create_derived(|cx| {
                         cx.use_resource::<ColorEditState>().hsl.lightness * 100.0
@@ -303,8 +303,8 @@ impl ViewTemplate for AlphaSlider {
                         Srgba::new(rgb.red, rgb.green, rgb.blue, 1.0),
                     ])
                 }))
-                .min(Signal::Constant(0.))
-                .max(Signal::Constant(255.))
+                .min(0.)
+                .max(255.)
                 .value(
                     cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.alpha * 255.0),
                 )

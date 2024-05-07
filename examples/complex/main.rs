@@ -286,7 +286,7 @@ impl ViewTemplate for DemoUi {
                             ToolButton::new()
                                 .children("Preview")
                                 .corners(RoundedCorners::Left)
-                                .variant_signal(cx.create_derived(|cx| {
+                                .variant(cx.create_derived(|cx| {
                                     let st = cx.use_resource::<State<EditorState>>();
                                     if *st.get() == EditorState::Preview {
                                         ButtonVariant::Selected
@@ -304,7 +304,7 @@ impl ViewTemplate for DemoUi {
                             ToolButton::new()
                                 .children("Materials")
                                 .corners(RoundedCorners::Right)
-                                .variant_signal(cx.create_derived(|cx| {
+                                .variant(cx.create_derived(|cx| {
                                     let st = cx.use_resource::<State<EditorState>>();
                                     if *st.get() == EditorState::Graph {
                                         ButtonVariant::Selected
@@ -354,8 +354,8 @@ impl ViewTemplate for DemoUi {
                             .style(style_column_group)
                             .children((
                                 Slider::new()
-                                    .min(Signal::Constant(0.))
-                                    .max(Signal::Constant(255.))
+                                    .min(0.)
+                                    .max(255.)
                                     .value(red.signal())
                                     .style(style_slider)
                                     .precision(1)

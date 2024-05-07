@@ -11,10 +11,6 @@ pub enum Signal<T> {
     /// A readonly value that is computed from other signals.
     Derived(Derived<T>),
 
-    /// A memoized value that is computed from other signals.
-    #[allow(dead_code)] // Not implemented yet.
-    Memo,
-
     /// A constant value, mainly useful for establishing defaults.
     Constant(T),
 }
@@ -27,7 +23,6 @@ where
         match self {
             Signal::Mutable(mutable) => Signal::Mutable(*mutable),
             Signal::Derived(derived) => Signal::Derived(*derived),
-            Signal::Memo => Signal::Memo,
             Signal::Constant(value) => Signal::Constant(value.clone()),
         }
     }
@@ -42,7 +37,6 @@ where
         match self {
             Signal::Mutable(mutable) => rc.read_mutable(mutable),
             Signal::Derived(derived) => rc.read_derived(derived),
-            Signal::Memo => unimplemented!(),
             Signal::Constant(value) => *value,
         }
     }
@@ -57,7 +51,6 @@ where
         match self {
             Signal::Mutable(mutable) => rc.read_mutable_clone(mutable),
             Signal::Derived(derived) => rc.read_derived_clone(derived),
-            Signal::Memo => unimplemented!(),
             Signal::Constant(value) => value.clone(),
         }
     }
@@ -72,7 +65,6 @@ where
         match self {
             Signal::Mutable(mutable) => rc.read_mutable_map(mutable, f),
             Signal::Derived(derived) => rc.read_derived_map(derived, f),
-            Signal::Memo => unimplemented!(),
             Signal::Constant(value) => f(value),
         }
     }
@@ -85,5 +77,36 @@ where
 {
     fn default() -> Self {
         Self::Constant(Default::default())
+    }
+}
+
+/// Trait that defines values that can be converted into a `Signal`.
+pub trait IntoSignal<T> {
+    /// Convert the value into a `Signal`. For most types, this will be a `Signal::Constant`.
+    /// For `Mutable` and `Derived` signals, this will be a `Signal::Mutable` or `Signal::Derived`
+    fn into_signal(self) -> Signal<T>;
+}
+
+impl<T> IntoSignal<T> for T {
+    fn into_signal(self) -> Signal<T> {
+        Signal::Constant(self)
+    }
+}
+
+impl<T> IntoSignal<T> for Mutable<T> {
+    fn into_signal(self) -> Signal<T> {
+        Signal::Mutable(self)
+    }
+}
+
+impl<T> IntoSignal<T> for Derived<T> {
+    fn into_signal(self) -> Signal<T> {
+        Signal::Derived(self)
+    }
+}
+
+impl<T> IntoSignal<T> for Signal<T> {
+    fn into_signal(self) -> Signal<T> {
+        self
     }
 }

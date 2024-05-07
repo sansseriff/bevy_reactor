@@ -185,26 +185,20 @@ impl NodeDisplay {
     }
 
     /// Set the seletion state of the node.
-    pub fn selected(mut self, selected: Signal<bool>) -> Self {
-        self.selected = selected;
+    pub fn selected(mut self, selected: impl IntoSignal<bool>) -> Self {
+        self.selected = selected.into_signal();
         self
     }
 
     /// Set the position of the node.
-    pub fn position(mut self, position: Signal<Vec2>) -> Self {
-        self.position = position;
+    pub fn position(mut self, position: impl IntoSignal<Vec2>) -> Self {
+        self.position = position.into_signal();
         self
     }
 
     /// Set the title of the node.
-    pub fn title(mut self, title: &str) -> Self {
-        self.title = Signal::Constant(title.to_string());
-        self
-    }
-
-    /// Set the title of the node.
-    pub fn title_signal(mut self, title: Signal<String>) -> Self {
-        self.title = title;
+    pub fn title(mut self, title: impl IntoSignal<String>) -> Self {
+        self.title = title.into_signal();
         self
     }
 

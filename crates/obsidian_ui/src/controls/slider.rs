@@ -119,20 +119,20 @@ impl Slider {
     }
 
     /// Set the current slider value.
-    pub fn value(mut self, value: Signal<f32>) -> Self {
-        self.value = value;
+    pub fn value(mut self, value: impl IntoSignal<f32>) -> Self {
+        self.value = value.into_signal();
         self
     }
 
     /// Set the minimum slider value.
-    pub fn min(mut self, min: Signal<f32>) -> Self {
-        self.min = min;
+    pub fn min(mut self, min: impl IntoSignal<f32>) -> Self {
+        self.min = min.into_signal();
         self
     }
 
     /// Set the maximum slider value.
-    pub fn max(mut self, max: Signal<f32>) -> Self {
-        self.max = max;
+    pub fn max(mut self, max: impl IntoSignal<f32>) -> Self {
+        self.max = max.into_signal();
         self
     }
 
@@ -149,15 +149,15 @@ impl Slider {
     }
 
     /// Set whether the slider is disabled.
-    pub fn disabled(mut self, disabled: Signal<bool>) -> Self {
-        self.disabled = disabled;
+    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+        self.disabled = disabled.into_signal();
         self
     }
 
     /// Set the signal which returns the value formatted as a string. If `None`, then a default
     /// formatter will be used.
-    pub fn formatted_value(mut self, formatted_value: Signal<String>) -> Self {
-        self.formatted_value = Some(formatted_value);
+    pub fn formatted_value(mut self, formatted_value: impl IntoSignal<String>) -> Self {
+        self.formatted_value = Some(formatted_value.into_signal());
         self
     }
 

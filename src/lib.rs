@@ -62,6 +62,7 @@ pub use plugin::ReactorPlugin;
 pub use portal::Portal;
 pub use r#for::For;
 pub use reaction::*;
+pub use signal::IntoSignal;
 pub use signal::Signal;
 pub use style::StyleBuilder;
 pub use style::StyleBuilderBackground;

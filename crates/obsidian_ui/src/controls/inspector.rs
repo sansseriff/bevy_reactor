@@ -88,8 +88,8 @@ impl InspectorGroup {
     }
 
     /// Set the expanded signal of the inspector group.
-    pub fn expanded(mut self, expanded: Signal<bool>) -> Self {
-        self.expanded = expanded;
+    pub fn expanded(mut self, expanded: impl IntoSignal<bool>) -> Self {
+        self.expanded = expanded.into_signal();
         self
     }
 }
