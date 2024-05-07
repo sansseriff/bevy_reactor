@@ -18,8 +18,6 @@
     - Title
     - Dropdown
   - Undefined Fields
-- Memoized Deriveds, with custom equality hook.
-  - Needed to make Dynamic work with sliders
 - Components and Resources as signals?
   - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.

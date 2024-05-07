@@ -177,32 +177,39 @@ pub trait RunContextSetup<'p> {
         })
     }
 
-    // /// Create a new [`Memo`] in this context. This represents a readable signal which
-    // /// is computed from other signals. The result is memoized, which means that downstream
-    // /// dependants will not be notified unless the output changes.
-    // ///
-    // /// Arguments:
-    // /// * `compute` - The function that computes the output. This will be called with a single
-    // ///    parameter, which is a [`Cx`] object.
-    // fn create_memo<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
-    //     &mut self,
-    //     compute: F,
-    // ) -> Signal<R> {
-    //     let ticks = self.world_mut().change_tick();
-    //     let derived = self
-    //         .world_mut()
-    //         .spawn((
-    //             TrackingScope::new(ticks),
-    //             MutableCell(Box::new(init)),
-    //             DerivedCell::<R>(Arc::new(compute)),
-    //         ))
-    //         .id();
-    //     self.add_owned(derived);
-    //     Signal::Derived(Derived {
-    //         id: derived,
-    //         marker: PhantomData,
-    //     })
-    // }
+    /// Create a new [`Memo`] in this context. This represents a readable signal which
+    /// is computed from other signals. The result is memoized, which means that downstream
+    /// dependants will not be notified unless the output changes.
+    ///
+    /// Arguments:
+    /// * `compute` - The function that computes the output. This will be called with a single
+    ///    parameter, which is a [`Cx`] object.
+    fn create_memo<
+        R: 'static + PartialEq + Send + Sync + Clone,
+        F: Send + Sync + 'static + Fn(&mut Cx) -> R,
+    >(
+        &mut self,
+        compute: F,
+    ) -> Signal<R> {
+        let owner = self.owner();
+        let ticks = self.world_mut().change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        let init = compute(&mut Cx::new(self.world_mut(), owner, &mut scope));
+        let mutable = self.create_mutable(init);
+        let signal = mutable.signal();
+        let reaction = Arc::new(Mutex::new(move |cx: &mut Cx| {
+            let prev_value = mutable.get_clone(cx);
+            let value = compute(cx);
+            if value != prev_value {
+                mutable.set_clone(cx, value);
+            }
+        }));
+        self.world_mut()
+            .entity_mut(mutable.cell)
+            .insert((ReactionHandle(reaction), scope));
+
+        signal
+    }
 
     /// Create an effect. This is a function that is associated with an entity, and which
     /// re-runs whenever any of it's dependencies change.
@@ -220,7 +227,7 @@ pub trait RunContextSetup<'p> {
         action.lock().unwrap()(&mut Cx::new(self.world_mut(), entity, &mut scope));
         self.world_mut()
             .entity_mut(entity)
-            .insert((scope, ReactionHandle(action.clone())));
+            .insert((scope, ReactionHandle(action)));
     }
 }
 
@@ -332,15 +339,6 @@ impl<'p, 'w> Cx<'p, 'w> {
         let owner = self.owner;
         self.world_mut().entity_mut(owner).insert(component);
     }
-
-    // fn add_tracked_component<C: Component>(&self, entity: Entity) {
-    //     let cid = self
-    //         .bc
-    //         .world
-    //         .component_id::<C>()
-    //         .expect("Unregistered component type");
-    //     self.tracking.borrow_mut().components.insert((entity, cid));
-    // }
 
     /// Add a cleanup function which is run once before the next reaction, or when the owner
     /// entity for this context is despawned.

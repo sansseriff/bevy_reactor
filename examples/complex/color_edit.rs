@@ -62,6 +62,8 @@ impl ViewTemplate for ColorEdit {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
         // let state = cx.use_resource::<ColorEditState>();
 
+        let mode = cx.create_memo(|cx| cx.use_resource::<ColorEditState>().mode);
+
         Element::<NodeBundle>::new()
             .style(style_color_edit)
             .children((
@@ -109,7 +111,7 @@ impl ViewTemplate for ColorEdit {
                             })),
                     )),
                 DynamicKeyed::new(
-                    |cx| cx.use_resource::<ColorEditState>().mode,
+                    move |cx| mode.get(cx),
                     |mode| match mode {
                         ColorMode::Rgb => RgbSliders.to_view_ref(),
                         ColorMode::Hsl => HslSliders.to_view_ref(),
