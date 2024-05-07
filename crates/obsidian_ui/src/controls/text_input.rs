@@ -197,7 +197,7 @@ impl ViewTemplate for TextInput {
 
         Element::<NodeBundle>::for_entity(id)
             .named("text_input")
-            .with_styles((
+            .style((
                 style_text_input,
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());
@@ -378,7 +378,7 @@ impl ViewTemplate for TextInput {
             .children((
                 // Background
                 Element::<NodeBundle>::new()
-                    .with_styles(style_text_input_border)
+                    .style(style_text_input_border)
                     .create_effect(move |cx, ent| {
                         let is_hovering = hovering.get(cx);
                         let is_focused = focused.get(cx);
@@ -411,16 +411,16 @@ impl ViewTemplate for TextInput {
                 self.0.adornments_prefix.clone(),
                 // Scrolling content
                 Element::<NodeBundle>::new()
-                    .with_styles(style_text_scroll)
+                    .style(style_text_scroll)
                     .children(
                         Element::<NodeBundle>::new()
-                            .with_styles(style_text_inner)
+                            .style(style_text_inner)
                             .children((
                                 // Selection rects
                                 For::index(
                                     move |cx| selection_rects.get_clone(cx).into_iter(),
                                     move |rect, _| {
-                                        Element::<NodeBundle>::new().with_styles((
+                                        Element::<NodeBundle>::new().style((
                                             style_text_selection,
                                             {
                                                 let rect = *rect;
@@ -444,7 +444,7 @@ impl ViewTemplate for TextInput {
                                     // React to changes in glyph layout.
                                     move || {
                                         Element::<NodeBundle>::new()
-                                            .with_styles(style_text_cursor)
+                                            .style(style_text_cursor)
                                             .create_effect(move |cx, el| {
                                                 let index = selection.get(cx).cursor;
                                                 let text_layout = cx

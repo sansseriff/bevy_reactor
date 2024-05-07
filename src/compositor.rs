@@ -190,7 +190,7 @@ impl From<Compositor> for ViewRef {
 }
 
 impl WithStyles for Compositor {
-    fn with_styles<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
+    fn style<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
         self.add_effect(Box::new(ApplyStylesEffect { styles }));
         self
     }

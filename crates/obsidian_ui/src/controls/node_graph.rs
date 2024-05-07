@@ -71,7 +71,7 @@ impl ViewTemplate for GraphDisplay {
                 Element::<MaterialNodeBundle<DotGridMaterial>>::new()
                     .named("NodeGraph::Scroll")
                     .insert(material.clone())
-                    .with_styles(style_node_graph_scroll)
+                    .style(style_node_graph_scroll)
                     .children(self.children.clone()),
             )
             .style((style_node_graph, self.style.clone()))
@@ -230,7 +230,7 @@ impl ViewTemplate for NodeDisplay {
 
         Element::<NodeBundle>::for_entity(id)
             .named("NodeGraph::Node")
-            .with_styles(style_node_graph_node)
+            .style(style_node_graph_node)
             .create_effect(move |cx, ent| {
                 // Update node position.
                 let pos = position.get(cx);
@@ -241,10 +241,10 @@ impl ViewTemplate for NodeDisplay {
             .children((
                 Element::<NodeBundle>::new()
                     .named("NodeGraph::Node::Shadow")
-                    .with_styles(style_node_graph_node_shadow),
+                    .style(style_node_graph_node_shadow),
                 Element::<NodeBundle>::new()
                     .named("NodeGraph::Node::Title")
-                    .with_styles(style_node_graph_node_title)
+                    .style(style_node_graph_node_title)
                     .insert((
                         On::<Pointer<DragStart>>::run(move |world: &mut World| {
                             // Save initial value to use as drag offset.
@@ -281,14 +281,14 @@ impl ViewTemplate for NodeDisplay {
                     ))
                     .children(self.title.clone()),
                 Element::<NodeBundle>::new()
-                    .with_styles(style_node_graph_node_content)
+                    .style(style_node_graph_node_content)
                     .children(self.children.clone()),
                 Cond::new(
                     move |cx| hovering.get(cx),
                     || {
                         Element::<NodeBundle>::new()
                             .named("NodeGraph::Node::Outline")
-                            .with_styles(style_node_graph_node_outline)
+                            .style(style_node_graph_node_outline)
                     },
                     || (),
                 ),
@@ -328,9 +328,9 @@ impl ViewTemplate for InputTerminalDisplay {
         let color = self.color;
         Element::<NodeBundle>::for_entity(self.id)
             .named("InputConnector")
-            .with_styles(style_input_connector)
+            .style(style_input_connector)
             .children((
-                Element::<NodeBundle>::new().with_styles((
+                Element::<NodeBundle>::new().style((
                     style_input_terminal,
                     move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
@@ -376,9 +376,9 @@ impl ViewTemplate for OutputTerminalDisplay {
         let color = self.color;
         Element::<NodeBundle>::for_entity(self.id)
             .named("OutputConnector")
-            .with_styles(style_output_connector)
+            .style(style_output_connector)
             .children((
-                Element::<NodeBundle>::new().with_styles((
+                Element::<NodeBundle>::new().style((
                     style_output_terminal,
                     move |sb: &mut StyleBuilder| {
                         sb.background_color(color);

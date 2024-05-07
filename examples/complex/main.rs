@@ -246,7 +246,7 @@ impl ViewTemplate for DemoUi {
 
         Element::<NodeBundle>::new()
             .named("Main")
-            .with_styles((typography::text_default, style_main))
+            .style((typography::text_default, style_main))
             .insert((TabGroup::default(), TargetCamera(self.0)))
             .children((
                 Dialog::new()
@@ -275,7 +275,7 @@ impl ViewTemplate for DemoUi {
                     )),
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
-                    .with_styles(style_aside)
+                    .style(style_aside)
                     .create_effect(move |cx, ent| {
                         let width = panel_width.get(cx);
                         let mut style = cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
@@ -321,7 +321,7 @@ impl ViewTemplate for DemoUi {
                                 })),
                         )),
                         Element::<NodeBundle>::new()
-                            .with_styles(style_button_row)
+                            .style(style_button_row)
                             .children((
                                 Button::new()
                                     .children("Open…")
@@ -333,7 +333,7 @@ impl ViewTemplate for DemoUi {
                                     .style(style_button_flex),
                             )),
                         Element::<NodeBundle>::new()
-                            .with_styles(style_column_group)
+                            .style(style_column_group)
                             .children((
                                 Checkbox::new()
                                     .label("Include Author Name")
@@ -351,7 +351,7 @@ impl ViewTemplate for DemoUi {
                                     })),
                             )),
                         Element::<NodeBundle>::new()
-                            .with_styles(style_column_group)
+                            .style(style_column_group)
                             .children((
                                 Slider::new()
                                     .min(Signal::Constant(0.))
@@ -403,13 +403,13 @@ impl ViewTemplate for CenterPanel {
             || {
                 Element::<NodeBundle>::new()
                     .named("Preview")
-                    .with_styles(style_viewport)
+                    .style(style_viewport)
                     .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
                     .children(
                         Element::<NodeBundle>::new()
                             .named("Log")
-                            .with_styles(style_log)
-                            .children(Element::<NodeBundle>::new().with_styles(style_log_inner)),
+                            .style(style_log)
+                            .children(Element::<NodeBundle>::new().style(style_log_inner)),
                     )
             },
             || NodeGraphDemo {},

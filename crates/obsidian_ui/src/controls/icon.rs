@@ -70,7 +70,7 @@ impl ViewTemplate for Icon {
         let size = self.size;
 
         Element::<NodeBundle>::new()
-            .with_styles((
+            .style((
                 move |sb: &mut StyleBuilder| {
                     sb.width(size.x)
                         .height(size.y)

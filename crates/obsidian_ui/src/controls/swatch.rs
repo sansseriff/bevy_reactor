@@ -70,7 +70,7 @@ impl ViewTemplate for Swatch {
 
         Element::<NodeBundle>::new()
             .named("Swatch")
-            .with_styles((
+            .style((
                 style_swatch,
                 move |ss: &mut StyleBuilder| {
                     ss.min_height(size.height());

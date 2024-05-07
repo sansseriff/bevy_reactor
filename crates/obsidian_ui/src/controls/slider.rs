@@ -223,7 +223,7 @@ impl ViewTemplate for Slider {
         });
 
         Element::<MaterialNodeBundle<SliderRectMaterial>>::for_entity(slider_id)
-            .with_styles((style_slider, self.style.clone()))
+            .style((style_slider, self.style.clone()))
             .insert((
                 material.clone(),
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
@@ -300,7 +300,7 @@ impl ViewTemplate for Slider {
             })
             .children((Element::<NodeBundle>::new()
                 .named("Slider")
-                .with_styles(style_overlay)
+                .style(style_overlay)
                 .children((
                     SliderButton {
                         value,
@@ -311,33 +311,30 @@ impl ViewTemplate for Slider {
                         on_change,
                         drag_state,
                     },
-                    Element::<NodeBundle>::new()
-                        .with_styles(style_label)
-                        .children((
-                            Cond::new(
-                                {
-                                    let label = self.label.clone();
-                                    move |_cx| label.is_some()
-                                },
-                                {
-                                    let label = self.label.clone();
-                                    move || {
-                                        Fragment::new((
-                                            label.clone().unwrap(),
-                                            Element::<NodeBundle>::new()
-                                                .with_styles(style_label_spacer),
-                                        ))
-                                    }
-                                },
-                                || (),
-                            ),
-                            text_computed({
-                                move |cx| {
-                                    let value = value.get(cx);
-                                    format!("{:.*}", precision, value)
+                    Element::<NodeBundle>::new().style(style_label).children((
+                        Cond::new(
+                            {
+                                let label = self.label.clone();
+                                move |_cx| label.is_some()
+                            },
+                            {
+                                let label = self.label.clone();
+                                move || {
+                                    Fragment::new((
+                                        label.clone().unwrap(),
+                                        Element::<NodeBundle>::new().style(style_label_spacer),
+                                    ))
                                 }
-                            }),
-                        )),
+                            },
+                            || (),
+                        ),
+                        text_computed({
+                            move |cx| {
+                                let value = value.get(cx);
+                                format!("{:.*}", precision, value)
+                            }
+                        }),
+                    )),
                     SliderButton {
                         value,
                         min,
@@ -379,7 +376,7 @@ impl ViewTemplate for SliderButton {
         };
 
         Element::<NodeBundle>::for_entity(button_id)
-            .with_styles(style_button)
+            .style(style_button)
             .insert((
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
                     let mut event = world
@@ -448,7 +445,7 @@ impl ViewTemplate for SliderButton {
             ))
             .children(
                 Element::<NodeBundle>::new()
-                    .with_styles((
+                    .style((
                         style_button_icon,
                         if step > 0.0 {
                             style_button_icon_right

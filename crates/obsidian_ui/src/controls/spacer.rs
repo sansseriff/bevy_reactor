@@ -11,6 +11,6 @@ pub struct Spacer;
 
 impl ViewTemplate for Spacer {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
-        Element::<NodeBundle>::new().with_styles(style_spacer)
+        Element::<NodeBundle>::new().style(style_spacer)
     }
 }

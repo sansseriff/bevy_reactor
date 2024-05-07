@@ -179,7 +179,7 @@ impl ViewTemplate for Button {
 
         Element::<NodeBundle>::for_entity(id)
             .named("Button")
-            .with_styles((
+            .style((
                 typography::text_default,
                 style_button,
                 move |ss: &mut StyleBuilder| {
@@ -255,7 +255,7 @@ impl ViewTemplate for Button {
             .children((
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
-                    .with_styles(style_button_bg)
+                    .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .create_effect(move |cx, ent| {
                         let is_pressed = pressed.get(cx);

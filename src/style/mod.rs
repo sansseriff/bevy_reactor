@@ -97,11 +97,11 @@ impl<S: StyleTuple> EntityEffect for ApplyStylesEffect<S> {
 /// Trait to add a collection of styles to the receiver.
 pub trait WithStyles {
     /// Apply a set of style builders to a target.
-    fn with_styles<S: StyleTuple + 'static>(self, styles: S) -> Self;
+    fn style<S: StyleTuple + 'static>(self, styles: S) -> Self;
 }
 
 impl<B: Bundle + Default> WithStyles for Element<B> {
-    fn with_styles<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
+    fn style<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
         self.add_effect(Box::new(ApplyStylesEffect { styles }));
         self
     }

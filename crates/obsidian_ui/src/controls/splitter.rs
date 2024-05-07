@@ -95,7 +95,7 @@ impl ViewTemplate for Splitter {
         Element::<NodeBundle>::for_entity(id)
             .named("Splitter")
             // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
-            .with_styles(style_vsplitter)
+            .style(style_vsplitter)
             .insert((
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
                     // Save initial value to use as drag offset.
@@ -144,7 +144,7 @@ impl ViewTemplate for Splitter {
             ))
             .children(
                 Element::<NodeBundle>::new()
-                    .with_styles(style_vsplitter_inner)
+                    .style(style_vsplitter_inner)
                     .create_effect(move |cx, ent| {
                         // Color change on hover / drag
                         let ds = drag_state.get(cx);

@@ -399,7 +399,7 @@ impl ViewTemplate for InputTemplate {
                 move |cx| is_connected.get(cx),
                 move || {
                     Element::<NodeBundle>::new()
-                        .with_styles(style_input_label)
+                        .style(style_input_label)
                         .children(label.clone())
                 },
                 move || {

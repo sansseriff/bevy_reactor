@@ -39,7 +39,7 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(mut commands: Commands) {
     commands.spawn(ViewRoot::new(
         Element::<NodeBundle>::new()
-            .with_styles(style_test)
+            .style(style_test)
             .insert(BorderColor(palettes::css::LIME.into()))
             .insert_computed(|cx| {
                 let counter = cx.use_resource::<Counter>();

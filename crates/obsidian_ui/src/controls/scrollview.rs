@@ -142,7 +142,7 @@ impl ViewTemplate for ScrollView {
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
         Element::<NodeBundle>::new()
             .named("ScrollView")
-            .with_styles((style_scroll_view, self.style.clone()))
+            .style((style_scroll_view, self.style.clone()))
             .children((
                 // Scroll area
                 Element::<NodeBundle>::for_entity(id_scroll_area)
@@ -160,12 +160,12 @@ impl ViewTemplate for ScrollView {
                             },
                         ),
                     ))
-                    .with_styles(style_scroll_region)
+                    .style(style_scroll_region)
                     .children(
                         Element::<NodeBundle>::new()
                             .named("ScrollView::ScrollRegion")
                             .insert(ScrollContent)
-                            .with_styles((style_scroll_content, self.content_style.clone()))
+                            .style((style_scroll_content, self.content_style.clone()))
                             .children(self.children.clone()),
                     ),
                 // Horizontal scroll bar
@@ -258,7 +258,7 @@ impl ViewTemplate for Scrollbar {
                     ),
                 ),
             )
-            .with_styles(if vertical {
+            .style(if vertical {
                 style_scrollbar_y
             } else {
                 style_scrollbar_x
@@ -266,7 +266,7 @@ impl ViewTemplate for Scrollbar {
             .children(
                 Element::<NodeBundle>::for_entity(id_thumb)
                     // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).mode == mode))
-                    .with_styles(if vertical {
+                    .style(if vertical {
                         style_scrollbar_y_thumb
                     } else {
                         style_scrollbar_x_thumb

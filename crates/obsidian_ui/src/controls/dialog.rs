@@ -135,7 +135,7 @@ impl ViewTemplate for Dialog {
                 Portal::new(
                     Element::<NodeBundle>::new()
                         .named("Dialog::Overlay")
-                        .with_styles(style_dialog_overlay)
+                        .style(style_dialog_overlay)
                         .insert((
                             // Click on backdrop sends close signal.
                             On::<Pointer<Click>>::run(move |world: &mut World| {
@@ -180,7 +180,7 @@ impl ViewTemplate for Dialog {
                                     order: 0,
                                     modal: true,
                                 })
-                                .with_styles((
+                                .style((
                                     text_default,
                                     style_dialog,
                                     move |ss: &mut StyleBuilder| {
@@ -246,7 +246,7 @@ impl DialogHeader {
 impl ViewTemplate for DialogHeader {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
-            .with_styles(style_dialog_header)
+            .style(style_dialog_header)
             .children(self.children.clone())
     }
 }
@@ -283,7 +283,7 @@ impl DialogBody {
 impl ViewTemplate for DialogBody {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
-            .with_styles(style_dialog_body)
+            .style(style_dialog_body)
             .children(self.children.clone())
     }
 }
@@ -322,7 +322,7 @@ impl DialogFooter {
 impl ViewTemplate for DialogFooter {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
-            .with_styles(style_dialog_footer)
+            .style(style_dialog_footer)
             .children(self.children.clone())
     }
 }

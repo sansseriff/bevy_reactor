@@ -80,7 +80,7 @@ impl ViewTemplate for ToolPalette {
 
         Element::<NodeBundle>::new()
             .named("ToolPalette")
-            .with_styles((
+            .style((
                 style_tool_palette,
                 move |ss: &mut StyleBuilder| {
                     ss.grid_template_columns(vec![ui::RepeatedGridTrack::auto(columns)]);

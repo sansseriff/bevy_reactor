@@ -52,7 +52,7 @@ impl ViewTemplate for ListView {
             .children(
                 Element::<NodeBundle>::new()
                     .named("ListView")
-                    .with_styles(style_listview_inner)
+                    .style(style_listview_inner)
                     .children(self.children.clone()),
             )
             .style((style_listview, self.style.clone()))

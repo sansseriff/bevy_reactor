@@ -286,7 +286,7 @@ impl ViewTemplate for GradientSlider {
 
         Element::<NodeBundle>::for_entity(slider_id)
             .named("GradientSlider")
-            .with_styles((style_slider, self.style.clone()))
+            .style((style_slider, self.style.clone()))
             .insert((
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
                     // Save initial value to use as drag offset.
@@ -356,7 +356,7 @@ impl ViewTemplate for GradientSlider {
                 //     }),
                 Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
                     .insert(gradient_material.clone())
-                    .with_styles(style_gradient),
+                    .style(style_gradient),
                 // Element::<NodeBundle>::new()
                 //     .with_styles(style_end_cap)
                 //     .create_effect({
@@ -368,11 +368,11 @@ impl ViewTemplate for GradientSlider {
                 //     }),
                 Element::<NodeBundle>::new()
                     .named("GradientSlider::Track")
-                    .with_styles(style_track)
+                    .style(style_track)
                     .children(
                         Element::<NodeBundle>::new()
                             .named("GradientSlider::Thumb")
-                            .with_styles(style_thumb)
+                            .style(style_thumb)
                             .create_effect(move |cx, ent| {
                                 let min = min.get(cx);
                                 let max = max.get(cx);

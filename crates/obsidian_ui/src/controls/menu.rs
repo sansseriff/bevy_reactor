@@ -166,7 +166,7 @@ impl ViewTemplate for MenuButton {
 
         Element::<NodeBundle>::for_entity(id_anchor)
             .named("MenuButton")
-            .with_styles((
+            .style((
                 typography::text_default,
                 style_button,
                 move |ss: &mut StyleBuilder| {
@@ -223,7 +223,7 @@ impl ViewTemplate for MenuButton {
             .children((
                 Element::<NodeBundle>::new()
                     .named("MenuButton::Background")
-                    .with_styles(style_button_bg)
+                    .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .create_effect(move |cx, ent| {
                         let is_pressed = open.get(cx);
@@ -276,7 +276,7 @@ impl ViewTemplate for MenuButton {
                     move || {
                         Portal::new(
                             Element::<NodeBundle>::new()
-                                .with_styles(style_menu_barrier)
+                                .style(style_menu_barrier)
                                 .insert((
                                     On::<Pointer<Click>>::run(move |world: &mut World| {
                                         if !disabled.get(world) {
@@ -357,7 +357,7 @@ impl ViewTemplate for MenuPopup {
 
         Element::<NodeBundle>::new()
             .named("MenuPopup")
-            .with_styles((typography::text_default, style_popup, self.style.clone()))
+            .style((typography::text_default, style_popup, self.style.clone()))
             .insert(Floating {
                 anchor: context.0,
                 position: vec![
@@ -458,7 +458,7 @@ impl ViewTemplate for MenuItem {
 
         Element::<NodeBundle>::for_entity(id)
             .named("MenuItem")
-            .with_styles((style_menu_item, self.style.clone()))
+            .style((style_menu_item, self.style.clone()))
             .insert((
                 TabIndex(0),
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
@@ -632,6 +632,6 @@ impl ViewTemplate for MenuDivider {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
             .named("MenuDivider")
-            .with_styles(style_menu_divider)
+            .style(style_menu_divider)
     }
 }

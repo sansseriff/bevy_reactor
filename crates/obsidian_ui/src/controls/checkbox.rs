@@ -130,7 +130,7 @@ impl ViewTemplate for Checkbox {
 
         Element::<NodeBundle>::for_entity(id)
             .named("Checkbox")
-            .with_styles((style_checkbox, self.style.clone()))
+            .style((style_checkbox, self.style.clone()))
             .insert((
                 TabIndex(self.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
@@ -197,7 +197,7 @@ impl ViewTemplate for Checkbox {
             .children((
                 Element::<NodeBundle>::new()
                     .named("Checkbox::Border")
-                    .with_styles(style_checkbox_border)
+                    .style(style_checkbox_border)
                     .create_effect(move |cx, ent| {
                         let is_checked = checked.get(cx);
                         let is_pressed = pressed.get(cx);
@@ -231,11 +231,11 @@ impl ViewTemplate for Checkbox {
                     })
                     .children(cond(
                         move |cx| checked.get(cx),
-                        move || Element::<NodeBundle>::new().with_styles(style_checkbox_inner),
+                        move || Element::<NodeBundle>::new().style(style_checkbox_inner),
                         || (),
                     )),
                 Element::<NodeBundle>::new()
-                    .with_styles(style_checkbox_label)
+                    .style(style_checkbox_label)
                     .children(self.label.clone()),
             ))
     }

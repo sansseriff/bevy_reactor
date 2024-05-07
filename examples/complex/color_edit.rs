@@ -63,10 +63,10 @@ impl ViewTemplate for ColorEdit {
         // let state = cx.use_resource::<ColorEditState>();
 
         Element::<NodeBundle>::new()
-            .with_styles(style_color_edit)
+            .style(style_color_edit)
             .children((
                 Element::<NodeBundle>::new()
-                    .with_styles(style_mode_selector)
+                    .style(style_mode_selector)
                     .children((
                         Button::new()
                             .children("RGB")
@@ -124,84 +124,74 @@ struct RgbSliders;
 
 impl ViewTemplate for RgbSliders {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
-        Element::<NodeBundle>::new()
-            .with_styles(style_sliders)
-            .children((
-                GradientSlider::new()
-                    .gradient(cx.create_derived(|cx| {
-                        let rgb = cx.use_resource::<ColorEditState>().rgb;
-                        ColorGradient::new(&[
-                            Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
-                            Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
-                        ])
-                    }))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(255.))
-                    .value(
-                        cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.red * 255.0),
-                    )
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut().resource_mut::<ColorEditState>().rgb.red = value / 255.0;
-                    })),
-                text_computed(|cx| {
-                    format!("{:.0}", cx.use_resource::<ColorEditState>().rgb.red * 255.0)
-                }),
-                GradientSlider::new()
-                    .gradient(cx.create_derived(|cx| {
-                        let rgb = cx.use_resource::<ColorEditState>().rgb;
-                        ColorGradient::new(&[
-                            Srgba::new(rgb.red, 0.0, rgb.blue, 1.0),
-                            Srgba::new(rgb.red, 1.0, rgb.blue, 1.0),
-                        ])
-                    }))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(255.))
-                    .value(
-                        cx.create_derived(|cx| {
-                            cx.use_resource::<ColorEditState>().rgb.green * 255.0
-                        }),
-                    )
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut().resource_mut::<ColorEditState>().rgb.green = value / 255.0;
-                    })),
-                text_computed(|cx| {
-                    format!(
-                        "{:.0}",
-                        cx.use_resource::<ColorEditState>().rgb.green * 255.0
-                    )
-                }),
-                GradientSlider::new()
-                    .gradient(cx.create_derived(|cx| {
-                        let rgb = cx.use_resource::<ColorEditState>().rgb;
-                        ColorGradient::new(&[
-                            Srgba::new(rgb.red, rgb.green, 0.0, 1.0),
-                            Srgba::new(rgb.red, rgb.green, 1.0, 1.0),
-                        ])
-                    }))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(255.))
-                    .value(
-                        cx.create_derived(|cx| {
-                            cx.use_resource::<ColorEditState>().rgb.blue * 255.0
-                        }),
-                    )
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut().resource_mut::<ColorEditState>().rgb.blue = value / 255.0;
-                    })),
-                text_computed(|cx| {
-                    format!(
-                        "{:.0}",
-                        cx.use_resource::<ColorEditState>().rgb.blue * 255.0
-                    )
-                }),
-                AlphaSlider,
-            ))
+        Element::<NodeBundle>::new().style(style_sliders).children((
+            GradientSlider::new()
+                .gradient(cx.create_derived(|cx| {
+                    let rgb = cx.use_resource::<ColorEditState>().rgb;
+                    ColorGradient::new(&[
+                        Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
+                        Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
+                    ])
+                }))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(255.))
+                .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.red * 255.0))
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut().resource_mut::<ColorEditState>().rgb.red = value / 255.0;
+                })),
+            text_computed(|cx| {
+                format!("{:.0}", cx.use_resource::<ColorEditState>().rgb.red * 255.0)
+            }),
+            GradientSlider::new()
+                .gradient(cx.create_derived(|cx| {
+                    let rgb = cx.use_resource::<ColorEditState>().rgb;
+                    ColorGradient::new(&[
+                        Srgba::new(rgb.red, 0.0, rgb.blue, 1.0),
+                        Srgba::new(rgb.red, 1.0, rgb.blue, 1.0),
+                    ])
+                }))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(255.))
+                .value(
+                    cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.green * 255.0),
+                )
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut().resource_mut::<ColorEditState>().rgb.green = value / 255.0;
+                })),
+            text_computed(|cx| {
+                format!(
+                    "{:.0}",
+                    cx.use_resource::<ColorEditState>().rgb.green * 255.0
+                )
+            }),
+            GradientSlider::new()
+                .gradient(cx.create_derived(|cx| {
+                    let rgb = cx.use_resource::<ColorEditState>().rgb;
+                    ColorGradient::new(&[
+                        Srgba::new(rgb.red, rgb.green, 0.0, 1.0),
+                        Srgba::new(rgb.red, rgb.green, 1.0, 1.0),
+                    ])
+                }))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(255.))
+                .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().rgb.blue * 255.0))
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut().resource_mut::<ColorEditState>().rgb.blue = value / 255.0;
+                })),
+            text_computed(|cx| {
+                format!(
+                    "{:.0}",
+                    cx.use_resource::<ColorEditState>().rgb.blue * 255.0
+                )
+            }),
+            AlphaSlider,
+        ))
     }
 }
 
@@ -209,90 +199,88 @@ struct HslSliders;
 
 impl ViewTemplate for HslSliders {
     fn create(&self, cx: &mut Cx) -> impl Into<ViewRef> {
-        Element::<NodeBundle>::new()
-            .with_styles(style_sliders)
-            .children((
-                GradientSlider::new()
-                    .gradient(Signal::Constant(ColorGradient::new(&[
-                        Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(180.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
-                        Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
-                    ])))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(360.))
-                    .value(
-                        cx.create_derived(|cx| cx.use_resource::<ColorEditState>().hsl.hue * 360.0),
-                    )
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut().resource_mut::<ColorEditState>().hsl.hue = value / 360.0;
-                    })),
-                text_computed(|cx| {
-                    format!("{:.0}", cx.use_resource::<ColorEditState>().hsl.hue * 360.0)
-                }),
-                GradientSlider::new()
-                    .gradient(cx.create_derived(|cx| {
-                        let hsl = cx.use_resource::<ColorEditState>().hsl;
-                        ColorGradient::new(&[
-                            Srgba::from(Hsla::new(hsl.hue, 0.0, hsl.lightness, 1.0)),
-                            Srgba::from(Hsla::new(hsl.hue, 0.5, hsl.lightness, 1.0)),
-                            Srgba::from(Hsla::new(hsl.hue, 1.0, hsl.lightness, 1.0)),
-                        ])
-                    }))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(100.))
-                    .value(cx.create_derived(|cx| {
-                        cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
-                    }))
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut()
-                            .resource_mut::<ColorEditState>()
-                            .hsl
-                            .saturation = value / 100.0;
-                    })),
-                text_computed(|cx| {
-                    format!(
-                        "{:.0}",
-                        cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
-                    )
-                }),
-                GradientSlider::new()
-                    .gradient(cx.create_derived(|cx| {
-                        let hsl = cx.use_resource::<ColorEditState>().hsl;
-                        ColorGradient::new(&[
-                            Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 0.0, 1.0)),
-                            Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 0.5, 1.0)),
-                            Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 1.0, 1.0)),
-                        ])
-                    }))
-                    .min(Signal::Constant(0.))
-                    .max(Signal::Constant(100.))
-                    .value(cx.create_derived(|cx| {
+        Element::<NodeBundle>::new().style(style_sliders).children((
+            GradientSlider::new()
+                .gradient(Signal::Constant(ColorGradient::new(&[
+                    Srgba::from(Hsla::new(0.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(60.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(120.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(180.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(240.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(300.0, 1.0, 0.5, 1.0)),
+                    Srgba::from(Hsla::new(360.0, 1.0, 0.5, 1.0)),
+                ])))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(360.))
+                .value(cx.create_derived(|cx| cx.use_resource::<ColorEditState>().hsl.hue * 360.0))
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut().resource_mut::<ColorEditState>().hsl.hue = value / 360.0;
+                })),
+            text_computed(|cx| {
+                format!("{:.0}", cx.use_resource::<ColorEditState>().hsl.hue * 360.0)
+            }),
+            GradientSlider::new()
+                .gradient(cx.create_derived(|cx| {
+                    let hsl = cx.use_resource::<ColorEditState>().hsl;
+                    ColorGradient::new(&[
+                        Srgba::from(Hsla::new(hsl.hue, 0.0, hsl.lightness, 1.0)),
+                        Srgba::from(Hsla::new(hsl.hue, 0.5, hsl.lightness, 1.0)),
+                        Srgba::from(Hsla::new(hsl.hue, 1.0, hsl.lightness, 1.0)),
+                    ])
+                }))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(100.))
+                .value(cx.create_derived(|cx| {
+                    cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
+                }))
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut()
+                        .resource_mut::<ColorEditState>()
+                        .hsl
+                        .saturation = value / 100.0;
+                })),
+            text_computed(|cx| {
+                format!(
+                    "{:.0}",
+                    cx.use_resource::<ColorEditState>().hsl.saturation * 100.0
+                )
+            }),
+            GradientSlider::new()
+                .gradient(cx.create_derived(|cx| {
+                    let hsl = cx.use_resource::<ColorEditState>().hsl;
+                    ColorGradient::new(&[
+                        Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 0.0, 1.0)),
+                        Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 0.5, 1.0)),
+                        Srgba::from(Hsla::new(hsl.hue, hsl.saturation, 1.0, 1.0)),
+                    ])
+                }))
+                .min(Signal::Constant(0.))
+                .max(Signal::Constant(100.))
+                .value(
+                    cx.create_derived(|cx| {
                         cx.use_resource::<ColorEditState>().hsl.lightness * 100.0
-                    }))
-                    .style(style_slider)
-                    .precision(1)
-                    .on_change(cx.create_callback(move |cx, value| {
-                        cx.world_mut()
-                            .resource_mut::<ColorEditState>()
-                            .hsl
-                            .lightness = value / 100.0;
-                    })),
-                text_computed(|cx| {
-                    format!(
-                        "{:.0}",
-                        cx.use_resource::<ColorEditState>().hsl.lightness * 100.0
-                    )
-                }),
-                AlphaSlider,
-            ))
+                    }),
+                )
+                .style(style_slider)
+                .precision(1)
+                .on_change(cx.create_callback(move |cx, value| {
+                    cx.world_mut()
+                        .resource_mut::<ColorEditState>()
+                        .hsl
+                        .lightness = value / 100.0;
+                })),
+            text_computed(|cx| {
+                format!(
+                    "{:.0}",
+                    cx.use_resource::<ColorEditState>().hsl.lightness * 100.0
+                )
+            }),
+            AlphaSlider,
+        ))
     }
 }
 

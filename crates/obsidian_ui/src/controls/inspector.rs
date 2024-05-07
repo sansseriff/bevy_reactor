@@ -99,16 +99,16 @@ impl ViewTemplate for InspectorGroup {
         let expanded = self.expanded;
         let body = self.body.clone();
         Element::<NodeBundle>::new()
-            .with_styles(style_inspector_group)
+            .style(style_inspector_group)
             .children((
                 Element::<NodeBundle>::new()
-                    .with_styles((typography::text_default, style_inspector_group_header))
+                    .style((typography::text_default, style_inspector_group_header))
                     .children(self.title.clone()),
                 Cond::new(
                     move |cx| expanded.get(cx),
                     move || {
                         Element::<NodeBundle>::new()
-                            .with_styles(style_inspector_group_body)
+                            .style(style_inspector_group_body)
                             .children(body.clone())
                     },
                     || (),
@@ -138,7 +138,7 @@ pub struct InspectorFieldLabel {
 impl ViewTemplate for InspectorFieldLabel {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
-            .with_styles((
+            .style((
                 typography::text_default,
                 style_inspector_field_label,
                 self.style.clone(),
@@ -190,7 +190,7 @@ impl InspectorFieldReadonlyValue {
 impl ViewTemplate for InspectorFieldReadonlyValue {
     fn create(&self, _cx: &mut Cx) -> impl Into<ViewRef> {
         Element::<NodeBundle>::new()
-            .with_styles((
+            .style((
                 typography::text_default,
                 style_inspector_field_readonly_value,
                 self.style.clone(),
