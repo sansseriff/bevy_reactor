@@ -1,7 +1,9 @@
 use bevy_reactor::*;
-use obsidian_ui::controls::InspectorFieldReadonlyValue;
 
-use crate::{field_label::FieldLabel, InspectableField};
+use crate::{
+    templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
+    InspectableField,
+};
 
 /// Field editor for when no specific editor is available.
 pub struct FieldEditFallback(pub(crate) InspectableField);
@@ -23,8 +25,7 @@ impl ViewTemplate for FieldEditFallback {
             FieldLabel {
                 field: self.0.clone(),
             },
-            InspectorFieldReadonlyValue::new()
-                .children(format!("TODO: {}", reflect.reflect_type_path())),
+            FieldReadonlyValue::new().children(format!("TODO: {}", reflect.reflect_type_path())),
         ))
     }
 }

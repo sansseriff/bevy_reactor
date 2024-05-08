@@ -1,14 +1,14 @@
-use crate::{colors, typography};
 use bevy::{prelude::*, ui};
 use bevy_reactor::*;
+use obsidian_ui::{colors, typography};
 
-fn style_inspector_group(ss: &mut StyleBuilder) {
+fn style_inspector_panel(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .align_items(ui::AlignItems::Stretch);
 }
 
-fn style_inspector_group_header(ss: &mut StyleBuilder) {
+fn style_inspector_panel_header(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_items(ui::AlignItems::Center)
@@ -27,7 +27,7 @@ fn style_inspector_group_header(ss: &mut StyleBuilder) {
         .padding_right(3);
 }
 
-fn style_inspector_group_body(ss: &mut StyleBuilder) {
+fn style_inspector_panel_body(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Grid)
         .grid_auto_flow(ui::GridAutoFlow::Row)
         .grid_template_columns(vec![
@@ -58,57 +58,57 @@ fn style_inspector_group_body(ss: &mut StyleBuilder) {
         .padding_bottom(4);
 }
 
-/// Displays a inspector group card with a title and a body.
+/// Displays a inspector panel card with a title and a body.
 #[derive(Clone, Default)]
-pub struct InspectorGroup {
+pub struct InspectorPanel {
     /// The content of the title section.
     pub title: ChildArray,
     /// The content of the body section.
     pub body: ChildArray,
-    /// Whether the group is expanded or not. When collapsed, only the title is shown.
+    /// Whether the panel is expanded or not. When collapsed, only the title is shown.
     pub expanded: Signal<bool>,
 }
 
-impl InspectorGroup {
-    /// Create a new inspector group with the given title and body.
+impl InspectorPanel {
+    /// Create a new inspector panel with the given title and body.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Set the title of the inspector group.
+    /// Set the title of the inspector panel.
     pub fn title<V: ChildViewTuple>(mut self, title: V) -> Self {
         self.title = title.to_child_array();
         self
     }
 
-    /// Set the body of the inspector group.
+    /// Set the body of the inspector panel.
     pub fn body<V: ChildViewTuple>(mut self, body: V) -> Self {
         self.body = body.to_child_array();
         self
     }
 
-    /// Set the expanded signal of the inspector group.
+    /// Set the expanded signal of the inspector panel.
     pub fn expanded(mut self, expanded: impl IntoSignal<bool>) -> Self {
         self.expanded = expanded.into_signal();
         self
     }
 }
 
-impl ViewTemplate for InspectorGroup {
+impl ViewTemplate for InspectorPanel {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let expanded = self.expanded;
         let body = self.body.clone();
         Element::<NodeBundle>::new()
-            .style(style_inspector_group)
+            .style(style_inspector_panel)
             .children((
                 Element::<NodeBundle>::new()
-                    .style((typography::text_default, style_inspector_group_header))
+                    .style((typography::text_default, style_inspector_panel_header))
                     .children(self.title.clone()),
                 Cond::new(
                     move |cx| expanded.get(cx),
                     move || {
                         Element::<NodeBundle>::new()
-                            .style(style_inspector_group_body)
+                            .style(style_inspector_panel_body)
                             .children(body.clone())
                     },
                     || (),

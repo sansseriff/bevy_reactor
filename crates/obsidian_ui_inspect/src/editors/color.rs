@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 use bevy_reactor::*;
 use obsidian_ui::{
-    controls::{InspectorFieldReadonlyValue, Spacer, Swatch},
+    controls::{Spacer, Swatch},
     size::Size,
 };
 
-use crate::{field_label::FieldLabel, InspectableField};
+use crate::{
+    templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
+    InspectableField,
+};
 
 pub struct FieldEditSrgba {
     pub(crate) field: InspectableField,
@@ -26,7 +29,7 @@ impl ViewTemplate for FieldEditSrgba {
             FieldLabel {
                 field: self.field.clone(),
             },
-            InspectorFieldReadonlyValue::new().children((
+            FieldReadonlyValue::new().children((
                 Swatch::new(value).size(Size::Xxxs),
                 Spacer,
                 text_computed(move |cx| {

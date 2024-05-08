@@ -1,11 +1,9 @@
 mod default_factory;
-mod edit_bool;
-mod edit_color;
-mod edit_fallback;
-mod field_label;
+mod editors;
 mod inspectable;
 mod inspector;
 mod inspector_factory;
+mod templates;
 
 use bevy::app::{App, Plugin};
 use default_factory::DefaultInspectorFactory;

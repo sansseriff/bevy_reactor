@@ -4,7 +4,7 @@ use obsidian_ui::{colors, controls::Spacer, typography};
 
 use crate::InspectableField;
 
-fn style_inspector_field_label(ss: &mut StyleBuilder) {
+fn style_field_label(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Row)
         .align_items(ui::AlignItems::Center)
@@ -22,7 +22,7 @@ pub struct FieldLabel {
 impl ViewTemplate for FieldLabel {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         Element::<NodeBundle>::new()
-            .style((typography::text_default, style_inspector_field_label))
+            .style((typography::text_default, style_field_label))
             .children((self.field.name(), Spacer))
     }
 }

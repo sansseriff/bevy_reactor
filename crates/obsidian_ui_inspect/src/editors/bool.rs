@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_reactor::*;
 use obsidian_ui::controls::Checkbox;
 
-use crate::{field_label::FieldLabel, InspectableField};
+use crate::{templates::field_label::FieldLabel, InspectableField};
 
 pub struct FieldEditBool(pub(crate) InspectableField);
 

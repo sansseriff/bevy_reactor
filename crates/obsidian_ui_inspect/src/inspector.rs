@@ -7,12 +7,15 @@ use bevy::{
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
-    controls::{Icon, InspectorGroup, MenuButton, MenuDivider, MenuItem, MenuPopup, Spacer},
+    controls::{Icon, MenuButton, MenuDivider, MenuItem, MenuPopup, Spacer},
     floating::FloatAlign,
     size::Size,
 };
 
-use crate::{Inspectable, InspectableField, InspectorFactoryRegistry};
+use crate::{
+    templates::inspector_panel::InspectorPanel, Inspectable, InspectableField,
+    InspectorFactoryRegistry,
+};
 
 pub struct Inspector {
     // Need a reference to the entity being inspected
@@ -83,7 +86,7 @@ impl Inspector {
 
 impl ViewTemplate for Inspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        InspectorGroup::new()
+        InspectorPanel::new()
             .title((
                 self.target.name(cx),
                 Spacer,

@@ -188,13 +188,6 @@ impl<V: IntoView> IntoView for Option<V> {
     }
 }
 
-// This From impl is commented out because it causes many conflicts with other From impls.
-// impl<V: View + Send + Sync + 'static> From<V> for ViewHandle {
-//     fn from(view: V) -> Self {
-//         ViewHandle::new(view)
-//     }
-// }
-
 #[derive(Component)]
 /// Marker component used to signal that a view's output nodes have changed.
 pub struct DisplayNodeChanged;

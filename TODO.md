@@ -1,11 +1,12 @@
 # TODO
 
-- need something like IntoView.
 - Move 'inspector' widgets from obsidian_ui to obsidian_ui_inspect
 - Menus:
   - Close on click
   - Keyboard navigation
+  - Initial focus
   - Focus indicator
+  - Tab trapping and tab navigation (TabGroup)
   - Restore Focus
   - Shortcuts
   - Checkmarks and checkmark spacing

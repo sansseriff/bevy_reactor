@@ -1,10 +1,10 @@
 use crate::{
-    edit_bool::FieldEditBool, edit_color::FieldEditSrgba, edit_fallback::FieldEditFallback,
+    editors::{bool::FieldEditBool, color::FieldEditSrgba, fallback::FieldEditFallback},
+    templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
     InspectableField, InspectorFactory,
 };
 use bevy::{prelude::*, reflect::ReflectRef};
 use bevy_reactor::*;
-use obsidian_ui::controls::{InspectorFieldLabel, InspectorFieldReadonlyValue};
 
 #[derive(Default)]
 pub struct DefaultInspectorFactory;
@@ -12,7 +12,7 @@ pub struct DefaultInspectorFactory;
 impl InspectorFactory for DefaultInspectorFactory {
     fn create_inspector(
         &self,
-        name: &str,
+        _name: &str,
         reflect: &dyn Reflect,
         field: &InspectableField,
         views: &mut Vec<ViewRef>,
@@ -64,87 +64,61 @@ impl InspectorFactory for DefaultInspectorFactory {
             }
             ReflectRef::TupleStruct(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
                 views.push(
-                    InspectorFieldReadonlyValue::new()
+                    FieldReadonlyValue::new()
                         .children("TupleStruct:TODO")
                         .into_view(),
                 );
             }
             ReflectRef::Tuple(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
-                views.push(
-                    InspectorFieldReadonlyValue::new()
-                        .children("Tuple:TODO")
-                        .into_view(),
-                );
+                views.push(FieldReadonlyValue::new().children("Tuple:TODO").into_view());
             }
             ReflectRef::List(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
-                views.push(
-                    InspectorFieldReadonlyValue::new()
-                        .children("List:TODO")
-                        .into_view(),
-                );
+                views.push(FieldReadonlyValue::new().children("List:TODO").into_view());
             }
             ReflectRef::Array(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
-                views.push(
-                    InspectorFieldReadonlyValue::new()
-                        .children("Array:TODO")
-                        .into_view(),
-                );
+                views.push(FieldReadonlyValue::new().children("Array:TODO").into_view());
             }
             ReflectRef::Map(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
-                views.push(
-                    InspectorFieldReadonlyValue::new()
-                        .children("Map:TODO")
-                        .into_view(),
-                );
+                views.push(FieldReadonlyValue::new().children("Map:TODO").into_view());
             }
             ReflectRef::Enum(_) => {
                 views.push(
-                    InspectorFieldLabel {
-                        children: name.into_view(),
-                        ..default()
+                    FieldLabel {
+                        field: field.clone(),
                     }
                     .into_view(),
                 );
-                views.push(
-                    InspectorFieldReadonlyValue::new()
-                        .children("Enum:TODO")
-                        .into_view(),
-                );
+                views.push(FieldReadonlyValue::new().children("Enum:TODO").into_view());
             }
             ReflectRef::Value(v) => match v.reflect_type_path() {
                 "bool" => {
