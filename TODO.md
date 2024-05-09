@@ -3,6 +3,9 @@
 - ColorEdit
   - click on slider
   - swatch alpha
+  - recent colors
+    - saving
+    - detecting when changed. (on_cleanup?)
 - Menus:
   - Close on click
   - Keyboard navigation

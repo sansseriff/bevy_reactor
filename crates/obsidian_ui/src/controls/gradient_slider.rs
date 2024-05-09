@@ -258,6 +258,33 @@ impl ViewTemplate for GradientSlider {
             .named("GradientSlider")
             .style((style_slider, self.style.clone()))
             .insert((
+                On::<Pointer<Down>>::run(move |world: &mut World| {
+                    let min = min.get(world);
+                    let max = max.get(world);
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<Down>>>()
+                        .unwrap();
+                    event.stop_propagation();
+                    let hit_x = event.pointer_location.position.x;
+                    let ent = world.entity(slider_id);
+                    let node = ent.get::<Node>();
+                    let transform = ent.get::<GlobalTransform>();
+                    if let (Some(node), Some(transform)) = (node, transform) {
+                        // If not clicking on thumb, then snap thumb to new location.
+                        let rect = node.logical_rect(transform);
+                        let slider_width = rect.width() - THUMB_WIDTH;
+                        let range = max - min;
+                        let pointer_pos = hit_x - rect.min.x - THUMB_WIDTH / 2.;
+                        let thumb_pos =
+                            value.get(world) - min * slider_width / range + THUMB_WIDTH / 2.;
+                        if range > 0. && (pointer_pos - thumb_pos).abs() >= THUMB_WIDTH / 2. {
+                            let new_value = min + (pointer_pos * range) / slider_width;
+                            if let Some(on_change) = on_change {
+                                world.run_callback(on_change, new_value.clamp(min, max));
+                            }
+                        };
+                    }
+                }),
                 On::<Pointer<DragStart>>::run(move |world: &mut World| {
                     // Save initial value to use as drag offset.
                     let mut event = world
