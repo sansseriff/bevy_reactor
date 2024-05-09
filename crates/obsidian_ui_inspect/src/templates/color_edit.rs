@@ -166,6 +166,11 @@ impl ViewTemplate for ColorEdit {
         let mode = cx.create_memo(move |cx| state.map(cx, |st| st.mode));
         let on_change = self.on_change;
 
+        cx.on_cleanup(move |world| {
+            println!("Cleanup: {:?}", state.get(world).rgb);
+            // state.drop();
+        });
+
         Element::<NodeBundle>::new().style(style_grid).children((
             Element::<NodeBundle>::new().style(style_top_row).children((
                 Swatch::new(cx.create_memo(move |cx| state.get(cx).rgb)).style(style_swatch),

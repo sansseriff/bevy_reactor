@@ -81,17 +81,11 @@ impl ViewTemplate for FieldEditSrgba {
                         MenuPopup::new()
                             .side(FloatSide::Right)
                             .align(FloatAlign::Start)
-                            .children((
-                                ColorEdit::new(
-                                    state,
-                                    cx.create_callback(move |cx, st: ColorEditState| {
-                                        state.set(cx, st);
-                                    }),
-                                ),
-                                // MenuItem::new().label("Open"),
-                                // MenuItem::new().label("Close"),
-                                // MenuDivider,
-                                // MenuItem::new().label("Quit..."),
+                            .children(ColorEdit::new(
+                                state,
+                                cx.create_callback(move |cx, st: ColorEditState| {
+                                    state.set(cx, st);
+                                }),
                             )),
                     )
                     .size(Size::Xxs)

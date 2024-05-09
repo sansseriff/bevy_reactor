@@ -1,7 +1,6 @@
 # TODO
 
 - ColorEdit
-  - click on slider
   - swatch alpha
   - recent colors
     - saving

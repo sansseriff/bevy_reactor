@@ -262,10 +262,11 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         let mut tracking = TrackingScope::new(world.change_tick());
         let mut cx = Cx::new(world, view_entity, &mut tracking);
         let view = self.template.create(&mut cx).into_view();
-        let inner = world.spawn(tracking).set_parent(view_entity).id();
+        let inner = world.spawn_empty().set_parent(view_entity).id();
         view.0.lock().unwrap().build(inner, world);
         self.nodes = view.nodes();
         world.entity_mut(inner).insert(ViewHandle(view.0));
+        world.entity_mut(view_entity).insert(tracking);
         self.view_entity = Some(inner);
     }
 
