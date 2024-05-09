@@ -70,6 +70,9 @@ pub struct MenuButton {
     /// The popup to display when the button is clicked.
     pub popup: ChildArray,
 
+    /// If true, don't display the caret icon.
+    pub no_caret: bool,
+
     /// The tab index of the button (default 0).
     pub tab_index: i32,
 }
@@ -125,6 +128,12 @@ impl MenuButton {
     /// Set the button style.
     pub fn style(mut self, style: StyleHandle) -> Self {
         self.style = style;
+        self
+    }
+
+    /// Control whether to hide the drop-down caret icon.
+    pub fn no_caret(mut self, no_caret: bool) -> Self {
+        self.no_caret = no_caret;
         self
     }
 
@@ -260,11 +269,20 @@ impl ViewTemplate for MenuButton {
                     }),
                 self.children.clone(),
                 Spacer,
-                Icon::new("obsidian_ui://icons/chevron_down.png")
-                    .color(Color::from(colors::DIM))
-                    .style(|ss: &mut StyleBuilder| {
-                        ss.margin_right(4);
-                    }),
+                Cond::new(
+                    {
+                        let no_caret = self.no_caret;
+                        move |_cx| no_caret
+                    },
+                    || (),
+                    || {
+                        Icon::new("obsidian_ui://icons/chevron_down.png")
+                            .color(Color::from(colors::DIM))
+                            .style(|ss: &mut StyleBuilder| {
+                                ss.margin_right(4);
+                            })
+                    },
+                ),
                 Cond::new(
                     move |cx| open.get(cx),
                     move || {
@@ -295,20 +313,19 @@ impl ViewTemplate for MenuButton {
 }
 
 fn style_popup(ss: &mut StyleBuilder) {
-    ss.background_color(colors::U3)
-        .border_radius(2.0)
+    ss.background_color(colors::U1)
+        .border_radius(4.0)
         .position(PositionType::Absolute)
         .display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .justify_content(ui::JustifyContent::FlexStart)
         .align_items(ui::AlignItems::Stretch)
-        .border_color(colors::U2)
+        .border_color(Srgba::BLACK)
         .border(1)
         .padding((0, 2));
 }
 
 /// UI component representing the popup menu.
-#[derive(Default)]
 pub struct MenuPopup {
     /// The children of the popup.
     pub children: ChildArray,
@@ -318,6 +335,21 @@ pub struct MenuPopup {
 
     /// Whether to align the popup to the left or right side of the anchor.
     pub align: FloatAlign,
+
+    /// Default side of the popup (top, bottom, left, right). Note that the popup will also
+    /// automatically flip to the opposite side if it doesn't fit on the default side.
+    pub side: FloatSide,
+}
+
+impl Default for MenuPopup {
+    fn default() -> Self {
+        Self {
+            children: Default::default(),
+            style: Default::default(),
+            align: FloatAlign::Start,
+            side: FloatSide::Bottom,
+        }
+    }
 }
 
 impl MenuPopup {
@@ -343,6 +375,12 @@ impl MenuPopup {
         self.align = align;
         self
     }
+
+    /// Set the default side of the popup.
+    pub fn side(mut self, side: FloatSide) -> Self {
+        self.side = side;
+        self
+    }
 }
 
 impl ViewTemplate for MenuPopup {
@@ -352,23 +390,31 @@ impl ViewTemplate for MenuPopup {
         Element::<NodeBundle>::new()
             .named("MenuPopup")
             .style((typography::text_default, style_popup, self.style.clone()))
-            .insert(Floating {
-                anchor: context.0,
-                position: vec![
-                    FloatPosition {
-                        side: FloatSide::Bottom,
-                        align: self.align,
-                        stretch: false,
-                        gap: 2.0,
-                    },
-                    FloatPosition {
-                        side: FloatSide::Top,
-                        align: self.align,
-                        stretch: false,
-                        gap: 2.0,
-                    },
-                ],
-            })
+            .insert((
+                Floating {
+                    anchor: context.0,
+                    position: vec![
+                        FloatPosition {
+                            side: self.side,
+                            align: self.align,
+                            stretch: false,
+                            gap: 2.0,
+                        },
+                        FloatPosition {
+                            side: self.side.mirror(),
+                            align: self.align,
+                            stretch: false,
+                            gap: 2.0,
+                        },
+                    ],
+                },
+                On::<Pointer<Click>>::run(move |world: &mut World| {
+                    let mut event = world
+                        .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                        .unwrap();
+                    event.stop_propagation();
+                }),
+            ))
             .children(self.children.clone())
     }
 }

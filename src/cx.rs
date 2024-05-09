@@ -204,9 +204,11 @@ pub trait RunContextSetup<'p> {
                 mutable.set_clone(cx, value);
             }
         }));
-        self.world_mut()
-            .entity_mut(mutable.cell)
-            .insert((ReactionCell(reaction), scope));
+        self.world_mut().entity_mut(mutable.cell).insert((
+            ReactionCell(reaction),
+            scope,
+            Name::new(format!("Memo::<{}>", std::any::type_name::<R>())),
+        ));
 
         signal
     }

@@ -193,6 +193,10 @@ impl ViewTemplate for Button {
                         let mut focus = world.get_resource_mut::<Focus>().unwrap();
                         focus.0 = Some(id);
                         if !disabled.get(world) {
+                            let mut event = world
+                                .get_resource_mut::<ListenerInput<Pointer<Click>>>()
+                                .unwrap();
+                            event.stop_propagation();
                             if let Some(on_click) = on_click {
                                 world.run_callback(on_click, ());
                             }

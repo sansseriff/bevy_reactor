@@ -82,27 +82,9 @@ fn style_slider(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Stretch);
 }
 
-// fn style_alpha(ss: &mut StyleBuilder) {
-//     ss.position(ui::PositionType::Absolute)
-//         .background_color(colors::U5)
-//         .background_image("obsidian_ui://textures/checkerboard.png")
-//         .top(0)
-//         .bottom(0)
-//         .left(0)
-//         .right(0);
-// }
-
-// fn style_start_cap(ss: &mut StyleBuilder) {
-//     ss.background_color(colors::LIGHT).width(THUMB_WIDTH * 0.5);
-// }
-
 fn style_gradient(ss: &mut StyleBuilder) {
     ss.flex_grow(1.);
 }
-
-// fn style_end_cap(ss: &mut StyleBuilder) {
-//     ss.background_color(colors::X_RED).width(THUMB_WIDTH * 0.5);
-// }
 
 fn style_track(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)
@@ -230,18 +212,6 @@ impl ViewTemplate for GradientSlider {
         let precision = self.precision;
         let on_change = self.on_change;
 
-        // Derived signal of first color in gradient.
-        // let first_color = {
-        //     let gradient = self.gradient;
-        //     cx.create_derived(move |cc| gradient.map(cc, |g| g.first()).unwrap_or(Srgba::BLACK))
-        // };
-
-        // // Derived signal of last color in gradient.
-        // let last_color = {
-        //     let gradient = self.gradient;
-        //     cx.create_derived(move |cc| gradient.map(cc, |g| g.last()).unwrap_or(Srgba::BLACK))
-        // };
-
         // This should really be an effect.
         let color_stops: Signal<(usize, [Vec4; 8])> = {
             let gradient = self.gradient;
@@ -344,28 +314,9 @@ impl ViewTemplate for GradientSlider {
                 }),
             ))
             .children((
-                // Element::<NodeBundle>::new().with_styles(style_alpha),
-                // Element::<NodeBundle>::new()
-                //     .with_styles(style_start_cap)
-                //     .create_effect({
-                //         move |cx, ent| {
-                //             let color = first_color.get(cx);
-                //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                //             bg.0 = color.into();
-                //         }
-                //     }),
                 Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
                     .insert(gradient_material.clone())
                     .style(style_gradient),
-                // Element::<NodeBundle>::new()
-                //     .with_styles(style_end_cap)
-                //     .create_effect({
-                //         move |cx, ent| {
-                //             let color = last_color.get(cx);
-                //             let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                //             bg.0 = color.into();
-                //         }
-                //     }),
                 Element::<NodeBundle>::new()
                     .named("GradientSlider::Track")
                     .style(style_track)

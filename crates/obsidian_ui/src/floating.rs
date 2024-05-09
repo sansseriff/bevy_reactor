@@ -20,6 +20,18 @@ pub enum FloatSide {
     Right,
 }
 
+impl FloatSide {
+    /// Returns the side that is the mirror image of this side.
+    pub fn mirror(&self) -> Self {
+        match self {
+            FloatSide::Top => FloatSide::Bottom,
+            FloatSide::Bottom => FloatSide::Top,
+            FloatSide::Left => FloatSide::Right,
+            FloatSide::Right => FloatSide::Left,
+        }
+    }
+}
+
 /// How the floating element should be aligned to the anchor element.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum FloatAlign {

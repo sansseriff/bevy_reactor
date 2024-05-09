@@ -92,11 +92,11 @@ impl TrackingScope {
 
     fn components_changed(&self, world: &World, tick: Tick) -> bool {
         self.component_deps.iter().any(|(e, c)| {
-            world
-                .entity(*e)
-                .get_change_ticks_by_id(*c)
-                .map(|ct| ct.is_changed(self.tick, tick))
-                .unwrap_or(false)
+            world.get_entity(*e).map_or(false, |e| {
+                e.get_change_ticks_by_id(*c)
+                    .map(|ct| ct.is_changed(self.tick, tick))
+                    .unwrap_or(false)
+            })
         })
     }
 

@@ -94,7 +94,7 @@ impl ViewTemplate for Inspector {
                     .children(
                         Icon::new("obsidian_ui://icons/add_box.png")
                             .color(Color::from(colors::DIM))
-                            .style(style_close_icon),
+                            .style(style_menu_icon),
                     )
                     .popup(MenuPopup::new().align(FloatAlign::End).children((
                         MenuItem::new().label("Open"),
@@ -110,7 +110,7 @@ impl ViewTemplate for Inspector {
     }
 }
 
-fn style_close_icon(ss: &mut StyleBuilder) {
+fn style_menu_icon(ss: &mut StyleBuilder) {
     ss.margin((4, 0));
 }
 

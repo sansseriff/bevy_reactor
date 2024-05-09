@@ -1,5 +1,4 @@
 //! Example of a simple UI layout
-mod color_edit;
 mod node_graph_demo;
 mod reflect_demo;
 mod transform_overlay;
@@ -13,16 +12,14 @@ use bevy_mod_picking::{
 };
 use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 use bevy_reactor_overlays as overlays;
-use color_edit::{ColorEdit, ColorEditState, ColorMode};
 use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 use obsidian_ui::{
     colors,
     controls::{
         Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
-        Splitter, SplitterDirection, Swatch, TextInput, TextInputProps, ToolButton, ToolPalette,
+        Splitter, SplitterDirection, TextInput, TextInputProps, ToolButton, ToolPalette,
     },
     focus::TabGroup,
-    size::Size,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 use obsidian_ui_inspect::InspectorPlugin;
@@ -33,7 +30,7 @@ use std::f32::consts::PI;
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
-    color::{palettes, Srgba},
+    color::palettes,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -160,12 +157,6 @@ fn main() {
             ..default()
         })
         .insert_resource(PanelWidth(200.))
-        .insert_resource(ColorEditState {
-            mode: ColorMode::Rgb,
-            rgb: Srgba::new(1., 0., 0., 1.),
-            recent: vec![],
-            ..default()
-        })
         .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
@@ -233,11 +224,6 @@ impl ViewTemplate for DemoUi {
         let checked_2 = cx.create_mutable(true);
         let red = cx.create_mutable::<f32>(128.);
         let name = cx.create_mutable("filename.txt".to_string());
-
-        let rgb_color = cx.create_derived(move |cx| {
-            let red = red.get(cx);
-            Srgba::new(red / 255., 100.0, 0.0, 1.0)
-        });
 
         let panel_width = cx.create_derived(|cx| {
             let res = cx.use_resource::<PanelWidth>();
@@ -352,7 +338,7 @@ impl ViewTemplate for DemoUi {
                             )),
                         Element::<NodeBundle>::new()
                             .style(style_column_group)
-                            .children((
+                            .children(
                                 Slider::new()
                                     .min(0.)
                                     .max(255.)
@@ -362,13 +348,7 @@ impl ViewTemplate for DemoUi {
                                     .on_change(cx.create_callback(move |cx, value| {
                                         red.set(cx, value);
                                     })),
-                                Swatch::new(rgb_color).size(Size::Md),
-                                text_computed(move |cx| {
-                                    let color = rgb_color.get(cx);
-                                    color.to_hex()
-                                }),
-                            )),
-                        ColorEdit,
+                            ),
                         TextInput::new(TextInputProps {
                             value: name.signal(),
                             on_change: Some(cx.create_callback(

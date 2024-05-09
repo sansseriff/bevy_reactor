@@ -1,6 +1,8 @@
 # TODO
 
-- Move 'inspector' widgets from obsidian_ui to obsidian_ui_inspect
+- ColorEdit
+  - click on slider
+  - swatch alpha
 - Menus:
   - Close on click
   - Keyboard navigation

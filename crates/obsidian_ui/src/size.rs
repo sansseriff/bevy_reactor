@@ -65,6 +65,3 @@ impl Size {
         }
     }
 }
-
-// export type Space = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | 'none';
-// export type DialogWidth = Size | 'full';
