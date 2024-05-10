@@ -2,30 +2,20 @@
 #import bevy_ui::ui_vertex_output::UiVertexOutput
 
 @group(1) @binding(0)
-var<uniform> num_color_stops: i32;
+var<uniform> color: vec4<f32>;
 
 @group(1) @binding(1)
-var<uniform> color_stops: array<vec4<f32>, 8>;
-
-@group(1) @binding(3)
-var<uniform> cap_size: f32;
+var<uniform> radius: vec4<f32>;
 
 @fragment
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
-    let t = (in.uv.x - 0.1) * 1.0 / 0.8 * f32(num_color_stops - 1);
-    let color_index_lo = clamp(i32(floor(t)), 0, num_color_stops - 1);
-    let color_index_hi = clamp(i32(ceil(t)), 0, num_color_stops - 1);
-    let color_lo = color_stops[color_index_lo];
-    let color_hi = color_stops[color_index_hi];
-    let color = mix(color_lo, color_hi, t - f32(color_index_lo));
-
     let uv = (in.uv - vec2<f32>(0.5, 0.5)) * in.size / 8.;
     let check = select(0.0, 1.0, (fract(uv.x) < 0.5) != (fract(uv.y) < 0.5));
     let bg = mix(vec3<f32>(0.4, 0.4, 0.4), vec3<f32>(0.6, 0.6, 0.6), check);
     let c = srgb_to_linear(mix(bg, color.rgb, color.w));
 
     let size = vec2<f32>(in.size.x, in.size.y);
-    let external_distance = sd_rounded_box((in.uv - 0.5) * size, size, vec4<f32>(size.y * 0.5));
+    let external_distance = sd_rounded_box((in.uv - 0.5) * size, size, radius);
     let alpha = smoothstep(0.5, -0.5, external_distance);
 
     return vec4<f32>(c, alpha);

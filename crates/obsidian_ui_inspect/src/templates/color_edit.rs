@@ -1,11 +1,12 @@
 use bevy::{
     color::{Alpha, Hsla, Hue, Srgba},
     ecs::system::Resource,
+    math::UVec2,
     ui::{self, node_bundles::NodeBundle},
 };
 use bevy_reactor::*;
 use obsidian_ui::{
-    controls::{Button, ButtonVariant, ColorGradient, GradientSlider, Swatch},
+    controls::{Button, ButtonVariant, ColorGradient, GradientSlider, Swatch, SwatchGrid},
     RoundedCorners,
 };
 
@@ -26,9 +27,29 @@ pub struct ColorEditState {
     pub hsl: Hsla,
 }
 
+const MAX_RECENT: usize = 32;
+
+fn style_recent_colors(ss: &mut StyleBuilder) {
+    ss.align_self(ui::AlignSelf::Stretch).height(76);
+}
+
 /// Recent colors for the color edit control.
 #[derive(Resource, Default, Clone)]
 pub struct RecentColors(pub Vec<Srgba>);
+
+impl RecentColors {
+    pub fn add(&mut self, color: Srgba) {
+        // Move color to front of list, removing duplicates.
+        if let Some(index) = self.0.iter().position(|c| *c == color) {
+            self.0.remove(index);
+        }
+        // Add color to front of list and trim.
+        self.0.insert(0, color);
+        if self.0.len() > MAX_RECENT {
+            self.0.pop();
+        }
+    }
+}
 
 impl ColorEditState {
     pub fn set_mode(self, mode: ColorMode) -> Self {
@@ -167,8 +188,10 @@ impl ViewTemplate for ColorEdit {
         let on_change = self.on_change;
 
         cx.on_cleanup(move |world| {
-            println!("Cleanup: {:?}", state.get(world).rgb);
-            // state.drop();
+            // Add color to recent colors.
+            let color = state.get(world).rgb;
+            let mut recent_colors = world.get_resource_mut::<RecentColors>().unwrap();
+            recent_colors.add(color);
         });
 
         Element::<NodeBundle>::new().style(style_grid).children((
@@ -226,7 +249,7 @@ impl ViewTemplate for ColorEdit {
                 move |mode| match mode {
                     ColorMode::Rgb => RgbSliders { state, on_change }.into_view(),
                     ColorMode::Hsl => HslSliders { state, on_change }.into_view(),
-                    ColorMode::Recent => "Recent".into_view(),
+                    ColorMode::Recent => RecentColorsGrid { state, on_change }.into_view(),
                 },
             ),
         ))
@@ -426,5 +449,27 @@ impl ViewTemplate for AlphaSlider {
                     format!("{:.0}", rgb.get(cx).alpha * 255.0)
                 })),
         ))
+    }
+}
+
+struct RecentColorsGrid {
+    state: Signal<ColorEditState>,
+    on_change: Callback<ColorEditState>,
+}
+
+impl ViewTemplate for RecentColorsGrid {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
+        let state = self.state;
+        let rgb = cx.create_memo(move |cx| state.map(cx, |st| st.rgb));
+        let on_change = self.on_change;
+        let recent_colors = cx.create_derived(|cx| cx.use_resource::<RecentColors>().0.clone());
+
+        SwatchGrid::new(recent_colors)
+            .style(style_recent_colors)
+            .grid_size(UVec2::new(12, 4))
+            .selected(rgb)
+            .on_change(cx.create_callback(move |cx, color| {
+                cx.run_callback(on_change, state.get(cx).set_rgb(color));
+            }))
     }
 }

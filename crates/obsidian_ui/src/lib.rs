@@ -4,7 +4,9 @@
 
 use bevy::{app::*, ui::UiMaterialPlugin};
 use bevy_mod_picking::prelude::EventListenerPlugin;
-use materials::{DotGridMaterial, DrawPathMaterial, GradientRectMaterial, SliderRectMaterial};
+use materials::{
+    DotGridMaterial, DrawPathMaterial, GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial,
+};
 
 /// Utilities for animation.
 pub mod animation;
@@ -53,6 +55,7 @@ impl Plugin for ObsidianUiPlugin {
         app.add_plugins((
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),
+            UiMaterialPlugin::<SwatchRectMaterial>::default(),
             UiMaterialPlugin::<DotGridMaterial>::default(),
             UiMaterialPlugin::<DrawPathMaterial>::default(),
             hooks::BistableTransitionPlugin,

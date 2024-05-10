@@ -11,6 +11,7 @@ mod slider;
 mod spacer;
 mod splitter;
 mod swatch;
+mod swatch_grid;
 mod text_input;
 mod tool_palette;
 
@@ -27,5 +28,6 @@ pub use slider::*;
 pub use spacer::*;
 pub use splitter::*;
 pub use swatch::*;
+pub use swatch_grid::*;
 pub use text_input::*;
 pub use tool_palette::*;

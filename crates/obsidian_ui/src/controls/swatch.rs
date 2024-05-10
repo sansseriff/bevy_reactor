@@ -3,18 +3,31 @@ use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 // use bevy_tabindex::TabIndex;
 
+use crate::materials::SwatchRectMaterial;
+
 use crate::colors;
 
 fn style_swatch(ss: &mut StyleBuilder) {
-    ss.border(1)
-        .min_width(8)
+    ss.min_width(8)
         .min_height(8)
         .display(ui::Display::Flex)
-        .border(0)
-        .color(colors::FOREGROUND);
+        .color(colors::FOREGROUND)
+        .padding(2);
 }
 
-/// Color swatch widget.
+fn style_selection(ss: &mut StyleBuilder) {
+    ss.border(1)
+        .border_color(colors::U1)
+        .outline_color(colors::FOREGROUND)
+        .outline_width(2)
+        .outline_offset(0)
+        .align_self(ui::AlignSelf::Stretch)
+        .justify_self(ui::JustifySelf::Stretch)
+        .flex_grow(1.);
+}
+
+/// Color swatch widget. This displays a solid color, and can also display a checkerboard
+/// pattern behind the color if it has an alpha of less than 1.
 #[derive(Default)]
 pub struct Swatch {
     /// Color to display
@@ -23,11 +36,11 @@ pub struct Swatch {
     /// For swatch grids, whether this swatch is selected.
     pub selected: Signal<bool>,
 
-    /// Additional styles to be applied to the button.
+    /// Additional styles to be applied to the widget.
     pub style: StyleHandle,
 
     /// Callback called when clicked
-    pub on_click: Option<Callback>,
+    pub on_click: Option<Callback<Srgba>>,
 }
 
 impl Swatch {
@@ -49,31 +62,88 @@ impl Swatch {
     }
 
     /// Set the callback called when clicked.
-    pub fn on_click(mut self, on_click: Callback) -> Self {
+    pub fn on_click(mut self, on_click: Callback<Srgba>) -> Self {
         self.on_click = Some(on_click);
+        self
+    }
+
+    /// Set whether the swatch should be rendered in a 'selected' state.
+    pub fn selected(mut self, selected: impl Into<Signal<bool>>) -> Self {
+        self.selected = selected.into();
         self
     }
 }
 
 impl ViewTemplate for Swatch {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
         let color = self.color;
+        let selected = self.selected;
 
-        Element::<NodeBundle>::new()
+        let mut ui_materials = cx
+            .world_mut()
+            .get_resource_mut::<Assets<SwatchRectMaterial>>()
+            .unwrap();
+        let material = ui_materials.add(SwatchRectMaterial {
+            color: LinearRgba::from(colors::U1).into(),
+            border_radius: Vec4::splat(0.),
+        });
+
+        // Update material color
+        cx.create_effect({
+            let material = material.clone();
+            move |cx| {
+                let color = color.get(cx);
+                let mut ui_materials = cx
+                    .world_mut()
+                    .get_resource_mut::<Assets<SwatchRectMaterial>>()
+                    .unwrap();
+                let material = ui_materials.get_mut(material.id()).unwrap();
+                material.color = color.into();
+            }
+        });
+
+        Element::<MaterialNodeBundle<SwatchRectMaterial>>::new()
             .named("Swatch")
             .style((style_swatch, self.style.clone()))
-            .insert(({
+            .insert((material.clone(), {
                 let on_click = self.on_click;
                 On::<Pointer<Click>>::run(move |world: &mut World| {
+                    let color = color.get(world);
                     if let Some(on_click) = on_click {
-                        world.run_callback(on_click, ());
+                        world.run_callback(on_click, color);
                     }
                 })
-            },))
+            }))
+            .children(Cond::new(
+                move |cx| selected.get(cx),
+                || Element::<NodeBundle>::new().style(style_selection),
+                || (),
+            ))
             .create_effect(move |cx, ent| {
-                let color = color.get(cx);
-                let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                bg.0 = color.into();
+                let radius = cx.use_component::<BorderRadius>(ent);
+                if let Some(radius) = radius {
+                    let radius = Vec4::from_array(resolve_border_radius(radius));
+                    let mut ui_materials = cx
+                        .world_mut()
+                        .get_resource_mut::<Assets<SwatchRectMaterial>>()
+                        .unwrap();
+                    let material = ui_materials.get_mut(material.id()).unwrap();
+                    material.border_radius = radius;
+                }
             })
     }
+}
+
+// For now we only support pixel units.
+fn resolve_border_radius(&values: &BorderRadius) -> [f32; 4] {
+    [
+        values.top_left,
+        values.top_right,
+        values.bottom_right,
+        values.bottom_left,
+    ]
+    .map(|value| match value {
+        Val::Px(px) => px,
+        _ => 0.,
+    })
 }
