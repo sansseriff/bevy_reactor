@@ -1,8 +1,8 @@
 use crate::{
     colors,
     floating::{FloatAlign, FloatPosition, FloatSide, Floating},
-    focus::{AutoFocus, KeyPressEvent, TabIndex},
-    hooks::CreateFocusSignal,
+    focus::{AutoFocus, KeyPressEvent, NavAction, TabGroup, TabIndex, TabNavigation},
+    hooks::{BistableTransitionState, CreateBistableTransition, CreateFocusSignal},
     size::Size,
     typography, RoundedCorners,
 };
@@ -11,6 +11,7 @@ use bevy::{
         accesskit::{HasPopup, NodeBuilder, Role},
         AccessibilityNode, Focus,
     },
+    ecs::system::SystemState,
     prelude::*,
     ui,
 };
@@ -22,6 +23,14 @@ use super::{style_button, style_button_bg, ButtonVariant, Icon, Spacer};
 /// View context component which stores the anchor element id for a menu.
 #[derive(Component)]
 struct MenuAnchor(Entity);
+
+#[derive(Clone, Event, EntityEvent)]
+#[can_bubble]
+pub(crate) struct MenuCloseEvent {
+    /// The target of the event
+    #[target]
+    pub target: Entity,
+}
 
 // Dialog background overlay
 fn style_menu_barrier(ss: &mut StyleBuilder) {
@@ -166,6 +175,13 @@ impl ViewTemplate for MenuButton {
         let popup = self.popup.clone();
 
         cx.insert(MenuAnchor(id_anchor));
+        cx.insert(On::<MenuCloseEvent>::run(move |world: &mut World| {
+            let mut event = world
+                .get_resource_mut::<ListenerInput<MenuCloseEvent>>()
+                .unwrap();
+            event.stop_propagation();
+            open.set(world, false);
+        }));
 
         Element::<NodeBundle>::for_entity(id_anchor)
             .named("MenuButton")
@@ -385,12 +401,19 @@ impl MenuPopup {
 
 impl ViewTemplate for MenuPopup {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
+        // Adds a delay to ensure the menu items are created before setting focus.
+        let state = cx.create_bistable_transition(Signal::Constant(true), 0.01);
         let context = cx.use_inherited_component::<MenuAnchor>().unwrap();
+        let owner_id = cx.owner();
 
         Element::<NodeBundle>::new()
             .named("MenuPopup")
             .style((typography::text_default, style_popup, self.style.clone()))
             .insert((
+                TabGroup {
+                    order: 1,
+                    modal: true,
+                },
                 Floating {
                     anchor: context.0,
                     position: vec![
@@ -414,8 +437,49 @@ impl ViewTemplate for MenuPopup {
                         .unwrap();
                     event.stop_propagation();
                 }),
+                On::<KeyPressEvent>::run(move |world: &mut World| {
+                    let mut st: SystemState<(
+                        ResMut<ListenerInput<KeyPressEvent>>,
+                        ResMut<Focus>,
+                        TabNavigation,
+                    )> = SystemState::new(world);
+                    let (mut event, mut focus, nav) = st.get_mut(world);
+                    if !event.repeat {
+                        match event.key_code {
+                            KeyCode::Escape => {
+                                event.stop_propagation();
+                                world.send_event(MenuCloseEvent { target: owner_id });
+                            }
+                            KeyCode::ArrowUp => {
+                                event.stop_propagation();
+                                focus.0 = nav.navigate(focus.0, NavAction::Previous);
+                            }
+                            KeyCode::ArrowDown => {
+                                event.stop_propagation();
+                                focus.0 = nav.navigate(focus.0, NavAction::Next);
+                            }
+                            KeyCode::Home => {
+                                event.stop_propagation();
+                                focus.0 = nav.navigate(focus.0, NavAction::First);
+                            }
+                            KeyCode::End => {
+                                event.stop_propagation();
+                                focus.0 = nav.navigate(focus.0, NavAction::Last);
+                            }
+                            _ => {}
+                        }
+                    }
+                }),
             ))
             .children(self.children.clone())
+            .create_effect(move |cx, ent| {
+                if state.get(cx) == BistableTransitionState::Entered {
+                    let mut st: SystemState<(ResMut<Focus>, TabNavigation)> =
+                        SystemState::new(cx.world_mut());
+                    let (mut focus, nav) = st.get_mut(cx.world_mut());
+                    focus.0 = nav.navigate(Some(ent), NavAction::First);
+                }
+            })
     }
 }
 
@@ -490,9 +554,10 @@ impl MenuItem {
 impl ViewTemplate for MenuItem {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
+        let owner_id = cx.owner();
         let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);
-        let focused = cx.create_focus_visible_signal(id);
+        let focused = cx.create_focus_signal(id);
 
         let disabled = self.disabled;
 
@@ -505,10 +570,13 @@ impl ViewTemplate for MenuItem {
                 {
                     let on_click = self.on_click;
                     On::<Pointer<Click>>::run(move |world: &mut World| {
-                        let mut focus = world.get_resource_mut::<Focus>().unwrap();
-                        focus.0 = Some(id);
+                        let mut st: SystemState<(EventWriter<MenuCloseEvent>, ResMut<Focus>)> =
+                            SystemState::new(world);
                         if !disabled.get(world) {
+                            let (mut writer, mut focus) = st.get_mut(world);
+                            focus.0 = Some(id);
                             if let Some(on_click) = on_click {
+                                writer.send(MenuCloseEvent { target: owner_id });
                                 world.run_callback(on_click, ());
                             }
                         }
@@ -543,15 +611,18 @@ impl ViewTemplate for MenuItem {
                     let on_click = self.on_click;
                     move |world: &mut World| {
                         if !disabled.get(world) {
-                            let mut event = world
-                                .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                .unwrap();
+                            let mut st: SystemState<(
+                                ResMut<ListenerInput<KeyPressEvent>>,
+                                EventWriter<MenuCloseEvent>,
+                            )> = SystemState::new(world);
+                            let (mut event, mut writer) = st.get_mut(world);
                             if !event.repeat
                                 && (event.key_code == KeyCode::Enter
                                     || event.key_code == KeyCode::Space)
                             {
                                 event.stop_propagation();
                                 if let Some(on_click) = on_click {
+                                    writer.send(MenuCloseEvent { target: owner_id });
                                     world.run_callback(on_click, ());
                                 }
                             }
@@ -564,8 +635,8 @@ impl ViewTemplate for MenuItem {
                 let is_hovering = hovering.get(cx);
                 let is_focused = focused.get(cx);
                 let color = match (is_pressed || is_focused, is_hovering) {
-                    (true, _) => colors::U3.lighter(0.05),
-                    (false, true) => colors::U3.lighter(0.02),
+                    (true, _) => colors::U1.lighter(0.02),
+                    (false, true) => colors::U1.lighter(0.01),
                     (false, false) => Srgba::NONE,
                 };
                 let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
@@ -575,94 +646,8 @@ impl ViewTemplate for MenuItem {
     }
 }
 
-// pub fn menu_button<'a, V: View + Clone, VP: View + Clone, S: StyleTuple, C: ClassNames<'a>>(
-//     mut cx: Cx<MenuButtonProps<'a, V, VP, S, C>>,
-// ) -> impl View {
-//     let id_anchor = cx.props.anchor;
-//     let is_open = cx.create_atom_init::<bool>(|| false);
-//     let state = cx.use_enter_exit(cx.read_atom(is_open), 0.3);
-//     cx.define_scoped_value(MENU_ANCHOR, id_anchor);
-//     RefElement::new(cx.props.anchor)
-//         .named("menu-button")
-//         .class_names((
-//             cx.props.class_names.clone(),
-//             CLS_OPEN.if_true(cx.read_atom(is_open)),
-//         ))
-//         .insert((
-//             On::<Pointer<Click>>::run(
-//                 move |ev: Listener<Pointer<Click>>,
-//                       mut writer: EventWriter<MenuEvent>,
-//                       atoms: AtomStore| {
-//                     let open = atoms.get(is_open);
-//                     writer.send(MenuEvent {
-//                         target: ev.target,
-//                         action: if open {
-//                             MenuAction::Close
-//                         } else {
-//                             MenuAction::Open
-//                         },
-//                     });
-//                 },
-//             ),
-//             On::<MenuEvent>::run(move |ev: Listener<MenuEvent>, mut atoms: AtomStore| {
-//                 match ev.action {
-//                     MenuAction::Open => {
-//                         atoms.set(is_open, true);
-//                     }
-//                     MenuAction::Close => {
-//                         atoms.set(is_open, false);
-//                     }
-//                     _ => {}
-//                 }
-//             }),
-//         ))
-//         .styled(cx.props.style.clone())
-//         .children((
-//             cx.props.children.clone(),
-//             If::new(
-//                 state != EnterExitState::Exited,
-//                 Portal::new().children(
-//                     Element::new()
-//                         .class_names(state.as_class_name())
-//                         .insert((
-//                             On::<Pointer<Down>>::run(move |mut writer: EventWriter<MenuEvent>| {
-//                                 writer.send(MenuEvent {
-//                                     action: MenuAction::Close,
-//                                     target: id_anchor,
-//                                 });
-//                             }),
-//                             Style {
-//                                 left: Val::Px(0.),
-//                                 right: Val::Px(0.),
-//                                 top: Val::Px(0.),
-//                                 bottom: Val::Px(0.),
-//                                 position_type: PositionType::Absolute,
-//                                 ..default()
-//                             },
-//                             ZIndex::Global(100),
-//                         ))
-//                         .children(cx.props.popup.clone()),
-//                 ),
-//                 (),
-//             ),
-//         ))
-// }
-
-// pub fn menu_item<V: View + Clone, S: StyleTuple>(mut cx: Cx<MenuItemProps<V, S>>) -> impl View {
-//     Element::new()
-//         .insert((On::<Pointer<Click>>::run(
-//             move |mut writer: EventWriter<Clicked>, mut writer2: EventWriter<MenuEvent>| {
-//                 writer.send(Clicked { target: anchor, id });
-//                 writer2.send(MenuEvent {
-//                     action: MenuAction::Close,
-//                     target: anchor,
-//                 });
-//             },
-//         ),))
-// }
-
 fn style_menu_divider(ss: &mut StyleBuilder) {
-    ss.height(1).background_color(colors::U2).margin((0, 2));
+    ss.height(1).background_color(Srgba::BLACK).margin((0, 2));
 }
 
 /// UI component representing a menu divider.

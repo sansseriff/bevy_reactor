@@ -1,15 +1,8 @@
 # TODO
 
-- ColorEdit
-  - swatch alpha
-  - recent colors
-    - saving
-    - detecting when changed. (on_cleanup?)
+- Undefined fields.
 - Menus:
-  - Close on click
-  - Keyboard navigation
-  - Initial focus
-  - Focus indicator
+  - Redo with new colors
   - Tab trapping and tab navigation (TabGroup)
   - Restore Focus
   - Shortcuts
@@ -31,6 +24,7 @@
 - Composite buffers.
 - Don't execute dialog content if dialog not open.
 - Can we make ForEach not require cloning the iterator?
+- Persist recent colors
 - Text Input
 
   - drag to select (requires text measurement)

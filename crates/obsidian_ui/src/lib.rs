@@ -4,6 +4,7 @@
 
 use bevy::{app::*, ui::UiMaterialPlugin};
 use bevy_mod_picking::prelude::EventListenerPlugin;
+use controls::MenuCloseEvent;
 use materials::{
     DotGridMaterial, DrawPathMaterial, GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial,
 };
@@ -62,7 +63,10 @@ impl Plugin for ObsidianUiPlugin {
             animation::AnimatedTransitionPlugin,
             focus::KeyboardInputPlugin,
         ))
-        .add_plugins(EventListenerPlugin::<ScrollWheel>::default())
+        .add_plugins((
+            EventListenerPlugin::<ScrollWheel>::default(),
+            EventListenerPlugin::<MenuCloseEvent>::default(),
+        ))
         .add_event::<ScrollWheel>()
         .add_systems(
             Update,

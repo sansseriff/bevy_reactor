@@ -91,8 +91,8 @@ impl Command for DespawnViewRoot {
         let handle = root.0.clone();
         let mut view = handle.lock().unwrap();
         view.raze(self.0, world);
-        let entt = world.entity_mut(self.0);
-        entt.despawn();
+        // let entt = world.entity_mut(self.0);
+        // entt.despawn();
     }
 }
 

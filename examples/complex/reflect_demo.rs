@@ -13,6 +13,7 @@ pub struct TestStruct {
 
     pub unlit: Option<bool>,
     pub roughness: Option<f32>,
+    pub metalness: Option<f32>,
 }
 
 pub struct ResourcePropertyInspector<T: Resource> {

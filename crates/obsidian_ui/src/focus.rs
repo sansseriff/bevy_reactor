@@ -105,6 +105,18 @@ pub struct TabNavigation<'w, 's> {
     parent: Query<'w, 's, &'static Parent, With<Node>>,
 }
 
+/// Navigation action for tabbing.
+pub enum NavAction {
+    /// Navigate to the next focusable entity.
+    Next,
+    /// Navigate to the previous focusable entity.
+    Previous,
+    /// Navigate to the first focusable entity.
+    First,
+    /// Navigate to the last focusable entity.
+    Last,
+}
+
 impl TabNavigation<'_, '_> {
     /// Navigate to the next focusable entity.
     ///
@@ -112,7 +124,7 @@ impl TabNavigation<'_, '_> {
     /// * `focus`: The current focus entity. If `None`, then the first focusable entity is returned,
     ///    unless `reverse` is true, in which case the last focusable entity is returned.
     /// * `reverse`: Whether to navigate in reverse order.
-    fn navigate(&self, focus: Option<Entity>, reverse: bool) -> Option<Entity> {
+    pub fn navigate(&self, focus: Option<Entity>, action: NavAction) -> Option<Entity> {
         // If there are no tab groups, then there are no focusable entities.
         if self.tabgroup.is_empty() {
             warn!("No tab groups found");
@@ -126,19 +138,25 @@ impl TabNavigation<'_, '_> {
         while let Some(ent) = entity {
             if let Ok((tg_entity, tg, _)) = self.tabgroup.get(ent) {
                 tabgroup = Some((tg_entity, tg));
+                break;
             }
             // Search up
             entity = self.parent.get(ent).ok().map(|parent| parent.get());
         }
 
-        self.navigate_in_group(tabgroup, focus, reverse)
+        if tabgroup.is_none() {
+            warn!("No tab group found for focus entity");
+            return None;
+        }
+
+        self.navigate_in_group(tabgroup, focus, action)
     }
 
     fn navigate_in_group(
         &self,
         tabgroup: Option<(Entity, &TabGroup)>,
         focus: Option<Entity>,
-        reverse: bool,
+        action: NavAction,
     ) -> Option<Entity> {
         // List of all focusable entities found.
         let mut focusable: Vec<(Entity, TabIndex)> = Vec::with_capacity(self.tabindex.iter().len());
@@ -180,11 +198,13 @@ impl TabNavigation<'_, '_> {
 
         let index = focusable.iter().position(|e| Some(e.0) == focus);
         let count = focusable.len();
-        let next = match (index, reverse) {
-            (Some(idx), false) => (idx + 1).rem_euclid(count),
-            (Some(idx), true) => (idx + count - 1).rem_euclid(count),
-            (None, false) => 0,
-            (None, true) => count - 1,
+        let next = match (index, action) {
+            (Some(idx), NavAction::Next) => (idx + 1).rem_euclid(count),
+            (Some(idx), NavAction::Previous) => (idx + count - 1).rem_euclid(count),
+            (None, NavAction::Next) => 0,
+            (None, NavAction::Previous) => count - 1,
+            (_, NavAction::First) => 0,
+            (_, NavAction::Last) => count - 1,
         };
         focusable.get(next).map(|(e, _)| e).copied()
     }
@@ -242,7 +262,11 @@ fn handle_tab(
     if key.just_pressed(KeyCode::Tab) {
         let next = nav.navigate(
             focus.0,
-            key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight),
+            if key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight) {
+                NavAction::Previous
+            } else {
+                NavAction::Next
+            },
         );
         if next.is_some() {
             focus.0 = next;
