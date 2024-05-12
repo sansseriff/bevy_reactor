@@ -8,13 +8,7 @@ use crate::InspectableField;
 pub trait InspectorFactory: Sync + Send {
     /// Examine the reflect data and decide what kind of widget to create to edit the
     /// data. Can return false if the data is not in a supported format.
-    fn create_inspector(
-        &self,
-        name: &str,
-        reflect: &dyn Reflect,
-        field: &InspectableField,
-        views: &mut Vec<ViewRef>,
-    ) -> bool;
+    fn create_inspector(&self, reflect: &Cx, field: &InspectableField) -> Option<ViewRef>;
 }
 
 #[derive(Resource, Default)]

@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use bevy::{prelude::*, reflect::ParsedPath};
+use bevy::{
+    prelude::*,
+    reflect::{DynamicEnum, DynamicVariant, ParsedPath},
+};
 use bevy_reactor::*;
 
 /// Trait that represents an item that can be inspected
@@ -70,6 +73,7 @@ pub struct InspectableField {
     pub(crate) root: Arc<dyn Inspectable>,
     pub(crate) name: String,
     pub(crate) path: ParsedPath,
+    pub(crate) path_container: ParsedPath,
     pub(crate) can_remove: bool,
 }
 
@@ -100,5 +104,27 @@ impl InspectableField {
     }
 
     /// Remove the value from the parent
-    pub fn remove(&self, _cx: &mut Cx) {}
+    pub fn remove(&self, cx: &mut Cx) {
+        let field = self.root.reflect_field(cx, &self.path_container);
+        match field.get_represented_type_info().unwrap() {
+            bevy::reflect::TypeInfo::Struct(_) => todo!(),
+            bevy::reflect::TypeInfo::TupleStruct(_) => todo!(),
+            bevy::reflect::TypeInfo::Tuple(_) => todo!(),
+            bevy::reflect::TypeInfo::List(_) => todo!(),
+            bevy::reflect::TypeInfo::Array(_) => todo!(),
+            bevy::reflect::TypeInfo::Map(_) => todo!(),
+            bevy::reflect::TypeInfo::Enum(_enum_ref) => {
+                if field
+                    .reflect_type_path()
+                    .starts_with("core::option::Option")
+                {
+                    let dynamic_enum = DynamicEnum::new("None", DynamicVariant::Unit);
+                    self.root.set_field(cx, &self.path_container, &dynamic_enum);
+                } else {
+                    panic!("Can't remove non-optional field");
+                }
+            }
+            bevy::reflect::TypeInfo::Value(_) => todo!(),
+        }
+    }
 }
