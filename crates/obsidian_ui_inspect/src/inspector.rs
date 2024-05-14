@@ -293,16 +293,26 @@ impl ViewTemplate for AddStructFieldItem {
             let some_type_id = some_field.type_id();
             let registry_lock = registry.read();
             let some_type = registry_lock.get_type_info(some_type_id).unwrap();
-            let some_default = registry_lock.get_type_data::<ReflectDefault>(some_type_id);
-            if some_default.is_some() {
-                // The value that needs to get wrapped in `Some`.
-                let default = some_default.unwrap().default();
+            if some_type.is::<bool>() {
+                // For Option<bool> we assume that the user wants a default of 'true', because
+                // that's the most common use case. This is because for most fields, `Some(false)`
+                // is the same as `None`.
                 let mut data = DynamicTuple::default();
-                data.insert_boxed(default);
+                data.insert_boxed(Box::new(true));
                 let dynamic_enum = DynamicEnum::new("Some", data);
                 field.set_value(cx, &dynamic_enum);
             } else {
-                println!("Can't find ReflectDefault for: {:?}", some_type.type_path());
+                let some_default = registry_lock.get_type_data::<ReflectDefault>(some_type_id);
+                if some_default.is_some() {
+                    // The value that needs to get wrapped in `Some`.
+                    let default = some_default.unwrap().default();
+                    let mut data = DynamicTuple::default();
+                    data.insert_boxed(default);
+                    let dynamic_enum = DynamicEnum::new("Some", data);
+                    field.set_value(cx, &dynamic_enum);
+                } else {
+                    println!("Can't find ReflectDefault for: {:?}", some_type.type_path());
+                }
             }
         });
         MenuItem::new()

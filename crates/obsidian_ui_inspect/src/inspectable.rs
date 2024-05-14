@@ -120,34 +120,3 @@ impl InspectableField {
         }
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use bevy::reflect::{DynamicEnum, DynamicVariant};
-
-//     use super::*;
-
-//     #[derive(Resource, Debug, Reflect, Clone, Default)]
-//     struct TestExample {
-//         opt_bool: Option<bool>,
-//     }
-
-//     #[test]
-//     fn test_set_option() {
-//         let mut world = World::default();
-//         world.insert_resource(TestExample {
-//             opt_bool: Some(true),
-//         });
-//         let scope = TrackingScope::new(world.change_tick());
-//         let inspector = InspectableResource::<TestExample>::default();
-//         // let cx = Cx::new(&world, &scope);
-
-//         let mut res = world.get_resource_mut::<TestExample>().unwrap();
-//         let value = DynamicEnum::new("None", DynamicVariant::Unit);
-//         let reflect = res.reflect_path(".opt_bool").unwrap();
-//         assert!(reflect.is::<Option<bool>>());
-//         assert_eq!(*reflect.downcast_ref::<Option<bool>>().unwrap(), Some(true));
-//         let reflect = res.reflect_path_mut(".opt_bool").unwrap();
-//         reflect.apply(&value);
-//     }
-// }
