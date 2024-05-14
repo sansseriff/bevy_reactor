@@ -1,8 +1,9 @@
+use core::panic;
 use std::sync::Arc;
 
 use bevy::{
     prelude::*,
-    reflect::{DynamicEnum, DynamicVariant, ParsedPath},
+    reflect::{DynamicEnum, DynamicVariant, ParsedPath, ReflectPathError},
 };
 use bevy_reactor::*;
 
@@ -16,10 +17,7 @@ pub trait Inspectable: Send + Sync {
     fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect;
 
     /// The reflect data for a field within the item.
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> &'a dyn Reflect;
-
-    /// Update a field within the item
-    fn get_field<'a>(&self, cx: &'a Rcx, path: &ParsedPath) -> &'a dyn Reflect;
+    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect>;
 
     /// Update a field within the item
     fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect);
@@ -48,21 +46,18 @@ impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
         cx.use_resource::<T>().as_reflect()
     }
 
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> &'a dyn Reflect {
+    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
         let res = cx.use_resource::<T>();
-        res.reflect_path(path).expect("Invalid path")
-    }
-
-    fn get_field<'a>(&self, cx: &'a Rcx, path: &ParsedPath) -> &'a dyn Reflect {
-        let res = cx.use_resource::<T>();
-        res.reflect_path(path).expect("Invalid path")
+        match res.reflect_path(path) {
+            Ok(result) => Some(result),
+            Err(ReflectPathError::InvalidAccess(_)) => None,
+            Err(err) => panic!("{:?}", err),
+        }
     }
 
     fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect) {
         let mut res = cx.world_mut().get_resource_mut::<T>().unwrap();
-        res.reflect_path_mut(path)
-            .expect("Invalid path")
-            .apply(value);
+        res.reflect_path_mut(path).unwrap().apply(value);
     }
 }
 
@@ -73,7 +68,7 @@ pub struct InspectableField {
     pub(crate) root: Arc<dyn Inspectable>,
     pub(crate) name: String,
     pub(crate) path: ParsedPath,
-    pub(crate) path_container: ParsedPath,
+    pub(crate) container_path: ParsedPath,
     pub(crate) can_remove: bool,
 }
 
@@ -83,14 +78,9 @@ impl InspectableField {
         &self.name
     }
 
-    /// Update the value of the field
-    pub fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect {
+    /// Get the reflected value of the field.
+    pub fn reflect<'a>(&self, cx: &'a Cx) -> Option<&'a dyn Reflect> {
         self.root.reflect_field(cx, &self.path)
-    }
-
-    /// Update the value of the field
-    pub fn get_value<'a>(&self, cx: &'a Rcx) -> &'a dyn Reflect {
-        self.root.get_field(cx, &self.path)
     }
 
     /// Update the value of the field
@@ -105,7 +95,9 @@ impl InspectableField {
 
     /// Remove the value from the parent
     pub fn remove(&self, cx: &mut Cx) {
-        let field = self.root.reflect_field(cx, &self.path_container);
+        let Some(field) = self.root.reflect_field(cx, &self.container_path) else {
+            return;
+        };
         match field.get_represented_type_info().unwrap() {
             bevy::reflect::TypeInfo::Struct(_) => todo!(),
             bevy::reflect::TypeInfo::TupleStruct(_) => todo!(),
@@ -119,7 +111,7 @@ impl InspectableField {
                     .starts_with("core::option::Option")
                 {
                     let dynamic_enum = DynamicEnum::new("None", DynamicVariant::Unit);
-                    self.root.set_field(cx, &self.path_container, &dynamic_enum);
+                    self.root.set_field(cx, &self.container_path, &dynamic_enum);
                 } else {
                     panic!("Can't remove non-optional field");
                 }
@@ -128,3 +120,34 @@ impl InspectableField {
         }
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use bevy::reflect::{DynamicEnum, DynamicVariant};
+
+//     use super::*;
+
+//     #[derive(Resource, Debug, Reflect, Clone, Default)]
+//     struct TestExample {
+//         opt_bool: Option<bool>,
+//     }
+
+//     #[test]
+//     fn test_set_option() {
+//         let mut world = World::default();
+//         world.insert_resource(TestExample {
+//             opt_bool: Some(true),
+//         });
+//         let scope = TrackingScope::new(world.change_tick());
+//         let inspector = InspectableResource::<TestExample>::default();
+//         // let cx = Cx::new(&world, &scope);
+
+//         let mut res = world.get_resource_mut::<TestExample>().unwrap();
+//         let value = DynamicEnum::new("None", DynamicVariant::Unit);
+//         let reflect = res.reflect_path(".opt_bool").unwrap();
+//         assert!(reflect.is::<Option<bool>>());
+//         assert_eq!(*reflect.downcast_ref::<Option<bool>>().unwrap(), Some(true));
+//         let reflect = res.reflect_path_mut(".opt_bool").unwrap();
+//         reflect.apply(&value);
+//     }
+// }

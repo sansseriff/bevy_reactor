@@ -11,7 +11,9 @@ pub struct FieldEditFallback(pub(crate) InspectableField);
 impl ViewTemplate for FieldEditFallback {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
-        let reflect = field.reflect(cx);
+        let Some(reflect) = field.reflect(cx) else {
+            return ().into_view();
+        };
         // let is_checked = cx.create_derived(move |cx| {
         //     let value = field.get_value(cx);
         //     if value.is::<bool>() {
@@ -27,5 +29,6 @@ impl ViewTemplate for FieldEditFallback {
             },
             FieldReadonlyValue::new().children(format!("TODO: {}", reflect.reflect_type_path())),
         ))
+        .into_view()
     }
 }

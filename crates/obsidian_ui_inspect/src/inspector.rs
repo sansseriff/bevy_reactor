@@ -69,6 +69,9 @@ struct StructInspector {
 impl ViewTemplate for StructInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let target = self.target.clone();
+        // Get the memoized field names of the struct, minus missing optionals. This should
+        // isolate the field editors from each other so that they don't constantly update.
+        // We will still need to memoize the individual field values.
         let field_names = cx.create_memo(move |cx| {
             let ReflectRef::Struct(st) = target.reflect(cx).reflect_ref() else {
                 panic!("Expected ReflectRef::Struct")
@@ -104,7 +107,7 @@ impl ViewTemplate for StructInspector {
                     root: target.clone(),
                     name: name.to_string(),
                     path: path.clone(),
-                    path_container: path,
+                    container_path: path,
                     can_remove: false,
                 });
                 FieldInspector { field }.into_view()
@@ -121,7 +124,9 @@ impl ViewTemplate for FieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let factories = cx.use_resource::<InspectorFactoryRegistry>();
         let field = self.field.clone();
-        let reflect = field.reflect(cx);
+        let Some(reflect) = field.reflect(cx) else {
+            return ().into_view();
+        };
 
         // If the field is Option<T>, and not None, then unwrap the value and inspect the
         // inner value.
@@ -144,7 +149,7 @@ impl ViewTemplate for FieldInspector {
                     root: field.root.clone(),
                     name: field.name.clone(),
                     path,
-                    path_container: field.path.clone(),
+                    container_path: field.path.clone(),
                     can_remove: true,
                 });
                 for factory in factories.0.iter().rev() {
@@ -213,7 +218,7 @@ impl ViewTemplate for AddFieldsButton {
                                             root: target.clone(),
                                             name: name.to_string(),
                                             path: ParsedPath::parse(name).unwrap(),
-                                            path_container: ParsedPath::parse(name).unwrap(),
+                                            container_path: ParsedPath::parse(name).unwrap(),
                                             can_remove: false,
                                         }),
                                         // path: ParsedPath::parse(name).unwrap(),
@@ -271,7 +276,9 @@ impl ViewTemplate for AddStructFieldItem {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
         let callback = cx.create_callback(move |cx, _| {
-            let field_reflect = field.reflect(cx);
+            let Some(field_reflect) = field.reflect(cx) else {
+                return;
+            };
             let Some(TypeInfo::Enum(enum_info)) = field_reflect.get_represented_type_info() else {
                 panic!("Expected TypeInfo::Enum");
             };

@@ -11,7 +11,7 @@ pub struct DefaultInspectorFactory;
 
 impl InspectorFactory for DefaultInspectorFactory {
     fn create_inspector(&self, cx: &Cx, field: &InspectableField) -> Option<ViewRef> {
-        let reflect = field.reflect(cx);
+        let reflect = field.reflect(cx)?;
         match reflect.reflect_ref() {
             ReflectRef::Struct(s) => {
                 match s.reflect_type_path() {
