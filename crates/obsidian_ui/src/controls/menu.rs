@@ -635,7 +635,8 @@ impl ViewTemplate for MenuItem {
                 let is_hovering = hovering.get(cx);
                 let is_focused = focused.get(cx);
                 let color = match (is_pressed || is_focused, is_hovering) {
-                    (true, _) => colors::U1.lighter(0.02),
+                    (true, true) => colors::U1.lighter(0.03),
+                    (true, false) => colors::U1.lighter(0.02),
                     (false, true) => colors::U1.lighter(0.01),
                     (false, false) => Srgba::NONE,
                 };

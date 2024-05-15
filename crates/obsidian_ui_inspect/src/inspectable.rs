@@ -1,6 +1,10 @@
+use core::panic;
 use std::sync::Arc;
 
-use bevy::{prelude::*, reflect::ParsedPath};
+use bevy::{
+    prelude::*,
+    reflect::{DynamicEnum, DynamicVariant, ParsedPath, ReflectPathError},
+};
 use bevy_reactor::*;
 
 /// Trait that represents an item that can be inspected
@@ -13,10 +17,7 @@ pub trait Inspectable: Send + Sync {
     fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect;
 
     /// The reflect data for a field within the item.
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> &'a dyn Reflect;
-
-    /// Update a field within the item
-    fn get_field<'a>(&self, cx: &'a Rcx, path: &ParsedPath) -> &'a dyn Reflect;
+    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect>;
 
     /// Update a field within the item
     fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect);
@@ -45,21 +46,18 @@ impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
         cx.use_resource::<T>().as_reflect()
     }
 
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> &'a dyn Reflect {
+    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
         let res = cx.use_resource::<T>();
-        res.reflect_path(path).expect("Invalid path")
-    }
-
-    fn get_field<'a>(&self, cx: &'a Rcx, path: &ParsedPath) -> &'a dyn Reflect {
-        let res = cx.use_resource::<T>();
-        res.reflect_path(path).expect("Invalid path")
+        match res.reflect_path(path) {
+            Ok(result) => Some(result),
+            Err(ReflectPathError::InvalidAccess(_)) => None,
+            Err(err) => panic!("{:?}", err),
+        }
     }
 
     fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect) {
         let mut res = cx.world_mut().get_resource_mut::<T>().unwrap();
-        res.reflect_path_mut(path)
-            .expect("Invalid path")
-            .apply(value);
+        res.reflect_path_mut(path).unwrap().apply(value);
     }
 }
 
@@ -70,6 +68,7 @@ pub struct InspectableField {
     pub(crate) root: Arc<dyn Inspectable>,
     pub(crate) name: String,
     pub(crate) path: ParsedPath,
+    pub(crate) container_path: ParsedPath,
     pub(crate) can_remove: bool,
 }
 
@@ -79,14 +78,9 @@ impl InspectableField {
         &self.name
     }
 
-    /// Update the value of the field
-    pub fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect {
+    /// Get the reflected value of the field.
+    pub fn reflect<'a>(&self, cx: &'a Cx) -> Option<&'a dyn Reflect> {
         self.root.reflect_field(cx, &self.path)
-    }
-
-    /// Update the value of the field
-    pub fn get_value<'a>(&self, cx: &'a Rcx) -> &'a dyn Reflect {
-        self.root.get_field(cx, &self.path)
     }
 
     /// Update the value of the field
@@ -100,5 +94,29 @@ impl InspectableField {
     }
 
     /// Remove the value from the parent
-    pub fn remove(&self, _cx: &mut Cx) {}
+    pub fn remove(&self, cx: &mut Cx) {
+        let Some(field) = self.root.reflect_field(cx, &self.container_path) else {
+            return;
+        };
+        match field.get_represented_type_info().unwrap() {
+            bevy::reflect::TypeInfo::Struct(_) => todo!(),
+            bevy::reflect::TypeInfo::TupleStruct(_) => todo!(),
+            bevy::reflect::TypeInfo::Tuple(_) => todo!(),
+            bevy::reflect::TypeInfo::List(_) => todo!(),
+            bevy::reflect::TypeInfo::Array(_) => todo!(),
+            bevy::reflect::TypeInfo::Map(_) => todo!(),
+            bevy::reflect::TypeInfo::Enum(_enum_ref) => {
+                if field
+                    .reflect_type_path()
+                    .starts_with("core::option::Option")
+                {
+                    let dynamic_enum = DynamicEnum::new("None", DynamicVariant::Unit);
+                    self.root.set_field(cx, &self.container_path, &dynamic_enum);
+                } else {
+                    panic!("Can't remove non-optional field");
+                }
+            }
+            bevy::reflect::TypeInfo::Value(_) => todo!(),
+        }
+    }
 }

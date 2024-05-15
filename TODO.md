@@ -1,9 +1,6 @@
 # TODO
 
-- Undefined fields.
 - Menus:
-  - Redo with new colors
-  - Tab trapping and tab navigation (TabGroup)
   - Restore Focus
   - Shortcuts
   - Checkmarks and checkmark spacing
@@ -13,7 +10,6 @@
     - Icon
     - Title
     - Dropdown
-  - Undefined Fields
 - Components and Resources as signals?
   - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.
@@ -76,20 +72,3 @@
 - A long-standing request is the ability to use Bevy queries, but I have never figured out how
   to do change detection on a query (that is, you can write a query that detects changes to
   components, but there's no way to detect a change to query results).
-
-# Reflection Notes
-
-- Starts with a Reflect object.
-- For the root object, we treat container types (structs, lists, tuples) transparently, meaning
-  that the contents of the inspector are the contents of the container. For value types,
-  the contents of the container are the type itself.
-- We need some way to register factories that can inspect the Reflect trait object and decide
-  which widget to instantiate.
-- Ultimately, this needs to return a ViewRef, or possibly Some(ViewRef).
-- We also need to track which items are Optional/None and add them to the undefined fields list.
-- We also need to sort the field names (maybe this should be a preference).
-- Nested structs:
-  - remove an optional item
-  - add an optional item with a default value.
-  - notify container that its contents have changed.
-- Each widget has a path which allows access to the specific field. Yay!

@@ -36,10 +36,11 @@ pub struct FieldEditSrgba {
 impl ViewTemplate for FieldEditSrgba {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
-        let value = cx.create_derived(move |cx| {
-            let value = field.get_value(cx);
-            if value.is::<Srgba>() {
-                return *value.downcast_ref::<Srgba>().unwrap();
+        let value = cx.create_memo(move |cx| {
+            if let Some(value) = field.reflect(cx) {
+                if value.is::<Srgba>() {
+                    return *value.downcast_ref::<Srgba>().unwrap();
+                }
             }
             Srgba::NONE
         });
@@ -53,9 +54,11 @@ impl ViewTemplate for FieldEditSrgba {
         let field = self.field.clone();
         cx.create_effect(move |cx| {
             let next_state = state.get(cx);
-            let value = *field.reflect(cx).downcast_ref::<Srgba>().unwrap();
-            if value != next_state.rgb {
-                field.set_value(cx, &next_state.rgb);
+            if let Some(reflect) = field.reflect(cx) {
+                let value = *reflect.downcast_ref::<Srgba>().unwrap();
+                if value != next_state.rgb {
+                    field.set_value(cx, &next_state.rgb);
+                }
             }
         });
 

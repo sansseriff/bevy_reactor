@@ -9,10 +9,11 @@ pub struct FieldEditBool(pub(crate) InspectableField);
 impl ViewTemplate for FieldEditBool {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
-        let is_checked = cx.create_derived(move |cx| {
-            let value = field.get_value(cx);
-            if value.is::<bool>() {
-                return *value.downcast_ref::<bool>().unwrap();
+        let is_checked = cx.create_memo(move |cx| {
+            if let Some(value) = field.reflect(cx) {
+                if value.is::<bool>() {
+                    return *value.downcast_ref::<bool>().unwrap();
+                }
             }
             false
         });
