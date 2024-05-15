@@ -216,8 +216,8 @@ impl ViewTemplate for Slider {
             .get_resource_mut::<Assets<SliderRectMaterial>>()
             .unwrap();
         let material = ui_materials.add(SliderRectMaterial {
-            color_lo: LinearRgba::from(colors::U1).into(),
-            color_hi: LinearRgba::from(colors::U3).into(),
+            color_lo: LinearRgba::from(colors::U1).to_vec4(),
+            color_hi: LinearRgba::from(colors::U3).to_vec4(),
             value: 0.5,
             radius: RoundedCorners::All.to_vec(4.),
         });

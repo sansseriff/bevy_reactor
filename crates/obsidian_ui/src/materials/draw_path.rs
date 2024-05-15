@@ -98,7 +98,7 @@ pub struct DrawPathMaterial {
 impl DrawPathMaterial {
     pub fn update(&mut self, path: &DrawablePath) {
         let bounds = path.bounds();
-        self.color = path.color.into();
+        self.color = path.color.to_vec4();
         self.width = path.width;
         self.commands.clear();
         for segment in &path.commands {
