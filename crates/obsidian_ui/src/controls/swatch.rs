@@ -84,7 +84,7 @@ impl ViewTemplate for Swatch {
             .get_resource_mut::<Assets<SwatchRectMaterial>>()
             .unwrap();
         let material = ui_materials.add(SwatchRectMaterial {
-            color: LinearRgba::from(colors::U1).into(),
+            color: LinearRgba::from(colors::U1).to_vec4(),
             border_radius: Vec4::splat(0.),
         });
 
@@ -98,7 +98,7 @@ impl ViewTemplate for Swatch {
                     .get_resource_mut::<Assets<SwatchRectMaterial>>()
                     .unwrap();
                 let material = ui_materials.get_mut(material.id()).unwrap();
-                material.color = color.into();
+                material.color = color.to_vec4();
             }
         });
 

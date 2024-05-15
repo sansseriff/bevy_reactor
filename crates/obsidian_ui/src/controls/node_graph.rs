@@ -62,8 +62,8 @@ impl ViewTemplate for GraphDisplay {
             .get_resource_mut::<Assets<DotGridMaterial>>()
             .unwrap();
         let material = ui_materials.add(DotGridMaterial {
-            color_bg: LinearRgba::from(colors::U1).into(),
-            color_fg: LinearRgba::from(colors::U3).into(),
+            color_bg: LinearRgba::from(colors::U1).to_vec4(),
+            color_fg: LinearRgba::from(colors::U3).to_vec4(),
         });
 
         ScrollView::new()

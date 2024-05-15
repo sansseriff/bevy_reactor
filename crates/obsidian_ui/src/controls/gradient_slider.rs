@@ -234,7 +234,7 @@ impl ViewTemplate for GradientSlider {
             .get_resource_mut::<Assets<GradientRectMaterial>>()
             .unwrap();
         let gradient_material = gradient_material_assets.add(GradientRectMaterial {
-            color_stops: [Srgba::default().into(); 8],
+            color_stops: [Srgba::default().to_vec4(); 8],
             num_color_stops: 2,
             cap_size: THUMB_WIDTH * 0.5,
         });
