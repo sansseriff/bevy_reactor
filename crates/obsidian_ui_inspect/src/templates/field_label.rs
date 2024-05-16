@@ -14,7 +14,6 @@ fn style_field_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::FlexStart)
         .font_size(16)
-        .min_width(64)
         .color(colors::DIM);
 }
 
@@ -72,8 +71,33 @@ fn style_field_label_wide(ss: &mut StyleBuilder) {
 pub struct FieldLabelWide {
     /// The content of the label.
     pub field: InspectableField,
+    /// Name to display.
+    pub name: Option<ViewRef>,
     /// Additional buttons in the label.
     pub buttons: Option<ViewRef>,
+}
+
+impl FieldLabelWide {
+    /// Create a new field label.
+    pub fn new(field: InspectableField) -> Self {
+        Self {
+            field,
+            name: None,
+            buttons: None,
+        }
+    }
+
+    /// Set the name of the field.
+    pub fn name(mut self, name: impl IntoView) -> Self {
+        self.name = Some(name.into_view());
+        self
+    }
+
+    /// Set additional buttons in the label.
+    pub fn buttons(mut self, buttons: impl IntoView) -> Self {
+        self.buttons = Some(buttons.into_view());
+        self
+    }
 }
 
 impl ViewTemplate for FieldLabelWide {
@@ -86,7 +110,9 @@ impl ViewTemplate for FieldLabelWide {
         Element::<NodeBundle>::new()
             .style((typography::text_default, style_field_label_wide))
             .children((
-                self.field.name(),
+                // TODO: Disclosure
+                self.name.clone(),
+                // Optional item count
                 Spacer,
                 self.buttons.clone(),
                 Cond::new(

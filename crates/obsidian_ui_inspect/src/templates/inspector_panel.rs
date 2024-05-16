@@ -31,7 +31,11 @@ fn style_inspector_panel_body(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Grid)
         .grid_auto_flow(ui::GridAutoFlow::Row)
         .grid_template_columns(vec![
-            ui::RepeatedGridTrack::auto(1),
+            ui::RepeatedGridTrack::minmax(
+                1,
+                ui::MinTrackSizingFunction::Px(64.),
+                ui::MaxTrackSizingFunction::Auto,
+            ),
             ui::RepeatedGridTrack::flex(1, 1.),
         ])
         .column_gap(4)

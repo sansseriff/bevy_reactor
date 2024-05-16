@@ -68,42 +68,41 @@ impl ViewTemplate for FieldEditList {
 
         let field = self.0.clone();
         Fragment::new((
-            FieldLabelWide {
-                field: field.clone(),
-                buttons: Some(
-                    Fragment::new((
-                        Button::new()
-                            .children(
-                                Icon::new("obsidian_ui://icons/remove.png")
-                                    .color(cx.create_derived(move |cx| {
-                                        // TODO: Having to explicitly dim the icon is a pain.
-                                        if pop_disabled.get(cx) {
-                                            Color::from(colors::DIM).with_alpha(0.2)
-                                        } else {
-                                            Color::from(colors::DIM)
-                                        }
-                                    }))
-                                    .style(|ss: &mut StyleBuilder| {
-                                        ss.margin((4, 0));
-                                    }),
-                            )
-                            .disabled(pop_disabled)
-                            .minimal(true)
-                            .on_click(pop),
-                        Button::new()
-                            .children(
-                                Icon::new("obsidian_ui://icons/add.png")
-                                    .color(Color::from(colors::DIM))
-                                    .style(|ss: &mut StyleBuilder| {
-                                        ss.margin((4, 0));
-                                    }),
-                            )
-                            .minimal(true)
-                            .on_click(push),
-                    ))
-                    .into_view(),
-                ),
-            },
+            FieldLabelWide::new(field.clone())
+                .name(TextComputed::new(move |cx| {
+                    let length = length.get(cx);
+                    format!("{} ({})", field.name.clone(), length)
+                }))
+                .buttons(Fragment::new((
+                    Button::new()
+                        .children(
+                            Icon::new("obsidian_ui://icons/remove.png")
+                                .color(cx.create_derived(move |cx| {
+                                    // TODO: Having to explicitly dim the icon is a pain.
+                                    if pop_disabled.get(cx) {
+                                        Color::from(colors::DIM).with_alpha(0.2)
+                                    } else {
+                                        Color::from(colors::DIM)
+                                    }
+                                }))
+                                .style(|ss: &mut StyleBuilder| {
+                                    ss.margin((4, 0));
+                                }),
+                        )
+                        .disabled(pop_disabled)
+                        .minimal(true)
+                        .on_click(pop),
+                    Button::new()
+                        .children(
+                            Icon::new("obsidian_ui://icons/add.png")
+                                .color(Color::from(colors::DIM))
+                                .style(|ss: &mut StyleBuilder| {
+                                    ss.margin((4, 0));
+                                }),
+                        )
+                        .minimal(true)
+                        .on_click(push),
+                ))),
             Element::<NodeBundle>::new()
                 .style(style_list_items)
                 .children((For::index(
