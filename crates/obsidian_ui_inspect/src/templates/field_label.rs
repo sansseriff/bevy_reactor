@@ -2,7 +2,8 @@ use bevy::{prelude::*, ui};
 use bevy_reactor::*;
 use obsidian_ui::{
     colors,
-    controls::{Button, Icon, Spacer},
+    controls::{IconButton, Spacer},
+    size::Size,
     typography,
 };
 
@@ -37,15 +38,8 @@ impl ViewTemplate for FieldLabel {
                 Cond::new(
                     move |_cx| can_remove,
                     move || {
-                        Button::new()
-                            .children(
-                                Icon::new("obsidian_ui://icons/close.png")
-                                    .size(Vec2::splat(10.))
-                                    .color(Color::from(colors::DIM))
-                                    .style(|ss: &mut StyleBuilder| {
-                                        ss.margin((4, 0));
-                                    }),
-                            )
+                        IconButton::new("obsidian_ui://icons/close.png")
+                            // .size(Size::Sm)
                             .minimal(true)
                             .on_click(remove)
                     },
@@ -118,15 +112,8 @@ impl ViewTemplate for FieldLabelWide {
                 Cond::new(
                     move |_cx| can_remove,
                     move || {
-                        Button::new()
-                            .children(
-                                Icon::new("obsidian_ui://icons/close.png")
-                                    .size(Vec2::splat(10.))
-                                    .color(Color::from(colors::DIM))
-                                    .style(|ss: &mut StyleBuilder| {
-                                        ss.margin((4, 0));
-                                    }),
-                            )
+                        IconButton::new("obsidian_ui://icons/close.png")
+                            .size(Size::Sm)
                             .minimal(true)
                             .on_click(remove)
                     },

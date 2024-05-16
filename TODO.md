@@ -5,6 +5,9 @@
   - Shortcuts
   - Checkmarks and checkmark spacing
 - Property Editor.
+  - Refactor icon buttons
+  - Nested structs
+  - Disclosure buttons
 - Components and Resources as signals?
   - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.

@@ -6,10 +6,7 @@ use bevy::{
     ui,
 };
 use bevy_reactor::*;
-use obsidian_ui::{
-    colors,
-    controls::{Button, Icon},
-};
+use obsidian_ui::{colors, controls::IconButton, size::Size};
 
 use crate::{templates::field_label::FieldLabelWide, InspectableField, InspectorFactoryRegistry};
 
@@ -74,32 +71,13 @@ impl ViewTemplate for FieldEditList {
                     format!("{} ({})", field.name.clone(), length)
                 }))
                 .buttons(Fragment::new((
-                    Button::new()
-                        .children(
-                            Icon::new("obsidian_ui://icons/remove.png")
-                                .color(cx.create_derived(move |cx| {
-                                    // TODO: Having to explicitly dim the icon is a pain.
-                                    if pop_disabled.get(cx) {
-                                        Color::from(colors::DIM).with_alpha(0.2)
-                                    } else {
-                                        Color::from(colors::DIM)
-                                    }
-                                }))
-                                .style(|ss: &mut StyleBuilder| {
-                                    ss.margin((4, 0));
-                                }),
-                        )
+                    IconButton::new("obsidian_ui://icons/remove.png")
+                        .size(Size::Xs)
                         .disabled(pop_disabled)
                         .minimal(true)
                         .on_click(pop),
-                    Button::new()
-                        .children(
-                            Icon::new("obsidian_ui://icons/add.png")
-                                .color(Color::from(colors::DIM))
-                                .style(|ss: &mut StyleBuilder| {
-                                    ss.margin((4, 0));
-                                }),
-                        )
+                    IconButton::new("obsidian_ui://icons/add.png")
+                        .size(Size::Xs)
                         .minimal(true)
                         .on_click(push),
                 ))),
