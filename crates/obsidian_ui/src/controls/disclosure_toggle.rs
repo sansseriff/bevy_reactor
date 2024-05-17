@@ -1,4 +1,4 @@
-use super::{Button, Icon};
+use super::Icon;
 use crate::{
     animation::{AnimatedRotation, AnimatedTransition},
     colors,
@@ -160,6 +160,22 @@ impl ViewTemplate for DisclosureToggle {
                 };
                 let target = Quat::from_rotation_z(angle);
                 AnimatedTransition::<AnimatedRotation>::start(&mut entt, target, 0.3);
+            })
+            .create_effect(move |cx, entt| {
+                let is_focused = focused.get(cx);
+                let mut entt = cx.world_mut().entity_mut(entt);
+                match is_focused {
+                    true => {
+                        entt.insert(Outline {
+                            color: colors::FOCUS.into(),
+                            offset: ui::Val::Px(2.0),
+                            width: ui::Val::Px(2.0),
+                        });
+                    }
+                    false => {
+                        entt.remove::<Outline>();
+                    }
+                };
             })
             .children(
                 Icon::new("obsidian_ui://icons/chevron_right.png")
