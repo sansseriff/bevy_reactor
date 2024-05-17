@@ -1,6 +1,7 @@
 mod button;
 mod checkbox;
 mod dialog;
+mod disclosure_toggle;
 mod gradient_slider;
 mod icon;
 mod icon_button;
@@ -19,6 +20,7 @@ mod tool_palette;
 pub use button::*;
 pub use checkbox::*;
 pub use dialog::*;
+pub use disclosure_toggle::*;
 pub use gradient_slider::*;
 pub use icon::*;
 pub use icon_button::*;

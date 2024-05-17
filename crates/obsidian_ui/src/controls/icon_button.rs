@@ -35,7 +35,7 @@ pub struct IconButton {
 }
 
 impl IconButton {
-    /// Construct a new `Button`.
+    /// Construct a new `IconButton`.
     pub fn new(icon: &str) -> Self {
         Self {
             icon: icon.to_string(),
@@ -62,7 +62,6 @@ impl IconButton {
     }
 
     /// Set the button disabled state.
-    /// TODO: Come up with some kind of IntoSignal conversion for this.
     pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
         self.disabled = disabled.into_signal();
         self

@@ -39,7 +39,7 @@ impl ViewTemplate for FieldLabel {
                     move |_cx| can_remove,
                     move || {
                         IconButton::new("obsidian_ui://icons/close.png")
-                            // .size(Size::Sm)
+                            .size(Size::Xs)
                             .minimal(true)
                             .on_click(remove)
                     },
@@ -113,7 +113,7 @@ impl ViewTemplate for FieldLabelWide {
                     move |_cx| can_remove,
                     move || {
                         IconButton::new("obsidian_ui://icons/close.png")
-                            .size(Size::Sm)
+                            .size(Size::Xs)
                             .minimal(true)
                             .on_click(remove)
                     },

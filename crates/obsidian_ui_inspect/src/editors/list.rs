@@ -6,7 +6,11 @@ use bevy::{
     ui,
 };
 use bevy_reactor::*;
-use obsidian_ui::{colors, controls::IconButton, size::Size};
+use obsidian_ui::{
+    colors,
+    controls::{DisclosureToggle, IconButton},
+    size::Size,
+};
 
 use crate::{templates::field_label::FieldLabelWide, InspectableField, InspectorFactoryRegistry};
 
@@ -15,6 +19,7 @@ pub struct FieldEditList(pub(crate) InspectableField);
 impl ViewTemplate for FieldEditList {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
+        let expanded = cx.create_mutable(false);
         let length = cx.create_memo(move |cx| {
             if let Some(value) = field.reflect(cx) {
                 return if let ReflectRef::List(list) = value.reflect_ref() {
@@ -66,10 +71,18 @@ impl ViewTemplate for FieldEditList {
         let field = self.0.clone();
         Fragment::new((
             FieldLabelWide::new(field.clone())
-                .name(TextComputed::new(move |cx| {
-                    let length = length.get(cx);
-                    format!("{} ({})", field.name.clone(), length)
-                }))
+                .name(Fragment::new((
+                    DisclosureToggle::new()
+                        .size(Size::Xs)
+                        .expanded(expanded)
+                        .on_change(cx.create_callback(move |cx, value: bool| {
+                            expanded.set(cx, value);
+                        })),
+                    TextComputed::new(move |cx| {
+                        let length = length.get(cx);
+                        format!("{} ({})", field.name.clone(), length)
+                    }),
+                )))
                 .buttons(Fragment::new((
                     IconButton::new("obsidian_ui://icons/remove.png")
                         .size(Size::Xs)
@@ -81,9 +94,34 @@ impl ViewTemplate for FieldEditList {
                         .minimal(true)
                         .on_click(push),
                 ))),
-            Element::<NodeBundle>::new()
-                .style(style_list_items)
-                .children((For::index(
+            Cond::new(
+                move |cx| expanded.get(cx),
+                {
+                    let field = self.0.clone();
+                    move || ListContentInspector {
+                        field: field.clone(),
+                        length,
+                    }
+                },
+                || (),
+            ),
+        ))
+    }
+}
+
+struct ListContentInspector {
+    field: InspectableField,
+    length: Signal<usize>,
+}
+
+impl ViewTemplate for ListContentInspector {
+    fn create(&self, _cx: &mut Cx) -> impl IntoView {
+        let field = self.field.clone();
+        let length = self.length;
+        Element::<NodeBundle>::new()
+            .style(style_list_items)
+            .children(
+                For::index(
                     move |cx| 0..length.get(cx),
                     move |_, index| {
                         let mut path = field.path.clone();
@@ -105,8 +143,8 @@ impl ViewTemplate for FieldEditList {
                     Element::<NodeBundle>::new()
                         .style(style_empty_list)
                         .children("(empty list)"),
-                ),)),
-        ))
+                ),
+            )
     }
 }
 

@@ -122,6 +122,21 @@ impl AnimatableProperty for AnimatedScale {
     }
 }
 
+/// Animated scale.
+pub struct AnimatedRotation;
+impl AnimatableProperty for AnimatedRotation {
+    type ValueType = Quat;
+    type ComponentType = Transform;
+
+    fn current(component: &Self::ComponentType) -> Self::ValueType {
+        component.rotation
+    }
+
+    fn update(trans: &mut Self::ComponentType, t: f32, origin: Quat, target: Quat) {
+        trans.rotation = origin.lerp(target, t);
+    }
+}
+
 /// Animated translation.
 pub struct AnimatedTranslation;
 impl AnimatableProperty for AnimatedTranslation {
@@ -243,6 +258,7 @@ impl Plugin for AnimatedTransitionPlugin {
                 AnimatedTransition::<AnimatedPxWidth>::run_animations,
                 AnimatedTransition::<AnimatedPxHeight>::run_animations,
                 AnimatedTransition::<AnimatedScale>::run_animations,
+                AnimatedTransition::<AnimatedRotation>::run_animations,
                 AnimatedTransition::<AnimatedTranslation>::run_animations,
             ),
         );

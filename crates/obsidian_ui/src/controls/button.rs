@@ -114,7 +114,6 @@ impl Button {
     }
 
     /// Set the button disabled state.
-    /// TODO: Come up with some kind of IntoSignal conversion for this.
     pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
         self.disabled = disabled.into_signal();
         self
