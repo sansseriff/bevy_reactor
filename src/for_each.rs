@@ -288,6 +288,10 @@ impl<
         for entry in self.items.drain(..) {
             entry.view.raze(entry.id, world);
         }
+        if let Some(fallback_ent) = self.fallback_ent {
+            self.fallback_ent = None;
+            self.fallback.as_mut().unwrap().raze(fallback_ent, world);
+        }
         world.despawn_owned_recursive(view_entity);
     }
 }
