@@ -1,4 +1,5 @@
 use crate::{
+    cursor::StyleBuilderCursor,
     focus::{AutoFocus, KeyCharEvent, KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
 };
@@ -79,7 +80,8 @@ fn style_text_scroll(ss: &mut StyleBuilder) {
         .flex_grow(1.)
         .flex_shrink(1.)
         .flex_basis(10)
-        .min_width(0);
+        .min_width(0)
+        .cursor(CursorIcon::Text);
 }
 
 fn style_text_inner(ss: &mut StyleBuilder) {

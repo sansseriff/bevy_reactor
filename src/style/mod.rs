@@ -15,7 +15,7 @@ use std::sync::Arc;
 use crate::{effect_target::EffectTarget, Element, EntityEffect, TrackingScope};
 // pub use atlas_loader::TextureAtlasLoader;
 use bevy::{prelude::*, ui};
-pub use builder::StyleBuilder;
+pub use builder::*;
 pub use builder_background::StyleBuilderBackground;
 pub use builder_border_color::StyleBuilderBorderColor;
 pub use builder_border_radius::StyleBuilderBorderRadius;

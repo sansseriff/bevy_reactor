@@ -1,5 +1,6 @@
 use crate::{
     colors,
+    cursor::StyleBuilderCursor,
     focus::{AutoFocus, KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
     size::Size,
@@ -43,7 +44,8 @@ pub(crate) fn style_button(ss: &mut StyleBuilder) {
         .align_content(ui::AlignContent::Center)
         .padding((12, 0))
         .border(0)
-        .color(colors::FOREGROUND);
+        .color(colors::FOREGROUND)
+        .cursor(CursorIcon::Pointer);
 }
 
 pub(crate) fn style_button_bg(ss: &mut StyleBuilder) {

@@ -12,6 +12,7 @@ use bevy_reactor::*;
 
 use crate::{
     colors,
+    cursor::StyleBuilderCursor,
     focus::{KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
 };
@@ -30,7 +31,8 @@ fn style_checkbox_border(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
         .width(16)
         .height(16)
-        .border_radius(3.0);
+        .border_radius(3.0)
+        .cursor(CursorIcon::Pointer);
 }
 
 fn style_checkbox_inner(ss: &mut StyleBuilder) {

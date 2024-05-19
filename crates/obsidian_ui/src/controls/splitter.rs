@@ -2,7 +2,7 @@ use bevy::{color::Luminance, prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 
-use crate::colors;
+use crate::{colors, cursor::StyleBuilderCursor};
 
 /// The direction of the splitter. Represents the direction of the bar, not the items being split.
 #[derive(Clone, PartialEq, Default)]
@@ -28,7 +28,10 @@ fn style_vsplitter(ss: &mut StyleBuilder) {
         .flex_direction(ui::FlexDirection::Column)
         .gap(8)
         .width(9)
-        .background_color(colors::U2);
+        .background_color(colors::U2)
+        .cursor(CursorIcon::ColResize)
+        // .cursor_image("obsidian_ui://icons/add_box.png", Vec2::new(4., 4.))
+        ;
 }
 
 // The decorative handle inside the splitter.
@@ -39,7 +42,6 @@ fn style_vsplitter_inner(ss: &mut StyleBuilder) {
         .height(ui::Val::Percent(20.));
 }
 
-
 fn style_hsplitter(ss: &mut StyleBuilder) {
     ss.align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
@@ -47,7 +49,8 @@ fn style_hsplitter(ss: &mut StyleBuilder) {
         .flex_direction(ui::FlexDirection::Column)
         .gap(8)
         .height(9)
-        .background_color(colors::U2);
+        .background_color(colors::U2)
+        .cursor(CursorIcon::RowResize);
 }
 
 // The decorative handle inside the splitter.
@@ -157,10 +160,10 @@ impl ViewTemplate for Splitter {
                                 match direction {
                                     SplitterDirection::Horizontal => {
                                         world.run_callback(on_change, ds.offset - ev.y);
-                                    },
+                                    }
                                     SplitterDirection::Vertical => {
                                         world.run_callback(on_change, ev.x + ds.offset);
-                                    },
+                                    }
                                 }
                             }
                         }

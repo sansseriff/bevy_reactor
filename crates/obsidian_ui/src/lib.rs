@@ -19,6 +19,9 @@ pub mod colors;
 /// Module containing interactive and layout control widgets.
 pub mod controls;
 
+/// Module containing utilities for creating custom window cursors.
+pub mod cursor;
+
 /// Utilities for tabbing between widgets.
 pub mod focus;
 
@@ -73,6 +76,7 @@ impl Plugin for ObsidianUiPlugin {
             (
                 scrolling::handle_scroll_events,
                 scrolling::update_scroll_positions,
+                cursor::update_cursor,
             ),
         )
         .add_systems(PostUpdate, floating::position_floating);

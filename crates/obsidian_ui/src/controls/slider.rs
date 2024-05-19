@@ -6,7 +6,7 @@ use bevy::{
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
 
-use crate::{colors, materials::SliderRectMaterial, RoundedCorners};
+use crate::{colors, cursor::StyleBuilderCursor, materials::SliderRectMaterial, RoundedCorners};
 
 #[derive(Clone, PartialEq, Default, Copy)]
 enum DragType {
@@ -35,7 +35,8 @@ fn style_overlay(ss: &mut StyleBuilder) {
         .left(0)
         .top(0)
         .bottom(0)
-        .right(0);
+        .right(0)
+        .cursor(CursorIcon::ColResize);
 }
 
 fn style_button(ss: &mut StyleBuilder) {
@@ -46,7 +47,8 @@ fn style_button(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Regular.ttf")
-        .font_size(16);
+        .font_size(16)
+        .cursor(CursorIcon::Pointer);
 }
 
 fn style_button_icon(ss: &mut StyleBuilder) {

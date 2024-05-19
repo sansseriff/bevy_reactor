@@ -2,6 +2,7 @@ use super::Icon;
 use crate::{
     animation::{AnimatedRotation, AnimatedTransition},
     colors,
+    cursor::StyleBuilderCursor,
     focus::{KeyPressEvent, TabIndex},
     hooks::CreateFocusSignal,
     size::Size,
@@ -23,7 +24,8 @@ fn style_toggle(ss: &mut StyleBuilder) {
         .justify_content(ui::JustifyContent::Center)
         .align_items(ui::AlignItems::Center)
         .align_content(ui::AlignContent::Center)
-        .color(colors::FOREGROUND);
+        .color(colors::FOREGROUND)
+        .cursor(CursorIcon::Pointer);
 }
 
 /// A widget which displays small toggleable chevron that can be used to control whether

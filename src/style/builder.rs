@@ -9,7 +9,7 @@ use bevy::{
 };
 
 pub struct StyleBuilder<'a, 'w> {
-    pub(crate) target: &'a mut EntityWorldMut<'w>,
+    pub target: &'a mut EntityWorldMut<'w>,
     pub(crate) style: ui::Style,
     pub(crate) style_changed: bool,
 }

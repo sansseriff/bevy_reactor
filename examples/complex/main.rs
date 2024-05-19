@@ -19,6 +19,7 @@ use obsidian_ui::{
         Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
         Splitter, SplitterDirection, TextInput, TextInputProps, ToolButton, ToolPalette,
     },
+    cursor::StyleBuilderCursor,
     focus::TabGroup,
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
@@ -152,6 +153,11 @@ fn main() {
             "obsidian_ui",
             AssetSource::build()
                 .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
+        )
+        .register_asset_source(
+            "demo",
+            AssetSource::build()
+                .with_reader(|| Box::new(FileAssetReader::new("examples/complex/assets"))),
         )
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
@@ -350,6 +356,9 @@ impl ViewTemplate for DemoUi {
                             .style(style_column_group)
                             .children((
                                 Checkbox::new()
+                                    .style(|ss: &mut StyleBuilder| {
+                                        ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
+                                    })
                                     .label("Include Author Name")
                                     .checked(checked_1.signal())
                                     .on_change(cx.create_callback(move |cx, checked| {
@@ -430,7 +439,7 @@ impl ViewTemplate for CenterPanel {
         Element::<NodeBundle>::new()
             .children((Cond::new(
                 |cx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
-                ||  NodeGraphDemo {},
+                || NodeGraphDemo {},
                 move || {
                     Fragment::new((
                         Element::<NodeBundle>::new()

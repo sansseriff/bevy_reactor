@@ -18,9 +18,9 @@ pub(crate) fn update_hover_states(
     let hover_set = hover_map.get(&PointerId::Mouse);
     for (entity, mut hoverable) in hovers.iter_mut() {
         let is_hovering = match hover_set {
-            Some(map) => map
-                .iter()
-                .any(|(ha, _)| parent_query.iter_ancestors(*ha).any(|e| e == entity)),
+            Some(map) => map.iter().any(|(ha, _)| {
+                *ha == entity || parent_query.iter_ancestors(*ha).any(|e| e == entity)
+            }),
             None => false,
         };
         if hoverable.0 != is_hovering {
