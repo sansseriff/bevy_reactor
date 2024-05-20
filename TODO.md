@@ -8,6 +8,9 @@
   - Nested structs
   - Finish float editor.
   - Num spinners
+- Too many public members in TrackingScope. This happened because of the need to
+  allow external crates to define their own reaction types.
+- `run_reactions` does a lot of excessive entity lookups, needed to satisfy the borrow checker.
 - Components and Resources as signals?
   - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.
