@@ -1,6 +1,7 @@
 use bevy::{color::Luminance, prelude::*, ui};
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
 
 use crate::{colors, cursor::StyleBuilderCursor};
 
@@ -29,9 +30,7 @@ fn style_vsplitter(ss: &mut StyleBuilder) {
         .gap(8)
         .width(9)
         .background_color(colors::U2)
-        .cursor(CursorIcon::ColResize)
-        // .cursor_image("obsidian_ui://icons/add_box.png", Vec2::new(4., 4.))
-        ;
+        .cursor(CursorIcon::ColResize);
 }
 
 // The decorative handle inside the splitter.

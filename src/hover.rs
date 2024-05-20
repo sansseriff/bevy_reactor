@@ -1,7 +1,6 @@
 use bevy::{hierarchy::Parent, prelude::*};
 use bevy_mod_picking::{focus::HoverMap, pointer::PointerId};
-
-use crate::{signal::Signal, Cx, RunContextRead, RunContextSetup};
+use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
 
 /// Component which tracks whether the pointer is hovering over an entity.
 #[derive(Default, Component)]

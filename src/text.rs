@@ -1,11 +1,11 @@
 use bevy::prelude::*;
+use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
 
 use crate::{
     node_span::NodeSpan,
     style::{InheritableFontStyles, TextStyleChanged},
-    tracking_scope::TrackingScope,
     view::View,
-    DespawnScopes, IntoView, Rcx, ViewRef,
+    IntoView, ViewRef,
 };
 
 /// A UI element that displays text

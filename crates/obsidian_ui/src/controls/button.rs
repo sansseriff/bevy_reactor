@@ -17,6 +17,7 @@ use bevy::{
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]

@@ -11,11 +11,9 @@ use bevy::{
     hierarchy::{BuildWorldChildren, Parent},
     log::warn,
 };
+use bevy_reactor_signals::{Cx, DespawnScopes, Signal, TrackingScope};
 
-use crate::{
-    node_span::NodeSpan, text::TextStatic, tracking_scope::TrackingScope, Cx, DespawnScopes,
-    Signal, TextComputed,
-};
+use crate::{node_span::NodeSpan, text::TextStatic, TextComputed};
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.

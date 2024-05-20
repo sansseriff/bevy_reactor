@@ -8,6 +8,7 @@ use bevy::{
     ui,
 };
 use bevy_reactor::*;
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, Signal};
 
 use super::{Button, ButtonVariant};
 

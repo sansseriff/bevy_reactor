@@ -1,5 +1,6 @@
 use bevy::{prelude::*, ui};
 use bevy_reactor::*;
+use bevy_reactor_signals::{Cx, IntoSignal, Signal};
 use obsidian_ui::{colors, typography};
 
 fn style_inspector_panel(ss: &mut StyleBuilder) {

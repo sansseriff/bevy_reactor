@@ -4,9 +4,10 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
+use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
 
 use crate::{lcs::lcs, View};
-use crate::{DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, ViewRef};
+use crate::{DisplayNodeChanged, IntoView, ViewRef};
 
 use crate::node_span::NodeSpan;
 

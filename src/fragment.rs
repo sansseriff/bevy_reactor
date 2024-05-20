@@ -1,8 +1,8 @@
 use bevy::prelude::*;
+use bevy_reactor_signals::DespawnScopes;
 
 use crate::{
-    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, DespawnScopes,
-    IntoView, ViewRef,
+    node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, IntoView, ViewRef,
 };
 
 /// A `Fragment` represents a group of one or more child views which can be inserted inline

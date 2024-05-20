@@ -5,6 +5,9 @@ use bevy::{
 };
 use bevy_mod_picking::prelude::*;
 use bevy_reactor::*;
+use bevy_reactor_signals::{
+    Callback, Cx, IntoSignal, Mutable, RunContextSetup, RunContextWrite, Signal,
+};
 
 use crate::{colors, cursor::StyleBuilderCursor, materials::SliderRectMaterial, RoundedCorners};
 

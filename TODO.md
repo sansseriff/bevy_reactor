@@ -5,9 +5,9 @@
   - Shortcuts
   - Checkmarks and checkmark spacing
 - Property Editor.
-  - Refactor icon buttons
   - Nested structs
-  - Disclosure buttons
+  - Finish float editor.
+  - Num spinners
 - Components and Resources as signals?
   - This is problematic because it would require Signal<T> to impl Component/Resource.
 - Change tab key handling to use bubbled events.
@@ -24,7 +24,6 @@
   - correct rendering of selection rects and cursor
   - correct rendering of focus rect (just uses outline for now)
   - correct rendering of rounded corners
-- Having to explicitly dim button contents for disabled buttons is a pain.
 
 # Node Graph
 

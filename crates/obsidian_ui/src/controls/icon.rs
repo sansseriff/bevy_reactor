@@ -1,5 +1,6 @@
 use bevy::{asset::AssetPath, prelude::*};
 use bevy_reactor::*;
+use bevy_reactor_signals::{Cx, IntoSignal, Signal};
 
 use crate::colors;
 

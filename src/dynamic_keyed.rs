@@ -1,8 +1,9 @@
 use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
+use bevy_reactor_signals::{Cx, DespawnScopes, TrackingScope};
 
-use crate::{Cx, DespawnScopes, DisplayNodeChanged, TrackingScope, ViewRef};
+use crate::{DisplayNodeChanged, ViewRef};
 use crate::{IntoView, View};
 
 use crate::node_span::NodeSpan;

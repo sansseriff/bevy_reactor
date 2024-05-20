@@ -2,8 +2,9 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
+use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
 
-use crate::{DespawnScopes, DisplayNodeChanged, IntoView, Rcx, TrackingScope, View, ViewRef};
+use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
 
 use crate::node_span::NodeSpan;
 
@@ -88,7 +89,7 @@ impl<
         &mut self,
         view_entity: bevy::prelude::Entity,
         world: &mut World,
-        tracking: &mut crate::TrackingScope,
+        tracking: &mut TrackingScope,
     ) {
         let iter = (self.item_fn)(&Rcx::new(world, view_entity, tracking));
         let mut prev_len = self.items.len();

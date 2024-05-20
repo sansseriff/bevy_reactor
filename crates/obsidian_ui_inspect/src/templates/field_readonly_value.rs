@@ -1,5 +1,6 @@
 use bevy::{prelude::*, ui};
 use bevy_reactor::*;
+use bevy_reactor_signals::Cx;
 use obsidian_ui::{colors, typography};
 
 fn style_field_readonly_value(ss: &mut StyleBuilder) {

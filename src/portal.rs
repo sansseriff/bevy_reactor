@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use bevy_reactor_signals::DespawnScopes;
 
-use crate::{node_span::NodeSpan, view::View, DespawnScopes, IntoView, ViewRef};
+use crate::{node_span::NodeSpan, view::View, IntoView, ViewRef};
 
 /// A `Portal` represents a view that is displayed with no parent, causing it's location to
 /// be relative to the window rather than any parent view.

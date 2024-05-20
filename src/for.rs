@@ -1,6 +1,8 @@
+use bevy_reactor_signals::Rcx;
+
 use crate::IntoView;
 
-use super::{ForEach, ForIndex, Rcx};
+use super::{ForEach, ForIndex};
 
 /// A namespace that contains constructor functions for various kinds of for-loops:
 /// * `For::each()`

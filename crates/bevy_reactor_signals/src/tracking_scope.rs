@@ -4,7 +4,7 @@ use bevy::{
     utils::HashSet,
 };
 
-use crate::{reaction::ReactionCell, ViewHandle};
+use crate::reaction::ReactionCell;
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -20,11 +20,11 @@ pub struct TrackingScope {
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
-    tick: Tick,
+    pub tick: Tick,
 
     /// List of cleanup functions to call when the scope is dropped.
     #[allow(clippy::type_complexity)]
-    pub(crate) cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
+    pub cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
 }
 
 /// A resource which, if inserted, displays the view entities that have reacted this frame.
@@ -49,17 +49,19 @@ impl TrackingScope {
         }
     }
 
-    pub(crate) fn add_owned(&mut self, owned: Entity) {
+    /// Add an entity which is owned by this scope. When the scope is dropped, the entity
+    /// will be despawned.
+    pub fn add_owned(&mut self, owned: Entity) {
         self.owned.push(owned);
     }
 
     /// Add a cleanup function which will be run once before the next reaction.
-    pub(crate) fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
+    pub fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
         self.cleanups.push(Box::new(cleanup));
     }
 
     /// Convenience method for adding a resource dependency.
-    pub(crate) fn track_resource<T: Resource>(&mut self, world: &World) {
+    pub fn track_resource<T: Resource>(&mut self, world: &World) {
         self.resource_deps.insert(
             world
                 .components()
@@ -86,7 +88,7 @@ impl TrackingScope {
 
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
-    fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
+    pub fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
         self.components_changed(world, tick) || self.resources_changed(world, tick)
     }
 
@@ -111,7 +113,7 @@ impl TrackingScope {
 
     /// Take the dependencies from another scope. Typically the other scope is a temporary
     /// scope that is used to compute the next set of dependencies.
-    pub(crate) fn take_deps(&mut self, other: &mut Self) {
+    pub fn take_deps(&mut self, other: &mut Self) {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
         self.cleanups = std::mem::take(&mut other.cleanups);

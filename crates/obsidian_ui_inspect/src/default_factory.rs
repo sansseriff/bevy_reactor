@@ -8,6 +8,7 @@ use crate::{
 };
 use bevy::reflect::ReflectRef;
 use bevy_reactor::*;
+use bevy_reactor_signals::Cx;
 
 #[derive(Default)]
 pub struct DefaultInspectorFactory;

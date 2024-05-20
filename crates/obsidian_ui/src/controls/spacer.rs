@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_reactor::*;
+use bevy_reactor_signals::Cx;
 
 fn style_spacer(ss: &mut StyleBuilder) {
     ss.flex_grow(1.);

@@ -2,6 +2,7 @@ use super::{Button, Icon};
 use crate::{colors, size::Size};
 use bevy::prelude::*;
 use bevy_reactor::*;
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
 
 /// A widget which displays a button containing an icon.
 #[derive(Default)]

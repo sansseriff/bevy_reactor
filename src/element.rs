@@ -1,13 +1,14 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::*;
+use bevy_reactor_signals::{DespawnScopes, TrackingScope};
 
 use crate::{
     effect_target::{EffectTarget, EntityEffect},
     node_span::NodeSpan,
     parent_view::{ChildView, ParentView},
     view::View,
-    DespawnScopes, IntoView, TrackingScope, ViewRef,
+    IntoView, ViewRef,
 };
 
 /// A basic UI element

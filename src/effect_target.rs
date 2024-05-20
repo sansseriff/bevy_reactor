@@ -6,7 +6,7 @@ use bevy::{
     hierarchy::BuildWorldChildren,
 };
 
-use crate::{tracking_scope::TrackingScope, Cx, Rcx, Reaction, ReactionCell, ReactionTarget};
+use bevy_reactor_signals::{Cx, Rcx, Reaction, ReactionCell, ReactionTarget, TrackingScope};
 
 /// A reactive effect that modifies a target entity.
 pub trait EntityEffect: Sync + Send {

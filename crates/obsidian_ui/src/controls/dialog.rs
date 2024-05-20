@@ -8,6 +8,7 @@ use bevy_mod_picking::{
     prelude::{ListenerInput, On},
 };
 use bevy_reactor::*;
+use bevy_reactor_signals::{Callback, Cx, RunContextSetup, RunContextWrite, Signal};
 
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedScale, AnimatedTransition},

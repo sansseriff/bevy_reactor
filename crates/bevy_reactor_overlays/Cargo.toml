@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git" }
+bevy = { workspace = true }
+bevy_reactor_signals = { workspace = true }
 # bevy = "0.13.1"
 bevy_mod_picking = "0.18.0"
 bevy_reactor = { path = "../.." }

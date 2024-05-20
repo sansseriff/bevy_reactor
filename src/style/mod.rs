@@ -12,9 +12,10 @@ mod builder_z_index;
 
 use std::sync::Arc;
 
-use crate::{effect_target::EffectTarget, Element, EntityEffect, TrackingScope};
+use crate::{effect_target::EffectTarget, Element, EntityEffect};
 // pub use atlas_loader::TextureAtlasLoader;
 use bevy::{prelude::*, ui};
+use bevy_reactor_signals::TrackingScope;
 pub use builder::*;
 pub use builder_background::StyleBuilderBackground;
 pub use builder_border_color::StyleBuilderBorderColor;

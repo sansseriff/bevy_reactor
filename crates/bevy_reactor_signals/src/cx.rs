@@ -255,11 +255,8 @@ pub struct Cx<'p, 'w> {
 }
 
 impl<'p, 'w> Cx<'p, 'w> {
-    pub(crate) fn new(
-        world: &'w mut World,
-        owner: Entity,
-        tracking: &'p mut TrackingScope,
-    ) -> Self {
+    /// Construct a new reactive context.
+    pub fn new(world: &'w mut World, owner: Entity, tracking: &'p mut TrackingScope) -> Self {
         Self {
             world,
             owner,
