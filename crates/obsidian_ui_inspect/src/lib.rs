@@ -1,3 +1,4 @@
+mod attributes;
 mod default_factory;
 mod editors;
 mod inspectable;
@@ -8,6 +9,7 @@ mod templates;
 use bevy::app::{App, Plugin};
 use default_factory::DefaultInspectorFactory;
 
+pub use attributes::*;
 pub use inspectable::*;
 pub use inspector::*;
 pub use inspector_factory::*;

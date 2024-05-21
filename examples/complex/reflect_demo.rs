@@ -3,18 +3,27 @@ use std::sync::Arc;
 use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
-use obsidian_ui_inspect::{InspectableResource, Inspector};
+use obsidian_ui_inspect::{InspectableResource, Inspector, Precision, ValueRange};
 
 #[derive(Resource, Debug, Reflect, Clone, Default)]
 pub struct TestStruct {
     pub selected: bool,
+
+    #[reflect(@ValueRange::<f32>(0.0..1.0))]
     pub scale: f32,
+
     pub color: Srgba,
     pub position: Vec3,
-
     pub unlit: Option<bool>,
+
+    #[reflect(@ValueRange::<f32>(0.0..10.0))]
     pub roughness: Option<f32>,
+
+    #[reflect(@ValueRange::<f32>(0.0..10.0))]
+    #[reflect(@Precision(2))]
     pub metalness: Option<f32>,
+
+    #[reflect(@ValueRange::<f32>(0.0..1000.0))]
     pub factors: Vec<f32>,
 }
 

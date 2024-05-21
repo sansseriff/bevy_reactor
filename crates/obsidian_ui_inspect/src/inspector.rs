@@ -70,6 +70,9 @@ struct StructInspector {
 impl ViewTemplate for StructInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let target = self.target.clone();
+        let reflect = self.target.reflect(cx);
+        let info = reflect.get_represented_type_info().unwrap();
+
         // Get the memoized field names of the struct, minus missing optionals. This should
         // isolate the field editors from each other so that they don't constantly update.
         // We will still need to memoize the individual field values.
@@ -82,6 +85,7 @@ impl ViewTemplate for StructInspector {
             // Filter out field names for fields with a value of `None`.
             for findex in 0..num_fields {
                 let field = st.field_at(findex).unwrap();
+                // let info = st.get_represented_type_info().unwrap()
                 if field.reflect_kind() == ReflectKind::Enum
                     && field
                         .reflect_type_path()
@@ -104,12 +108,18 @@ impl ViewTemplate for StructInspector {
             move |cx| field_names.get_clone(cx).into_iter(),
             move |name| {
                 let path = ParsedPath::parse(name).unwrap();
+                let TypeInfo::Struct(st_info) = info else {
+                    panic!("Expected StructInfo");
+                };
+                let field_info = st_info.field(name).unwrap();
+                let attrs = field_info.custom_attributes();
                 let field = Arc::new(InspectableField {
                     root: target.clone(),
                     name: name.to_string(),
-                    path: path.clone(),
-                    container_path: path,
+                    value_path: path.clone(),
+                    field_path: path,
                     can_remove: false,
+                    attributes: Some(attrs),
                 });
                 FieldInspector { field }.into_view()
             },
@@ -140,7 +150,7 @@ impl ViewTemplate for FieldInspector {
                 panic!("Expected ReflectRef::Enum");
             };
             if enum_ref.variant_name() != "None" {
-                let mut path = field.path.clone();
+                let mut path = field.value_path.clone();
                 path.0.push(OffsetAccess {
                     access: bevy::reflect::Access::TupleIndex(0),
                     offset: None,
@@ -149,9 +159,10 @@ impl ViewTemplate for FieldInspector {
                 let access = Arc::new(InspectableField {
                     root: field.root.clone(),
                     name: field.name.clone(),
-                    path,
-                    container_path: field.path.clone(),
+                    value_path: path,
+                    field_path: field.value_path.clone(),
                     can_remove: true,
+                    attributes: field.attributes,
                 });
                 for factory in factories.0.iter().rev() {
                     if let Some(view_ref) = factory.create_inspector(cx, &access) {
@@ -218,9 +229,10 @@ impl ViewTemplate for AddFieldsButton {
                                         field: Arc::new(InspectableField {
                                             root: target.clone(),
                                             name: name.to_string(),
-                                            path: ParsedPath::parse(name).unwrap(),
-                                            container_path: ParsedPath::parse(name).unwrap(),
+                                            value_path: ParsedPath::parse(name).unwrap(),
+                                            field_path: ParsedPath::parse(name).unwrap(),
                                             can_remove: false,
+                                            attributes: None,
                                         }),
                                         // path: ParsedPath::parse(name).unwrap(),
                                         // name: name.to_string(),

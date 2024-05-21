@@ -48,6 +48,8 @@ impl ViewTemplate for FieldEditList {
                             list.push(default.clone_value());
                         }
                     });
+                    // Auto expand when pushing.
+                    expanded.set(cx, true);
                 } else {
                     unreachable!("Expected List type ");
                 }
@@ -125,7 +127,7 @@ impl ViewTemplate for ListContentInspector {
                 For::index(
                     move |cx| 0..length.get(cx),
                     move |_, index| {
-                        let mut path = field.path.clone();
+                        let mut path = field.value_path.clone();
                         path.0.push(OffsetAccess {
                             access: bevy::reflect::Access::ListIndex(index),
                             offset: None,
@@ -133,9 +135,10 @@ impl ViewTemplate for ListContentInspector {
                         let access = Arc::new(InspectableField {
                             root: field.root.clone(),
                             name: format!("{}", index),
-                            path,
-                            container_path: field.path.clone(),
+                            value_path: path,
+                            field_path: field.value_path.clone(),
                             can_remove: false,
+                            attributes: field.attributes,
                         });
                         ListItemInspector { field: access }.into_view()
                     },

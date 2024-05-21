@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use bevy::{
     prelude::*,
-    reflect::{DynamicEnum, DynamicVariant, ParsedPath, ReflectPathError},
+    reflect::{
+        attributes::CustomAttributes, DynamicEnum, DynamicVariant, ParsedPath, ReflectPathError,
+    },
 };
 use bevy_reactor_signals::{Cx, RunContextRead};
 
@@ -73,11 +75,21 @@ impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
 /// get and set the field as well as query it's type.
 #[derive(Clone)]
 pub struct InspectableField {
+    /// The top-level data structure being inspected, which contains this field.
     pub(crate) root: Arc<dyn Inspectable>,
+    /// Name of the field.
     pub(crate) name: String,
-    pub(crate) path: ParsedPath,
-    pub(crate) container_path: ParsedPath,
+    /// The path to the struct field or tuple field containing the value. This is used to
+    /// add or remove the field from the parent.
+    pub(crate) field_path: ParsedPath,
+    /// The path to the actual value, which might be wrapped in an `Option` or `Vec`. This is
+    /// used to edit the field value.
+    pub(crate) value_path: ParsedPath,
+    /// If true, then the field can be removed from it's parent.
     pub(crate) can_remove: bool,
+
+    /// Custom attributes for the field
+    pub(crate) attributes: Option<&'static CustomAttributes>,
 }
 
 impl InspectableField {
@@ -88,12 +100,12 @@ impl InspectableField {
 
     /// Get the reflected value of the field.
     pub fn reflect<'a>(&self, cx: &'a Cx) -> Option<&'a dyn Reflect> {
-        self.root.reflect_field(cx, &self.path)
+        self.root.reflect_field(cx, &self.value_path)
     }
 
     /// Update the value of the field
     pub fn set_value(&self, cx: &mut Cx, value: &dyn Reflect) {
-        self.root.set_field(cx, &self.path, value);
+        self.root.set_field(cx, &self.value_path, value);
     }
 
     /// Whether the item can be removed (in other words, is it optional or an array element)
@@ -103,12 +115,12 @@ impl InspectableField {
 
     /// Use a closure to modify the reflected field data.
     pub fn update(&self, cx: &mut Cx, f: &dyn Fn(&mut dyn Reflect)) {
-        self.root.update_field(cx, &self.path, f);
+        self.root.update_field(cx, &self.value_path, f);
     }
 
     /// Remove the value from the parent
     pub fn remove(&self, cx: &mut Cx) {
-        let Some(field) = self.root.reflect_field(cx, &self.container_path) else {
+        let Some(field) = self.root.reflect_field(cx, &self.field_path) else {
             return;
         };
         match field.get_represented_type_info().unwrap() {
@@ -124,7 +136,7 @@ impl InspectableField {
                     .starts_with("core::option::Option")
                 {
                     let dynamic_enum = DynamicEnum::new("None", DynamicVariant::Unit);
-                    self.root.set_field(cx, &self.container_path, &dynamic_enum);
+                    self.root.set_field(cx, &self.field_path, &dynamic_enum);
                 } else {
                     panic!("Can't remove non-optional field");
                 }

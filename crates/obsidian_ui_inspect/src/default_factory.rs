@@ -1,6 +1,6 @@
 use crate::{
     editors::{
-        bool::FieldEditBool, color::FieldEditSrgba, fallback::FieldEditFallback,
+        bool::FieldEditBool, color::FieldEditSrgba, f32::FieldEditF32, fallback::FieldEditFallback,
         list::FieldEditList,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
@@ -104,6 +104,7 @@ impl InspectorFactory for DefaultInspectorFactory {
             ),
             ReflectRef::Value(v) => match v.reflect_type_path() {
                 "bool" => Some(FieldEditBool(field.clone()).into_view()),
+                "f32" => Some(FieldEditF32(field.clone()).into_view()),
 
                 _ => Some(FieldEditFallback(field.clone()).into_view()),
             },
