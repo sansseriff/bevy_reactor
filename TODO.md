@@ -6,8 +6,8 @@
   - Checkmarks and checkmark spacing
 - Property Editor.
   - Nested structs
-  - Finish float editor.
-  - Num spinners
+  - Spinbox click to edit text
+  - Slider click to edit text
 - Too many public members in TrackingScope. This happened because of the need to
   allow external crates to define their own reaction types.
 - `run_reactions` does a lot of excessive entity lookups, needed to satisfy the borrow checker.
