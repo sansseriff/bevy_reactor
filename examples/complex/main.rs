@@ -12,7 +12,7 @@ use bevy_mod_picking::{
 };
 use bevy_picking_backdrop::{BackdropBackend, BackdropPickable};
 use bevy_reactor_overlays as overlays;
-use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, TrackingScopeTracing};
+use bevy_reactor_signals::{Cx, Rcx, RunContextRead, RunContextSetup, TrackingScopeTracing};
 use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 use obsidian_ui::{
     colors,
@@ -439,7 +439,7 @@ impl ViewTemplate for CenterPanel {
 
         Element::<NodeBundle>::new()
             .children((Cond::new(
-                |cx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
+                |cx: &Rcx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
                 || NodeGraphDemo {},
                 move || {
                     Fragment::new((
@@ -454,7 +454,7 @@ impl ViewTemplate for CenterPanel {
                                     .children(Element::<NodeBundle>::new().style(style_log_inner)),
                             ),
                         Cond::new(
-                            |cx| {
+                            |cx: &Rcx| {
                                 *cx.use_resource::<State<EditorState>>().get() == EditorState::Split
                             },
                             move || {

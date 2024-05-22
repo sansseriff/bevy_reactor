@@ -233,7 +233,7 @@ impl ViewTemplate for Checkbox {
                         };
                     })
                     .children(Cond::new(
-                        move |cx| checked.get(cx),
+                        checked,
                         move || Element::<NodeBundle>::new().style(style_checkbox_inner),
                         || (),
                     )),

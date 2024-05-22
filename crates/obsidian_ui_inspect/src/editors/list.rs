@@ -98,7 +98,7 @@ impl ViewTemplate for FieldEditList {
                         .on_click(push),
                 ))),
             Cond::new(
-                move |cx| expanded.get(cx),
+                expanded.signal(),
                 {
                     let field = self.0.clone();
                     move || ListContentInspector {

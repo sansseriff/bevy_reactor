@@ -11,7 +11,7 @@ use bevy::{
     },
 };
 use bevy_reactor::*;
-use bevy_reactor_signals::{Cx, RunContextRead};
+use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -70,7 +70,7 @@ fn setup_view_root(mut commands: Commands) {
                 NestedView,
                 ": ",
                 Cond::new(
-                    |cx| {
+                    |cx: &Rcx| {
                         let counter = cx.use_resource::<Counter>();
                         counter.count & 1 == 0
                     },

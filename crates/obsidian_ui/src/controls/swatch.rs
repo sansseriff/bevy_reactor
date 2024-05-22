@@ -116,7 +116,7 @@ impl ViewTemplate for Swatch {
                 })
             }))
             .children(Cond::new(
-                move |cx| selected.get(cx),
+                selected,
                 || Element::<NodeBundle>::new().style(style_selection),
                 || (),
             ))

@@ -8,7 +8,7 @@ use bevy_mod_picking::{
     prelude::{ListenerInput, On},
 };
 use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, RunContextSetup, RunContextWrite, Signal};
+use bevy_reactor_signals::{Callback, Cx, Rcx, RunContextSetup, RunContextWrite, Signal};
 
 use crate::{
     animation::{AnimatedBackgroundColor, AnimatedScale, AnimatedTransition},
@@ -131,7 +131,7 @@ impl ViewTemplate for Dialog {
         });
 
         Cond::new(
-            move |cx| state.get(cx) != BistableTransitionState::Exited,
+            move |cx: &Rcx| state.get(cx) != BistableTransitionState::Exited,
             move || {
                 Portal::new(
                     Element::<NodeBundle>::new()

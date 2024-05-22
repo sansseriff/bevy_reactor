@@ -110,7 +110,7 @@ impl ViewTemplate for InspectorPanel {
                     .style((typography::text_default, style_inspector_panel_header))
                     .children(self.title.clone()),
                 Cond::new(
-                    move |cx| expanded.get(cx),
+                    expanded,
                     move || {
                         Element::<NodeBundle>::new()
                             .style(style_inspector_panel_body)

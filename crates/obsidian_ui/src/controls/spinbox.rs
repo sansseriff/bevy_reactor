@@ -213,7 +213,7 @@ impl ViewTemplate for SpinBox {
                 .style(style_overlay)
                 .children((
                     Cond::new(
-                        move |cx| show_buttons.get(cx),
+                        show_buttons,
                         move || {
                             IconButton::new("obsidian_ui://icons/chevron_left.png")
                                 .corners(RoundedCorners::Left)
@@ -296,7 +296,7 @@ impl ViewTemplate for SpinBox {
                             }
                         }),)),
                     Cond::new(
-                        move |cx| show_buttons.get(cx),
+                        show_buttons,
                         move || {
                             IconButton::new("obsidian_ui://icons/chevron_right.png")
                                 .corners(RoundedCorners::Right)

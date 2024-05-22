@@ -279,7 +279,7 @@ impl ViewTemplate for NodeDisplay {
                     .style(style_node_graph_node_content)
                     .children(self.children.clone()),
                 Cond::new(
-                    move |cx| hovering.get(cx),
+                    hovering,
                     || {
                         Element::<NodeBundle>::new()
                             .named("NodeGraph::Node::Outline")

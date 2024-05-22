@@ -10,7 +10,7 @@ use bevy_mod_picking::{
 use bevy_reactor::*;
 use bevy_reactor_overlays::{OverlayShape, PolygonOptions, StrokeMarker};
 use bevy_reactor_signals::{
-    Callback, Cx, RunContextRead, RunContextSetup, RunContextWrite, Signal,
+    Callback, Cx, Rcx, RunContextRead, RunContextSetup, RunContextWrite, Signal,
 };
 use obsidian_ui::colors;
 
@@ -71,7 +71,7 @@ impl ViewTemplate for TransformOverlay {
 
         // Using a portal here to suppress the error message about no parent.
         Portal::new(Cond::new(
-            move |cx| target_entity.get(cx).is_some(),
+            move |cx: &Rcx| target_entity.get(cx).is_some(),
             move || {
                 OverlayShape::new(|_cx, sb| {
                     sb.with_stroke_width(0.2)

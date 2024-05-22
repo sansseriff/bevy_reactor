@@ -16,7 +16,7 @@ use bevy::{
 use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 use bevy_reactor_signals::{
-    Callback, Cx, RunContextRead, RunContextSetup, RunContextWrite, Signal,
+    Callback, Cx, Rcx, RunContextRead, RunContextSetup, RunContextWrite, Signal,
 };
 
 use crate::{colors, size::Size};
@@ -441,7 +441,7 @@ impl ViewTemplate for TextInput {
                                 ),
                                 // Caret
                                 Cond::new(
-                                    move |cx| {
+                                    move |cx: &Rcx| {
                                         selection.get(cx).is_empty()
                                             && focused.get(cx)
                                             && !disabled.get(cx)

@@ -1,9 +1,31 @@
 use bevy::ecs::world::World;
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Rcx, Signal, TrackingScope};
 
 use crate::node_span::NodeSpan;
 use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
+
+pub trait TestCondition: Send + Sync {
+    fn test(&self, rcx: &Rcx) -> bool;
+}
+
+impl<F: Send + Sync + Fn(&Rcx) -> bool> TestCondition for F {
+    fn test(&self, rcx: &Rcx) -> bool {
+        self(rcx)
+    }
+}
+
+impl TestCondition for bool {
+    fn test(&self, _rcx: &Rcx) -> bool {
+        *self
+    }
+}
+
+impl TestCondition for Signal<bool> {
+    fn test(&self, rcx: &Rcx) -> bool {
+        self.get(rcx)
+    }
+}
 
 pub enum CondState {
     Unset,
@@ -20,13 +42,8 @@ pub struct Cond<Test: 'static, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView,
     state: CondState,
 }
 
-impl<
-        Test: Fn(&Rcx) -> bool,
-        Pos: IntoView,
-        PosFn: Fn() -> Pos,
-        Neg: IntoView,
-        NegFn: Fn() -> Neg,
-    > Cond<Test, Pos, PosFn, Neg, NegFn>
+impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegFn: Fn() -> Neg>
+    Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     /// Construct a new conditional View.
     pub fn new(test: Test, pos: PosFn, neg: NegFn) -> Self {
@@ -54,13 +71,8 @@ impl<
     }
 }
 
-impl<
-        Test: Fn(&Rcx) -> bool,
-        Pos: IntoView,
-        PosFn: Fn() -> Pos,
-        Neg: IntoView,
-        NegFn: Fn() -> Neg,
-    > View for Cond<Test, Pos, PosFn, Neg, NegFn>
+impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegFn: Fn() -> Neg> View
+    for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     fn nodes(&self) -> NodeSpan {
         match self.state {
@@ -83,7 +95,7 @@ impl<
 
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, view_entity, tracking);
-        let cond = (self.test)(&re);
+        let cond = self.test.test(&re);
         // possibly raze previous state
         match self.state {
             CondState::True(_) if cond => {
@@ -122,7 +134,7 @@ impl<
 }
 
 impl<
-        Test: Send + Sync + Fn(&Rcx) -> bool,
+        Test: TestCondition,
         Pos: 'static + IntoView,
         PosFn: Send + Sync + 'static + Fn() -> Pos,
         Neg: 'static + IntoView,
@@ -131,5 +143,19 @@ impl<
 {
     fn into_view(self) -> ViewRef {
         ViewRef::new(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_into_view() {
+        let const_true = Signal::Constant(true);
+        let _vref1 = Cond::new(true, || (), || ()).into_view();
+        let _vref2 = Cond::new(|_cx: &Rcx| true, || (), || ()).into_view();
+        let _vref3 = Cond::new(const_true, || (), || ()).into_view();
+        let _vref4 = Cond::new(move |cx: &Rcx| const_true.get(cx), || (), || ()).into_view();
     }
 }

@@ -37,7 +37,7 @@ impl ViewTemplate for FieldLabel {
             .children((
                 self.field.name(),
                 Cond::new(
-                    move |_cx| can_remove,
+                    can_remove,
                     move || {
                         IconButton::new("obsidian_ui://icons/close.png")
                             .size(Size::Xs)
@@ -111,7 +111,7 @@ impl ViewTemplate for FieldLabelWide {
                 Spacer,
                 self.buttons.clone(),
                 Cond::new(
-                    move |_cx| can_remove,
+                    can_remove,
                     move || {
                         IconButton::new("obsidian_ui://icons/close.png")
                             .size(Size::Xs)

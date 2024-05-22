@@ -287,10 +287,7 @@ impl ViewTemplate for MenuButton {
                 self.children.clone(),
                 Spacer,
                 Cond::new(
-                    {
-                        let no_caret = self.no_caret;
-                        move |_cx| no_caret
-                    },
+                    self.no_caret,
                     || (),
                     || {
                         Icon::new("obsidian_ui://icons/chevron_down.png")
@@ -301,7 +298,7 @@ impl ViewTemplate for MenuButton {
                     },
                 ),
                 Cond::new(
-                    move |cx| open.get(cx),
+                    open.signal(),
                     move || {
                         Portal::new(
                             Element::<NodeBundle>::new()

@@ -397,7 +397,7 @@ impl ViewTemplate for InputTemplate {
             id: display_id,
             color: color.get(cx),
             control: Cond::new(
-                move |cx| is_connected.get(cx),
+                is_connected,
                 move || {
                     Element::<NodeBundle>::new()
                         .style(style_input_label)

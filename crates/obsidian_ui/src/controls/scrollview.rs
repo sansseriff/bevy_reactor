@@ -171,7 +171,7 @@ impl ViewTemplate for ScrollView {
                     ),
                 // Horizontal scroll bar
                 Cond::new(
-                    move |_| enable_x,
+                    enable_x,
                     move || {
                         Scrollbar::new(ScrollbarProps {
                             id_scroll_area,
@@ -184,7 +184,7 @@ impl ViewTemplate for ScrollView {
                 ),
                 // Vertical scroll bar
                 Cond::new(
-                    move |_| enable_y,
+                    enable_y,
                     move || {
                         Scrollbar::new(ScrollbarProps {
                             id_scroll_area,
