@@ -3,12 +3,9 @@ use std::ops::Range;
 use bevy::reflect::Reflect;
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
-use obsidian_ui::controls::Slider;
+use obsidian_ui::controls::{Slider, SpinBox};
 
-use crate::{
-    templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
-    InspectableField, Precision, Step, ValueRange,
-};
+use crate::{templates::field_label::FieldLabel, InspectableField, Precision, Step, ValueRange};
 
 #[derive(Clone, Debug)]
 struct F32Attrs {
@@ -22,20 +19,12 @@ pub struct FieldEditF32(pub(crate) InspectableField);
 impl ViewTemplate for FieldEditF32 {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
-        let value = cx.create_memo(move |cx| {
-            if let Some(value) = field.reflect(cx) {
-                if value.is::<f32>() {
-                    return *value.downcast_ref::<f32>().unwrap();
-                }
-            }
-            0.0
+        let value = cx.create_memo(move |cx| match field.reflect(cx) {
+            Some(value) if value.is::<f32>() => *value.downcast_ref::<f32>().unwrap(),
+            _ => 0.0,
         });
 
         let field = self.0.clone();
-        let Some(reflect) = field.reflect(cx) else {
-            return ().into_view();
-        };
-
         let mut slider_params = F32Attrs {
             range: None,
             precision: 0,
@@ -78,8 +67,15 @@ impl ViewTemplate for FieldEditF32 {
                         });
                     }))
                     .into_view(),
-                None => FieldReadonlyValue::new()
-                    .children(format!("NoRange: {}", reflect.reflect_type_path()))
+                None => SpinBox::new()
+                    .precision(slider_params.precision)
+                    .step(slider_params.step)
+                    .value(value)
+                    .on_change(cx.create_callback(move |cx, value: f32| {
+                        field.update(cx, &|reflect| {
+                            reflect.apply(value.as_reflect());
+                        });
+                    }))
                     .into_view(),
             },
         ))

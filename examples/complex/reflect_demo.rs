@@ -19,7 +19,6 @@ pub struct TestStruct {
     #[reflect(@ValueRange::<f32>(0.0..10.0))]
     pub roughness: Option<f32>,
 
-    #[reflect(@ValueRange::<f32>(0.0..10.0))]
     #[reflect(@Precision(2))]
     pub metalness: Option<f32>,
 

@@ -28,7 +28,8 @@ impl ViewTemplate for FieldEditFallback {
             FieldLabel {
                 field: self.0.clone(),
             },
-            FieldReadonlyValue::new().children(format!("TODO: {}", reflect.reflect_type_path())),
+            FieldReadonlyValue::new()
+                .children(format!("Fallback: {}", reflect.reflect_type_path())),
         ))
         .into_view()
     }

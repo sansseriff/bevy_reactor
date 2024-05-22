@@ -23,6 +23,10 @@ pub trait RunContextRead {
     /// Return a reference to the Component `C` on the given entity. Calling this function
     /// adds the component as a dependency of the current tracking scope.
     fn use_component<C: Component>(&self, entity: Entity) -> Option<&C>;
+
+    /// Return a reference to the Component `C` on the given entity. Calling this function
+    /// does not add the component as a dependency of the current tracking scope.
+    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C>;
 }
 
 /// A mutable reactive context. This allows write access to reactive data sources.
@@ -286,7 +290,8 @@ impl<'p, 'w> Cx<'p, 'w> {
         entity
     }
 
-    /// Return a reference to the Component `C` on the given entity.
+    /// Return a reference to the Component `C` on the given entity. Adds the component to
+    /// the current tracking scope.
     pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
         let component = self
             .world
@@ -301,6 +306,15 @@ impl<'p, 'w> Cx<'p, 'w> {
                     .track_component_id(entity, component);
                 c.get::<C>()
             }
+            None => None,
+        }
+    }
+
+    /// Return a reference to the Component `C` on the given entity. Does not add the component
+    /// to the tracking scope.
+    pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
+        match self.world.get_entity(entity) {
+            Some(c) => c.get::<C>(),
             None => None,
         }
     }
@@ -440,6 +454,10 @@ impl<'p, 'w> RunContextRead for Cx<'p, 'w> {
         self.tracking
             .borrow_mut()
             .track_component::<C>(entity, self.world);
+        self.world.entity(entity).get::<C>()
+    }
+
+    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.world.entity(entity).get::<C>()
     }
 }
@@ -597,6 +615,10 @@ impl<'p, 'w> RunContextRead for Rcx<'p, 'w> {
             .track_component::<C>(entity, self.world);
         self.world.entity(entity).get::<C>()
     }
+
+    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.world.entity(entity).get::<C>()
+    }
 }
 
 impl ReadMutable for World {
@@ -740,6 +762,10 @@ impl RunContextRead for World {
     }
 
     fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.entity(entity).get::<C>()
+    }
+
+    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.entity(entity).get::<C>()
     }
 }

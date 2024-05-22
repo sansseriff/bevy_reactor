@@ -1,7 +1,7 @@
 use crate::{
     editors::{
         bool::FieldEditBool, color::FieldEditSrgba, f32::FieldEditF32, fallback::FieldEditFallback,
-        list::FieldEditList,
+        list::FieldEditList, vec3::FieldEditVec3,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
     InspectableField, InspectorFactory,
@@ -25,6 +25,8 @@ impl InspectorFactory for DefaultInspectorFactory {
                         }
                         .into_view(),
                     ),
+
+                    "glam::Vec3" => Some(FieldEditVec3(field.clone()).into_view()),
 
                     _ => Some(FieldEditFallback(field.clone()).into_view()),
                 }

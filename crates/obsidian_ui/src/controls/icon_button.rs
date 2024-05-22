@@ -1,5 +1,5 @@
 use super::{Button, Icon};
-use crate::{colors, size::Size};
+use crate::{colors, size::Size, RoundedCorners};
 use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
@@ -18,6 +18,9 @@ pub struct IconButton {
 
     /// Whether the button is disabled.
     pub disabled: Signal<bool>,
+
+    /// Which corners to render rounded.
+    pub corners: RoundedCorners,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -74,6 +77,12 @@ impl IconButton {
         self
     }
 
+    /// Set which corners to render rounded.
+    pub fn corners(mut self, corners: RoundedCorners) -> Self {
+        self.corners = corners;
+        self
+    }
+
     /// Set callback when clicked
     pub fn on_click(mut self, callback: Callback) -> Self {
         self.on_click = Some(callback);
@@ -99,11 +108,17 @@ impl ViewTemplate for IconButton {
         Button {
             size: self.size,
             disabled,
-            style: self.style.clone(),
+            style: StyleHandle::new((
+                |ss: &mut StyleBuilder| {
+                    ss.padding((4, 0));
+                },
+                self.style.clone(),
+            )),
             on_click: self.on_click,
             tab_index: self.tab_index,
             autofocus: self.autofocus,
             minimal: self.minimal,
+            corners: self.corners,
             ..default()
         }
         .children(
@@ -123,9 +138,6 @@ impl ViewTemplate for IconButton {
                     Size::Xs => Vec2::splat(12.),
                     Size::Xxs => Vec2::splat(11.),
                     Size::Xxxs => Vec2::splat(10.),
-                })
-                .style(|ss: &mut StyleBuilder| {
-                    ss.margin((4, 0));
                 }),
         )
     }

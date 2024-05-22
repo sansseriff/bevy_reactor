@@ -24,6 +24,7 @@ enum DragType {
 struct DragState {
     dragging: DragType,
     offset: f32,
+    was_dragged: bool,
 }
 
 fn style_slider(ss: &mut StyleBuilder) {
@@ -55,7 +56,10 @@ fn style_button(ss: &mut StyleBuilder) {
 }
 
 fn style_button_icon(ss: &mut StyleBuilder) {
-    ss.height(16).width(12).pointer_events(false);
+    ss.height(16)
+        .max_width(12)
+        .flex_grow(0.1)
+        .pointer_events(false);
 }
 
 fn style_button_icon_left(ss: &mut StyleBuilder) {
@@ -73,7 +77,6 @@ fn style_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::Center)
         .height(ui::Val::Percent(100.))
-        // .border_color(colors::DESTRUCTIVE)
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
         .padding((6, 0));
@@ -242,17 +245,22 @@ impl ViewTemplate for Slider {
                         DragState {
                             dragging: DragType::Dragging,
                             offset: value.get(world),
+                            was_dragged: false,
                         },
                     );
                 }),
                 On::<Pointer<DragEnd>>::run(move |world: &mut World| {
                     let ds = drag_state.get(world);
                     if ds.dragging == DragType::Dragging {
+                        if !ds.was_dragged {
+                            println!("was not dragged");
+                        }
                         drag_state.set(
                             world,
                             DragState {
                                 dragging: DragType::None,
                                 offset: value.get(world),
+                                was_dragged: false,
                             },
                         );
                     }
@@ -278,9 +286,21 @@ impl ViewTemplate for Slider {
                                 min + range * 0.5
                             };
                             let rounding = f32::powi(10., precision as i32);
+                            let value = value.get(world);
                             let new_value = (new_value * rounding).round() / rounding;
-                            if let Some(on_change) = on_change {
-                                world.run_callback(on_change, new_value.clamp(min, max));
+                            if value != new_value {
+                                if !ds.was_dragged {
+                                    drag_state.set(
+                                        world,
+                                        DragState {
+                                            was_dragged: true,
+                                            ..ds
+                                        },
+                                    );
+                                }
+                                if let Some(on_change) = on_change {
+                                    world.run_callback(on_change, new_value.clamp(min, max));
+                                }
                             }
                         }
                     }
@@ -393,6 +413,7 @@ impl ViewTemplate for SliderButton {
                         DragState {
                             dragging: drag_type,
                             offset: value.get(world),
+                            was_dragged: false,
                         },
                     );
                     let min = min.get(world);
@@ -412,6 +433,7 @@ impl ViewTemplate for SliderButton {
                         DragState {
                             dragging: DragType::None,
                             offset: value.get(world),
+                            was_dragged: false,
                         },
                     );
                 }),
@@ -427,6 +449,7 @@ impl ViewTemplate for SliderButton {
                             DragState {
                                 dragging: drag_type,
                                 offset: value.get(world),
+                                was_dragged: false,
                             },
                         );
                     }
@@ -443,6 +466,7 @@ impl ViewTemplate for SliderButton {
                             DragState {
                                 dragging: DragType::None,
                                 offset: value.get(world),
+                                was_dragged: false,
                             },
                         );
                     }
