@@ -64,6 +64,49 @@ impl<T: Resource + Reflect> InspectableRoot for InspectableResource<T> {
     }
 }
 
+/// An ECS component that can be inspected
+pub struct InspectableComponent<T: Component + Reflect> {
+    entity: Entity,
+    marker: std::marker::PhantomData<T>,
+}
+
+impl<T: Component + Reflect> InspectableComponent<T> {
+    pub fn new(entity: Entity) -> Self {
+        Self {
+            entity,
+            marker: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<T: Component + Reflect> InspectableRoot for InspectableComponent<T> {
+    fn name(&self, cx: &Cx) -> String {
+        let cmp = cx.use_component::<T>(self.entity).unwrap();
+        cmp.reflect_short_type_path().to_string()
+    }
+
+    fn reflect_path<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
+        let cmp = cx.use_component::<T>(self.entity).unwrap();
+        match cmp.reflect_path(path) {
+            Ok(result) => Some(result),
+            Err(ReflectPathError::InvalidAccess(_)) => None,
+            Err(err) => panic!("{:?}", err),
+        }
+    }
+
+    fn set_path(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect) {
+        let mut entt = cx.world_mut().entity_mut(self.entity);
+        let mut cmp = entt.get_mut::<T>().unwrap();
+        cmp.reflect_path_mut(path).unwrap().apply(value);
+    }
+
+    fn update_path(&self, cx: &mut Cx, path: &ParsedPath, f: &dyn Fn(&mut dyn Reflect)) {
+        let mut entt = cx.world_mut().entity_mut(self.entity);
+        let mut res = entt.get_mut::<T>().unwrap();
+        f(res.reflect_path_mut(path).unwrap());
+    }
+}
+
 /// A reference to a field within an `Inspectable`. This contains information needed to
 /// get and set the field as well as query it's type.
 #[derive(Clone)]
