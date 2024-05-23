@@ -7,9 +7,9 @@ use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::SpinBox;
 
-use crate::{templates::field_label::FieldLabel, InspectableField, Precision, Step};
+use crate::{templates::field_label::FieldLabel, Inspectable, Precision, Step};
 
-pub struct FieldEditVec3(pub(crate) InspectableField);
+pub struct FieldEditVec3(pub(crate) Inspectable);
 
 #[derive(Clone, Debug)]
 struct Vec3Attrs {

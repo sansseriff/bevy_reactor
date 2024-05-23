@@ -5,7 +5,7 @@ use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::{Slider, SpinBox};
 
-use crate::{templates::field_label::FieldLabel, InspectableField, Precision, Step, ValueRange};
+use crate::{templates::field_label::FieldLabel, Inspectable, Precision, Step, ValueRange};
 
 #[derive(Clone, Debug)]
 struct F32Attrs {
@@ -14,7 +14,7 @@ struct F32Attrs {
     step: f32,
 }
 
-pub struct FieldEditF32(pub(crate) InspectableField);
+pub struct FieldEditF32(pub(crate) Inspectable);
 
 impl ViewTemplate for FieldEditF32 {
     fn create(&self, cx: &mut Cx) -> impl IntoView {

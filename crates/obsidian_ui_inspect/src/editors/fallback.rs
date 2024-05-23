@@ -3,11 +3,11 @@ use bevy_reactor_signals::Cx;
 
 use crate::{
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
-    InspectableField,
+    Inspectable,
 };
 
 /// Field editor for when no specific editor is available.
-pub struct FieldEditFallback(pub(crate) InspectableField);
+pub struct FieldEditFallback(pub(crate) Inspectable);
 
 impl ViewTemplate for FieldEditFallback {
     fn create(&self, cx: &mut Cx) -> impl IntoView {

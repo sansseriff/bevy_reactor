@@ -1,5 +1,7 @@
 # TODO
 
+- Refactor Inspectable / InspectableField
+  - First handle nested structs.
 - Menus:
   - Restore Focus
   - Shortcuts

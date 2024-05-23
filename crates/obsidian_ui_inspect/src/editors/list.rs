@@ -13,9 +13,9 @@ use obsidian_ui::{
     size::Size,
 };
 
-use crate::{templates::field_label::FieldLabelWide, InspectableField, InspectorFactoryRegistry};
+use crate::{templates::field_label::FieldLabelWide, Inspectable, InspectorFactoryRegistry};
 
-pub struct FieldEditList(pub(crate) InspectableField);
+pub struct FieldEditList(pub(crate) Inspectable);
 
 impl ViewTemplate for FieldEditList {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
@@ -113,7 +113,7 @@ impl ViewTemplate for FieldEditList {
 }
 
 struct ListContentInspector {
-    field: InspectableField,
+    field: Inspectable,
     length: Signal<usize>,
 }
 
@@ -132,7 +132,7 @@ impl ViewTemplate for ListContentInspector {
                             access: bevy::reflect::Access::ListIndex(index),
                             offset: None,
                         });
-                        let access = Arc::new(InspectableField {
+                        let access = Arc::new(Inspectable {
                             root: field.root.clone(),
                             name: format!("{}", index),
                             value_path: path,
@@ -153,7 +153,7 @@ impl ViewTemplate for ListContentInspector {
 }
 
 struct ListItemInspector {
-    field: Arc<InspectableField>,
+    field: Arc<Inspectable>,
 }
 
 impl ViewTemplate for ListItemInspector {

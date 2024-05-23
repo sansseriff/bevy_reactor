@@ -4,7 +4,7 @@ use crate::{
         list::FieldEditList, vec3::FieldEditVec3,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
-    InspectableField, InspectorFactory,
+    Inspectable, InspectorFactory,
 };
 use bevy::reflect::ReflectRef;
 use bevy_reactor::*;
@@ -14,7 +14,7 @@ use bevy_reactor_signals::Cx;
 pub struct DefaultInspectorFactory;
 
 impl InspectorFactory for DefaultInspectorFactory {
-    fn create_inspector(&self, cx: &Cx, field: &InspectableField) -> Option<ViewRef> {
+    fn create_inspector(&self, cx: &Cx, field: &Inspectable) -> Option<ViewRef> {
         let reflect = field.reflect(cx)?;
         match reflect.reflect_ref() {
             ReflectRef::Struct(s) => {

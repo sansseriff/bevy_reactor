@@ -2,14 +2,14 @@ use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
 
-use crate::InspectableField;
+use crate::Inspectable;
 
 /// Trait that defines a factory for creating inspectors. Multiple factories can be registered,
 /// and the first one that returns true will be used to create the inspector.
 pub trait InspectorFactory: Sync + Send {
     /// Examine the reflect data and decide what kind of widget to create to edit the
     /// data. Can return false if the data is not in a supported format.
-    fn create_inspector(&self, reflect: &Cx, field: &InspectableField) -> Option<ViewRef>;
+    fn create_inspector(&self, reflect: &Cx, field: &Inspectable) -> Option<ViewRef>;
 }
 
 #[derive(Resource, Default)]

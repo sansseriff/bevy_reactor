@@ -3,9 +3,9 @@ use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::Checkbox;
 
-use crate::{templates::field_label::FieldLabel, InspectableField};
+use crate::{templates::field_label::FieldLabel, Inspectable};
 
-pub struct FieldEditBool(pub(crate) InspectableField);
+pub struct FieldEditBool(pub(crate) Inspectable);
 
 impl ViewTemplate for FieldEditBool {
     fn create(&self, cx: &mut Cx) -> impl IntoView {

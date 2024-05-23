@@ -11,21 +11,18 @@ use bevy_reactor_signals::{Cx, RunContextRead};
 
 /// Trait that represents an item that can be inspected
 #[allow(unused_variables)]
-pub trait Inspectable: Send + Sync {
+pub trait InspectableRoot: Send + Sync {
     /// The name of the item being inspected
     fn name(&self, cx: &Cx) -> String;
 
-    /// The reflect data for the item being inspected
-    fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect;
-
-    /// The reflect data for a field within the item.
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect>;
+    /// The reflect data for a path within the reflected item.
+    fn reflect_path<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect>;
 
     /// Update a field within the item
-    fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect);
+    fn set_path(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect);
 
     /// Apply a closure to a field within the item
-    fn update_field(&self, cx: &mut Cx, path: &ParsedPath, f: &dyn Fn(&mut dyn Reflect));
+    fn update_path(&self, cx: &mut Cx, path: &ParsedPath, f: &dyn Fn(&mut dyn Reflect));
 }
 
 /// A resource that can be inspected
@@ -41,17 +38,13 @@ impl<T: Resource + Reflect> Default for InspectableResource<T> {
     }
 }
 
-impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
+impl<T: Resource + Reflect> InspectableRoot for InspectableResource<T> {
     fn name(&self, cx: &Cx) -> String {
         let res = cx.use_resource::<T>();
         res.reflect_short_type_path().to_string()
     }
 
-    fn reflect<'a>(&self, cx: &'a Cx) -> &'a dyn Reflect {
-        cx.use_resource::<T>().as_reflect()
-    }
-
-    fn reflect_field<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
+    fn reflect_path<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
         let res = cx.use_resource::<T>();
         match res.reflect_path(path) {
             Ok(result) => Some(result),
@@ -60,12 +53,12 @@ impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
         }
     }
 
-    fn set_field(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect) {
+    fn set_path(&self, cx: &mut Cx, path: &ParsedPath, value: &dyn Reflect) {
         let mut res = cx.world_mut().get_resource_mut::<T>().unwrap();
         res.reflect_path_mut(path).unwrap().apply(value);
     }
 
-    fn update_field(&self, cx: &mut Cx, path: &ParsedPath, f: &dyn Fn(&mut dyn Reflect)) {
+    fn update_path(&self, cx: &mut Cx, path: &ParsedPath, f: &dyn Fn(&mut dyn Reflect)) {
         let mut res = cx.world_mut().get_resource_mut::<T>().unwrap();
         f(res.reflect_path_mut(path).unwrap());
     }
@@ -74,9 +67,9 @@ impl<T: Resource + Reflect> Inspectable for InspectableResource<T> {
 /// A reference to a field within an `Inspectable`. This contains information needed to
 /// get and set the field as well as query it's type.
 #[derive(Clone)]
-pub struct InspectableField {
+pub struct Inspectable {
     /// The top-level data structure being inspected, which contains this field.
-    pub(crate) root: Arc<dyn Inspectable>,
+    pub(crate) root: Arc<dyn InspectableRoot>,
     /// Name of the field.
     pub(crate) name: String,
     /// The path to the struct field or tuple field containing the value. This is used to
@@ -92,7 +85,7 @@ pub struct InspectableField {
     pub(crate) attributes: Option<&'static CustomAttributes>,
 }
 
-impl InspectableField {
+impl Inspectable {
     /// Return the name of this field.
     pub fn name(&self) -> &str {
         &self.name
@@ -100,12 +93,12 @@ impl InspectableField {
 
     /// Get the reflected value of the field.
     pub fn reflect<'a>(&self, cx: &'a Cx) -> Option<&'a dyn Reflect> {
-        self.root.reflect_field(cx, &self.value_path)
+        self.root.reflect_path(cx, &self.value_path)
     }
 
     /// Update the value of the field
     pub fn set_value(&self, cx: &mut Cx, value: &dyn Reflect) {
-        self.root.set_field(cx, &self.value_path, value);
+        self.root.set_path(cx, &self.value_path, value);
     }
 
     /// Whether the item can be removed (in other words, is it optional or an array element)
@@ -115,12 +108,12 @@ impl InspectableField {
 
     /// Use a closure to modify the reflected field data.
     pub fn update(&self, cx: &mut Cx, f: &dyn Fn(&mut dyn Reflect)) {
-        self.root.update_field(cx, &self.value_path, f);
+        self.root.update_path(cx, &self.value_path, f);
     }
 
     /// Remove the value from the parent
     pub fn remove(&self, cx: &mut Cx) {
-        let Some(field) = self.root.reflect_field(cx, &self.field_path) else {
+        let Some(field) = self.root.reflect_path(cx, &self.field_path) else {
             return;
         };
         match field.get_represented_type_info().unwrap() {
@@ -136,7 +129,7 @@ impl InspectableField {
                     .starts_with("core::option::Option")
                 {
                     let dynamic_enum = DynamicEnum::new("None", DynamicVariant::Unit);
-                    self.root.set_field(cx, &self.field_path, &dynamic_enum);
+                    self.root.set_path(cx, &self.field_path, &dynamic_enum);
                 } else {
                     panic!("Can't remove non-optional field");
                 }

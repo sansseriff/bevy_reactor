@@ -8,7 +8,7 @@ use obsidian_ui::{
     typography,
 };
 
-use crate::InspectableField;
+use crate::Inspectable;
 
 fn style_field_label(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -22,7 +22,7 @@ fn style_field_label(ss: &mut StyleBuilder) {
 /// Label for editable struct field in an inspector.
 pub struct FieldLabel {
     /// The content of the label.
-    pub field: InspectableField,
+    pub field: Inspectable,
 }
 
 impl ViewTemplate for FieldLabel {
@@ -65,7 +65,7 @@ fn style_field_label_wide(ss: &mut StyleBuilder) {
 /// Label for editable struct field in an inspector.
 pub struct FieldLabelWide {
     /// The content of the label.
-    pub field: InspectableField,
+    pub field: Inspectable,
     /// Name to display.
     pub name: Option<ViewRef>,
     /// Additional buttons in the label.
@@ -74,7 +74,7 @@ pub struct FieldLabelWide {
 
 impl FieldLabelWide {
     /// Create a new field label.
-    pub fn new(field: InspectableField) -> Self {
+    pub fn new(field: Inspectable) -> Self {
         Self {
             field,
             name: None,

@@ -27,11 +27,11 @@ use crate::{
         color_edit::{ColorEdit, ColorEditState, ColorMode},
         field_label::FieldLabel,
     },
-    InspectableField,
+    Inspectable,
 };
 
 pub struct FieldEditSrgba {
-    pub(crate) field: InspectableField,
+    pub(crate) field: Inspectable,
 }
 
 impl ViewTemplate for FieldEditSrgba {
