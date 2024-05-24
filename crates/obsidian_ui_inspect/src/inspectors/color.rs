@@ -13,7 +13,8 @@ use obsidian_ui::{
 fn style_field(ss: &mut StyleBuilder) {
     ss.flex_direction(ui::FlexDirection::Row)
         .align_items(ui::AlignItems::Center)
-        .justify_content(ui::JustifyContent::FlexStart);
+        .justify_content(ui::JustifyContent::FlexStart)
+        .color(colors::FOREGROUND);
 }
 
 fn style_swatch(ss: &mut StyleBuilder) {

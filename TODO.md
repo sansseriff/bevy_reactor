@@ -1,13 +1,14 @@
 # TODO
 
 - Checkbox bug in inspector
-- Spinners overflowing margins.
+- Inspector text colors are inconsistent
 - Menus:
   - Restore Focus
   - Shortcuts
   - Checkmarks and checkmark spacing
 - Property Editor.
-  - Nested structs
+  - Nested tuples
+  - Top level tuples
   - Top level newtype structs
   - Top level lists
   - Spinbox click to edit text

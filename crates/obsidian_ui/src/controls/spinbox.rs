@@ -50,7 +50,8 @@ fn style_spinbox_label(ss: &mut StyleBuilder) {
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
         .overflow(ui::OverflowAxis::Hidden)
-        .padding((3, 0));
+        .padding((3, 0))
+        .color(colors::FOREGROUND);
 }
 
 fn style_spinbox_button(ss: &mut StyleBuilder) {

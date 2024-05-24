@@ -203,14 +203,8 @@ fn style_list_items(ss: &mut StyleBuilder) {
         .grid_column_span(2)
         .min_width(64)
         .color(colors::DIM)
-        // .border(1)
-        // .border_color(colors::X_RED)
         .margin_left(16);
 }
-
-// fn style_item_index(ss: &mut StyleBuilder) {
-//     ss.justify_content(ui::JustifyContent::FlexEnd);
-// }
 
 fn style_empty_list(ss: &mut StyleBuilder) {
     ss.color(colors::DIM);

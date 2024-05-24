@@ -67,9 +67,7 @@ impl ViewTemplate for NestedStruct {
                     move || {
                         Element::<NodeBundle>::new()
                             .style(style_field_list)
-                            .children(StructFieldList {
-                                target: field.clone(),
-                            })
+                            .children(StructFieldList(field.clone()))
                     }
                 },
                 || (),
@@ -78,14 +76,12 @@ impl ViewTemplate for NestedStruct {
     }
 }
 
-pub struct StructFieldList {
-    pub target: Arc<Inspectable>,
-}
+pub struct StructFieldList(pub Arc<Inspectable>);
 
 impl ViewTemplate for StructFieldList {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let target = self.target.clone();
-        let reflect = self.target.reflect(cx).unwrap();
+        let target = self.0.clone();
+        let reflect = self.0.reflect(cx).unwrap();
         let info = reflect.get_represented_type_info().unwrap();
 
         // Get the memoized field names of the struct, minus missing optionals. This should
@@ -118,7 +114,7 @@ impl ViewTemplate for StructFieldList {
             }
             names
         });
-        let target = self.target.clone();
+        let target = self.0.clone();
         For::each(
             move |cx| field_names.get_clone(cx).into_iter(),
             move |name| {

@@ -79,7 +79,8 @@ fn style_label(ss: &mut StyleBuilder) {
         .height(ui::Val::Percent(100.))
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
-        .padding((6, 0));
+        .padding((6, 0))
+        .color(colors::FOREGROUND);
 }
 
 fn style_label_spacer(ss: &mut StyleBuilder) {

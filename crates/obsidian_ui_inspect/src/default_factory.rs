@@ -4,7 +4,7 @@ use crate::{
     inspectors::{
         bool::BooleanFieldInspector, color::SrgbaFieldInspector, f32::F32FieldInspector,
         fallback::FallbackInspector, list::ListInspector, r#struct::NestedStruct,
-        vec3::Vec3FieldInspector,
+        tuple_struct::NestedTupleStruct, vec3::Vec3FieldInspector,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
     Inspectable, InspectorFactory,
@@ -25,15 +25,7 @@ impl InspectorFactory for DefaultInspectorFactory {
                 "glam::Vec3" => Some(Vec3FieldInspector(field.clone()).into_view()),
                 _ => Some(NestedStruct(field.clone()).into_view()),
             },
-            ReflectRef::TupleStruct(_) => Some(
-                Fragment::new((
-                    FieldLabel {
-                        field: field.clone(),
-                    },
-                    FieldReadonlyValue::new().children("TupleStruct:TODO"),
-                ))
-                .into_view(),
-            ),
+            ReflectRef::TupleStruct(_) => Some(NestedTupleStruct(field.clone()).into_view()),
             ReflectRef::Tuple(_) => Some(
                 Fragment::new((
                     FieldLabel {

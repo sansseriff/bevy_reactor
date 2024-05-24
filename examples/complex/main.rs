@@ -402,7 +402,7 @@ impl ViewTemplate for DemoUi {
                         }),
                         ResourcePropertyInspector::<TestStruct>::new(),
                         ResourcePropertyInspector::<TestStruct2>::new(),
-                        // ResourcePropertyInspector::<TestStruct3>::new(),
+                        ResourcePropertyInspector::<TestStruct3>::new(),
                         ReactionsTable,
                     )),
                 Splitter::new()

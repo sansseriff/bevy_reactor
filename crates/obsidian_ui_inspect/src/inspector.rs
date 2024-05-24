@@ -6,7 +6,10 @@ use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::Spacer;
 
 use crate::{
-    inspectors::r#struct::{StructFieldList, StructInspectorHeaderControls},
+    inspectors::{
+        r#struct::{StructFieldList, StructInspectorHeaderControls},
+        tuple_struct::TupleStructElements,
+    },
     templates::inspector_panel::InspectorPanel,
     Inspectable, InspectableRoot,
 };
@@ -28,10 +31,8 @@ impl Inspector {
         DynamicKeyed::new(
             move |cx| field_type.get(cx),
             move |ftype| match ftype {
-                ReflectKind::Struct => StructFieldList {
-                    target: inspectable.clone(),
-                },
-                ReflectKind::TupleStruct => todo!(),
+                ReflectKind::Struct => StructFieldList(inspectable.clone()).into_view(),
+                ReflectKind::TupleStruct => TupleStructElements(inspectable.clone()).into_view(),
                 ReflectKind::Tuple => todo!(),
                 ReflectKind::List => todo!(),
                 ReflectKind::Array => todo!(),
