@@ -30,11 +30,11 @@ use crate::{
     Inspectable,
 };
 
-pub struct FieldEditSrgba {
+pub struct SrgbaFieldInspector {
     pub(crate) field: Inspectable,
 }
 
-impl ViewTemplate for FieldEditSrgba {
+impl ViewTemplate for SrgbaFieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
         let value = cx.create_memo(move |cx| {

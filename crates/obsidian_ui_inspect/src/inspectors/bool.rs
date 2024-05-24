@@ -5,9 +5,9 @@ use obsidian_ui::controls::Checkbox;
 
 use crate::{templates::field_label::FieldLabel, Inspectable};
 
-pub struct FieldEditBool(pub(crate) Inspectable);
+pub struct BooleanFieldInspector(pub(crate) Inspectable);
 
-impl ViewTemplate for FieldEditBool {
+impl ViewTemplate for BooleanFieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let is_checked = cx.create_memo(move |cx| {

@@ -123,7 +123,6 @@ pub struct Inspectable {
     pub(crate) value_path: ParsedPath,
     /// If true, then the field can be removed from it's parent.
     pub(crate) can_remove: bool,
-
     /// Custom attributes for the field
     pub(crate) attributes: Option<&'static CustomAttributes>,
 }

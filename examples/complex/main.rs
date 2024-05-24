@@ -25,7 +25,7 @@ use obsidian_ui::{
     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 };
 use obsidian_ui_inspect::InspectorPlugin;
-use reflect_demo::{ResourcePropertyInspector, TestStruct};
+use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2};
 use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
@@ -166,6 +166,9 @@ fn main() {
         .insert_resource(TestStruct {
             unlit: Some(true),
             ..default()
+        })
+        .insert_resource(TestStruct2 {
+            nested: TestStruct::default(),
         })
         .insert_resource(PanelWidth(200.))
         .insert_resource(PanelHeight(300.))
@@ -397,6 +400,7 @@ impl ViewTemplate for DemoUi {
                             ..default()
                         }),
                         ResourcePropertyInspector::<TestStruct>::new(),
+                        ResourcePropertyInspector::<TestStruct2>::new(),
                         ReactionsTable,
                     )),
                 Splitter::new()

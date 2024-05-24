@@ -26,6 +26,11 @@ pub struct TestStruct {
     pub factors: Vec<f32>,
 }
 
+#[derive(Resource, Debug, Reflect, Clone, Default)]
+pub struct TestStruct2 {
+    pub nested: TestStruct,
+}
+
 pub struct ResourcePropertyInspector<T: Resource> {
     marker: std::marker::PhantomData<T>,
 }

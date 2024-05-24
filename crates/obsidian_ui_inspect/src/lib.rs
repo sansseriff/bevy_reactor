@@ -1,9 +1,9 @@
 mod attributes;
 mod default_factory;
-mod editors;
 mod inspectable;
 mod inspector;
 mod inspector_factory;
+mod inspectors;
 mod templates;
 
 use bevy::app::{App, Plugin};

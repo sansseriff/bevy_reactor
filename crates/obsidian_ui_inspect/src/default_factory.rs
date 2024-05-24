@@ -1,7 +1,7 @@
 use crate::{
-    editors::{
-        bool::FieldEditBool, color::FieldEditSrgba, f32::FieldEditF32, fallback::FieldEditFallback,
-        list::FieldEditList, vec3::FieldEditVec3,
+    inspectors::{
+        bool::BooleanFieldInspector, color::SrgbaFieldInspector, f32::F32FieldInspector,
+        fallback::FieldEditFallback, list::FieldEditList, vec3::Vec3FieldInspector,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
     Inspectable, InspectorFactory,
@@ -20,13 +20,13 @@ impl InspectorFactory for DefaultInspectorFactory {
             ReflectRef::Struct(s) => {
                 match s.reflect_type_path() {
                     "bevy_color::srgba::Srgba" => Some(
-                        FieldEditSrgba {
+                        SrgbaFieldInspector {
                             field: field.clone(),
                         }
                         .into_view(),
                     ),
 
-                    "glam::Vec3" => Some(FieldEditVec3(field.clone()).into_view()),
+                    "glam::Vec3" => Some(Vec3FieldInspector(field.clone()).into_view()),
 
                     _ => Some(FieldEditFallback(field.clone()).into_view()),
                 }
@@ -105,8 +105,8 @@ impl InspectorFactory for DefaultInspectorFactory {
                 .into_view(),
             ),
             ReflectRef::Value(v) => match v.reflect_type_path() {
-                "bool" => Some(FieldEditBool(field.clone()).into_view()),
-                "f32" => Some(FieldEditF32(field.clone()).into_view()),
+                "bool" => Some(BooleanFieldInspector(field.clone()).into_view()),
+                "f32" => Some(F32FieldInspector(field.clone()).into_view()),
 
                 _ => Some(FieldEditFallback(field.clone()).into_view()),
             },

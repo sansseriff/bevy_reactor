@@ -1,13 +1,13 @@
 # TODO
 
-- Refactor Inspectable / InspectableField
-  - First handle nested structs.
 - Menus:
   - Restore Focus
   - Shortcuts
   - Checkmarks and checkmark spacing
 - Property Editor.
   - Nested structs
+  - Top level newtype structs
+  - Top level lists
   - Spinbox click to edit text
   - Slider click to edit text
 - Too many public members in TrackingScope. This happened because of the need to
@@ -42,14 +42,8 @@
 - line should appear above when dragging, and have rounded ends.
   - gesture
 
-# StyleBuilder
-
-- cursors
-
 # Obsidian
 
-- DisclosureTriangle - with transition
-- Menu
 - Focus Outlines (improve appearance)
 - Graph editor.
 
@@ -66,8 +60,6 @@
 
 # Sticking Points
 
-- Figure out how to decouple Views from generic reactions. This would allow the low-level signal
-  code to live in a separate crate.
 - Currently For::each() requires cloning the iterator, but it shouldn't need to since only the
   closure is long-lived, not the iterator itself. Is there some way I can use Rust lifetimes to
   reduce the amount of cloning?

@@ -14,9 +14,9 @@ struct F32Attrs {
     step: f32,
 }
 
-pub struct FieldEditF32(pub(crate) Inspectable);
+pub struct F32FieldInspector(pub(crate) Inspectable);
 
-impl ViewTemplate for FieldEditF32 {
+impl ViewTemplate for F32FieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let value = cx.create_memo(move |cx| match field.reflect(cx) {

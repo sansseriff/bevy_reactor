@@ -6,7 +6,7 @@ use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::Spacer;
 
 use crate::{
-    editors::r#struct::{AddFieldsButton, StructContentInspector},
+    inspectors::r#struct::{AddFieldsButton, StructContentInspector},
     templates::inspector_panel::InspectorPanel,
     Inspectable, InspectableRoot,
 };

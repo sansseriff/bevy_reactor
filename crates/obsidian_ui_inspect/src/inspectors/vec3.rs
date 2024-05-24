@@ -9,7 +9,7 @@ use obsidian_ui::controls::SpinBox;
 
 use crate::{templates::field_label::FieldLabel, Inspectable, Precision, Step};
 
-pub struct FieldEditVec3(pub(crate) Inspectable);
+pub struct Vec3FieldInspector(pub(crate) Inspectable);
 
 #[derive(Clone, Debug)]
 struct Vec3Attrs {
@@ -29,7 +29,7 @@ fn style_spinbox(ss: &mut StyleBuilder) {
     ss.flex_grow(1.);
 }
 
-impl ViewTemplate for FieldEditVec3 {
+impl ViewTemplate for Vec3FieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let value = cx.create_memo(move |cx| match field.reflect(cx) {
