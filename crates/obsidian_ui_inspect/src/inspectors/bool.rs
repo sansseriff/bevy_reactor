@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
@@ -5,7 +7,7 @@ use obsidian_ui::controls::Checkbox;
 
 use crate::{templates::field_label::FieldLabel, Inspectable};
 
-pub struct BooleanFieldInspector(pub(crate) Inspectable);
+pub struct BooleanFieldInspector(pub(crate) Arc<Inspectable>);
 
 impl ViewTemplate for BooleanFieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {

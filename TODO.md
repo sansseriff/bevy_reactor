@@ -1,5 +1,7 @@
 # TODO
 
+- Checkbox bug in inspector
+- Spinners overflowing margins.
 - Menus:
   - Restore Focus
   - Shortcuts

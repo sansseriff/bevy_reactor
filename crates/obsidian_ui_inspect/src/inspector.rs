@@ -6,7 +6,7 @@ use bevy_reactor_signals::{Cx, RunContextSetup};
 use obsidian_ui::controls::Spacer;
 
 use crate::{
-    inspectors::r#struct::{AddFieldsButton, StructContentInspector},
+    inspectors::r#struct::{StructFieldList, StructInspectorHeaderControls},
     templates::inspector_panel::InspectorPanel,
     Inspectable, InspectableRoot,
 };
@@ -28,10 +28,16 @@ impl Inspector {
         DynamicKeyed::new(
             move |cx| field_type.get(cx),
             move |ftype| match ftype {
-                ReflectKind::Struct => StructContentInspector {
+                ReflectKind::Struct => StructFieldList {
                     target: inspectable.clone(),
                 },
-                _ => todo!(),
+                ReflectKind::TupleStruct => todo!(),
+                ReflectKind::Tuple => todo!(),
+                ReflectKind::List => todo!(),
+                ReflectKind::Array => todo!(),
+                ReflectKind::Map => todo!(),
+                ReflectKind::Enum => todo!(),
+                ReflectKind::Value => todo!(),
             },
         )
         .into_view()
@@ -53,11 +59,11 @@ impl ViewTemplate for Inspector {
             .title((
                 self.target.name(cx),
                 Spacer,
-                AddFieldsButton {
+                StructInspectorHeaderControls {
                     target: inspectable.clone(),
                 },
             ))
-            .body(self.create_fields(cx, inspectable.clone()))
+            .body(self.create_fields(cx, inspectable))
             .expanded(true)
     }
 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
@@ -9,7 +11,7 @@ use crate::Inspectable;
 pub trait InspectorFactory: Sync + Send {
     /// Examine the reflect data and decide what kind of widget to create to edit the
     /// data. Can return false if the data is not in a supported format.
-    fn create_inspector(&self, reflect: &Cx, field: &Inspectable) -> Option<ViewRef>;
+    fn create_inspector(&self, reflect: &Cx, field: Arc<Inspectable>) -> Option<ViewRef>;
 }
 
 #[derive(Resource, Default)]

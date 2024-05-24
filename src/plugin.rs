@@ -51,6 +51,11 @@ pub fn run_view_reactions(world: &mut World) {
     }
 
     for scope_entity in changed.iter() {
+        // It's possible that an earlier reaction or cleanup deleted the entity.
+        if world.get_entity(*scope_entity).is_none() {
+            continue;
+        }
+
         // Call registered cleanup functions
         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
         let mut cleanups = std::mem::take(&mut scope.cleanups);

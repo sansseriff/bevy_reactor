@@ -22,7 +22,7 @@ struct DragState {
 }
 
 fn style_spinbox(ss: &mut StyleBuilder) {
-    ss.min_width(32)
+    ss.min_width(24)
         .height(20)
         .background_color(colors::U1)
         .border_radius(5);
@@ -49,6 +49,7 @@ fn style_spinbox_label(ss: &mut StyleBuilder) {
         .height(ui::Val::Percent(100.))
         .font("obsidian_ui://fonts/Open_Sans/static/OpenSans-Medium.ttf")
         .font_size(16)
+        .overflow(ui::OverflowAxis::Hidden)
         .padding((3, 0));
 }
 

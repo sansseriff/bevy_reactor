@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{
     math::Vec3,
     reflect::Reflect,
@@ -9,7 +11,7 @@ use obsidian_ui::controls::SpinBox;
 
 use crate::{templates::field_label::FieldLabel, Inspectable, Precision, Step};
 
-pub struct Vec3FieldInspector(pub(crate) Inspectable);
+pub struct Vec3FieldInspector(pub(crate) Arc<Inspectable>);
 
 #[derive(Clone, Debug)]
 struct Vec3Attrs {

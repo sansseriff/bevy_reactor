@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{ops::Range, sync::Arc};
 
 use bevy::reflect::Reflect;
 use bevy_reactor::*;
@@ -14,7 +14,7 @@ struct F32Attrs {
     step: f32,
 }
 
-pub struct F32FieldInspector(pub(crate) Inspectable);
+pub struct F32FieldInspector(pub(crate) Arc<Inspectable>);
 
 impl ViewTemplate for F32FieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {

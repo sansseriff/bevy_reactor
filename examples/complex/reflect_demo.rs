@@ -31,6 +31,9 @@ pub struct TestStruct2 {
     pub nested: TestStruct,
 }
 
+#[derive(Resource, Debug, Reflect, Clone, Default)]
+pub struct TestStruct3(pub bool);
+
 pub struct ResourcePropertyInspector<T: Resource> {
     marker: std::marker::PhantomData<T>,
 }

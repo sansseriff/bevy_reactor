@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{prelude::*, ui};
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
@@ -30,13 +32,11 @@ use crate::{
     Inspectable,
 };
 
-pub struct SrgbaFieldInspector {
-    pub(crate) field: Inspectable,
-}
+pub struct SrgbaFieldInspector(pub(crate) Arc<Inspectable>);
 
 impl ViewTemplate for SrgbaFieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let field = self.field.clone();
+        let field = self.0.clone();
         let value = cx.create_memo(move |cx| {
             if let Some(value) = field.reflect(cx) {
                 if value.is::<Srgba>() {
@@ -52,7 +52,7 @@ impl ViewTemplate for SrgbaFieldInspector {
             hsl: Hsla::default(),
         });
 
-        let field = self.field.clone();
+        let field = self.0.clone();
         cx.create_effect(move |cx| {
             let next_state = state.get(cx);
             if let Some(reflect) = field.reflect(cx) {
@@ -65,7 +65,7 @@ impl ViewTemplate for SrgbaFieldInspector {
 
         Fragment::new((
             FieldLabel {
-                field: self.field.clone(),
+                field: self.0.clone(),
             },
             Element::<NodeBundle>::new().style(style_field).children((
                 Swatch::new(value).style(style_swatch),

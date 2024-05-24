@@ -201,7 +201,7 @@ impl ViewTemplate for DisclosureToggle {
                         Size::Xxxs => Vec2::splat(11.),
                     })
                     .style(|ss: &mut StyleBuilder| {
-                        ss.margin((4, 0));
+                        ss.margin_right(2);
                     }),
             )
     }

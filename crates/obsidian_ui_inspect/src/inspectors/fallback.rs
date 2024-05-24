@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
 
@@ -7,23 +9,14 @@ use crate::{
 };
 
 /// Field editor for when no specific editor is available.
-pub struct FieldEditFallback(pub(crate) Inspectable);
+pub struct FallbackInspector(pub(crate) Arc<Inspectable>);
 
-impl ViewTemplate for FieldEditFallback {
+impl ViewTemplate for FallbackInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let Some(reflect) = field.reflect(cx) else {
             return ().into_view();
         };
-        // let is_checked = cx.create_derived(move |cx| {
-        //     let value = field.get_value(cx);
-        //     if value.is::<bool>() {
-        //         return *value.downcast_ref::<bool>().unwrap();
-        //     }
-        //     false
-        // });
-
-        // let field = self.field.clone();
         Fragment::new((
             FieldLabel {
                 field: self.0.clone(),

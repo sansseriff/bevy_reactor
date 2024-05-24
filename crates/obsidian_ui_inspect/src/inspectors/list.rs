@@ -6,7 +6,7 @@ use bevy::{
     ui,
 };
 use bevy_reactor::*;
-use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
+use bevy_reactor_signals::{Cx, Mutable, RunContextRead, RunContextSetup, Signal};
 use obsidian_ui::{
     colors,
     controls::{DisclosureToggle, IconButton},
@@ -15,9 +15,9 @@ use obsidian_ui::{
 
 use crate::{templates::field_label::FieldLabelWide, Inspectable, InspectorFactoryRegistry};
 
-pub struct FieldEditList(pub(crate) Inspectable);
+pub struct ListInspector(pub(crate) Arc<Inspectable>);
 
-impl ViewTemplate for FieldEditList {
+impl ViewTemplate for ListInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let expanded = cx.create_mutable(false);
@@ -32,9 +32,55 @@ impl ViewTemplate for FieldEditList {
             0
         });
 
+        let field = self.0.clone();
+        Fragment::new((
+            FieldLabelWide::new(field.clone())
+                .name(Fragment::new((
+                    DisclosureToggle::new()
+                        .size(Size::Xs)
+                        .expanded(expanded)
+                        .on_change(cx.create_callback(move |cx, value: bool| {
+                            expanded.set(cx, value);
+                        })),
+                    TextComputed::new(move |cx| {
+                        let length = length.get(cx);
+                        format!("{} ({})", field.name.clone(), length)
+                    }),
+                )))
+                .buttons(ListInspectorHeaderControls {
+                    field: self.0.clone(),
+                    length,
+                    expanded,
+                }),
+            Cond::new(
+                expanded.signal(),
+                {
+                    let field = self.0.clone();
+                    move || ListElementsInspector {
+                        field: field.clone(),
+                        length,
+                    }
+                },
+                || (),
+            ),
+        ))
+    }
+}
+
+struct ListInspectorHeaderControls {
+    field: Arc<Inspectable>,
+    length: Signal<usize>,
+    expanded: Mutable<bool>,
+}
+
+impl ViewTemplate for ListInspectorHeaderControls {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
+        let length = self.length;
+        let expanded = self.expanded;
+
         let pop_disabled = cx.create_derived(move |cx| length.get(cx) == 0);
 
-        let field = self.0.clone();
+        let field = self.field.clone();
         let push = cx.create_callback(move |cx, _| {
             if let Some(list) = field.reflect(cx) {
                 if let TypeInfo::List(list_type) = list.get_represented_type_info().unwrap() {
@@ -58,7 +104,7 @@ impl ViewTemplate for FieldEditList {
             }
         });
 
-        let field = self.0.clone();
+        let field = self.field.clone();
         let pop = cx.create_callback(move |cx, _| {
             field.update(cx, &|reflect| {
                 if let ReflectMut::List(list) = reflect.reflect_mut() {
@@ -71,53 +117,26 @@ impl ViewTemplate for FieldEditList {
             })
         });
 
-        let field = self.0.clone();
         Fragment::new((
-            FieldLabelWide::new(field.clone())
-                .name(Fragment::new((
-                    DisclosureToggle::new()
-                        .size(Size::Xs)
-                        .expanded(expanded)
-                        .on_change(cx.create_callback(move |cx, value: bool| {
-                            expanded.set(cx, value);
-                        })),
-                    TextComputed::new(move |cx| {
-                        let length = length.get(cx);
-                        format!("{} ({})", field.name.clone(), length)
-                    }),
-                )))
-                .buttons(Fragment::new((
-                    IconButton::new("obsidian_ui://icons/remove.png")
-                        .size(Size::Xs)
-                        .disabled(pop_disabled)
-                        .minimal(true)
-                        .on_click(pop),
-                    IconButton::new("obsidian_ui://icons/add.png")
-                        .size(Size::Xs)
-                        .minimal(true)
-                        .on_click(push),
-                ))),
-            Cond::new(
-                expanded.signal(),
-                {
-                    let field = self.0.clone();
-                    move || ListContentInspector {
-                        field: field.clone(),
-                        length,
-                    }
-                },
-                || (),
-            ),
+            IconButton::new("obsidian_ui://icons/remove.png")
+                .size(Size::Xs)
+                .disabled(pop_disabled)
+                .minimal(true)
+                .on_click(pop),
+            IconButton::new("obsidian_ui://icons/add.png")
+                .size(Size::Xs)
+                .minimal(true)
+                .on_click(push),
         ))
     }
 }
 
-struct ListContentInspector {
-    field: Inspectable,
+struct ListElementsInspector {
+    field: Arc<Inspectable>,
     length: Signal<usize>,
 }
 
-impl ViewTemplate for ListContentInspector {
+impl ViewTemplate for ListElementsInspector {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
         let length = self.length;
@@ -159,9 +178,8 @@ struct ListItemInspector {
 impl ViewTemplate for ListItemInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let factories = cx.use_resource::<InspectorFactoryRegistry>();
-        let field = self.field.clone();
         for factory in factories.0.iter().rev() {
-            if let Some(view_ref) = factory.create_inspector(cx, &field) {
+            if let Some(view_ref) = factory.create_inspector(cx, self.field.clone()) {
                 return view_ref;
             }
         }

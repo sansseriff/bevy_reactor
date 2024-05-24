@@ -4,26 +4,85 @@ use bevy::{
     color::Color,
     ecs::reflect::AppTypeRegistry,
     reflect::{
-        std_traits::ReflectDefault, DynamicEnum, DynamicTuple, OffsetAccess, ParsedPath,
-        ReflectKind, ReflectRef, TypeInfo, VariantInfo,
+        std_traits::ReflectDefault, DynamicEnum, DynamicTuple, OffsetAccess, ReflectKind,
+        ReflectRef, TypeInfo, VariantInfo,
     },
+    ui::{self, node_bundles::NodeBundle},
 };
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup};
 use obsidian_ui::{
     colors,
-    controls::{Icon, MenuButton, MenuItem, MenuPopup},
+    controls::{DisclosureToggle, Icon, MenuButton, MenuItem, MenuPopup},
     floating::FloatAlign,
     size::Size,
 };
 
-use crate::{Inspectable, InspectorFactoryRegistry};
+use crate::{templates::field_label::FieldLabelWide, Inspectable, InspectorFactoryRegistry};
 
-pub struct StructContentInspector {
+pub struct NestedStruct(pub(crate) Arc<Inspectable>);
+
+fn style_field_list(ss: &mut StyleBuilder) {
+    ss.display(ui::Display::Grid)
+        .grid_auto_flow(ui::GridAutoFlow::Row)
+        .grid_template_columns(vec![
+            ui::RepeatedGridTrack::auto(1),
+            ui::RepeatedGridTrack::flex(1, 1.),
+        ])
+        .column_gap(4)
+        .row_gap(2)
+        .align_items(ui::AlignItems::Stretch)
+        .grid_column_span(2)
+        .min_width(64)
+        .color(colors::DIM)
+        .margin_left(16)
+        .margin_top(4)
+        .margin_bottom(4);
+}
+
+impl ViewTemplate for NestedStruct {
+    fn create(&self, cx: &mut Cx) -> impl IntoView {
+        let field = self.0.clone();
+        let expanded = cx.create_mutable(false);
+
+        Fragment::new((
+            FieldLabelWide::new(field.clone())
+                .name(Fragment::new((
+                    DisclosureToggle::new()
+                        .size(Size::Xs)
+                        .expanded(expanded)
+                        .on_change(cx.create_callback(move |cx, value: bool| {
+                            expanded.set(cx, value);
+                        })),
+                    field.name.clone(),
+                )))
+                .buttons(StructInspectorHeaderControls {
+                    target: self.0.clone(),
+                    // expanded,
+                }),
+            Cond::new(
+                expanded.signal(),
+                {
+                    let field = self.0.clone();
+                    move || {
+                        Element::<NodeBundle>::new()
+                            .style(style_field_list)
+                            .children(StructFieldList {
+                                target: field.clone(),
+                            })
+                    }
+                },
+                || (),
+            ),
+        ))
+    }
+}
+
+pub struct StructFieldList {
     pub target: Arc<Inspectable>,
 }
 
-impl ViewTemplate for StructContentInspector {
+impl ViewTemplate for StructFieldList {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let target = self.target.clone();
         let reflect = self.target.reflect(cx).unwrap();
@@ -63,7 +122,11 @@ impl ViewTemplate for StructContentInspector {
         For::each(
             move |cx| field_names.get_clone(cx).into_iter(),
             move |name| {
-                let path = ParsedPath::parse(name).unwrap();
+                let mut path = target.field_path.clone();
+                path.0.push(OffsetAccess {
+                    access: bevy::reflect::Access::Field(name.clone().into()),
+                    offset: None,
+                });
                 let TypeInfo::Struct(st_info) = info else {
                     panic!("Expected StructInfo");
                 };
@@ -121,14 +184,14 @@ impl ViewTemplate for NamedFieldInspector {
                     attributes: field.attributes,
                 });
                 for factory in factories.0.iter().rev() {
-                    if let Some(view_ref) = factory.create_inspector(cx, &access) {
+                    if let Some(view_ref) = factory.create_inspector(cx, access.clone()) {
                         return view_ref;
                     }
                 }
             }
         } else {
             for factory in factories.0.iter().rev() {
-                if let Some(view_ref) = factory.create_inspector(cx, &field) {
+                if let Some(view_ref) = factory.create_inspector(cx, field.clone()) {
                     return view_ref;
                 }
             }
@@ -140,13 +203,14 @@ impl ViewTemplate for NamedFieldInspector {
     }
 }
 
-pub struct AddFieldsButton {
+pub struct StructInspectorHeaderControls {
     pub target: Arc<Inspectable>,
 }
 
-impl ViewTemplate for AddFieldsButton {
+impl ViewTemplate for StructInspectorHeaderControls {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let target = self.target.clone();
+        let base_path = target.field_path.clone();
         Dynamic::new(move |cx| match target.reflect(cx).unwrap().reflect_ref() {
             ReflectRef::Struct(st) => {
                 let num_fields = st.field_len();
@@ -180,18 +244,21 @@ impl ViewTemplate for AddFieldsButton {
                             let some_default =
                                 registry_lock.get_type_data::<ReflectDefault>(some_type_id);
                             if some_default.is_some() {
+                                let mut path = base_path.clone();
+                                path.0.push(OffsetAccess {
+                                    access: bevy::reflect::Access::Field(name.to_string().into()),
+                                    offset: None,
+                                });
                                 items.push(
                                     AddStructFieldItem {
                                         field: Arc::new(Inspectable {
                                             root: target.root.clone(),
                                             name: name.to_string(),
-                                            value_path: ParsedPath::parse(name).unwrap(),
-                                            field_path: ParsedPath::parse(name).unwrap(),
+                                            value_path: path.clone(),
+                                            field_path: path,
                                             can_remove: false,
                                             attributes: None,
                                         }),
-                                        // path: ParsedPath::parse(name).unwrap(),
-                                        // name: name.to_string(),
                                     }
                                     .into_view(),
                                 );
@@ -200,12 +267,7 @@ impl ViewTemplate for AddFieldsButton {
                                     "Can't find ReflectDefault for: {:?}",
                                     some_type.type_path()
                                 );
-                                // println!("Some default: {:?}", some_default.unwrap().default());
                             }
-
-                            // let field_type = enum_ref.variant_type();
-                            // let some_type = field_type.type_id();
-                            // let ft = field_type.type_id();
                         }
                     }
                 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{prelude::*, ui};
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, RunContextSetup};
@@ -16,13 +18,14 @@ fn style_field_label(ss: &mut StyleBuilder) {
         .align_items(ui::AlignItems::Center)
         .justify_content(ui::JustifyContent::FlexStart)
         .font_size(16)
-        .color(colors::DIM);
+        .color(colors::DIM)
+        .padding_left(16);
 }
 
 /// Label for editable struct field in an inspector.
 pub struct FieldLabel {
     /// The content of the label.
-    pub field: Inspectable,
+    pub field: Arc<Inspectable>,
 }
 
 impl ViewTemplate for FieldLabel {
@@ -65,7 +68,7 @@ fn style_field_label_wide(ss: &mut StyleBuilder) {
 /// Label for editable struct field in an inspector.
 pub struct FieldLabelWide {
     /// The content of the label.
-    pub field: Inspectable,
+    pub field: Arc<Inspectable>,
     /// Name to display.
     pub name: Option<ViewRef>,
     /// Additional buttons in the label.
@@ -74,7 +77,7 @@ pub struct FieldLabelWide {
 
 impl FieldLabelWide {
     /// Create a new field label.
-    pub fn new(field: Inspectable) -> Self {
+    pub fn new(field: Arc<Inspectable>) -> Self {
         Self {
             field,
             name: None,
@@ -105,9 +108,7 @@ impl ViewTemplate for FieldLabelWide {
         Element::<NodeBundle>::new()
             .style((typography::text_default, style_field_label_wide))
             .children((
-                // TODO: Disclosure
                 self.name.clone(),
-                // Optional item count
                 Spacer,
                 self.buttons.clone(),
                 Cond::new(
