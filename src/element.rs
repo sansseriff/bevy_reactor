@@ -83,7 +83,11 @@ impl<B: Bundle + Default> Element<B> {
     /// Attach the children to the node. Note that each child view may produce multiple nodes,
     /// or none.
     fn attach_children(&self, world: &mut World) {
-        let flat = self.child_entities();
+        let flat: Vec<Entity> = self
+            .child_entities()
+            .into_iter()
+            .filter(|e| world.get_entity(*e).is_some())
+            .collect();
         world
             .entity_mut(self.display.unwrap())
             .replace_children(&flat);

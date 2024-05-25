@@ -33,9 +33,9 @@ use crate::{
     Inspectable,
 };
 
-pub struct SrgbaFieldInspector(pub(crate) Arc<Inspectable>);
+pub struct SrgbaInspector(pub(crate) Arc<Inspectable>);
 
-impl ViewTemplate for SrgbaFieldInspector {
+impl ViewTemplate for SrgbaInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let field = self.0.clone();
         let value = cx.create_memo(move |cx| {

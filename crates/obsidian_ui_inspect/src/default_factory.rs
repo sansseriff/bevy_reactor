@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use crate::{
     inspectors::{
-        bool::BooleanFieldInspector, color::SrgbaFieldInspector, f32::F32FieldInspector,
-        fallback::FallbackInspector, list::ListInspector, r#struct::NestedStruct,
-        tuple_struct::NestedTupleStruct, vec3::Vec3FieldInspector,
+        bool::BooleanFieldInspector, color::SrgbaInspector, f32::F32FieldInspector,
+        fallback::FallbackInspector, list::ListInspector, r#enum::EnumInspector,
+        r#struct::NestedStruct, tuple_struct::NestedTupleStruct, vec3::Vec3FieldInspector,
     },
     templates::{field_label::FieldLabel, field_readonly_value::FieldReadonlyValue},
     Inspectable, InspectorFactory,
@@ -21,7 +21,7 @@ impl InspectorFactory for DefaultInspectorFactory {
         let reflect = field.reflect(cx)?;
         match reflect.reflect_ref() {
             ReflectRef::Struct(s) => match s.reflect_type_path() {
-                "bevy_color::srgba::Srgba" => Some(SrgbaFieldInspector(field.clone()).into_view()),
+                "bevy_color::srgba::Srgba" => Some(SrgbaInspector(field.clone()).into_view()),
                 "glam::Vec3" => Some(Vec3FieldInspector(field.clone()).into_view()),
                 _ => Some(NestedStruct(field.clone()).into_view()),
             },
@@ -54,15 +54,7 @@ impl InspectorFactory for DefaultInspectorFactory {
                 ))
                 .into_view(),
             ),
-            ReflectRef::Enum(_) => Some(
-                Fragment::new((
-                    FieldLabel {
-                        field: field.clone(),
-                    },
-                    FieldReadonlyValue::new().children("Enum:TODO"),
-                ))
-                .into_view(),
-            ),
+            ReflectRef::Enum(_) => Some(EnumInspector(field.clone()).into_view()),
             ReflectRef::Value(v) => match v.reflect_type_path() {
                 "bool" => Some(BooleanFieldInspector(field.clone()).into_view()),
                 "f32" => Some(F32FieldInspector(field.clone()).into_view()),

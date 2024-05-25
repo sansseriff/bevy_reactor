@@ -193,6 +193,8 @@ impl ViewTemplate for MenuButton {
                     ss.min_height(size.height()).font_size(size.font_size());
                     if minimal {
                         ss.padding(0);
+                    } else {
+                        ss.padding_left(6).padding_right(0);
                     }
                 },
                 self.style.clone(),
@@ -418,13 +420,13 @@ impl ViewTemplate for MenuPopup {
                         FloatPosition {
                             side: self.side,
                             align: self.align,
-                            stretch: false,
+                            stretch: true,
                             gap: 2.0,
                         },
                         FloatPosition {
                             side: self.side.mirror(),
                             align: self.align,
-                            stretch: false,
+                            stretch: true,
                             gap: 2.0,
                         },
                     ],

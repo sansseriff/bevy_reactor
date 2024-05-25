@@ -5,6 +5,18 @@ use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
 use obsidian_ui_inspect::{InspectableResource, Inspector, Precision, ValueRange};
 
+#[derive(Debug, Reflect, Clone, Default)]
+pub enum TestEnum {
+    #[default]
+    Unit,
+    Float(f32),
+    Color(Srgba),
+    Struct {
+        position: Vec3,
+        color: Srgba,
+    },
+}
+
 #[derive(Resource, Debug, Reflect, Clone, Default)]
 pub struct TestStruct {
     pub selected: bool,
@@ -29,6 +41,7 @@ pub struct TestStruct {
 #[derive(Resource, Debug, Reflect, Clone, Default)]
 pub struct TestStruct2 {
     pub nested: TestStruct,
+    pub choice: TestEnum,
 }
 
 #[derive(Resource, Debug, Reflect, Clone, Default)]

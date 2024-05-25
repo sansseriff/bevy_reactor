@@ -1,7 +1,10 @@
 # TODO
 
 - Checkbox bug in inspector
-- Inspector text colors are inconsistent
+- Inspector: enums
+- Inspector: tuples
+- Button and Menu Button - make 'minimal' a variant? And 'transparent'?
+  - do we want 'minimal primary'?
 - Menus:
   - Restore Focus
   - Shortcuts

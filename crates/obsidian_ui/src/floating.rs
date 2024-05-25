@@ -207,11 +207,11 @@ pub(crate) fn position_floating(
             if best_position.stretch {
                 match best_position.side {
                     FloatSide::Top | FloatSide::Bottom => {
-                        style.width = ui::Val::Px(best_rect.width());
+                        style.min_width = ui::Val::Px(best_rect.width());
                     }
 
                     FloatSide::Left | FloatSide::Right => {
-                        style.height = ui::Val::Px(best_rect.height());
+                        style.min_height = ui::Val::Px(best_rect.height());
                     }
                 }
             }

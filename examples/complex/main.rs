@@ -169,6 +169,7 @@ fn main() {
         })
         .insert_resource(TestStruct2 {
             nested: TestStruct::default(),
+            ..default()
         })
         .insert_resource(TestStruct3(true))
         .insert_resource(PanelWidth(200.))

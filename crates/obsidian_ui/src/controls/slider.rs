@@ -56,10 +56,7 @@ fn style_button(ss: &mut StyleBuilder) {
 }
 
 fn style_button_icon(ss: &mut StyleBuilder) {
-    ss.height(16)
-        .max_width(12)
-        .flex_grow(0.1)
-        .pointer_events(false);
+    ss.height(16).width(12).flex_grow(0.1).pointer_events(false);
 }
 
 fn style_button_icon_left(ss: &mut StyleBuilder) {

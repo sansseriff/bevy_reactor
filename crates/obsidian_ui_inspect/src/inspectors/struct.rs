@@ -179,18 +179,12 @@ impl ViewTemplate for NamedFieldInspector {
                     can_remove: true,
                     attributes: field.attributes,
                 });
-                for factory in factories.0.iter().rev() {
-                    if let Some(view_ref) = factory.create_inspector(cx, access.clone()) {
-                        return view_ref;
-                    }
-                }
-            }
-        } else {
-            for factory in factories.0.iter().rev() {
-                if let Some(view_ref) = factory.create_inspector(cx, field.clone()) {
+                if let Some(view_ref) = factories.create_inspector(cx, access) {
                     return view_ref;
                 }
             }
+        } else if let Some(view_ref) = factories.create_inspector(cx, field) {
+            return view_ref;
         }
 
         // No inspector found, don't render anything. Note that default factory already
@@ -280,7 +274,7 @@ impl ViewTemplate for StructInspectorHeaderControls {
                                 .align(FloatAlign::End)
                                 .children(Fragment::from_slice(&items).into_view()),
                         )
-                        .size(Size::Xxs)
+                        .size(Size::Xs)
                         .minimal(true)
                         .into_view()
                 } else {

@@ -178,15 +178,10 @@ struct ListItemInspector {
 impl ViewTemplate for ListItemInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let factories = cx.use_resource::<InspectorFactoryRegistry>();
-        for factory in factories.0.iter().rev() {
-            if let Some(view_ref) = factory.create_inspector(cx, self.field.clone()) {
-                return view_ref;
-            }
-        }
-
-        // No inspector found, don't render anything. Note that default factory already
-        // has a fallback, so this should never be reached.
-        ().into_view()
+        // Either create an inspector for the field, or return an empty view.
+        factories
+            .create_inspector(cx, self.field.clone())
+            .unwrap_or_else(|| ().into_view())
     }
 }
 

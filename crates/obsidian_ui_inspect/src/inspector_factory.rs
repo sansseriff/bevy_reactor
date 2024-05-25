@@ -17,6 +17,17 @@ pub trait InspectorFactory: Sync + Send {
 #[derive(Resource, Default)]
 pub struct InspectorFactoryRegistry(pub Vec<Box<dyn InspectorFactory>>);
 
+impl InspectorFactoryRegistry {
+    pub fn create_inspector(&self, cx: &Cx, inspectable: Arc<Inspectable>) -> Option<ViewRef> {
+        for factory in self.0.iter() {
+            if let Some(view_ref) = factory.create_inspector(cx, inspectable.clone()) {
+                return Some(view_ref);
+            }
+        }
+        None
+    }
+}
+
 pub trait RegisterInspectorFactory {
     fn register_inspector<T: InspectorFactory + Default + 'static>(&mut self) -> &mut Self;
 }
