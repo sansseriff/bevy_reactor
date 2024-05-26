@@ -22,7 +22,7 @@ use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContext
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
 pub enum ButtonVariant {
-    /// The default apperance.
+    /// The default button apperance.
     #[default]
     Default,
 
@@ -182,6 +182,8 @@ impl ViewTemplate for Button {
                     ss.min_height(size.height()).font_size(size.font_size());
                     if minimal {
                         ss.padding(0);
+                    } else {
+                        ss.padding((size.font_size() * 0.75, 0));
                     }
                 },
                 self.style.clone(),
@@ -258,24 +260,15 @@ impl ViewTemplate for Button {
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .create_effect(move |cx, ent| {
-                        let is_pressed = pressed.get(cx);
-                        let is_hovering = hovering.get(cx);
-                        let base_color = match variant.get(cx) {
-                            ButtonVariant::Default => colors::U3,
-                            ButtonVariant::Primary => colors::PRIMARY,
-                            ButtonVariant::Danger => colors::DESTRUCTIVE,
-                            ButtonVariant::Selected => colors::U4,
-                        };
-                        let color = match (is_pressed, is_hovering) {
-                            (true, _) => base_color.lighter(0.05),
-                            (false, true) => base_color.lighter(0.02),
-                            (false, false) => {
-                                if minimal {
-                                    Srgba::NONE
-                                } else {
-                                    base_color
-                                }
-                            }
+                        let color = if minimal {
+                            colors::TRANSPARENT
+                        } else {
+                            button_bg_color(
+                                variant.get(cx),
+                                disabled.get(cx),
+                                pressed.get(cx),
+                                hovering.get(cx),
+                            )
                         };
                         let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                         bg.0 = color.into();
@@ -298,5 +291,25 @@ impl ViewTemplate for Button {
                     }),
                 self.children.clone(),
             ))
+    }
+}
+
+pub(crate) fn button_bg_color(
+    variant: ButtonVariant,
+    is_disabled: bool,
+    is_pressed: bool,
+    is_hovering: bool,
+) -> Srgba {
+    let base_color = match variant {
+        ButtonVariant::Default => colors::U3,
+        ButtonVariant::Primary => colors::PRIMARY,
+        ButtonVariant::Danger => colors::DESTRUCTIVE,
+        ButtonVariant::Selected => colors::U4,
+    };
+    match (is_disabled, is_pressed, is_hovering) {
+        (true, _, _) => base_color.with_alpha(0.2),
+        (_, true, _) => base_color.lighter(0.05),
+        (_, false, true) => base_color.lighter(0.02),
+        (_, false, false) => base_color,
     }
 }

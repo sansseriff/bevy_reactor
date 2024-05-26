@@ -25,37 +25,6 @@ impl<'a, 'w> StyleBuilder<'a, 'w> {
 
 // LineBreak(BreakLineOn),
 
-// fn scale_x(&mut self, scale: f32) -> &mut Self {
-//     self.props.push(StyleProp::ScaleX(scale));
-//     self
-// }
-
-// fn scale_y(&mut self, scale: f32) -> &mut Self {
-//     self.props.push(StyleProp::ScaleY(scale));
-//     self
-// }
-
-// fn scale(&mut self, scale: f32) -> &mut Self {
-//     self.props.push(StyleProp::Scale(scale));
-//     self
-// }
-
-// fn rotation(&mut self, rot: f32) -> &mut Self {
-//     self.props.push(StyleProp::Rotation(rot));
-//     self
-// }
-
-// fn translation(&mut self, trans: Vec3) -> &mut Self {
-//     self.props.push(StyleProp::Translation(trans));
-//     self
-// }
-
-// fn transition(&mut self, transition: &[Transition]) -> &mut Self {
-//     self.props
-//         .push(StyleProp::Transition(Vec::from(transition)));
-//     self
-// }
-
 /// Trait that represents a CSS color
 pub trait ColorParam {
     fn to_val(self) -> Option<Color>;

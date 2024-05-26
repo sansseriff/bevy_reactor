@@ -1,16 +1,16 @@
 # TODO
 
 - Checkbox bug in inspector
-- Inspector: enums
-- Inspector: tuples
-- Button and Menu Button - make 'minimal' a variant? And 'transparent'?
-  - do we want 'minimal primary'?
+  - caused by run reactions?
+- Idea: style effects.
 - Menus:
   - Restore Focus
   - Shortcuts
   - Checkmarks and checkmark spacing
 - Property Editor.
-  - Nested tuples
+  - Tuples (Nested)
+  - Map
+  - Array
   - Top level tuples
   - Top level newtype structs
   - Top level lists

@@ -19,7 +19,7 @@ use bevy_mod_picking::{events::PointerCancel, prelude::*};
 use bevy_reactor::*;
 use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
 
-use super::{style_button, style_button_bg, ButtonVariant, Icon, Spacer};
+use super::{button_bg_color, style_button, style_button_bg, ButtonVariant, Icon, Spacer};
 
 /// View context component which stores the anchor element id for a menu.
 #[derive(Component)]
@@ -248,25 +248,12 @@ impl ViewTemplate for MenuButton {
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .create_effect(move |cx, ent| {
-                        let is_pressed = open.get(cx);
-                        let is_hovering = hovering.get(cx);
-                        let base_color = match variant.get(cx) {
-                            ButtonVariant::Default => colors::U3,
-                            ButtonVariant::Primary => colors::PRIMARY,
-                            ButtonVariant::Danger => colors::DESTRUCTIVE,
-                            ButtonVariant::Selected => colors::U4,
-                        };
-                        let color = match (is_pressed, is_hovering) {
-                            (true, _) => base_color.lighter(0.05),
-                            (false, true) => base_color.lighter(0.02),
-                            (false, false) => {
-                                if minimal {
-                                    Srgba::NONE
-                                } else {
-                                    base_color
-                                }
-                            }
-                        };
+                        let color = button_bg_color(
+                            variant.get(cx),
+                            disabled.get(cx),
+                            open.get(cx),
+                            hovering.get(cx),
+                        );
                         let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
                         bg.0 = color.into();
                     })
