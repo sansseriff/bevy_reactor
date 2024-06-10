@@ -2,6 +2,7 @@
 name = "obsidian_ui_inspect"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 [dependencies]
 bevy = { workspace = true }
