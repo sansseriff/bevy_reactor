@@ -8,15 +8,15 @@ use bevy::{
 
 // mod transition;
 
-trait Lerp {
-    fn lerp(&self, other: Self, t: f32) -> Self;
-}
+// trait Lerp {
+//     fn lerp(&self, other: Self, t: f32) -> Self;
+// }
 
-impl Lerp for f32 {
-    fn lerp(&self, other: f32, t: f32) -> f32 {
-        self + (other - self) * t
-    }
-}
+// impl Lerp for f32 {
+//     fn lerp(&self, other: f32, t: f32) -> f32 {
+//         self + (other - self) * t
+//     }
+// }
 
 /// Trait that represents a property that can be animated, such as background color,
 /// transform, and so on.

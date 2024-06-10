@@ -138,10 +138,10 @@ pub trait RunContextSetup<'p> {
     /// Arguments:
     /// * `callback` - The callback function to invoke. This will be called with a single
     ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P: 'static, F: FnMut(&mut Cx, P)>(&mut self, callback: F) -> Callback<P>
-    where
-        F: Send + Sync + 'static,
-    {
+    fn create_callback_mut<P: 'static, F: Send + Sync + 'static + FnMut(&mut Cx, P)>(
+        &mut self,
+        callback: F,
+    ) -> Callback<P> {
         let owner = self.owner();
         let callback = self
             .world_mut()

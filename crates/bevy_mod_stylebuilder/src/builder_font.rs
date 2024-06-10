@@ -62,27 +62,27 @@ impl<'a, 'w> StyleBuilderFont for StyleBuilder<'a, 'w> {
 /// This will be applied to any text nodes that are children of the target entity, unless
 /// those nodes explicitly override the properties.
 #[derive(Component, Default, Clone, Debug)]
-pub(crate) struct InheritableFontStyles {
+pub struct InheritableFontStyles {
     /// Path to the font asset.
-    pub(crate) font: Option<Handle<Font>>,
+    pub font: Option<Handle<Font>>,
 
     /// Inherited size of the font.
-    pub(crate) font_size: Option<f32>,
+    pub font_size: Option<f32>,
 
     /// Inherited text color.
-    pub(crate) color: Option<Color>,
+    pub color: Option<Color>,
 }
 
 impl InheritableFontStyles {
     /// True if all text style properties are set.
-    pub(crate) fn is_final(&self) -> bool {
+    pub fn is_final(&self) -> bool {
         self.font.is_some() && self.font_size.is_some() && self.color.is_some()
     }
 
     /// Merge the properties from another `InheritableTextStyles` into this one.
-    pub(crate) fn merge(&mut self, other: &InheritableFontStyles) {
+    pub fn merge(&mut self, other: &InheritableFontStyles) {
         if other.font.is_some() && self.font.is_none() {
-            self.font = other.font.clone();
+            self.font.clone_from(&other.font);
         }
         if other.font_size.is_some() && self.font_size.is_none() {
             self.font_size = other.font_size;
@@ -96,4 +96,4 @@ impl InheritableFontStyles {
 /// A marker component that is used to indicate that the text element needs to recompute the
 /// inherited text styles.
 #[derive(Component)]
-pub(crate) struct TextStyleChanged;
+pub struct TextStyleChanged;

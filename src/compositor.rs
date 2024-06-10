@@ -7,11 +7,12 @@ use bevy::{
         },
     },
 };
+use bevy_mod_stylebuilder::StyleTuple;
 use bevy_reactor_signals::{DespawnScopes, TrackingScope};
 
 use crate::{
-    node_span::NodeSpan, style::ApplyStylesEffect, view::View, ChildView, ChildViewTuple,
-    DisplayNodeChanged, EffectTarget, EntityEffect, IntoView, StyleTuple, ViewRef, WithStyles,
+    node_span::NodeSpan, view::View, with_styles::ApplyStylesEffect, ChildView, ChildViewTuple,
+    DisplayNodeChanged, EffectTarget, EntityEffect, IntoView, ViewRef, WithStyles,
 };
 
 /// Marker component which indicates that the entity is a camera for the compositor.

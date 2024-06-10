@@ -6,5 +6,6 @@ edition = "2021"
 [dependencies]
 bevy = { workspace = true }
 bevy_reactor_signals = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
 obsidian_ui = { path = "../obsidian_ui" }
 bevy_reactor = { path = "../.." }

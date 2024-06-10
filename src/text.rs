@@ -1,12 +1,8 @@
 use bevy::prelude::*;
+use bevy_mod_stylebuilder::{InheritableFontStyles, TextStyleChanged};
 use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
 
-use crate::{
-    node_span::NodeSpan,
-    style::{InheritableFontStyles, TextStyleChanged},
-    view::View,
-    IntoView, ViewRef,
-};
+use crate::{node_span::NodeSpan, view::View, IntoView, ViewRef};
 
 /// A UI element that displays text
 pub struct TextStatic {

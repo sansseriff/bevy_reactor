@@ -1,4 +1,4 @@
-use bevy_reactor::{StyleBuilder, StyleBuilderFont};
+use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont};
 
 /// Default text style for UI.
 pub fn text_default(ss: &mut StyleBuilder) {

@@ -10,6 +10,7 @@ use bevy::{
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
+use bevy_mod_stylebuilder::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
 

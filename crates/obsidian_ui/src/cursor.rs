@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_picking::{focus::HoverMap, picking_core::Pickable, pointer::PointerId};
-use bevy_reactor::{AssetPathParam, StyleBuilder};
+use bevy_mod_stylebuilder::{AssetPathParam, StyleBuilder};
 
 /// A component which can be added to an entity to specify the cursor that should be used when
 /// the mouse is over the entity. Relies on bevy_mod_picking to determine which entity is being

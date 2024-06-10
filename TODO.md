@@ -2,7 +2,7 @@
 
 - Checkbox bug in inspector
   - caused by run reactions?
-- Idea: style effects.
+  - Need "run to convergence".
 - Menus:
   - Restore Focus
   - Shortcuts
@@ -25,11 +25,12 @@
 - Restore focus, focus-visible when dialog closes.
 - Clear focus when clicking on empty space.
 - Verify Razing / Despawning doesn't leak
-- use_element_rect hook - needed for popup menus
 - Composite buffers.
-- Don't execute dialog content if dialog not open.
+- Don't execute dialog content if dialog not open. (Maybe this already happens? Not sure.)
 - Can we make ForEach not require cloning the iterator?
 - Persist recent colors
+- Idea: dynamic style effects.
+  - Nice, but borrowing...
 - Text Input
   - drag to select (requires text measurement)
   - correct rendering of selection rects and cursor
