@@ -280,16 +280,6 @@ where
         self.attach_children(world);
     }
 
-    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        // Rebuild the overlay mesh.
-        let re = Rcx::new(world, view_entity, tracking);
-        let mut builder = SB::default();
-        (self.draw)(&re, &mut builder);
-        let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
-        let mesh = meshes.get_mut(self.mesh.id()).unwrap();
-        builder.build(mesh);
-    }
-
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         assert!(self.display.is_some());
         self.raze_children(world);
@@ -306,6 +296,21 @@ where
     fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {
         self.attach_children(world);
         true
+    }
+}
+
+impl<SB> Reaction for Overlay<SB>
+where
+    SB: MeshBuilder + Default,
+{
+    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        // Rebuild the overlay mesh.
+        let re = Rcx::new(world, view_entity, tracking);
+        let mut builder = SB::default();
+        (self.draw)(&re, &mut builder);
+        let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
+        let mesh = meshes.get_mut(self.mesh.id()).unwrap();
+        builder.build(mesh);
     }
 }
 

@@ -1,6 +1,6 @@
 use bevy::ecs::world::World;
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Rcx, Signal, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, Signal, TrackingScope};
 
 use crate::node_span::NodeSpan;
 use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
@@ -93,6 +93,20 @@ impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegF
         );
     }
 
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        match self.state {
+            CondState::True((ref mut true_state, entity)) => true_state.raze(entity, world),
+            CondState::False((ref mut false_state, entity)) => false_state.raze(entity, world),
+            CondState::Unset => {}
+        }
+        self.state = CondState::Unset;
+        world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegFn: Fn() -> Neg>
+    Reaction for Cond<Test, Pos, PosFn, Neg, NegFn>
+{
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, view_entity, tracking);
         let cond = self.test.test(&re);
@@ -120,16 +134,6 @@ impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegF
         };
 
         world.entity_mut(view_entity).insert(DisplayNodeChanged);
-    }
-
-    fn raze(&mut self, view_entity: Entity, world: &mut World) {
-        match self.state {
-            CondState::True((ref mut true_state, entity)) => true_state.raze(entity, world),
-            CondState::False((ref mut false_state, entity)) => false_state.raze(entity, world),
-            CondState::Unset => {}
-        }
-        self.state = CondState::Unset;
-        world.despawn_owned_recursive(view_entity);
     }
 }
 

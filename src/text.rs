@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::{InheritableFontStyles, TextStyleChanged};
-use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, TrackingScope};
 
 use crate::{node_span::NodeSpan, view::View, IntoView, ViewRef};
 
@@ -50,6 +50,10 @@ impl View for TextStatic {
         world.entity_mut(display).despawn();
         self.node = None;
     }
+}
+
+impl Reaction for TextStatic {
+    fn react(&mut self, _view_entity: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 }
 
 /// Creates a static text view.
@@ -107,6 +111,16 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
         world.entity_mut(view_entity).insert(tracking);
     }
 
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        let display = self.node.expect("Razing unbuilt TextComputed");
+        world.entity_mut(display).remove_parent();
+        world.entity_mut(display).despawn();
+        world.despawn_owned_recursive(view_entity);
+        self.node = None;
+    }
+}
+
+impl<F: FnMut(&Rcx) -> String> Reaction for TextComputed<F> {
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, view_entity, tracking);
         let text = (self.text)(&re);
@@ -116,14 +130,6 @@ impl<F: FnMut(&Rcx) -> String> View for TextComputed<F> {
             .unwrap()
             .sections[0]
             .value = text;
-    }
-
-    fn raze(&mut self, view_entity: Entity, world: &mut World) {
-        let display = self.node.expect("Razing unbuilt TextComputed");
-        world.entity_mut(display).remove_parent();
-        world.entity_mut(display).despawn();
-        world.despawn_owned_recursive(view_entity);
-        self.node = None;
     }
 }
 

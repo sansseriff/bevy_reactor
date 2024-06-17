@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Reaction, TrackingScope};
 
 use crate::{
     effect_target::{EffectTarget, EntityEffect},
@@ -179,6 +179,10 @@ impl<B: Bundle + Default> View for Element<B> {
         self.attach_children(world);
         true
     }
+}
+
+impl<B: Bundle + Default> Reaction for Element<B> {
+    fn react(&mut self, _owner: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 }
 
 impl<B: Bundle + Default> IntoView for Element<B> {

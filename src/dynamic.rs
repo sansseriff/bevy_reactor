@@ -1,7 +1,7 @@
 use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
-use bevy_reactor_signals::{Cx, DespawnScopes, TrackingScope};
+use bevy_reactor_signals::{Cx, DespawnScopes, Reaction, TrackingScope};
 
 use crate::{DisplayNodeChanged, ViewRef};
 use crate::{IntoView, View};
@@ -41,6 +41,16 @@ impl<V: IntoView, F: Fn(&mut Cx) -> V + Send> View for Dynamic<V, F> {
             .insert((tracking, Name::new("Dynamic")));
     }
 
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        if let Some((ref view, entity)) = self.state {
+            view.raze(entity, world)
+        }
+        self.state = None;
+        world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl<V: IntoView, F: Fn(&mut Cx) -> V + Send> Reaction for Dynamic<V, F> {
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         if let Some((view, entity)) = self.state.take() {
             view.raze(entity, world);
@@ -50,14 +60,6 @@ impl<V: IntoView, F: Fn(&mut Cx) -> V + Send> View for Dynamic<V, F> {
         let entity = ViewRef::spawn(&view, view_entity, world);
         self.state = Some((view, entity));
         world.entity_mut(view_entity).insert(DisplayNodeChanged);
-    }
-
-    fn raze(&mut self, view_entity: Entity, world: &mut World) {
-        if let Some((ref view, entity)) = self.state {
-            view.raze(entity, world)
-        }
-        self.state = None;
-        world.despawn_owned_recursive(view_entity);
     }
 }
 

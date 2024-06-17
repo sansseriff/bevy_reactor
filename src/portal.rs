@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_reactor_signals::DespawnScopes;
+use bevy_reactor_signals::{DespawnScopes, Reaction};
 
 use crate::{node_span::NodeSpan, view::View, IntoView, ViewRef};
 
@@ -39,6 +39,16 @@ impl View for Portal {
 
     fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {
         true
+    }
+}
+
+impl Reaction for Portal {
+    fn react(
+        &mut self,
+        _owner: Entity,
+        _world: &mut World,
+        _tracking: &mut bevy_reactor_signals::TrackingScope,
+    ) {
     }
 }
 

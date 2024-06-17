@@ -8,7 +8,7 @@ use bevy::{
     },
 };
 use bevy_mod_stylebuilder::StyleTuple;
-use bevy_reactor_signals::{DespawnScopes, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Reaction, TrackingScope};
 
 use crate::{
     node_span::NodeSpan, view::View, with_styles::ApplyStylesEffect, ChildView, ChildViewTuple,
@@ -176,6 +176,10 @@ impl View for Compositor {
         self.attach_children(world);
         true
     }
+}
+
+impl Reaction for Compositor {
+    fn react(&mut self, _owner: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 }
 
 impl EffectTarget for Compositor {

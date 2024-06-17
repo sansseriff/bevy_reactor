@@ -4,7 +4,7 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
-use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, TrackingScope};
 
 use crate::{lcs::lcs, View};
 use crate::{DisplayNodeChanged, IntoView, ViewRef};
@@ -239,6 +239,27 @@ impl<
         );
     }
 
+    fn raze(&mut self, view_entity: Entity, world: &mut World) {
+        for entry in self.items.drain(..) {
+            entry.view.raze(entry.id, world);
+        }
+        if let Some(fallback_ent) = self.fallback_ent {
+            self.fallback_ent = None;
+            self.fallback.as_mut().unwrap().raze(fallback_ent, world);
+        }
+        world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl<
+        Item: Clone,
+        ItemIter: Iterator<Item = Item>,
+        ItemFn: Fn(&Rcx) -> ItemIter,
+        Cmp: Fn(&Item, &Item) -> bool,
+        V: IntoView,
+        F: Fn(&Item) -> V + Send,
+    > Reaction for ForEach<Item, ItemIter, ItemFn, Cmp, V, F>
+{
     fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let iter = (self.item_fn)(&Rcx::new(world, view_entity, tracking));
         let hint = iter.size_hint().0;
@@ -283,17 +304,6 @@ impl<
         }
 
         self.items = std::mem::take(&mut next_state);
-    }
-
-    fn raze(&mut self, view_entity: Entity, world: &mut World) {
-        for entry in self.items.drain(..) {
-            entry.view.raze(entry.id, world);
-        }
-        if let Some(fallback_ent) = self.fallback_ent {
-            self.fallback_ent = None;
-            self.fallback.as_mut().unwrap().raze(fallback_ent, world);
-        }
-        world.despawn_owned_recursive(view_entity);
     }
 }
 

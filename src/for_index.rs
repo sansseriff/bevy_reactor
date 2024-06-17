@@ -2,7 +2,7 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
-use bevy_reactor_signals::{DespawnScopes, Rcx, TrackingScope};
+use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, TrackingScope};
 
 use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
 
@@ -85,6 +85,26 @@ impl<
         );
     }
 
+    fn raze(&mut self, view_entity: bevy::prelude::Entity, world: &mut World) {
+        for entry in self.items.drain(..) {
+            entry.view.raze(entry.id, world);
+        }
+        if let Some(fallback_ent) = self.fallback_ent {
+            self.fallback_ent = None;
+            self.fallback.as_mut().unwrap().raze(fallback_ent, world);
+        }
+        world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl<
+        Item: PartialEq + Clone + 'static,
+        ItemIter: Iterator<Item = Item>,
+        ItemFn: Fn(&Rcx) -> ItemIter,
+        V: IntoView,
+        F: Fn(&Item, usize) -> V,
+    > Reaction for ForIndex<Item, ItemIter, ItemFn, V, F>
+{
     fn react(
         &mut self,
         view_entity: bevy::prelude::Entity,
@@ -153,17 +173,6 @@ impl<
         if changed {
             world.entity_mut(view_entity).insert(DisplayNodeChanged);
         }
-    }
-
-    fn raze(&mut self, view_entity: bevy::prelude::Entity, world: &mut World) {
-        for entry in self.items.drain(..) {
-            entry.view.raze(entry.id, world);
-        }
-        if let Some(fallback_ent) = self.fallback_ent {
-            self.fallback_ent = None;
-            self.fallback.as_mut().unwrap().raze(fallback_ent, world);
-        }
-        world.despawn_owned_recursive(view_entity);
     }
 }
 

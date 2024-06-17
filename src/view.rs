@@ -11,7 +11,7 @@ use bevy::{
     hierarchy::{BuildWorldChildren, Parent},
     log::warn,
 };
-use bevy_reactor_signals::{Cx, DespawnScopes, Signal, TrackingScope};
+use bevy_reactor_signals::{Cx, DespawnScopes, Reaction, Signal, TrackingScope};
 
 use crate::{node_span::NodeSpan, text::TextStatic, TextComputed};
 
@@ -21,8 +21,10 @@ use crate::{node_span::NodeSpan, text::TextStatic, TextComputed};
 /// Lifecycle: To create a view, use [`ViewHandle::spawn`]. This creates an entity to hold the view,
 /// and which drives the reaction system. When the view is no longer needed, call [`View::raze`].
 /// This will destroy the view entity, and all of its children and display nodes.
+///
+/// Views are also reactions, and must implement the `react` method.
 #[allow(unused_variables)]
-pub trait View {
+pub trait View: Reaction {
     /// Returns the display nodes produced by this `View`.
     fn nodes(&self) -> NodeSpan;
 
@@ -32,10 +34,6 @@ pub trait View {
     /// * `view_entity`: The entity that owns this view.
     /// * `world`: The Bevy world.
     fn build(&mut self, view_entity: Entity, world: &mut World);
-
-    /// Update the view, reacting to changes in dependencies. This is optional, and need only
-    /// be implemented for views that are reactive.
-    fn react(&mut self, view_entity: Entity, world: &mut World, tracking: &mut TrackingScope) {}
 
     /// Destroy the view, including the display nodes, and all descendant views.
     fn raze(&mut self, view_entity: Entity, world: &mut World);
@@ -50,6 +48,14 @@ pub trait View {
     /// change.
     fn children_changed(&mut self, view_entity: Entity, world: &mut World) -> bool {
         false
+    }
+
+    /// Coerce this view into a [`Reaction`].
+    fn to_reaction_ref(&self) -> &dyn Reaction
+    where
+        Self: Sized + Send + Sync + 'static,
+    {
+        self
     }
 }
 
@@ -112,6 +118,7 @@ impl ViewRef {
     /// is part of the template invocation hierarchy, it is not a display node.
     pub fn spawn(view: &ViewRef, parent: Entity, world: &mut World) -> Entity {
         let mut child_ent = world.spawn(ViewHandle(view.0.clone()));
+        // child_ent.insert(view.0.to_reaction_ref());
         child_ent.set_parent(parent);
         let id = child_ent.id();
         view.0.lock().unwrap().build(child_ent.id(), world);
@@ -203,6 +210,10 @@ impl View for EmptyView {
     fn raze(&mut self, view_entity: Entity, world: &mut World) {}
 }
 
+impl Reaction for EmptyView {
+    fn react(&mut self, _owner: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
+}
+
 /// Trait that defines a factory object that can construct a [`View`] from a reactive context.
 /// Similar to a `PresenterFn`, but allows the template to be defined as a type, rather than as
 /// a function.
@@ -290,6 +301,10 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
         };
         false
     }
+}
+
+impl<W: ViewTemplate> Reaction for ViewTemplateState<W> {
+    fn react(&mut self, _owner: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 }
 
 /// System that initializes any views that have been added.

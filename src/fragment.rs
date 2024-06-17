@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_reactor_signals::DespawnScopes;
+use bevy_reactor_signals::{DespawnScopes, Reaction};
 
 use crate::{
     node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, IntoView, ViewRef,
@@ -67,6 +67,16 @@ impl View for Fragment {
         }
 
         world.despawn_owned_recursive(view_entity);
+    }
+}
+
+impl Reaction for Fragment {
+    fn react(
+        &mut self,
+        _owner: Entity,
+        _world: &mut World,
+        _tracking: &mut bevy_reactor_signals::TrackingScope,
+    ) {
     }
 }
 
