@@ -1,5 +1,12 @@
 # TODO
 
+- ReactionThunks
+- Consolidate reactions
+- Run to convergence.
+- Integrate ViewTuple with View
+- Use bevy_mod_stylebuilder crate
+- cleanup with component hooks.
+- Callbacks to one-shots.
 - Checkbox bug in inspector
   - caused by run reactions?
   - Need "run to convergence".
@@ -73,3 +80,10 @@
 - A long-standing request is the ability to use Bevy queries, but I have never figured out how
   to do change detection on a query (that is, you can write a query that detects changes to
   components, but there's no way to detect a change to query results).
+
+# Despawning
+
+- calling despawn_recursive on a tracking scope entity:
+  - despawns all child scopes.
+  - hook despawns all owned objects (entities)
+    - this includes views

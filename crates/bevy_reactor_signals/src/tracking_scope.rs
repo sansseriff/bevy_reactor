@@ -4,7 +4,7 @@ use bevy::{
     utils::HashSet,
 };
 
-use crate::reaction::ReactionCell;
+use crate::adapter::ReactionThunk;
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -150,7 +150,7 @@ impl DespawnScopes for World {
 
 /// Run reactions whose dependencies have changed.
 pub fn run_reactions(world: &mut World) {
-    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
+    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionThunk)>();
     let mut changed = HashSet::<Entity>::default();
     let tick = world.change_tick();
     for (entity, scope, _) in scopes.iter(world) {
@@ -179,13 +179,10 @@ pub fn run_reactions(world: &mut World) {
         }
 
         // Run the reaction
-        let (_, _, reaction_cell) = scopes.get_mut(world, *scope_entity).unwrap();
+        // let (_, _, thunk) = scopes.get_mut(world, *scope_entity).unwrap();
+        let thunk = *world.entity(*scope_entity).get::<ReactionThunk>().unwrap();
         let mut next_scope = TrackingScope::new(tick);
-        let inner = reaction_cell.0.clone();
-        inner
-            .lock()
-            .unwrap()
-            .react(*scope_entity, world, &mut next_scope);
+        thunk.react(*scope_entity, world, &mut next_scope);
 
         // Replace deps and cleanups in the current scope with the next scope.
         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();

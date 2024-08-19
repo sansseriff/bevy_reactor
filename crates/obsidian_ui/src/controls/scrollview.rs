@@ -94,6 +94,9 @@ pub struct ScrollView {
     pub scroll_enable_x: bool,
     /// Whether to enable vertical scrolling.
     pub scroll_enable_y: bool,
+    /// Optional entity id to use for the scrolling element. This is useful for querying the
+    /// current scroll position.
+    pub entity: Option<Entity>,
 }
 
 impl ScrollView {
@@ -131,6 +134,13 @@ impl ScrollView {
         self.scroll_enable_y = enable;
         self
     }
+
+    /// Set the entity id to use for the scrolling element.
+    /// This is useful for querying the current scroll position.
+    pub fn entity(mut self, entity: Entity) -> Self {
+        self.entity = Some(entity);
+        self
+    }
 }
 
 impl ViewTemplate for ScrollView {
@@ -142,61 +152,65 @@ impl ViewTemplate for ScrollView {
         let id_scrollbar_x = cx.create_entity();
         let id_scrollbar_y = cx.create_entity();
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
-        Element::<NodeBundle>::new()
-            .named("ScrollView")
-            .style((style_scroll_view, self.style.clone()))
-            .children((
-                // Scroll area
-                Element::<NodeBundle>::for_entity(id_scroll_area)
-                    .named("ScrollView::ScrollArea")
-                    .insert((
-                        ScrollArea {
-                            id_scrollbar_x: if enable_x { Some(id_scrollbar_x) } else { None },
-                            id_scrollbar_y: if enable_y { Some(id_scrollbar_y) } else { None },
-                            ..default()
+        if let Some(entity) = self.entity {
+            Element::<NodeBundle>::for_entity(entity)
+        } else {
+            Element::<NodeBundle>::new()
+        }
+        .named("ScrollView")
+        .style((style_scroll_view, self.style.clone()))
+        .children((
+            // Scroll area
+            Element::<NodeBundle>::for_entity(id_scroll_area)
+                .named("ScrollView::ScrollArea")
+                .insert((
+                    ScrollArea {
+                        id_scrollbar_x: if enable_x { Some(id_scrollbar_x) } else { None },
+                        id_scrollbar_y: if enable_y { Some(id_scrollbar_y) } else { None },
+                        ..default()
+                    },
+                    On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
+                        move |ev, scrolling| {
+                            ev.stop_propagation();
+                            scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
                         },
-                        On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
-                            move |ev, scrolling| {
-                                ev.stop_propagation();
-                                scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
-                            },
-                        ),
-                    ))
-                    .style(style_scroll_region)
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .named("ScrollView::ScrollRegion")
-                            .insert(ScrollContent)
-                            .style((style_scroll_content, self.content_style.clone()))
-                            .children(self.children.clone()),
                     ),
-                // Horizontal scroll bar
-                Cond::new(
-                    enable_x,
-                    move || {
-                        Scrollbar::new(ScrollbarProps {
-                            id_scroll_area,
-                            id_scrollbar: id_scrollbar_x,
-                            drag_state,
-                            vertical: false,
-                        })
-                    },
-                    || (),
+                ))
+                .style(style_scroll_region)
+                .children(
+                    Element::<NodeBundle>::new()
+                        .named("ScrollView::ScrollRegion")
+                        .insert(ScrollContent)
+                        .style((style_scroll_content, self.content_style.clone()))
+                        .children(self.children.clone()),
                 ),
-                // Vertical scroll bar
-                Cond::new(
-                    enable_y,
-                    move || {
-                        Scrollbar::new(ScrollbarProps {
-                            id_scroll_area,
-                            id_scrollbar: id_scrollbar_y,
-                            drag_state,
-                            vertical: true,
-                        })
-                    },
-                    || (),
-                ),
-            ))
+            // Horizontal scroll bar
+            Cond::new(
+                enable_x,
+                move || {
+                    Scrollbar::new(ScrollbarProps {
+                        id_scroll_area,
+                        id_scrollbar: id_scrollbar_x,
+                        drag_state,
+                        vertical: false,
+                    })
+                },
+                || (),
+            ),
+            // Vertical scroll bar
+            Cond::new(
+                enable_y,
+                move || {
+                    Scrollbar::new(ScrollbarProps {
+                        id_scroll_area,
+                        id_scrollbar: id_scrollbar_y,
+                        drag_state,
+                        vertical: true,
+                    })
+                },
+                || (),
+            ),
+        ))
     }
 }
 

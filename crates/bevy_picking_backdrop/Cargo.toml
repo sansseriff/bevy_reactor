@@ -5,8 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-bevy_app = { git = "https://github.com/bevyengine/bevy.git" }
-bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
-bevy_reflect = { git = "https://github.com/bevyengine/bevy.git" }
-bevy_render = { git = "https://github.com/bevyengine/bevy.git" }
-bevy_picking_core = "0.18.0"
+bevy = { workspace = true }
+bevy_mod_picking = { workspace = true }
+# bevy_app = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy_ecs = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy_reflect = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy_render = { git = "https://github.com/bevyengine/bevy.git" }
+# bevy_picking_core = "0.18.0"

@@ -8,12 +8,17 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 #![deny(missing_docs)]
 
-use bevy_app::prelude::*;
-use bevy_ecs::prelude::*;
-use bevy_reflect::prelude::*;
-use bevy_render::prelude::*;
+use bevy::prelude::*;
+use bevy_mod_picking::{
+    backend::{ray::RayMap, HitData, PointerHits},
+    picking_core::PickSet,
+};
+// use bevy_app::prelude::*;
+// use bevy_ecs::prelude::*;
+// use bevy_reflect::prelude::*;
+// use bevy_render::prelude::*;
 
-use bevy_picking_core::backend::prelude::*;
+// use bevy_picking_core::backend::prelude::*;
 
 /// Marks a camera that should be used in the backdrop picking backend.
 /// Also marks the entity which is used as the backdrop.

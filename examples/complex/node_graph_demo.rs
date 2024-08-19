@@ -63,6 +63,7 @@ pub struct InputTerminal<DataType> {
 #[derive(Debug, Component)]
 pub struct InputTerminalValue<ValueType>(ValueType);
 
+#[allow(dead_code)]
 #[derive(Debug, Component)]
 pub struct OutputTerminal<DataType, ValueType> {
     pub label: String,

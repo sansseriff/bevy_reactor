@@ -93,7 +93,7 @@ pub(crate) fn position_floating(
     let wh = window.resolution.physical_height() as f32;
     let sf = window.resolution.scale_factor();
 
-    let window_rect = Rect::new(0., 0., ww / sf, wh / sf).inset(8.);
+    let window_rect = Rect::new(0., 0., ww / sf, wh / sf).inflate(8.);
 
     for (mut style, target_node, floating, floating_transform) in query.iter_mut() {
         let Ok((anchor, anchor_transform)) = anchor_query.get(floating.anchor) else {

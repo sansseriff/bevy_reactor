@@ -62,7 +62,7 @@ impl DrawablePath {
                 }
             }
         }
-        bounds.inset(self.width * 0.5)
+        bounds.inflate(self.width * 0.5)
     }
 }
 

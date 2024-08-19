@@ -45,10 +45,10 @@ impl<B: Bundle + Default> Element<B> {
     }
 
     /// Construct a new `Element` with a given entity id.
-    pub fn for_entity(node: Entity) -> Self {
+    pub fn for_entity(entity: Entity) -> Self {
         Self {
             debug_name: String::new(),
-            display: Some(node),
+            display: Some(entity),
             children: Vec::new(),
             effects: Vec::new(),
             marker: PhantomData,
