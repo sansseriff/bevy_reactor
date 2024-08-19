@@ -1,6 +1,6 @@
 use bevy::ecs::world::World;
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, Signal, TrackingScope};
+use bevy_reactor_signals::{Rcx, Reaction, Signal, TrackingScope};
 
 use crate::node_span::NodeSpan;
 use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
@@ -100,7 +100,7 @@ impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegF
             CondState::Unset => {}
         }
         self.state = CondState::Unset;
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 }
 

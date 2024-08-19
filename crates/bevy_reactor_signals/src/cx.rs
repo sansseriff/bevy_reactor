@@ -4,12 +4,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use bevy::prelude::*;
+use bevy::{ecs::world::DeferredWorld, prelude::*};
 
 use crate::{
     callback::{Callback, CallbackFnCell, CallbackFnMutCell},
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
-    mutable::{MutableCell, ReadMutable, UpdateMutableCell, WriteMutable},
+    mutable::{MutableCell, ReadMutable, WriteMutable},
     tracking_scope::TrackingScope,
     Mutable, Reaction, ReactionCell, Signal,
 };
@@ -355,7 +355,7 @@ impl<'p, 'w> Cx<'p, 'w> {
 
     /// Add a cleanup function which is run once before the next reaction, or when the owner
     /// entity for this context is despawned.
-    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + Send + Sync + 'static) {
+    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut DeferredWorld) + Send + Sync + 'static) {
         self.tracking.borrow_mut().add_cleanup(cleanup);
     }
 }
@@ -530,7 +530,7 @@ impl<'p, 'w> Rcx<'p, 'w> {
 
     /// Add a cleanup function which is run once before the next reaction, or when the owner
     /// entity for this context is despawned.
-    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + Send + Sync + 'static) {
+    pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut DeferredWorld) + Send + Sync + 'static) {
         self.tracking.borrow_mut().add_cleanup(cleanup);
     }
 }
@@ -618,141 +618,6 @@ impl<'p, 'w> RunContextRead for Rcx<'p, 'w> {
 
     fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.world.entity(entity).get::<C>()
-    }
-}
-
-impl ReadMutable for World {
-    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
-    where
-        T: Send + Sync + Copy + 'static,
-    {
-        let mutable_entity = self.entity(mutable.cell);
-        mutable_entity.get::<MutableCell<T>>().unwrap().0
-    }
-
-    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
-    where
-        T: Send + Sync + Clone + 'static,
-    {
-        let mutable_entity = self.entity(mutable.cell);
-        mutable_entity.get::<MutableCell<T>>().unwrap().0.clone()
-    }
-
-    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
-    where
-        T: Send + Sync + 'static,
-    {
-        let mutable_entity = self.entity(mutable.cell);
-        &mutable_entity.get::<MutableCell<T>>().unwrap().0
-    }
-
-    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
-    where
-        T: Send + Sync + 'static,
-    {
-        let mutable_entity = self.entity(mutable.cell);
-        f(&mutable_entity.get::<MutableCell<T>>().unwrap().0)
-    }
-}
-
-impl WriteMutable for World {
-    /// Write the value of a mutable variable using Copy semantics. Does nothing if
-    /// the value being set matches the existing value.
-    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + PartialEq + 'static,
-    {
-        self.commands().add(UpdateMutableCell { mutable, value });
-    }
-
-    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
-    /// value being set matches the existing value.
-    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static,
-    {
-        self.commands().add(UpdateMutableCell { mutable, value });
-    }
-}
-
-impl ReadDerived for World {
-    fn read_derived<R>(&self, derived: &Derived<R>) -> R
-    where
-        R: Send + Sync + Copy + 'static,
-    {
-        let ticks = self.read_change_tick();
-        let mut scope = TrackingScope::new(ticks);
-        self.read_derived_with_scope(derived.id, &mut scope)
-    }
-
-    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
-    where
-        R: Send + Sync + Clone + 'static,
-    {
-        let ticks = self.read_change_tick();
-        let mut scope = TrackingScope::new(ticks);
-        self.read_derived_clone_with_scope(derived.id, &mut scope)
-    }
-
-    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
-    where
-        R: Send + Sync + 'static,
-    {
-        let ticks = self.read_change_tick();
-        let mut scope = TrackingScope::new(ticks);
-        self.read_derived_map_with_scope(derived.id, &mut scope, f)
-    }
-}
-
-impl ReadDerivedInternal for World {
-    fn read_derived_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
-    where
-        R: Send + Sync + Copy + 'static,
-    {
-        let derived_entity = self.entity(derived);
-        match derived_entity.get::<DerivedCell<R>>() {
-            Some(cell) => {
-                let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx)
-            }
-            _ => panic!("No derived found for {:?}", derived),
-        }
-    }
-
-    fn read_derived_clone_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
-    where
-        R: Send + Sync + Clone + 'static,
-    {
-        let derived_entity = self.entity(derived);
-        match derived_entity.get::<DerivedCell<R>>() {
-            Some(cell) => {
-                let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx).clone()
-            }
-            _ => panic!("No derived found for {:?}", derived),
-        }
-    }
-
-    fn read_derived_map_with_scope<R, U, F: Fn(&R) -> U>(
-        &self,
-        derived: Entity,
-        scope: &mut TrackingScope,
-        f: F,
-    ) -> U
-    where
-        R: Send + Sync + 'static,
-    {
-        let derived_entity = self.entity(derived);
-        match derived_entity.get::<DerivedCell<R>>() {
-            Some(cell) => {
-                let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                f(&derived_fn.call(&mut cx))
-            }
-            _ => panic!("No derived found for {:?}", derived),
-        }
     }
 }
 

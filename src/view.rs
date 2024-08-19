@@ -11,7 +11,7 @@ use bevy::{
     hierarchy::{BuildWorldChildren, Parent},
     log::warn,
 };
-use bevy_reactor_signals::{Cx, DespawnScopes, Reaction, Signal, TrackingScope};
+use bevy_reactor_signals::{Cx, Reaction, Signal, TrackingScope};
 
 use crate::{node_span::NodeSpan, text::TextStatic, TextComputed};
 
@@ -288,7 +288,7 @@ impl<W: ViewTemplate> View for ViewTemplateState<W> {
             handle.0.clone().lock().unwrap().raze(entt.id(), world);
         };
         self.output_entity = None;
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 
     fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {

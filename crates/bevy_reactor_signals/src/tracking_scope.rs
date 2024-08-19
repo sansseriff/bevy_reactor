@@ -1,5 +1,8 @@
 use bevy::{
-    ecs::component::{ComponentId, Tick},
+    ecs::{
+        component::{ComponentId, Tick},
+        world::{Command, DeferredWorld},
+    },
     prelude::*,
     utils::HashSet,
 };
@@ -24,7 +27,7 @@ pub struct TrackingScope {
 
     /// List of cleanup functions to call when the scope is dropped.
     #[allow(clippy::type_complexity)]
-    pub cleanups: Vec<Box<dyn FnOnce(&mut World) + 'static + Sync + Send>>,
+    pub cleanups: Vec<Box<dyn FnOnce(&mut DeferredWorld) + 'static + Sync + Send>>,
 }
 
 /// A resource which, if inserted, displays the view entities that have reacted this frame.
@@ -56,7 +59,10 @@ impl TrackingScope {
     }
 
     /// Add a cleanup function which will be run once before the next reaction.
-    pub fn add_cleanup(&mut self, cleanup: impl FnOnce(&mut World) + 'static + Sync + Send) {
+    pub fn add_cleanup(
+        &mut self,
+        cleanup: impl FnOnce(&mut DeferredWorld) + 'static + Sync + Send,
+    ) {
         self.cleanups.push(Box::new(cleanup));
     }
 
@@ -120,42 +126,68 @@ impl TrackingScope {
     }
 }
 
-/// Trait which allows despawning of any owned objects or reactions in the tracking scope
-/// associated with an entity. This operation is recursive in that an owned object may itself
-/// own other objects.
-pub trait DespawnScopes {
-    /// Despawn all owned objects and reactions associated with the given entity.
-    fn despawn_owned_recursive(&mut self, scope_entity: Entity);
+pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
+    world
+        .register_component_hooks::<TrackingScope>()
+        .on_remove(|mut world, entity, _component| {
+            let mut scope = world.get_mut::<TrackingScope>(entity).unwrap();
+            let mut cleanups = std::mem::take(&mut scope.cleanups);
+            let mut owned = std::mem::take(&mut scope.owned);
+            // let mut hooks = std::mem::take(&mut scope.hook_states);
+            for cleanup_fn in cleanups.drain(..) {
+                cleanup_fn(&mut world);
+            }
+            for ent in owned.drain(..) {
+                world.commands().add(DespawnEntityCmd(ent));
+            }
+            // for hook in hooks.drain(..).rev() {
+            //     match hook {
+            //         HookState::Entity(ent) => {
+            //             world.commands().add(DespawnEntityCmd(ent));
+            //         }
+            //         HookState::Mutable(mutable_ent, _) => {
+            //             world.commands().add(DespawnEntityCmd(mutable_ent));
+            //         }
+            //         HookState::Callback(callback) => {
+            //             world.commands().add(UnregisterCallbackCmd(callback));
+            //         }
+            //         HookState::Effect(_) | HookState::Memo(_) => {
+            //             // Nothing to do
+            //         }
+            //     }
+            // }
+        });
 }
 
-impl DespawnScopes for World {
-    fn despawn_owned_recursive(&mut self, scope_entity: Entity) {
-        let mut entt = self.entity_mut(scope_entity);
-        let Some(mut scope) = entt.get_mut::<TrackingScope>() else {
-            return;
+struct DespawnEntityCmd(Entity);
+
+impl Command for DespawnEntityCmd {
+    fn apply(self, world: &mut World) {
+        world.despawn(self.0);
+    }
+}
+
+fn run_cleanups(world: &mut World, changed: &[Entity]) {
+    let mut deferred = DeferredWorld::from(world);
+    for scope_entity in changed.iter() {
+        let Some(mut scope) = deferred.get_mut::<TrackingScope>(*scope_entity) else {
+            continue;
         };
-        // Run any cleanups
         let mut cleanups = std::mem::take(&mut scope.cleanups);
-        // Recursively despawn owned objects
-        let owned_list = std::mem::take(&mut scope.owned);
-        entt.despawn();
         for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(self);
-        }
-        for owned in owned_list {
-            self.despawn_owned_recursive(owned);
+            cleanup_fn(&mut deferred);
         }
     }
 }
 
 /// Run reactions whose dependencies have changed.
-pub fn run_reactions(world: &mut World) {
+pub(crate) fn run_reactions(world: &mut World) {
     let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionThunk)>();
-    let mut changed = HashSet::<Entity>::default();
+    let mut changed: Vec<Entity> = Vec::with_capacity(64);
     let tick = world.change_tick();
     for (entity, scope, _) in scopes.iter(world) {
         if scope.dependencies_changed(world, tick) {
-            changed.insert(entity);
+            changed.push(entity);
         }
     }
 
@@ -170,13 +202,15 @@ pub fn run_reactions(world: &mut World) {
         }
     }
 
+    run_cleanups(world, &changed);
+
     for scope_entity in changed.iter() {
         // Call registered cleanup functions
-        let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-        let mut cleanups = std::mem::take(&mut scope.cleanups);
-        for cleanup_fn in cleanups.drain(..) {
-            cleanup_fn(world);
-        }
+        // let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
+        // let mut cleanups = std::mem::take(&mut scope.cleanups);
+        // for cleanup_fn in cleanups.drain(..) {
+        //     cleanup_fn(world);
+        // }
 
         // Run the reaction
         // let (_, _, thunk) = scopes.get_mut(world, *scope_entity).unwrap();

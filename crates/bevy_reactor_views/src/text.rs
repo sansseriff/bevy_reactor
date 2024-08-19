@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::UseInheritedTextStyles;
-use bevy_reactor_signals::{
-    DespawnScopes, Rcx, Reaction, ReactionCell, ReactionThunk, TrackingScope,
-};
+use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, ReactionThunk, TrackingScope};
 
 use crate::{view::View, IntoView};
 
@@ -124,7 +122,7 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> 
         let display = self.node.expect("Razing unbuilt TextComputed");
         world.entity_mut(display).remove_parent();
         world.entity_mut(display).despawn();
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
         self.node = None;
     }
 }

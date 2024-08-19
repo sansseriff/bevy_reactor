@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Reaction};
+use bevy_reactor_signals::Reaction;
 
 use crate::{
     node_span::NodeSpan, parent_view::ChildViewTuple, view::View, ChildView, IntoView, ViewRef,
@@ -66,7 +66,7 @@ impl View for Fragment {
             // Child raze() will despawn itself.
         }
 
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 }
 

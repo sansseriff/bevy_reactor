@@ -1,7 +1,7 @@
 use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
-use bevy_reactor_signals::{Cx, DespawnScopes, Reaction, TrackingScope};
+use bevy_reactor_signals::{Cx, Reaction, TrackingScope};
 
 use crate::{DisplayNodeChanged, ViewRef};
 use crate::{IntoView, View};
@@ -46,7 +46,7 @@ impl<V: IntoView, F: Fn(&mut Cx) -> V + Send> View for Dynamic<V, F> {
             view.raze(entity, world)
         }
         self.state = None;
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 }
 

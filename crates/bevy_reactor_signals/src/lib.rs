@@ -30,10 +30,9 @@ pub use mutable::WriteMutable;
 pub use reaction::*;
 pub use signal::IntoSignal;
 pub use signal::Signal;
-use tracking_scope::run_reactions;
-pub use tracking_scope::DespawnScopes;
 pub use tracking_scope::TrackingScope;
 pub use tracking_scope::TrackingScopeTracing;
+use tracking_scope::{cleanup_tracking_scopes, run_reactions};
 
 /// Plugin that adds the reactive UI system to the app.
 pub struct SignalsPlugin;
@@ -44,6 +43,8 @@ pub struct ReactionSet;
 
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
+        cleanup_tracking_scopes(app.world_mut());
+        // cleanup_view_roots(app.world_mut());
         app.add_systems(Update, run_reactions.in_set(ReactionSet));
     }
 }

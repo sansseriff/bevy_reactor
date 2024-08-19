@@ -1,13 +1,18 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, sync::Arc};
 
 use bevy::{
     core::Name,
     prelude::{BuildWorldChildren, Bundle, Entity, World},
 };
-use bevy_mod_stylebuilder::StyleTuple;
-use bevy_reactor_signals::TrackingScope;
+use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
+use bevy_reactor_signals::Rcx;
 
-use crate::{effect::Effect, style::ApplyStylesEffect, view::IntoViewVec, IntoView, View};
+use crate::{
+    effect::Effect,
+    style::{DynamicStyleEffect, StaticStyleEffect},
+    view::IntoViewVec,
+    IntoView, View,
+};
 
 #[derive(Default)]
 pub struct Element<B: Bundle> {
@@ -52,7 +57,29 @@ impl<B: Bundle + Default> Element<B> {
 
     /// Set the static styles for this element.
     pub fn style<S: StyleTuple + 'static>(mut self, styles: S) -> Self {
-        self.effects.push(Box::new(ApplyStylesEffect { styles }));
+        self.effects.push(Box::new(StaticStyleEffect { styles }));
+        self
+    }
+
+    /// Set a dynamic style for this element.
+    ///
+    /// Arguments:
+    /// - `deps_fn`: A reactive function which accesses the reactive data sources and returns
+    ///     the values used as inputs for the dynamic style computation.
+    /// - `style_fn`: A non-reactive function which takes the computed style data and applies it to
+    ///     the element.
+    pub fn style_dyn<
+        D: 'static,
+        VF: Fn(&Rcx) -> D + Send + Sync + 'static,
+        SF: Fn(D, &mut StyleBuilder) + Send + Sync + 'static,
+    >(
+        mut self,
+        deps_fn: VF,
+        style_fn: SF,
+    ) -> Self {
+        self.effects.push(Box::new(DynamicStyleEffect {
+            style_fn: Arc::new((deps_fn, style_fn)),
+        }));
         self
     }
 
@@ -111,11 +138,9 @@ impl<B: Bundle + Default> View for Element<B> {
 
         // Insert components from effects.
         if !self.effects.is_empty() {
-            let mut tracking = TrackingScope::new(world.change_tick());
             for effect in self.effects.iter_mut() {
-                effect.start(owner, display, world, &mut tracking);
+                effect.start(owner, display, world);
             }
-            world.entity_mut(owner).insert(tracking);
         }
 
         // Build child nodes.

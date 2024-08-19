@@ -6,7 +6,7 @@ use bevy::{
 };
 use bevy_mod_picking::{backends::raycast::RaycastPickable, picking_core::Pickable};
 use bevy_reactor::*;
-use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, Signal, TrackingScope};
+use bevy_reactor_signals::{Rcx, Reaction, Signal, TrackingScope};
 
 use crate::overlay_material::{OverlayMaterial, UnderlayMaterial};
 
@@ -290,7 +290,7 @@ where
         self.display = None;
 
         // Delete all reactions.
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 
     fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {

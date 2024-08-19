@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Reaction, TrackingScope};
+use bevy_reactor_signals::{Reaction, TrackingScope};
 
 use crate::{
     effect_target::{EffectTarget, EntityEffect},
@@ -172,7 +172,7 @@ impl<B: Bundle + Default> View for Element<B> {
         self.display = None;
 
         // Delete all reactions and despawn the view entity.
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 
     fn children_changed(&mut self, _view_entity: Entity, world: &mut World) -> bool {

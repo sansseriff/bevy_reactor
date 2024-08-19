@@ -1,10 +1,6 @@
 # TODO
 
-- ReactionThunks
-- Consolidate reactions
 - Run to convergence.
-- Integrate ViewTuple with View
-- Use bevy_mod_stylebuilder crate
 - cleanup with component hooks.
 - Callbacks to one-shots.
 - Checkbox bug in inspector
@@ -84,6 +80,23 @@
 # Despawning
 
 - calling despawn_recursive on a tracking scope entity:
+
   - despawns all child scopes.
   - hook despawns all owned objects (entities)
     - this includes views
+
+- despawning:
+  - root
+    - despawn_recursive
+    - this despawns all child tracking scopes
+    - and anything they own.
+  - single template
+    - all owned nodes
+  - cond
+    - change
+      - owner despawn descendants, run cleanups
+    - raze
+      - nothing to do
+  - element
+    - raze - nothing to do.
+    - problem: need to spawn an entity for each reactive effect.

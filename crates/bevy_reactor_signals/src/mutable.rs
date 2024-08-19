@@ -1,5 +1,11 @@
 use crate::{signal::Signal, RunContextWrite};
-use bevy::{ecs::component::ComponentId, ecs::world::Command, prelude::*};
+use bevy::{
+    ecs::{
+        component::ComponentId,
+        world::{Command, DeferredWorld},
+    },
+    prelude::*,
+};
 
 /// Contains a mutable reactive value.
 #[derive(Component)]
@@ -160,6 +166,114 @@ impl<T: Send + Sync + 'static + PartialEq> Command for UpdateMutableCell<T> {
         if mutable.0 != self.value {
             mutable.0 = self.value;
         }
+    }
+}
+
+impl ReadMutable for World {
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0
+    }
+
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0.clone()
+    }
+
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
+    where
+        T: Send + Sync + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        &mutable_entity.get::<MutableCell<T>>().unwrap().0
+    }
+
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
+    where
+        T: Send + Sync + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        f(&mutable_entity.get::<MutableCell<T>>().unwrap().0)
+    }
+}
+
+impl WriteMutable for World {
+    /// Write the value of a mutable variable using Copy semantics. Does nothing if
+    /// the value being set matches the existing value.
+    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + PartialEq + 'static,
+    {
+        self.commands().add(UpdateMutableCell { mutable, value });
+    }
+
+    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
+    /// value being set matches the existing value.
+    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static,
+    {
+        self.commands().add(UpdateMutableCell { mutable, value });
+    }
+}
+
+impl<'w> ReadMutable for DeferredWorld<'w> {
+    fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Copy + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0
+    }
+
+    fn read_mutable_clone<T>(&self, mutable: &Mutable<T>) -> T
+    where
+        T: Send + Sync + Clone + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        mutable_entity.get::<MutableCell<T>>().unwrap().0.clone()
+    }
+
+    fn read_mutable_as_ref<T>(&self, mutable: &Mutable<T>) -> &T
+    where
+        T: Send + Sync + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        &mutable_entity.get::<MutableCell<T>>().unwrap().0
+    }
+
+    fn read_mutable_map<T, U, F: Fn(&T) -> U>(&self, mutable: &Mutable<T>, f: F) -> U
+    where
+        T: Send + Sync + 'static,
+    {
+        let mutable_entity = self.entity(mutable.cell);
+        f(&mutable_entity.get::<MutableCell<T>>().unwrap().0)
+    }
+}
+
+impl<'w> WriteMutable for DeferredWorld<'w> {
+    /// Write the value of a mutable variable using Copy semantics. Does nothing if
+    /// the value being set matches the existing value.
+    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + PartialEq + 'static,
+    {
+        self.commands().add(UpdateMutableCell { mutable, value });
+    }
+
+    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
+    /// value being set matches the existing value.
+    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
+    where
+        T: Send + Sync + Clone + PartialEq + 'static,
+    {
+        self.commands().add(UpdateMutableCell { mutable, value });
     }
 }
 

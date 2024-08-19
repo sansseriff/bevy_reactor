@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_reactor_signals::{DespawnScopes, Reaction};
+use bevy_reactor_signals::Reaction;
 
 use crate::{node_span::NodeSpan, view::View, IntoView, ViewRef};
 
@@ -34,7 +34,7 @@ impl View for Portal {
     fn raze(&mut self, view_entity: Entity, world: &mut World) {
         self.view.raze(self.entity.unwrap(), world);
         self.entity = None;
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 
     fn children_changed(&mut self, _view_entity: Entity, _world: &mut World) -> bool {

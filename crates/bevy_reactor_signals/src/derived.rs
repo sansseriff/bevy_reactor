@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use bevy::prelude::*;
+use bevy::{ecs::world::DeferredWorld, prelude::*};
 
 use crate::{Rcx, TrackingScope};
 
@@ -77,4 +77,166 @@ pub(crate) trait ReadDerivedInternal {
     ) -> U
     where
         R: Send + Sync + 'static;
+}
+
+impl ReadDerived for World {
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
+    where
+        R: Send + Sync + Copy + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_with_scope(derived.id, &mut scope)
+    }
+
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
+    where
+        R: Send + Sync + Clone + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_clone_with_scope(derived.id, &mut scope)
+    }
+
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
+    where
+        R: Send + Sync + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_map_with_scope(derived.id, &mut scope, f)
+    }
+}
+
+impl ReadDerivedInternal for World {
+    fn read_derived_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
+    where
+        R: Send + Sync + Copy + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut cx)
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
+
+    fn read_derived_clone_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
+    where
+        R: Send + Sync + Clone + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut cx).clone()
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
+
+    fn read_derived_map_with_scope<R, U, F: Fn(&R) -> U>(
+        &self,
+        derived: Entity,
+        scope: &mut TrackingScope,
+        f: F,
+    ) -> U
+    where
+        R: Send + Sync + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                f(&derived_fn.call(&mut cx))
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
+}
+
+impl<'w> ReadDerived for DeferredWorld<'w> {
+    fn read_derived<R>(&self, derived: &Derived<R>) -> R
+    where
+        R: Send + Sync + Copy + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_with_scope(derived.id, &mut scope)
+    }
+
+    fn read_derived_clone<R>(&self, derived: &Derived<R>) -> R
+    where
+        R: Send + Sync + Clone + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_clone_with_scope(derived.id, &mut scope)
+    }
+
+    fn read_derived_map<R, U, F: Fn(&R) -> U>(&self, derived: &Derived<R>, f: F) -> U
+    where
+        R: Send + Sync + 'static,
+    {
+        let ticks = self.read_change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        self.read_derived_map_with_scope(derived.id, &mut scope, f)
+    }
+}
+
+impl<'w> ReadDerivedInternal for DeferredWorld<'w> {
+    fn read_derived_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
+    where
+        R: Send + Sync + Copy + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut cx)
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
+
+    fn read_derived_clone_with_scope<R>(&self, derived: Entity, scope: &mut TrackingScope) -> R
+    where
+        R: Send + Sync + Clone + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut cx).clone()
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
+
+    fn read_derived_map_with_scope<R, U, F: Fn(&R) -> U>(
+        &self,
+        derived: Entity,
+        scope: &mut TrackingScope,
+        f: F,
+    ) -> U
+    where
+        R: Send + Sync + 'static,
+    {
+        let derived_entity = self.entity(derived);
+        match derived_entity.get::<DerivedCell<R>>() {
+            Some(cell) => {
+                let derived_fn = cell.0.clone();
+                let mut cx = Rcx::new(self, derived, scope);
+                f(&derived_fn.call(&mut cx))
+            }
+            _ => panic!("No derived found for {:?}", derived),
+        }
+    }
 }

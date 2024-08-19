@@ -2,7 +2,7 @@ use bevy::core::Name;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::world::World;
 use bevy::hierarchy::Parent;
-use bevy_reactor_signals::{DespawnScopes, Rcx, Reaction, TrackingScope};
+use bevy_reactor_signals::{Rcx, Reaction, TrackingScope};
 
 use crate::{DisplayNodeChanged, IntoView, View, ViewRef};
 
@@ -93,7 +93,7 @@ impl<
             self.fallback_ent = None;
             self.fallback.as_mut().unwrap().raze(fallback_ent, world);
         }
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
     }
 }
 

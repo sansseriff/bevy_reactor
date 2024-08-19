@@ -18,7 +18,6 @@ fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
         .flex_direction(FlexDirection::Row)
         .border(3)
-        .border_color(palettes::css::LIME)
         .padding(3);
 }
 
@@ -43,6 +42,19 @@ fn setup_view_root(mut commands: Commands) {
     commands.spawn(
         Element::<NodeBundle>::new()
             .style(style_test)
+            .style_dyn(
+                |rcx| {
+                    let counter = rcx.use_resource::<Counter>();
+                    counter.count & 1 == 0
+                },
+                |even, sb| {
+                    if even {
+                        sb.background_color(palettes::css::DARK_GRAY);
+                    } else {
+                        sb.background_color(palettes::css::MAROON);
+                    }
+                },
+            )
             // .insert(BorderColor(palettes::css::LIME.into()))
             // .insert_computed(|cx| {
             //     let counter = cx.use_resource::<Counter>();

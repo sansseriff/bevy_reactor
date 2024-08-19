@@ -8,7 +8,7 @@ use bevy::{
     },
 };
 use bevy_mod_stylebuilder::StyleTuple;
-use bevy_reactor_signals::{DespawnScopes, Reaction, TrackingScope};
+use bevy_reactor_signals::{Reaction, TrackingScope};
 
 use crate::{
     node_span::NodeSpan, view::View, with_styles::ApplyStylesEffect, ChildView, ChildViewTuple,
@@ -166,7 +166,7 @@ impl View for Compositor {
             // Child raze() will despawn itself.
         }
 
-        world.despawn_owned_recursive(view_entity);
+        world.entity_mut(view_entity).despawn();
         world.despawn(self.image_entity.unwrap());
         world.despawn(self.camera.unwrap());
         self.image = None;
