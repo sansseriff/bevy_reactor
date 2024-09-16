@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::prelude::{Component, Entity, World};
+use bevy_reactor_signals::TrackingScope;
 
 use crate::TextStatic;
 
@@ -8,32 +9,21 @@ use crate::TextStatic;
 /// entities and components.
 ///
 /// Views are also reactions, and must implement the `react` method.
-#[allow(unused_variables)]
 pub trait View {
-    /// Returns the display nodes produced by this `View`.
-    fn nodes(&self, out: &mut Vec<Entity>);
-
     /// Initialize the view, creating any entities needed.
     ///
     /// Arguments:
     /// * `owner`: The entity that owns this view.
     /// * `world`: The Bevy world.
-    fn build(&mut self, owner: Entity, world: &mut World);
-
-    /// Destroy the view, including the display nodes, and all descendant views.
-    fn raze(&mut self, owner: Entity, world: &mut World);
-
-    /// Notification from child views that the child display nodes have changed and need
-    /// to be re-attached to the parent. This is optional, and need only be implemented for
-    /// views which have display nodes that have child display nodes (like [`Element`]).
-    ///
-    /// Returns `true` if the view was able to update its display nodes. If it returns `false`,
-    /// then it means that this view is only a thin wrapper for other views, and doesn't actually
-    /// have any display nodes of its own, in which case the parent view will need to handle the
-    /// change.
-    fn children_changed(&mut self, owner: Entity, world: &mut World) -> bool {
-        false
-    }
+    /// * `scope`: The parent tracking scope which owns any reactions created by this view.
+    /// * `out`: A mutable reference to a vector where the output entities will be stored.
+    fn build(
+        &mut self,
+        owner: Entity,
+        world: &mut World,
+        scope: &mut TrackingScope,
+        out: &mut Vec<Entity>,
+    );
 
     /// Convert this View into a view root which can be spawned.
     fn to_root(self) -> (ViewCell, ViewRoot)
@@ -43,11 +33,6 @@ pub trait View {
         (ViewCell(Arc::new(Mutex::new(self))), ViewRoot)
     }
 }
-
-/// Marker on a [`View`] entity to indicate that it's output [`Vec<Entity>`] has changed, and that
-/// the parent needs to re-attach it's children.
-#[derive(Component)]
-pub struct ViewOutputChanged;
 
 #[derive(Component)]
 pub struct ViewRoot;
@@ -88,21 +73,15 @@ impl<V: IntoView> IntoViewVec for V {
 }
 
 impl<V: View> View for Option<V> {
-    fn nodes(&self, out: &mut Vec<Entity>) {
+    fn build(
+        &mut self,
+        owner: Entity,
+        world: &mut World,
+        scope: &mut TrackingScope,
+        out: &mut Vec<Entity>,
+    ) {
         if let Some(view) = self {
-            view.nodes(out);
-        }
-    }
-
-    fn build(&mut self, owner: Entity, world: &mut World) {
-        if let Some(view) = self {
-            view.build(owner, world);
-        }
-    }
-
-    fn raze(&mut self, owner: Entity, world: &mut World) {
-        if let Some(view) = self {
-            view.raze(owner, world);
+            view.build(owner, world, scope, out);
         }
     }
 }
@@ -138,7 +117,12 @@ impl_view_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; 
 
 #[allow(unused)]
 impl View for () {
-    fn nodes(&self, out: &mut Vec<Entity>) {}
-    fn build(&mut self, owner: Entity, world: &mut World) {}
-    fn raze(&mut self, owner: Entity, world: &mut World) {}
+    fn build(
+        &mut self,
+        owner: Entity,
+        world: &mut World,
+        scope: &mut TrackingScope,
+        out: &mut Vec<Entity>,
+    ) {
+    }
 }

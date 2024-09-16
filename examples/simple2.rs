@@ -12,7 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
-use bevy_reactor_views::*;
+use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -48,11 +48,11 @@ fn setup_view_root(mut commands: Commands) {
                     counter.count & 1 == 0
                 },
                 |even, sb| {
-                    if even {
-                        sb.background_color(palettes::css::DARK_GRAY);
+                    sb.border_color(if even {
+                        palettes::css::LIME
                     } else {
-                        sb.background_color(palettes::css::MAROON);
-                    }
+                        palettes::css::MAROON
+                    });
                 },
             )
             // .insert(BorderColor(palettes::css::LIME.into()))
@@ -76,7 +76,11 @@ fn setup_view_root(mut commands: Commands) {
             .children((
                 Element::<NodeBundle>::new(),
                 // TextStatic::new("Hello, world!".to_string()),
-                // text("Count: "),
+                "Count: ",
+                TextComputed::new(|cx| {
+                    let counter = cx.use_resource::<Counter>();
+                    format!("{}", counter.count)
+                }),
                 // text_computed(|cx| {
                 //     let counter = cx.use_resource::<Counter>();
                 //     format!("{}", counter.count)
@@ -84,14 +88,14 @@ fn setup_view_root(mut commands: Commands) {
                 ", ",
                 NestedView,
                 ": ",
-                // Cond::new(
-                //     |cx: &Rcx| {
-                //         let counter = cx.use_resource::<Counter>();
-                //         counter.count & 1 == 0
-                //     },
-                //     || "[Even]",
-                //     || "[Odd]",
-                // ),
+                Cond::new(
+                    |cx: &Rcx| {
+                        let counter = cx.use_resource::<Counter>();
+                        counter.count & 1 == 0
+                    },
+                    || "[Even]",
+                    || "[Odd]",
+                ),
                 // DynamicKeyed::new(
                 //     |cx| cx.use_resource::<Counter>().count,
                 //     |count| format!(":{}:", count),

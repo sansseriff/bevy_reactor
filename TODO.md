@@ -86,6 +86,7 @@
     - this includes views
 
 - despawning:
+
   - root
     - despawn_recursive
     - this despawns all child tracking scopes
@@ -100,3 +101,9 @@
   - element
     - raze - nothing to do.
     - problem: need to spawn an entity for each reactive effect.
+
+- cond - how to get nodes?
+  - attach children is a problem because we don't have an entity for every view level;
+    if we send a message up we don't know how far down to recurse. Because nodes are boxed
+    views, there's no way to locate them individually.
+  - we can't even assume that the message doesn't cross a tracking scope boundary.

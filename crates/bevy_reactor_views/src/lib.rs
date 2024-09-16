@@ -7,18 +7,18 @@ mod view;
 mod view_template;
 
 pub mod prelude {
-    pub use crate::element::Element;
-    pub use crate::view::View;
-    pub use crate::view_template::ViewTemplate;
-    pub use crate::ReactorViewsPlugin;
+    pub use crate::{
+        Cond, Element, IntoView, ReactorViewsPlugin, TextComputed, TextStatic, View, ViewTemplate,
+    };
 }
 
 use bevy::{
     app::{App, Plugin, Update},
-    prelude::{Added, Entity, IntoSystemConfigs, World},
+    prelude::{Added, BuildWorldChildren, Entity, IntoSystemConfigs, World},
 };
 use bevy_mod_stylebuilder::StyleBuilderPlugin;
-use bevy_reactor_signals::{ReactionSet, SignalsPlugin};
+use bevy_reactor_signals::{ReactionSet, SignalsPlugin, TrackingScope};
+pub use cond::Cond;
 pub use element::Element;
 pub use text::{TextComputed, TextStatic};
 use view::ViewCell;
@@ -45,15 +45,25 @@ impl Plugin for ReactorViewsPlugin {
 }
 
 pub(crate) fn build_added_view_roots(world: &mut World) {
+    let tick = world.change_tick();
     // Need to copy query result to avoid double-borrow of world.
-    let mut roots = world.query_filtered::<(Entity, &ViewRoot, &mut ViewCell), Added<ViewRoot>>();
-    let roots_copy: Vec<Entity> = roots.iter(world).map(|(e, _, _)| e).collect();
+    let mut roots = world.query_filtered::<(Entity, &mut ViewCell), Added<ViewRoot>>();
+    let roots_copy: Vec<Entity> = roots.iter(world).map(|(e, _)| e).collect();
     for root_entity in roots_copy.iter() {
-        let Ok((_, _, cell)) = roots.get(world, *root_entity) else {
+        let Ok((_, cell)) = roots.get(world, *root_entity) else {
             continue;
         };
+        let mut scope = TrackingScope::new(tick);
         let inner = cell.0.clone();
-        inner.lock().unwrap().build(*root_entity, world);
+        let mut children = Vec::new();
+        inner
+            .lock()
+            .unwrap()
+            .build(*root_entity, world, &mut scope, &mut children);
+        world
+            .entity_mut(*root_entity)
+            .insert(scope)
+            .replace_children(&children);
     }
 }
 

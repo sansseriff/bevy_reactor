@@ -50,29 +50,21 @@ pub struct ViewTemplateView<VT: ViewTemplate> {
 }
 
 impl<VT: ViewTemplate> View for ViewTemplateView<VT> {
-    fn nodes(&self, out: &mut Vec<Entity>) {
-        if let Some((_, ref view)) = self.root {
-            view.nodes(out);
-        }
-    }
-
-    fn build(&mut self, owner: Entity, world: &mut World) {
+    fn build(
+        &mut self,
+        owner: Entity,
+        world: &mut World,
+        scope: &mut TrackingScope,
+        out: &mut Vec<Entity>,
+    ) {
         assert!(self.root.is_none());
         let mut tracking = TrackingScope::new(world.change_tick());
         let root = world.spawn_empty().set_parent(owner).id();
         let mut cx = Cx::new(world, root, &mut tracking);
         let mut view = self.template.create(&mut cx).into_view();
-        // TODO: Need to insert the thunk.
         world.entity_mut(root).insert(tracking);
-        view.build(root, world);
+        view.build(root, world, scope, out);
         self.root = Some((root, view));
         // world.entity_mut(inner).insert(ViewHandle(view.0));
-    }
-
-    fn raze(&mut self, _owner: Entity, world: &mut World) {
-        if let Some((owner, ref mut _view)) = self.root {
-            world.entity_mut(owner).despawn();
-            // view.nodes(owner, world, out);
-        }
     }
 }

@@ -7,7 +7,7 @@ use bevy::{
     utils::HashSet,
 };
 
-use crate::adapter::ReactionThunk;
+use crate::ReactionCell;
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -163,6 +163,7 @@ struct DespawnEntityCmd(Entity);
 
 impl Command for DespawnEntityCmd {
     fn apply(self, world: &mut World) {
+        world.entity_mut(self.0).remove_parent();
         world.despawn(self.0);
     }
 }
@@ -182,7 +183,7 @@ fn run_cleanups(world: &mut World, changed: &[Entity]) {
 
 /// Run reactions whose dependencies have changed.
 pub(crate) fn run_reactions(world: &mut World) {
-    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionThunk)>();
+    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
     let mut changed: Vec<Entity> = Vec::with_capacity(64);
     let tick = world.change_tick();
     for (entity, scope, _) in scopes.iter(world) {
@@ -214,9 +215,11 @@ pub(crate) fn run_reactions(world: &mut World) {
 
         // Run the reaction
         // let (_, _, thunk) = scopes.get_mut(world, *scope_entity).unwrap();
-        let thunk = *world.entity(*scope_entity).get::<ReactionThunk>().unwrap();
+        let thunk = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
         let mut next_scope = TrackingScope::new(tick);
-        thunk.react(*scope_entity, world, &mut next_scope);
+        let inner = thunk.0.clone();
+        let mut lock = inner.lock().unwrap();
+        lock.react(*scope_entity, world, &mut next_scope);
 
         // Replace deps and cleanups in the current scope with the next scope.
         let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();

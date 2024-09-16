@@ -6,7 +6,6 @@ use bevy::{
     ecs::schedule::{IntoSystemConfigs, SystemSet},
 };
 
-mod adapter;
 mod callback;
 mod cx;
 mod derived;
@@ -15,7 +14,6 @@ mod reaction;
 mod signal;
 mod tracking_scope;
 
-pub use adapter::ReactionThunk;
 pub use callback::Callback;
 pub use cx::Cx;
 pub use cx::Rcx;

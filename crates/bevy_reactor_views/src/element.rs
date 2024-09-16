@@ -2,10 +2,10 @@ use std::{marker::PhantomData, sync::Arc};
 
 use bevy::{
     core::Name,
-    prelude::{BuildWorldChildren, Bundle, Entity, World},
+    prelude::{BuildWorldChildren, Bundle, Entity},
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
-use bevy_reactor_signals::Rcx;
+use bevy_reactor_signals::{Rcx, TrackingScope};
 
 use crate::{
     effect::Effect,
@@ -88,28 +88,16 @@ impl<B: Bundle + Default> Element<B> {
         child_views.into_view_vec(&mut self.children);
         self
     }
-
-    /// Attach the children to the node. Note that each child view may produce multiple nodes,
-    /// or none.
-    fn attach_children(&self, world: &mut World) {
-        let mut nodes: Vec<Entity> = Vec::new();
-        for child in self.children.iter() {
-            child.nodes(&mut nodes);
-        }
-        world
-            .entity_mut(self.display.unwrap())
-            .replace_children(&nodes);
-    }
 }
 
 impl<B: Bundle + Default> View for Element<B> {
-    fn nodes(&self, out: &mut Vec<Entity>) {
-        if let Some(node) = self.display {
-            out.push(node);
-        }
-    }
-
-    fn build(&mut self, owner: Entity, world: &mut bevy::prelude::World) {
+    fn build(
+        &mut self,
+        owner: Entity,
+        world: &mut bevy::prelude::World,
+        scope: &mut TrackingScope,
+        out: &mut Vec<Entity>,
+    ) {
         // assert!(self.display.is_none());
         if self.debug_name.is_empty() {
             world.entity_mut(owner).insert(Name::new("Element"));
@@ -131,6 +119,7 @@ impl<B: Bundle + Default> View for Element<B> {
                 let entity = world
                     .spawn((B::default(), Name::new(self.debug_name.clone())))
                     .id();
+                scope.add_owned(entity);
                 self.display = Some(entity);
                 entity
             }
@@ -144,24 +133,15 @@ impl<B: Bundle + Default> View for Element<B> {
         }
 
         // Build child nodes.
+        let mut children: Vec<Entity> = Vec::new();
         for child in self.children.iter_mut() {
-            child.build(owner, world);
+            child.build(owner, world, scope, &mut children);
         }
 
-        self.attach_children(world);
-    }
-
-    fn raze(&mut self, _owner: Entity, world: &mut bevy::prelude::World) {
-        assert!(self.display.is_some());
-        // self.raze_children(world);
-
-        // Delete the display node.
-        world.entity_mut(self.display.unwrap()).remove_parent();
-        world.entity_mut(self.display.unwrap()).despawn();
-        self.display = None;
-
-        // Delete all reactions and despawn the view entity.
-        // world.despawn_owned_recursive(owner);
+        world
+            .entity_mut(self.display.unwrap())
+            .replace_children(&children);
+        out.push(display);
     }
 }
 

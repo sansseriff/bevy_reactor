@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::{component::Component, entity::Entity, world::World};
 
-use crate::{tracking_scope::TrackingScope, ReactionThunk};
+use crate::tracking_scope::TrackingScope;
 
 /// Trait representing a reaction to changes in dependencies. The trait's [`react`] method
 /// is called when the dependencies change (dependencies are tracked in a separate
@@ -24,17 +24,12 @@ pub trait Reaction {
 /// Component which contains a reference to a reaction. Generally the entity will also
 /// have a [`TrackingScope`] component.
 #[derive(Component)]
-pub struct ReactionCell<R: Reaction>(pub Arc<Mutex<R>>);
+pub struct ReactionCell(pub Arc<Mutex<dyn Reaction + Send + Sync + 'static>>);
 
-impl<R: Reaction + Send + Sync + 'static> ReactionCell<R> {
+impl ReactionCell {
     /// Construct a new [`ReactionCell`].
-    pub fn new(reaction: R) -> Self {
+    pub fn new<R: Reaction + Send + Sync + 'static>(reaction: R) -> Self {
         Self(Arc::new(Mutex::new(reaction)))
-    }
-
-    /// Create a [`ReactionThunk`] for this reaction type.
-    pub fn thunk() -> ReactionThunk {
-        ReactionThunk::for_reaction::<R>()
     }
 }
 

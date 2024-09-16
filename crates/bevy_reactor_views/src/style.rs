@@ -5,7 +5,7 @@ use bevy::{
     ui,
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
-use bevy_reactor_signals::{Cx, Rcx, Reaction, ReactionCell, ReactionThunk, TrackingScope};
+use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::effect::Effect;
 
@@ -56,7 +56,6 @@ impl<
                 target,
                 style_fn: self.style_fn.clone(),
             }),
-            ReactionThunk::for_reaction::<DynamicStyleReaction<D, VF, SF>>(),
         ));
     }
 }
