@@ -6,6 +6,8 @@ use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, Signal, TrackingScope};
 
 use crate::{IntoView, View};
 
+/// Trait that abstracts over the boolean condition that controls the If. We use this trait
+/// to allow boolean signals to be passed directly as conditions.
 pub trait TestCondition: Send + Sync {
     fn test(&self, rcx: &Rcx) -> bool;
 }
@@ -28,6 +30,7 @@ impl TestCondition for Signal<bool> {
     }
 }
 
+/// The state of the conditional branch, which is initially "unset".
 #[derive(PartialEq)]
 pub enum CondState {
     Unset,
@@ -93,14 +96,19 @@ impl<
         _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
+        // Create an entity to represent the condition.
         let cond_owner = world.spawn(Name::new("Cond")).set_parent(owner).id();
+        out.push(cond_owner);
+
+        // Create a tracking scope and reaction.
         let mut tracking = TrackingScope::new(world.change_tick());
         let mut lock = self.reaction.lock().unwrap();
+
+        // Trigger the initial reaction.
         lock.react(cond_owner, world, &mut tracking);
         world
             .entity_mut(cond_owner)
             .insert((tracking, ReactionCell(self.reaction.clone())));
-        out.push(cond_owner);
     }
 }
 
@@ -117,6 +125,7 @@ impl<
     }
 }
 
+/// A reaction that handles the conditional rendering logic.
 struct CondReaction<
     Test: TestCondition,
     Pos: IntoView,
@@ -140,6 +149,7 @@ impl<
         NegFn: Fn() -> Neg + Send + Sync + 'static,
     > CondReaction<Test, Pos, PosFn, Neg, NegFn>
 {
+    /// Helper function to build either the true or false branch content.
     fn build_branch_state<V: IntoView, Factory: Fn() -> V>(
         &self,
         branch: &Factory,
@@ -164,18 +174,20 @@ impl<
     > Reaction for CondReaction<Test, Pos, PosFn, Neg, NegFn>
 {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        // Create a reactive context and call the test condition.
         let re = Rcx::new(world, owner, tracking);
         let cond: CondState = self.test.test(&re).into();
-        if cond == self.state {
-            return;
+
+        if cond != self.state {
+            // Destroy the old branch state and build the new one.
+            match cond {
+                CondState::Unset => {
+                    unreachable!("Condition should not be unset");
+                }
+                CondState::True => self.build_branch_state(&self.pos, owner, tracking, world),
+                CondState::False => self.build_branch_state(&self.neg, owner, tracking, world),
+            };
+            self.state = cond;
         }
-        match cond {
-            CondState::Unset => {
-                unreachable!("Condition should not be unset");
-            }
-            CondState::True => self.build_branch_state(&self.pos, owner, tracking, world),
-            CondState::False => self.build_branch_state(&self.neg, owner, tracking, world),
-        };
-        self.state = cond;
     }
 }
