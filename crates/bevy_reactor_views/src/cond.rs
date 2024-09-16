@@ -143,19 +143,15 @@ impl<
     fn build_branch_state<V: IntoView, Factory: Fn() -> V>(
         &self,
         branch: &Factory,
-        parent: Entity,
+        owner: Entity,
+        scope: &mut TrackingScope,
         world: &mut World,
-    ) -> (Box<dyn View + Send + Sync + 'static>, Entity) {
-        let state_entity = world.spawn_empty().set_parent(parent).id();
+    ) {
+        world.entity_mut(owner).despawn_descendants();
         let mut state_view = (branch)().into_view();
-        let mut scope = TrackingScope::new(world.change_tick());
         let mut children = Vec::new();
-        state_view.build(state_entity, world, &mut scope, &mut children);
-        world
-            .entity_mut(state_entity)
-            .insert(scope)
-            .replace_children(&children);
-        (state_view, state_entity)
+        state_view.build(owner, world, scope, &mut children);
+        world.entity_mut(owner).replace_children(&children);
     }
 }
 
@@ -173,13 +169,12 @@ impl<
         if cond == self.state {
             return;
         }
-        world.entity_mut(owner).despawn_descendants();
         match cond {
             CondState::Unset => {
                 unreachable!("Condition should not be unset");
             }
-            CondState::True => self.build_branch_state(&self.pos, owner, world),
-            CondState::False => self.build_branch_state(&self.neg, owner, world),
+            CondState::True => self.build_branch_state(&self.pos, owner, tracking, world),
+            CondState::False => self.build_branch_state(&self.neg, owner, tracking, world),
         };
         self.state = cond;
     }
