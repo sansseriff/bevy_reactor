@@ -28,6 +28,7 @@ impl TestCondition for Signal<bool> {
     }
 }
 
+#[derive(PartialEq)]
 pub enum CondState {
     Unset,
     True,
@@ -169,6 +170,10 @@ impl<
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, owner, tracking);
         let cond: CondState = self.test.test(&re).into();
+        if cond == self.state {
+            return;
+        }
+        world.entity_mut(owner).despawn_descendants();
         match cond {
             CondState::Unset => {
                 unreachable!("Condition should not be unset");
