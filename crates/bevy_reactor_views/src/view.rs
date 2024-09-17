@@ -7,8 +7,6 @@ use crate::TextStatic;
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.
-///
-/// Views are also reactions, and must implement the `react` method.
 pub trait View {
     /// Initialize the view, creating any entities needed.
     ///
