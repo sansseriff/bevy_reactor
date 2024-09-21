@@ -14,7 +14,8 @@ pub mod prelude {
 
 use bevy::{
     app::{App, Plugin, Update},
-    prelude::{Added, BuildWorldChildren, Entity, IntoSystemConfigs, World},
+    prelude::{Added, BuildChildren, Entity, IntoSystemConfigs, World},
+    ui::GhostNode,
 };
 use bevy_mod_stylebuilder::StyleBuilderPlugin;
 use bevy_reactor_signals::{ReactionSet, SignalsPlugin, TrackingScope};
@@ -62,7 +63,7 @@ pub(crate) fn build_added_view_roots(world: &mut World) {
             .build(*root_entity, world, &mut scope, &mut children);
         world
             .entity_mut(*root_entity)
-            .insert(scope)
+            .insert((scope, GhostNode))
             .replace_children(&children);
     }
 }

@@ -6,13 +6,14 @@ publish = false
 
 [workspace]
 members = ["crates/*"]
+exclude = ["crates/bevy_reactor_overlays", "crates/bevy_picking_backdrop"]
 
 [workspace.dependencies]
-bevy = "0.14.1"
+bevy = "0.15.0-dev"
 bevy_reactor_signals = { path = "crates/bevy_reactor_signals" }
 bevy_reactor_views = { path = "crates/bevy_reactor_views" }
 bevy_mod_picking = "0.20.1"
-bevy_mod_stylebuilder = { version = "0.1.3" }
+bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 
 [dependencies]
 bevy = { workspace = true }
@@ -27,8 +28,13 @@ smallvec = "1.13.2"
 opt-level = 3
 
 [dev-dependencies]
-obsidian_ui = { path = "crates/obsidian_ui" }
-obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
+# obsidian_ui = { path = "crates/obsidian_ui" }
+# obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
 bevy_reactor_views = { workspace = true }
-bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
-bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
+# bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
+# bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }
+bevy-inspector-egui = "0.26.0"
+
+[patch.crates-io]
+bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/15341/head", version = "0.15.0-dev" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/15341/head", version = "0.15.0-dev" }

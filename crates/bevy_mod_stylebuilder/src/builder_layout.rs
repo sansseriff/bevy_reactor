@@ -4,11 +4,17 @@ use bevy::ui;
 #[allow(missing_docs)]
 pub trait StyleBuilderLayout {
     fn display(&mut self, disp: ui::Display) -> &mut Self;
+
+    /// Set the display to flex and the flex direction to row.
+    fn flex_row(&mut self) -> &mut Self;
+
+    /// Set the display to flex and the flex direction to column.
+    fn flex_column(&mut self) -> &mut Self;
+
     fn position(&mut self, pos: ui::PositionType) -> &mut Self;
     fn overflow(&mut self, ov: ui::OverflowAxis) -> &mut Self;
     fn overflow_x(&mut self, ov: ui::OverflowAxis) -> &mut Self;
     fn overflow_y(&mut self, ov: ui::OverflowAxis) -> &mut Self;
-    fn direction(&mut self, dir: ui::Direction) -> &mut Self;
     fn left(&mut self, length: impl LengthParam) -> &mut Self;
     fn right(&mut self, length: impl LengthParam) -> &mut Self;
     fn top(&mut self, length: impl LengthParam) -> &mut Self;
@@ -72,6 +78,20 @@ impl<'a, 'w> StyleBuilderLayout for StyleBuilder<'a, 'w> {
         self
     }
 
+    fn flex_row(&mut self) -> &mut Self {
+        self.style.display = ui::Display::Flex;
+        self.style.flex_direction = ui::FlexDirection::Row;
+        self.style_changed = true;
+        self
+    }
+
+    fn flex_column(&mut self) -> &mut Self {
+        self.style.display = ui::Display::Flex;
+        self.style.flex_direction = ui::FlexDirection::Column;
+        self.style_changed = true;
+        self
+    }
+
     fn position(&mut self, pos: ui::PositionType) -> &mut Self {
         self.style.position_type = pos;
         self.style_changed = true;
@@ -93,12 +113,6 @@ impl<'a, 'w> StyleBuilderLayout for StyleBuilder<'a, 'w> {
 
     fn overflow_y(&mut self, ov: ui::OverflowAxis) -> &mut Self {
         self.style.overflow.y = ov;
-        self.style_changed = true;
-        self
-    }
-
-    fn direction(&mut self, dir: ui::Direction) -> &mut Self {
-        self.style.direction = dir;
         self.style_changed = true;
         self
     }

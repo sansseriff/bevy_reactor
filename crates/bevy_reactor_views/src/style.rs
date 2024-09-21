@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bevy::{
-    prelude::{BuildWorldChildren, Entity, World},
+    prelude::{BuildChildren, Entity, World},
     ui,
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};

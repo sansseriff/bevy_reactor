@@ -8,7 +8,7 @@ use bevy::{
         query::{Added, With},
         world::{Command, World},
     },
-    hierarchy::{BuildWorldChildren, Parent},
+    hierarchy::{BuildChildren, Parent},
     log::warn,
 };
 use bevy_reactor_signals::{Cx, Reaction, Signal, TrackingScope};

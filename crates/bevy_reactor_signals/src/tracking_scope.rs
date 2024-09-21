@@ -138,7 +138,7 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
                 cleanup_fn(&mut world);
             }
             for ent in owned.drain(..) {
-                world.commands().add(DespawnEntityCmd(ent));
+                world.commands().queue(DespawnEntityCmd(ent));
             }
             // for hook in hooks.drain(..).rev() {
             //     match hook {

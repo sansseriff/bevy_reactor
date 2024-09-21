@@ -210,7 +210,7 @@ impl WriteMutable for World {
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Write the value of a mutable variable using Clone semantics. Does nothing if the
@@ -219,7 +219,7 @@ impl WriteMutable for World {
     where
         T: Send + Sync + Clone + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 }
 
@@ -264,7 +264,7 @@ impl<'w> WriteMutable for DeferredWorld<'w> {
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 
     /// Write the value of a mutable variable using Clone semantics. Does nothing if the
@@ -273,7 +273,7 @@ impl<'w> WriteMutable for DeferredWorld<'w> {
     where
         T: Send + Sync + Clone + PartialEq + 'static,
     {
-        self.commands().add(UpdateMutableCell { mutable, value });
+        self.commands().queue(UpdateMutableCell { mutable, value });
     }
 }
 

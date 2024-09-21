@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::world::World;
 use bevy::prelude::*;
+use bevy::{ecs::world::World, ui::GhostNode};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, Signal, TrackingScope};
 
 use crate::{IntoView, View};
@@ -106,9 +106,11 @@ impl<
 
         // Trigger the initial reaction.
         lock.react(cond_owner, world, &mut tracking);
-        world
-            .entity_mut(cond_owner)
-            .insert((tracking, ReactionCell(self.reaction.clone())));
+        world.entity_mut(cond_owner).insert((
+            GhostNode,
+            tracking,
+            ReactionCell(self.reaction.clone()),
+        ));
     }
 }
 

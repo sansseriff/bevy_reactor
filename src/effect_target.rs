@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use bevy::{
     core::Name,
     ecs::{bundle::Bundle, entity::Entity, world::World},
-    hierarchy::BuildWorldChildren,
+    hierarchy::BuildChildren,
 };
 
 use bevy_reactor_signals::{Cx, Rcx, Reaction, ReactionCell, ReactionTarget, TrackingScope};

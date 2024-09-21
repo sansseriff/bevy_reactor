@@ -2,7 +2,7 @@ use std::{marker::PhantomData, sync::Arc};
 
 use bevy::{
     core::Name,
-    prelude::{BuildWorldChildren, Bundle, Entity},
+    prelude::{BuildChildren, Bundle, Entity},
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use bevy_reactor_signals::{Rcx, TrackingScope};

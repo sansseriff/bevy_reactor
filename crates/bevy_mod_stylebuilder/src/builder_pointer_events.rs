@@ -1,4 +1,6 @@
-use bevy_mod_picking::picking_core::Pickable;
+// use bevy_mod_picking::picking_core::Pickable;
+
+use bevy::prelude::Pickable;
 
 use super::builder::StyleBuilder;
 

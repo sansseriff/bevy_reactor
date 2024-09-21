@@ -63,10 +63,6 @@ impl<Test: TestCondition, Pos: IntoView, PosFn: Fn() -> Pos, Neg: IntoView, NegF
     ) -> (ViewRef, Entity) {
         let state_view = (branch)().into_view();
         let state_entity = ViewRef::spawn(&state_view, parent, world);
-        // assert!(
-        //     world.entity_mut(parent).get::<Parent>().is_some(),
-        //     "Cond should have a parent view"
-        // );
         (state_view, state_entity)
     }
 }

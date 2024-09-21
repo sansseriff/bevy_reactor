@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::prelude::{BuildWorldChildren, Entity, World};
+use bevy::prelude::{BuildChildren, Entity, World};
 use bevy_reactor_signals::{Cx, TrackingScope};
 
 use crate::{view::ViewCell, IntoView, View, ViewRoot};

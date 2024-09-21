@@ -31,28 +31,28 @@ pub struct BackdropPickable;
 pub struct BackdropBackend;
 impl Plugin for BackdropBackend {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, update_hits.in_set(PickSet::Backend))
-            .register_type::<BackdropPickable>();
+        // app.add_systems(PreUpdate, update_hits.in_set(PickSet::Backend))
+        //     .register_type::<BackdropPickable>();
     }
 }
 
-/// Returns a hit on the camera backdrop.
-pub fn update_hits(
-    ray_map: Res<RayMap>,
-    picking_cameras: Query<&Camera, With<BackdropPickable>>,
-    picking_backdrop: Query<(Entity, &BackdropPickable), Without<Camera>>,
-    mut output_events: EventWriter<PointerHits>,
-) {
-    let backdrop = picking_backdrop.get_single().unwrap();
+// / Returns a hit on the camera backdrop.
+// pub fn update_hits(
+//     ray_map: Res<RayMap>,
+//     picking_cameras: Query<&Camera, With<BackdropPickable>>,
+//     picking_backdrop: Query<(Entity, &BackdropPickable), Without<Camera>>,
+//     mut output_events: EventWriter<PointerHits>,
+// ) {
+//     let backdrop = picking_backdrop.get_single().unwrap();
 
-    for (&ray_id, &_ray) in ray_map.map().iter() {
-        let Ok(camera) = picking_cameras.get(ray_id.camera) else {
-            continue;
-        };
+//     for (&ray_id, &_ray) in ray_map.map().iter() {
+//         let Ok(camera) = picking_cameras.get(ray_id.camera) else {
+//             continue;
+//         };
 
-        let hit_data = HitData::new(ray_id.camera, f32::MAX, None, None);
-        let picks = Vec::from([(backdrop.0, hit_data)]);
-        let order = camera.order as f32 - 1.0;
-        output_events.send(PointerHits::new(ray_id.pointer, picks, order));
-    }
-}
+//         let hit_data = HitData::new(ray_id.camera, f32::MAX, None, None);
+//         let picks = Vec::from([(backdrop.0, hit_data)]);
+//         let order = camera.order as f32 - 1.0;
+//         output_events.send(PointerHits::new(ray_id.pointer, picks, order));
+//     }
+// }
