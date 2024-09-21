@@ -17,7 +17,7 @@ mod builder_pointer_events;
 use std::sync::Arc;
 
 use bevy::{
-    app::{Plugin, Update},
+    app::{Plugin, PostUpdate},
     prelude::{IntoSystemConfigs, SystemSet},
 };
 // pub use atlas_loader::TextureAtlasLoader;
@@ -150,6 +150,6 @@ pub struct StyleBuilderPlugin;
 
 impl Plugin for StyleBuilderPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_systems(Update, update_text_styles.in_set(StyleBuilderSystemSet));
+        app.add_systems(PostUpdate, update_text_styles.in_set(StyleBuilderSystemSet));
     }
 }

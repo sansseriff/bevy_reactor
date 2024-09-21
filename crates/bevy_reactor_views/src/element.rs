@@ -93,20 +93,11 @@ impl<B: Bundle + Default> Element<B> {
 impl<B: Bundle + Default> View for Element<B> {
     fn build(
         &mut self,
-        owner: Entity,
+        _owner: Entity,
         world: &mut bevy::prelude::World,
         scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
-        // assert!(self.display.is_none());
-        if self.debug_name.is_empty() {
-            world.entity_mut(owner).insert(Name::new("Element"));
-        } else {
-            world
-                .entity_mut(owner)
-                .insert(Name::new(format!("Element::{}", self.debug_name)));
-        }
-
         // Build display entity if it doesn't already exist.
         let display = match self.display {
             Some(display) => {
@@ -128,14 +119,14 @@ impl<B: Bundle + Default> View for Element<B> {
         // Insert components from effects.
         if !self.effects.is_empty() {
             for effect in self.effects.iter_mut() {
-                effect.start(owner, display, world);
+                effect.start(display, display, world);
             }
         }
 
         // Build child nodes.
         let mut children: Vec<Entity> = Vec::new();
         for child in self.children.iter_mut() {
-            child.build(owner, world, scope, &mut children);
+            child.build(display, world, scope, &mut children);
         }
 
         world

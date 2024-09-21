@@ -13,6 +13,7 @@ use bevy::{
     },
     color::Luminance,
     prelude::*,
+    render::view::cursor::CursorIcon,
     ui,
 };
 use bevy_mod_picking::{events::PointerCancel, prelude::*};

@@ -20,13 +20,14 @@ impl TextStatic {
 impl View for TextStatic {
     fn build(
         &mut self,
-        _view_entity: Entity,
+        _parent: Entity,
         world: &mut World,
-        scope: &mut TrackingScope,
+        _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
         let node = world
             .spawn((
+                Name::new("TextStatic"),
                 TextBundle {
                     text: Text::from_section(self.text.clone(), TextStyle { ..default() }),
                     ..default()
@@ -34,13 +35,8 @@ impl View for TextStatic {
                 UseInheritedTextStyles,
             ))
             .id();
-        scope.add_owned(node);
         out.push(node);
     }
-}
-
-impl Reaction for TextStatic {
-    fn react(&mut self, _view_entity: Entity, _world: &mut World, _tracking: &mut TrackingScope) {}
 }
 
 impl IntoView for TextStatic {
@@ -65,30 +61,27 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> TextComputed<F> {
 impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> {
     fn build(
         &mut self,
-        view_entity: Entity,
+        _parent: Entity,
         world: &mut World,
-        scope: &mut TrackingScope,
+        _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
+        let node = world.spawn_empty().id();
         let mut tracking = TrackingScope::new(world.change_tick());
-        let re = Rcx::new(world, view_entity, &mut tracking);
+        let re = Rcx::new(world, node, &mut tracking);
         let mut text_fn = self
             .text
             .take()
             .expect("TextComputed text function missing");
         let text = (text_fn)(&re);
-        let node = world
-            .spawn((
-                TextBundle {
-                    text: Text::from_section(text, TextStyle { ..default() }),
-                    ..default()
-                },
-                UseInheritedTextStyles,
-            ))
-            .id();
-        scope.add_owned(node);
-        world.entity_mut(view_entity).insert((
+        world.entity_mut(node).insert((
             tracking,
+            Name::new("TextComputed"),
+            TextBundle {
+                text: Text::from_section(text, TextStyle { ..default() }),
+                ..default()
+            },
+            UseInheritedTextStyles,
             ReactionCell::new(TextComputedReaction {
                 node,
                 text: text_fn,

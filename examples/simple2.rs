@@ -25,7 +25,6 @@ fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
         .add_plugins(ReactorViewsPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_counter))
@@ -81,10 +80,6 @@ fn setup_view_root(mut commands: Commands) {
                     let counter = cx.use_resource::<Counter>();
                     format!("{}", counter.count)
                 }),
-                // text_computed(|cx| {
-                //     let counter = cx.use_resource::<Counter>();
-                //     format!("{}", counter.count)
-                // }),
                 ", ",
                 NestedView,
                 ": ",

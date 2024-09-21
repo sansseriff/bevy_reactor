@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::prelude::{BuildChildren, Entity, World};
+use bevy::prelude::{Entity, World};
 use bevy_reactor_signals::{Cx, TrackingScope};
 
 use crate::{view::ViewCell, IntoView, View, ViewRoot};
@@ -17,10 +17,7 @@ pub trait ViewTemplate {
         Self: Sized + Send + Sync + 'static,
     {
         (
-            ViewCell(Arc::new(Mutex::new(ViewTemplateView {
-                template: self,
-                root: None,
-            }))),
+            ViewCell(Arc::new(Mutex::new(ViewTemplateView { template: self }))),
             ViewRoot,
         )
     }
@@ -28,25 +25,18 @@ pub trait ViewTemplate {
 
 impl<VT: ViewTemplate + Send + Sync + 'static> IntoView for VT {
     fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
-        Box::new(ViewTemplateView {
-            template: self,
-            root: None,
-        })
+        Box::new(ViewTemplateView { template: self })
     }
 }
 
 impl<VT: ViewTemplate + 'static> From<VT> for Box<dyn View> {
     fn from(value: VT) -> Self {
-        Box::new(ViewTemplateView {
-            template: value,
-            root: None,
-        })
+        Box::new(ViewTemplateView { template: value })
     }
 }
 
 pub struct ViewTemplateView<VT: ViewTemplate> {
     template: VT,
-    root: Option<(Entity, Box<dyn View + Send + Sync + 'static>)>,
 }
 
 impl<VT: ViewTemplate> View for ViewTemplateView<VT> {
@@ -57,14 +47,8 @@ impl<VT: ViewTemplate> View for ViewTemplateView<VT> {
         scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
-        assert!(self.root.is_none());
-        let mut tracking = TrackingScope::new(world.change_tick());
-        let root = world.spawn_empty().set_parent(owner).id();
-        let mut cx = Cx::new(world, root, &mut tracking);
+        let mut cx = Cx::new(world, owner, scope);
         let mut view = self.template.create(&mut cx).into_view();
-        world.entity_mut(root).insert(tracking);
-        view.build(root, world, scope, out);
-        self.root = Some((root, view));
-        // world.entity_mut(inner).insert(ViewHandle(view.0));
+        view.build(owner, world, scope, out);
     }
 }

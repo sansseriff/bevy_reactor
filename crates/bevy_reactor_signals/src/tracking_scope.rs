@@ -187,6 +187,9 @@ pub(crate) fn run_reactions(world: &mut World) {
     let mut changed: Vec<Entity> = Vec::with_capacity(64);
     let tick = world.change_tick();
     for (entity, scope, _) in scopes.iter(world) {
+        // if let Some(name) = world.entity(entity).get::<Name>() {
+        //     println!("Running reaction for {}", name);
+        // }
         if scope.dependencies_changed(world, tick) {
             changed.push(entity);
         }
@@ -206,18 +209,10 @@ pub(crate) fn run_reactions(world: &mut World) {
     run_cleanups(world, &changed);
 
     for scope_entity in changed.iter() {
-        // Call registered cleanup functions
-        // let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-        // let mut cleanups = std::mem::take(&mut scope.cleanups);
-        // for cleanup_fn in cleanups.drain(..) {
-        //     cleanup_fn(world);
-        // }
-
         // Run the reaction
-        // let (_, _, thunk) = scopes.get_mut(world, *scope_entity).unwrap();
-        let thunk = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
+        let cell = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
         let mut next_scope = TrackingScope::new(tick);
-        let inner = thunk.0.clone();
+        let inner = cell.0.clone();
         let mut lock = inner.lock().unwrap();
         lock.react(*scope_entity, world, &mut next_scope);
 

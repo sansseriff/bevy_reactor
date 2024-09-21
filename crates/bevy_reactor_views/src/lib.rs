@@ -33,15 +33,7 @@ impl Plugin for ReactorViewsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(SignalsPlugin)
             .add_plugins(StyleBuilderPlugin)
-            .add_systems(
-                Update,
-                (
-                    // run_view_reactions.in_set(ReactionSet),
-                    build_added_view_roots.before(ReactionSet),
-                    attach_child_views.after(ReactionSet),
-                    // update_text_styles.after(attach_child_views),
-                ),
-            );
+            .add_systems(Update, build_added_view_roots.before(ReactionSet));
     }
 }
 
@@ -67,5 +59,3 @@ pub(crate) fn build_added_view_roots(world: &mut World) {
             .replace_children(&children);
     }
 }
-
-fn attach_child_views() {}
