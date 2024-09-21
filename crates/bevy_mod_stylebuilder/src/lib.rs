@@ -31,7 +31,7 @@ pub use builder_outline::StyleBuilderOutline;
 pub use builder_visibility::StyleBuilderVisibility;
 pub use builder_z_index::StyleBuilderZIndex;
 use text_styles::update_text_styles;
-pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
+pub use text_styles::{get_inherited_text_styles, InheritableFontStyles, UseInheritedTextStyles};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
 
 #[cfg(feature = "mod_picking")]

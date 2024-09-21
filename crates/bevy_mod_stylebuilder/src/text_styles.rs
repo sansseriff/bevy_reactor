@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-use bevy::prelude::*;
+use bevy::{ecs::system::SystemState, prelude::*};
 
 /// Struct that holds the properties for text rendering, which can be inherited. This allows
 /// setting for font face, size and color to be established at a parent level and inherited by
@@ -44,6 +44,15 @@ impl InheritableFontStyles {
 /// inherited text styles.
 #[derive(Component)]
 pub struct UseInheritedTextStyles;
+
+/// Returns the inherited text styles for the given entity.
+#[allow(clippy::type_complexity)]
+pub fn get_inherited_text_styles(world: &mut World, entity: Entity) -> Option<TextStyle> {
+    let mut st: SystemState<(Query<Ref<InheritableFontStyles>, ()>, Query<&Parent, ()>)> =
+        SystemState::new(world);
+    let (inherited, parents) = st.get(world);
+    compute_inherited_style(entity, &inherited, &parents)
+}
 
 pub(crate) fn update_text_styles(
     mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_mod_stylebuilder::UseInheritedTextStyles;
+use bevy_mod_stylebuilder::{get_inherited_text_styles, UseInheritedTextStyles};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::{view::View, IntoView};
@@ -20,16 +20,17 @@ impl TextStatic {
 impl View for TextStatic {
     fn build(
         &mut self,
-        _parent: Entity,
+        parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
+        let style = get_inherited_text_styles(world, parent).unwrap_or_default();
         let node = world
             .spawn((
                 Name::new("TextStatic"),
                 TextBundle {
-                    text: Text::from_section(self.text.clone(), TextStyle { ..default() }),
+                    text: Text::from_section(self.text.clone(), style),
                     ..default()
                 },
                 UseInheritedTextStyles,
@@ -61,11 +62,12 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> TextComputed<F> {
 impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> {
     fn build(
         &mut self,
-        _parent: Entity,
+        parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
+        let style = get_inherited_text_styles(world, parent).unwrap_or_default();
         let node = world.spawn_empty().id();
         let mut tracking = TrackingScope::new(world.change_tick());
         let re = Rcx::new(world, node, &mut tracking);
@@ -78,7 +80,7 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> 
             tracking,
             Name::new("TextComputed"),
             TextBundle {
-                text: Text::from_section(text, TextStyle { ..default() }),
+                text: Text::from_section(text, style),
                 ..default()
             },
             UseInheritedTextStyles,
