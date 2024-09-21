@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{signal::Signal, RunContextWrite};
 use bevy::{
     ecs::{
@@ -152,6 +154,14 @@ pub trait WriteMutable {
         T: Send + Sync + Clone + PartialEq + 'static;
 }
 
+/// Trait for creating new mutable variables.
+pub trait CreateMutable {
+    /// Create a new [`Mutable`].
+    fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static;
+}
+
 /// Custom command which updates the state of a mutable cell.
 /// (Not used yet, waiting on changes in Bevy 0.14)
 pub(crate) struct UpdateMutableCell<T> {
@@ -220,6 +230,21 @@ impl WriteMutable for World {
         T: Send + Sync + Clone + PartialEq + 'static,
     {
         self.commands().queue(UpdateMutableCell { mutable, value });
+    }
+}
+
+impl CreateMutable for World {
+    fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static,
+    {
+        let cell = self.world_mut().spawn(MutableCell::<T>(init)).id();
+        let component = self.world_mut().init_component::<MutableCell<T>>();
+        Mutable {
+            cell,
+            component,
+            marker: PhantomData,
+        }
     }
 }
 

@@ -5,6 +5,7 @@ mod style;
 mod text;
 mod view;
 mod view_template;
+mod vcx;
 
 pub mod prelude {
     pub use crate::{
@@ -26,6 +27,7 @@ use view::ViewCell;
 pub use view::ViewRoot;
 pub use view::{IntoView, IntoViewVec, View};
 pub use view_template::ViewTemplate;
+pub use vcx::Vcx;
 
 pub struct ReactorViewsPlugin;
 

@@ -2,5 +2,10 @@
 name = "bevy_reactor_obsidian"
 version = "0.1.0"
 edition = "2021"
+publish = false
 
 [dependencies]
+bevy = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
+bevy_reactor_signals = { workspace = true }
+bevy_reactor_views = { workspace = true }

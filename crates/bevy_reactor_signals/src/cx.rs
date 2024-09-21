@@ -7,7 +7,7 @@ use std::{
 use bevy::{ecs::world::DeferredWorld, prelude::*};
 
 use crate::{
-    callback::{Callback, CallbackFnCell, CallbackFnMutCell},
+    callback::Callback,
     derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
     mutable::{MutableCell, ReadMutable, WriteMutable},
     tracking_scope::TrackingScope,
@@ -33,40 +33,6 @@ pub trait RunContextRead {
 pub trait RunContextWrite: RunContextRead {
     /// The current Bevy [`World`].
     fn world_mut(&mut self) -> &mut World;
-
-    /// Invoke a callback with the given props.
-    ///
-    /// Arguments:
-    /// * `callback` - The callback to invoke.
-    /// * `props` - The props to pass to the callback.
-    fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
-        let world = self.world_mut();
-        let tick = world.change_tick();
-        let mut tracking = TrackingScope::new(tick);
-        let mut cx = Cx::new(world, callback.id, &mut tracking);
-        let mut callback_entity = cx.world.entity_mut(callback.id);
-        if let Some(mut cell) = callback_entity.get_mut::<CallbackFnCell<P>>() {
-            let mut callback_fn = cell.inner.take();
-            let callback_box = callback_fn.as_ref().expect("Callback is not present");
-            callback_box.call(&mut cx, props);
-            let mut callback_entity = cx.world.entity_mut(callback.id);
-            callback_entity
-                .get_mut::<CallbackFnCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else if let Some(mut cell) = callback_entity.get_mut::<CallbackFnMutCell<P>>() {
-            let mut callback_fn = cell.inner.take();
-            let callback_box = callback_fn.as_mut().expect("Callback is not present");
-            callback_box.call(&mut cx, props);
-            let mut callback_entity = cx.world.entity_mut(callback.id);
-            callback_entity
-                .get_mut::<CallbackFnMutCell<P>>()
-                .unwrap()
-                .inner = callback_fn.take();
-        } else {
-            warn!("No callback found for {:?}", callback.id);
-        }
-    }
 }
 
 /// A "setup context" is similar to a reactive context, but can also be used to create
@@ -105,54 +71,6 @@ pub trait RunContextSetup<'p> {
         Mutable {
             cell,
             component,
-            marker: PhantomData,
-        }
-    }
-
-    /// Create a new [`Callback`] in this context. This holds a `Fn` within an entity.
-    ///
-    /// Arguments:
-    /// * `callback` - The callback function to invoke. This will be called with a single
-    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback<P: 'static, F: Send + Sync + 'static + Fn(&mut Cx, P)>(
-        &mut self,
-        callback: F,
-    ) -> Callback<P> {
-        let owner = self.owner();
-        let callback = self
-            .world_mut()
-            .spawn(CallbackFnCell::<P> {
-                inner: Some(Box::new(callback)),
-            })
-            .set_parent(owner)
-            .id();
-        self.add_owned(callback);
-        Callback {
-            id: callback,
-            marker: PhantomData,
-        }
-    }
-
-    /// Create a new [`CallbackFnMut`] in this context. This holds a `FnMut` within an entity.
-    ///
-    /// Arguments:
-    /// * `callback` - The callback function to invoke. This will be called with a single
-    ///    parameter, which is a [`Cx`] object. The context may or may not have props.
-    fn create_callback_mut<P: 'static, F: Send + Sync + 'static + FnMut(&mut Cx, P)>(
-        &mut self,
-        callback: F,
-    ) -> Callback<P> {
-        let owner = self.owner();
-        let callback = self
-            .world_mut()
-            .spawn(CallbackFnMutCell {
-                inner: Some(Box::new(callback)),
-            })
-            .set_parent(owner)
-            .id();
-        self.add_owned(callback);
-        Callback {
-            id: callback,
             marker: PhantomData,
         }
     }
@@ -290,51 +208,66 @@ impl<'p, 'w> Cx<'p, 'w> {
         entity
     }
 
-    /// Return a reference to the Component `C` on the given entity. Adds the component to
-    /// the current tracking scope.
-    pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        let component = self
-            .world
-            .components()
-            .component_id::<C>()
-            .expect("Unknown component type");
-
-        match self.world.get_entity(entity) {
-            Some(c) => {
-                self.tracking
-                    .borrow_mut()
-                    .track_component_id(entity, component);
-                c.get::<C>()
-            }
-            None => None,
-        }
+    /// Create a new callback in this context. This registers a one-shot system with the world.
+    /// The callback will be unregistered when the tracking scope is dropped.
+    ///
+    /// Note: This function takes no deps argument, the callback is only registered once the first
+    /// time it is called. Subsequent calls will return the original callback.
+    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+        &mut self,
+        callback: S,
+    ) -> Callback<P> {
+        let id = self.world_mut().register_system(callback);
+        let result = Callback { id };
+        self.tracking.borrow_mut().add_callback(Arc::new(result));
+        result
     }
 
-    /// Return a reference to the Component `C` on the given entity. Does not add the component
-    /// to the tracking scope.
-    pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-        match self.world.get_entity(entity) {
-            Some(c) => c.get::<C>(),
-            None => None,
-        }
-    }
+    // /// Return a reference to the Component `C` on the given entity. Adds the component to
+    // /// the current tracking scope.
+    // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+    //     let component = self
+    //         .world
+    //         .components()
+    //         .component_id::<C>()
+    //         .expect("Unknown component type");
 
-    /// Return a reference to the Component `C` on the owner entity of the current
-    /// context, or one of it's ancestors. This searches up the entity tree until it finds
-    /// a component of the given type.
-    pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
-        let mut entity = self.owner;
-        loop {
-            let ec = self.use_component(entity);
-            if ec.is_some() {
-                return ec;
-            }
-            match self.world.entity(entity).get::<Parent>() {
-                Some(parent) => entity = **parent,
-                _ => return None,
-            }
-        }
-    }
+    //     match self.world.get_entity(entity) {
+    //         Some(c) => {
+    //             self.tracking
+    //                 .borrow_mut()
+    //                 .track_component_id(entity, component);
+    //             c.get::<C>()
+    //         }
+    //         None => None,
+    //     }
+    // }
+
+    // /// Return a reference to the Component `C` on the given entity. Does not add the component
+    // /// to the tracking scope.
+    // pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
+    //     match self.world.get_entity(entity) {
+    //         Some(c) => c.get::<C>(),
+    //         None => None,
+    //     }
+    // }
+
+    // /// Return a reference to the Component `C` on the owner entity of the current
+    // /// context, or one of it's ancestors. This searches up the entity tree until it finds
+    // /// a component of the given type.
+    // pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
+    //     let mut entity = self.owner;
+    //     loop {
+    //         let ec = self.use_component(entity);
+    //         if ec.is_some() {
+    //             return ec;
+    //         }
+    //         match self.world.entity(entity).get::<Parent>() {
+    //             Some(parent) => entity = **parent,
+    //             _ => return None,
+    //         }
+    //     }
+    // }
 
     // /// Return a reference to the Component `C` on the given entity. This version does not
     // /// add the component to the tracking scope, and is intended for components that update

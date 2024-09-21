@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{
     ecs::{
         component::{ComponentId, Tick},
@@ -7,7 +9,10 @@ use bevy::{
     utils::HashSet,
 };
 
-use crate::ReactionCell;
+use crate::{
+    callback::{AnyCallback, UnregisterCallbackCmd},
+    ReactionCell,
+};
 
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
@@ -20,6 +25,9 @@ pub struct TrackingScope {
 
     /// Set of resources that we are currently subscribed to.
     resource_deps: HashSet<ComponentId>,
+
+    /// List of callbacks that are owned by this scope.
+    pub(crate) callbacks: Vec<Arc<dyn AnyCallback + Send + Sync>>,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -47,6 +55,7 @@ impl TrackingScope {
             owned: Vec::new(),
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
+            callbacks: Vec::new(),
             tick,
             cleanups: Vec::new(),
         }
@@ -56,6 +65,12 @@ impl TrackingScope {
     /// will be despawned.
     pub fn add_owned(&mut self, owned: Entity) {
         self.owned.push(owned);
+    }
+
+    /// Add a callback which is owned by this scope. When the scope is dropped, the callback
+    /// will be unregistered.
+    pub fn add_callback(&mut self, callback: Arc<dyn AnyCallback + Send + Sync>) {
+        self.callbacks.push(callback);
     }
 
     /// Add a cleanup function which will be run once before the next reaction.
@@ -132,10 +147,14 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
         .on_remove(|mut world, entity, _component| {
             let mut scope = world.get_mut::<TrackingScope>(entity).unwrap();
             let mut cleanups = std::mem::take(&mut scope.cleanups);
+            let mut callbacks = std::mem::take(&mut scope.callbacks);
             let mut owned = std::mem::take(&mut scope.owned);
             // let mut hooks = std::mem::take(&mut scope.hook_states);
             for cleanup_fn in cleanups.drain(..) {
                 cleanup_fn(&mut world);
+            }
+            for callback in callbacks.drain(..) {
+                world.commands().queue(UnregisterCallbackCmd(callback));
             }
             for ent in owned.drain(..) {
                 world.commands().queue(DespawnEntityCmd(ent));

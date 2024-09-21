@@ -1,8 +1,10 @@
 # TODO
 
+- Split Cx and Rcx. Cx is now `TemplateBuildContext` (need shorter name).
+- For nodes.
+
 - Run to convergence.
 - cleanup with component hooks.
-- Callbacks to one-shots.
 - Checkbox bug in inspector
   - caused by run reactions?
   - Need "run to convergence".

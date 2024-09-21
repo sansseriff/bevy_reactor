@@ -14,7 +14,7 @@ mod reaction;
 mod signal;
 mod tracking_scope;
 
-pub use callback::Callback;
+pub use callback::{Callback, RunCallback};
 pub use cx::Cx;
 pub use cx::Rcx;
 pub use cx::RunContextRead;
@@ -22,6 +22,7 @@ pub use cx::RunContextSetup;
 pub use cx::RunContextWrite;
 pub use derived::Derived;
 pub use derived::ReadDerived;
+pub use mutable::CreateMutable;
 pub use mutable::Mutable;
 pub use mutable::ReadMutable;
 pub use mutable::WriteMutable;
