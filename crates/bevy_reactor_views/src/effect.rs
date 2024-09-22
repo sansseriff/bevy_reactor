@@ -9,5 +9,5 @@ pub trait Effect: Sync + Send {
     ///     will be deleted when the owner is deleted.
     /// - `display`: The display entity that will be modified.
     /// - `world`: The Bevy world.
-    fn start(&mut self, owner: Entity, display: Entity, world: &mut World);
+    fn start(&self, owner: Entity, display: Entity, world: &mut World);
 }

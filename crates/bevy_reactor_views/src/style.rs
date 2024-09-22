@@ -16,7 +16,7 @@ pub struct StaticStyleEffect<S: StyleTuple> {
 
 impl<S: StyleTuple> Effect for StaticStyleEffect<S> {
     // For a style builder, run the builder over the target entity.
-    fn start(&mut self, _owner: Entity, target: Entity, world: &mut World) {
+    fn start(&self, _owner: Entity, target: Entity, world: &mut World) {
         let mut target = world.entity_mut(target);
         let mut style = ui::Style::default();
         if let Some(s) = target.get::<ui::Style>() {
@@ -40,7 +40,7 @@ impl<
     > Effect for DynamicStyleEffect<D, VF, SF>
 {
     // For a style builder, run the builder over the target entity.
-    fn start(&mut self, owner: Entity, target: Entity, world: &mut World) {
+    fn start(&self, owner: Entity, target: Entity, world: &mut World) {
         // Spawn a new entity with the effect.
         let effect_owner = world.spawn_empty().set_parent(owner).id();
         let mut scope = TrackingScope::new(world.change_tick());
