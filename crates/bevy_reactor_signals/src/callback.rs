@@ -1,7 +1,10 @@
 use std::{any::TypeId, sync::Arc};
 
 use bevy::{
-    ecs::{system::SystemId, world::Command},
+    ecs::{
+        system::SystemId,
+        world::{Command, DeferredWorld},
+    },
     prelude::*,
 };
 
@@ -60,6 +63,18 @@ impl RunCallback for World {
     /// * `props` - The props to pass to the callback.
     fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
         self.run_system_with_input(callback.id, props).unwrap();
+    }
+}
+
+/// A mutable reactive context. This allows write access to reactive data sources.
+impl<'w> RunCallback for DeferredWorld<'w> {
+    /// Invoke a callback with the given props.
+    ///
+    /// Arguments:
+    /// * `callback` - The callback to invoke.
+    /// * `props` - The props to pass to the callback.
+    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+        self.commands().run_system_with_input(callback.id, props);
     }
 }
 

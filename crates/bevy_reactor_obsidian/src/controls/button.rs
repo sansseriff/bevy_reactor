@@ -13,8 +13,10 @@ use bevy::{
     ui,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunCallback, RunContextRead, Signal};
 use bevy_reactor_views::*;
+
+use super::{Disabled, IsDisabled};
 
 /// The variant determines the button's color scheme
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
@@ -54,6 +56,9 @@ pub(crate) fn style_button_bg(ss: &mut StyleBuilder) {
         .top(0)
         .bottom(0);
 }
+
+#[derive(Component)]
+pub struct Pressed(pub bool);
 
 /// Button widget
 pub struct Button {
@@ -188,16 +193,14 @@ impl ViewTemplate for Button {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let id = cx.create_entity();
         let variant = self.variant;
-        let pressed = cx.create_mutable::<bool>(false);
         let hovering = cx.create_hover_signal(id);
-        // let focused = cx.create_focus_visible_signal(id);
         let focused = Signal::Constant(false);
 
-        let disabled = self.disabled;
         let corners = self.corners;
         let minimal = self.minimal;
 
         let size = self.size;
+        let on_click = self.on_click;
 
         Element::<NodeBundle>::for_entity(id)
             .named("Button")
@@ -214,51 +217,11 @@ impl ViewTemplate for Button {
                 },
                 self.style.clone(),
             ))
+            .insert_if(self.disabled, || Disabled)
             .insert((
                 // TabIndex(self.tab_index),
+                Pressed(false),
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-                // {
-                //     let on_click = self.on_click;
-                //     On::<Pointer<Click>>::run(move |world: &mut World| {
-                //         let mut focus = world.get_resource_mut::<Focus>().unwrap();
-                //         focus.0 = Some(id);
-                //         if !disabled.get(world) {
-                //             let mut event = world
-                //                 .get_resource_mut::<ListenerInput<Pointer<Click>>>()
-                //                 .unwrap();
-                //             event.stop_propagation();
-                //             if let Some(on_click) = on_click {
-                //                 world.run_callback(on_click, ());
-                //             }
-                //         }
-                //     })
-                // },
-                // On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                //     if !disabled.get(world) {
-                //         pressed.set(world, true);
-                //     }
-                // }),
-                // On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                //     if !disabled.get(world) {
-                //         pressed.set(world, false);
-                //     }
-                // }),
-                // On::<Pointer<DragEnter>>::run(move |world: &mut World| {
-                //     if !disabled.get(world) {
-                //         pressed.set(world, true);
-                //     }
-                // }),
-                // On::<Pointer<DragLeave>>::run(move |world: &mut World| {
-                //     if !disabled.get(world) {
-                //         pressed.set(world, false);
-                //     }
-                // }),
-                // On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
-                //     println!("PointerCancel");
-                //     if !disabled.get(world) {
-                //         pressed.set(world, false);
-                //     }
-                // }),
                 // On::<KeyPressEvent>::run({
                 //     let on_click = self.on_click;
                 //     move |world: &mut World| {
@@ -280,24 +243,77 @@ impl ViewTemplate for Button {
                 // }),
             ))
             // .insert_if(self.autofocus, AutoFocus)
-            .observe(|trigger: Trigger<Pointer<Click>>| {
-                println!("Click: {:?}", trigger);
-            })
+            .observe(
+                move |mut trigger: Trigger<Pointer<Click>>,
+                      mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>,
+                      mut commands: Commands| {
+                    let (pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
+                    trigger.propagate(false);
+                    if pressed.0 && disabled.is_none() {
+                        // println!("Click: {}", pressed.0);
+                        if let Some(on_click) = on_click {
+                            commands.run_callback(on_click, ());
+                        }
+                    }
+                },
+            )
+            .observe(
+                |mut trigger: Trigger<Pointer<Down>>,
+                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                    trigger.propagate(false);
+                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
+                    if disabled.is_none() {
+                        pressed.0 = true;
+                    }
+                },
+            )
+            .observe(
+                |mut trigger: Trigger<Pointer<Up>>,
+                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                    trigger.propagate(false);
+                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
+                    if disabled.is_none() {
+                        pressed.0 = false;
+                    }
+                },
+            )
+            .observe(
+                |mut trigger: Trigger<Pointer<DragEnd>>,
+                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                    trigger.propagate(false);
+                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
+                    if disabled.is_none() {
+                        pressed.0 = false;
+                    }
+                },
+            )
+            .observe(
+                |mut trigger: Trigger<Pointer<Cancel>>,
+                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                    trigger.propagate(false);
+                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
+                    if disabled.is_none() {
+                        pressed.0 = false;
+                    }
+                },
+            )
             .children((
                 Element::<NodeBundle>::new()
                     .named("Button::Background")
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .style_dyn(
-                        move |cx| {
+                        move |rcx| {
                             if minimal {
                                 colors::TRANSPARENT
                             } else {
+                                let pressed = rcx.use_component::<Pressed>(id).unwrap();
+                                let disabled = rcx.is_disabled(id);
                                 button_bg_color(
-                                    variant.get(cx),
-                                    disabled.get(cx),
-                                    pressed.get(cx),
-                                    hovering.get(cx),
+                                    variant.get(rcx),
+                                    disabled,
+                                    pressed.0,
+                                    hovering.get(rcx),
                                 )
                             }
                         },
@@ -306,7 +322,7 @@ impl ViewTemplate for Button {
                         },
                     )
                     .style_dyn(
-                        move |cx| focused.get(cx),
+                        move |rcx| focused.get(rcx),
                         |is_focused, sb| {
                             if is_focused {
                                 sb.outline_color(colors::FOCUS)
@@ -338,8 +354,8 @@ pub(crate) fn button_bg_color(
     };
     match (is_disabled, is_pressed, is_hovering) {
         (true, _, _) => base_color.with_alpha(0.2),
-        (_, true, _) => base_color.lighter(0.05),
-        (_, false, true) => base_color.lighter(0.02),
-        (_, false, false) => base_color,
+        (_, true, true) => base_color.lighter(0.07),
+        (_, false, true) => base_color.lighter(0.03),
+        _ => base_color,
     }
 }
