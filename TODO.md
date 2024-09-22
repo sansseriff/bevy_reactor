@@ -1,7 +1,10 @@
 # TODO
 
 - Split Cx and Rcx. Cx is now `TemplateBuildContext` (need shorter name).
-- For nodes.
+- `For` nodes.
+- `Switch` nodes.
+- Figure out how to avoid boxing children.
+- Observers.
 
 - Run to convergence.
 - cleanup with component hooks.

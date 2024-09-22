@@ -122,7 +122,7 @@ impl<
         NegFn: Fn() -> Neg + Send + Sync + 'static,
     > IntoView for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(self)
     }
 }

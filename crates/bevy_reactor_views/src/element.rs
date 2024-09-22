@@ -2,7 +2,8 @@ use std::{marker::PhantomData, sync::Arc};
 
 use bevy::{
     core::Name,
-    prelude::{BuildChildren, Bundle, Entity},
+    ecs::system::IntoObserverSystem,
+    prelude::{BuildChildren, Bundle, Entity, Event, Observer},
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use bevy_reactor_signals::{Rcx, TrackingScope};
@@ -23,10 +24,13 @@ pub struct Element<B: Bundle> {
     display: Option<Entity>,
 
     /// Children of this element.
-    children: Vec<Box<dyn View + Send + Sync + 'static>>,
+    children: Vec<Box<dyn View + 'static>>,
 
     /// List of effects to be added to the element.
     effects: Vec<Box<dyn Effect>>,
+
+    /// List of observers to be added to the element.
+    observers: Vec<Observer>,
 
     /// Marker for bundle type.
     marker: PhantomData<B>,
@@ -45,6 +49,7 @@ impl<B: Bundle + Default> Element<B> {
             display: Some(entity),
             children: Vec::new(),
             effects: Vec::new(),
+            observers: Vec::new(),
             marker: PhantomData,
         }
     }
@@ -88,6 +93,16 @@ impl<B: Bundle + Default> Element<B> {
         child_views.into_view_vec(&mut self.children);
         self
     }
+
+    /// Creates an [`Observer`] listening for events of type `E` targeting this entity.
+    /// In order to trigger the callback the entity must also match the query when the event is fired.
+    pub fn observe<E: Event, B2: Bundle, M: Send + Sync + 'static>(
+        mut self,
+        observer: impl IntoObserverSystem<E, B2, M> + Sync,
+    ) -> Self {
+        self.observers.push(Observer::new(observer));
+        self
+    }
 }
 
 impl<B: Bundle + Default> View for Element<B> {
@@ -118,26 +133,30 @@ impl<B: Bundle + Default> View for Element<B> {
 
         // Insert components from effects.
         if !self.effects.is_empty() {
-            for effect in self.effects.iter_mut() {
+            for effect in self.effects.iter() {
                 effect.start(display, display, world);
             }
         }
 
         // Build child nodes.
         let mut children: Vec<Entity> = Vec::new();
-        for child in self.children.iter_mut() {
+        for mut child in self.children.drain(..) {
             child.build(display, world, scope, &mut children);
         }
+        let mut entt = world.entity_mut(display);
+        entt.replace_children(&children);
 
-        world
-            .entity_mut(self.display.unwrap())
-            .replace_children(&children);
+        // Add observers
+        for observer in self.observers.drain(..) {
+            entt.insert(observer.with_entity(display));
+        }
+
         out.push(display);
     }
 }
 
 impl<B: Bundle + Default> IntoView for Element<B> {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(self)
     }
 }

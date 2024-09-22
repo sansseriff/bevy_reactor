@@ -7,7 +7,7 @@ use crate::TextStatic;
 
 /// Trait that defines a view, which is a template that constructs a hierarchy of
 /// entities and components.
-pub trait View {
+pub trait View: Send + Sync {
     /// Initialize the view, creating any entities needed.
     ///
     /// Arguments:
@@ -26,7 +26,7 @@ pub trait View {
     /// Convert this View into a view root which can be spawned.
     fn to_root(self) -> (ViewCell, ViewRoot)
     where
-        Self: Sized + Send + Sync + 'static,
+        Self: Sized + 'static,
     {
         (ViewCell(Arc::new(Mutex::new(self))), ViewRoot)
     }
@@ -36,36 +36,36 @@ pub trait View {
 pub struct ViewRoot;
 
 #[derive(Component)]
-pub struct ViewCell(pub(crate) Arc<Mutex<dyn View + Send + Sync + 'static>>);
+pub struct ViewCell(pub(crate) Arc<Mutex<dyn View + 'static>>);
 
 impl ViewCell {
-    pub fn new<V: View + Send + Sync + 'static>(view: V) -> Self {
+    pub fn new<V: View + 'static>(view: V) -> Self {
         Self(Arc::new(Mutex::new(view)))
     }
 }
 
 pub trait IntoView {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static>;
+    fn into_view(self) -> Box<dyn View + 'static>;
 }
 
 impl IntoView for &str {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(TextStatic::new(self.to_string()))
     }
 }
 
 impl IntoView for String {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(TextStatic::new(self))
     }
 }
 
 pub trait IntoViewVec {
-    fn into_view_vec(self, out: &mut Vec<Box<dyn View + Send + Sync + 'static>>);
+    fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>);
 }
 
 impl<V: IntoView> IntoViewVec for V {
-    fn into_view_vec(self, out: &mut Vec<Box<dyn View + Send + Sync + 'static>>) {
+    fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>) {
         out.push(self.into_view());
     }
 }
@@ -89,7 +89,7 @@ macro_rules! impl_view_tuple {
         impl<$(
             $view: IntoViewVec + Send + Sync + 'static,
         )+> IntoViewVec for ( $( $view, )* ) {
-            fn into_view_vec(self, out: &mut Vec<Box<dyn View + Send + Sync + 'static>>) {
+            fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>) {
                 $( self.$idx.into_view_vec(out); )*
             }
         }

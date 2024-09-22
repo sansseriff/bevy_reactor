@@ -24,12 +24,12 @@ pub trait ViewTemplate {
 }
 
 impl<VT: ViewTemplate + Send + Sync + 'static> IntoView for VT {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(ViewTemplateView { template: self })
     }
 }
 
-impl<VT: ViewTemplate + 'static> From<VT> for Box<dyn View> {
+impl<VT: ViewTemplate + Send + Sync + 'static> From<VT> for Box<dyn View> {
     fn from(value: VT) -> Self {
         Box::new(ViewTemplateView { template: value })
     }
@@ -39,7 +39,7 @@ pub struct ViewTemplateView<VT: ViewTemplate> {
     template: VT,
 }
 
-impl<VT: ViewTemplate> View for ViewTemplateView<VT> {
+impl<VT: ViewTemplate + Send + Sync> View for ViewTemplateView<VT> {
     fn build(
         &mut self,
         owner: Entity,

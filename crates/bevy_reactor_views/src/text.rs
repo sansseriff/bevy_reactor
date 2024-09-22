@@ -41,7 +41,7 @@ impl View for TextStatic {
 }
 
 impl IntoView for TextStatic {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(self)
     }
 }
@@ -116,7 +116,7 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> Reaction for TextComputed
 }
 
 impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> IntoView for TextComputed<F> {
-    fn into_view(self) -> Box<dyn View + Send + Sync + 'static> {
+    fn into_view(self) -> Box<dyn View + 'static> {
         Box::new(self)
     }
 }

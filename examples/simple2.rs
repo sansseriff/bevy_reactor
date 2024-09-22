@@ -72,6 +72,9 @@ fn setup_view_root(mut commands: Commands) {
             //         palettes::css::RED.into()
             //     };
             // })
+            .observe(|event: Trigger<Pointer<Click>>| {
+                println!("Click: {:?}", event);
+            })
             .children((
                 Element::<NodeBundle>::new(),
                 // TextStatic::new("Hello, world!".to_string()),
