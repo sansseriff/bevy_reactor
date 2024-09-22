@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    colors, hover_signal::CreateHoverSignal, prelude::RoundedCorners, size::Size, typography,
+    colors, cursor::StyleBuilderCursor, hover_signal::CreateHoverSignal, prelude::RoundedCorners,
+    size::Size, typography,
 };
 use bevy::{
     a11y::{
@@ -10,7 +11,9 @@ use bevy::{
     },
     color::Luminance,
     prelude::*,
+    render::view::cursor::CursorIcon,
     ui,
+    window::SystemCursorIcon,
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunCallback, RunContextRead, Signal};
@@ -44,8 +47,8 @@ pub(crate) fn style_button(ss: &mut StyleBuilder) {
         .align_content(ui::AlignContent::Center)
         .padding((12, 0))
         .border(0)
-        .color(colors::FOREGROUND);
-    // .cursor(CursorIcon::System(SystemCursorIcon::Pointer));
+        .color(colors::FOREGROUND)
+        .cursor(CursorIcon::System(SystemCursorIcon::Pointer));
 }
 
 pub(crate) fn style_button_bg(ss: &mut StyleBuilder) {

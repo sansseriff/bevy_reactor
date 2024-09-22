@@ -2,7 +2,7 @@ use bevy::{asset::embedded_asset, prelude::*};
 
 pub mod colors;
 pub mod controls;
-// pub mod cursor;
+pub mod cursor;
 // pub mod focus_signal;
 pub mod hover_signal;
 pub mod rounded_corners;
@@ -72,7 +72,7 @@ impl Plugin for ObsidianUiPlugin {
                     // scrolling::handle_scroll_events,
                     // scrolling::update_scroll_positions,
                     hover_signal::update_hover_states,
-                    // cursor::update_cursor,
+                    cursor::update_cursor,
                 ),
             );
         // .init_resource::<RecentColors>()
