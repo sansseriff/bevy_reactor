@@ -5,15 +5,9 @@ use bevy::{
     prelude::*,
     ui,
 };
-use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use obsidian_ui::{
-    colors,
-    controls::{Button, ButtonVariant, IconButton},
-    size::Size,
-    ObsidianUiPlugin, RoundedCorners,
-};
+use bevy_reactor_obsidian::{controls::Button, prelude::*};
+use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -42,12 +36,7 @@ fn main() {
             AssetSource::build()
                 .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
         )
-        .add_plugins((
-            DefaultPlugins,
-            DefaultPickingPlugins,
-            ReactorPlugin,
-            ObsidianUiPlugin,
-        ))
+        .add_plugins((DefaultPlugins, ReactorViewsPlugin, ObsidianUiPlugin))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, close_on_esc)
         .run();
@@ -62,7 +51,7 @@ fn setup_view_root(mut commands: Commands) {
         },))
         .id();
 
-    commands.spawn(ViewRoot::new(
+    commands.spawn(
         Element::<NodeBundle>::new()
             .insert(TargetCamera(camera))
             .style(style_test)
@@ -132,29 +121,30 @@ fn setup_view_root(mut commands: Commands) {
                         .children("corners: None")
                         .corners(RoundedCorners::None),
                 )),
-                "IconButton",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("obsidian_ui://icons/chevron_left.png"),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                    //     .variant(ButtonVariant::Primary),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                    //     .variant(ButtonVariant::Danger),
-                    // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                    //     .variant(ButtonVariant::Selected),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
-                )),
-                "IconButton Size",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
-                    IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
-                )),
-            )),
-    ));
+                // "IconButton",
+                // Element::<NodeBundle>::new().style(style_row).children((
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png"),
+                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                //     //     .variant(ButtonVariant::Primary),
+                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                //     //     .variant(ButtonVariant::Danger),
+                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+                //     //     .variant(ButtonVariant::Selected),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
+                // )),
+                // "IconButton Size",
+                // Element::<NodeBundle>::new().style(style_row).children((
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
+                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
+                // )),
+            ))
+            .to_root(),
+    );
 }
 
 pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {

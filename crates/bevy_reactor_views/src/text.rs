@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::{get_inherited_text_styles, UseInheritedTextStyles};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
@@ -19,7 +21,7 @@ impl TextStatic {
 
 impl View for TextStatic {
     fn build(
-        &mut self,
+        &self,
         parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
@@ -41,27 +43,29 @@ impl View for TextStatic {
 }
 
 impl IntoView for TextStatic {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(self)
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(self)
     }
 }
 
 /// A UI element that displays text that is dynamically computed.
 pub struct TextComputed<F: FnMut(&Rcx) -> String + Send + Sync + 'static> {
     /// The function that produces the text to display
-    text: Option<F>,
+    text: Mutex<Option<F>>,
 }
 
 impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> TextComputed<F> {
     /// Construct a new computed text view.
     pub fn new(text: F) -> Self {
-        Self { text: Some(text) }
+        Self {
+            text: Mutex::new(Some(text)),
+        }
     }
 }
 
 impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> {
     fn build(
-        &mut self,
+        &self,
         parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
@@ -73,6 +77,8 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> 
         let re = Rcx::new(world, node, &mut tracking);
         let mut text_fn = self
             .text
+            .lock()
+            .unwrap()
             .take()
             .expect("TextComputed text function missing");
         let text = (text_fn)(&re);
@@ -116,7 +122,7 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> Reaction for TextComputed
 }
 
 impl<F: Send + Sync + 'static + FnMut(&Rcx) -> String> IntoView for TextComputed<F> {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(self)
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(self)
     }
 }

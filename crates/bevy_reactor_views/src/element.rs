@@ -1,9 +1,12 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+};
 
 use bevy::{
     core::Name,
     ecs::system::IntoObserverSystem,
-    prelude::{BuildChildren, Bundle, Entity, Event, Observer},
+    prelude::{BuildChildren, Bundle, Entity, Event, Observer, World},
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use bevy_reactor_signals::{Rcx, TrackingScope};
@@ -24,13 +27,13 @@ pub struct Element<B: Bundle> {
     display: Option<Entity>,
 
     /// Children of this element.
-    children: Vec<Box<dyn View + 'static>>,
+    children: Vec<Arc<dyn View + 'static>>,
 
     /// List of effects to be added to the element.
     effects: Vec<Box<dyn Effect>>,
 
     /// List of observers to be added to the element.
-    observers: Vec<Observer>,
+    observers: Mutex<Vec<Observer>>,
 
     /// Marker for bundle type.
     marker: PhantomData<B>,
@@ -49,7 +52,7 @@ impl<B: Bundle + Default> Element<B> {
             display: Some(entity),
             children: Vec::new(),
             effects: Vec::new(),
-            observers: Vec::new(),
+            observers: Mutex::new(Vec::new()),
             marker: PhantomData,
         }
     }
@@ -57,6 +60,24 @@ impl<B: Bundle + Default> Element<B> {
     /// Set the debug name for this element.
     pub fn named(mut self, name: &str) -> Self {
         self.debug_name = name.to_string();
+        self
+    }
+
+    /// Add a static bundle to the element.
+    pub fn insert<T: Bundle>(mut self, bundle: T) -> Self {
+        self.effects.push(Box::new(InsertBundleEffect {
+            bundle: Mutex::new(Some(bundle)),
+        }));
+        self
+    }
+
+    /// Add a static bundle to the element, if a condition is true.
+    pub fn insert_if<T: Bundle>(mut self, cond: bool, bundle: T) -> Self {
+        if cond {
+            self.effects.push(Box::new(InsertBundleEffect {
+                bundle: Mutex::new(Some(bundle)),
+            }));
+        }
         self
     }
 
@@ -97,17 +118,17 @@ impl<B: Bundle + Default> Element<B> {
     /// Creates an [`Observer`] listening for events of type `E` targeting this entity.
     /// In order to trigger the callback the entity must also match the query when the event is fired.
     pub fn observe<E: Event, B2: Bundle, M: Send + Sync + 'static>(
-        mut self,
+        self,
         observer: impl IntoObserverSystem<E, B2, M> + Sync,
     ) -> Self {
-        self.observers.push(Observer::new(observer));
+        self.observers.lock().unwrap().push(Observer::new(observer));
         self
     }
 }
 
 impl<B: Bundle + Default> View for Element<B> {
     fn build(
-        &mut self,
+        &self,
         _owner: Entity,
         world: &mut bevy::prelude::World,
         scope: &mut TrackingScope,
@@ -126,7 +147,7 @@ impl<B: Bundle + Default> View for Element<B> {
                     .spawn((B::default(), Name::new(self.debug_name.clone())))
                     .id();
                 scope.add_owned(entity);
-                self.display = Some(entity);
+                // self.display = Some(entity);
                 entity
             }
         };
@@ -140,14 +161,14 @@ impl<B: Bundle + Default> View for Element<B> {
 
         // Build child nodes.
         let mut children: Vec<Entity> = Vec::new();
-        for mut child in self.children.drain(..) {
+        for child in self.children.iter() {
             child.build(display, world, scope, &mut children);
         }
         let mut entt = world.entity_mut(display);
         entt.replace_children(&children);
 
         // Add observers
-        for observer in self.observers.drain(..) {
+        for observer in self.observers.lock().unwrap().drain(..) {
             entt.insert(observer.with_entity(display));
         }
 
@@ -156,7 +177,21 @@ impl<B: Bundle + Default> View for Element<B> {
 }
 
 impl<B: Bundle + Default> IntoView for Element<B> {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(self)
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(self)
+    }
+}
+
+/// Inserts a static, pre-constructed bundle into the target entity. No reactivity.
+pub struct InsertBundleEffect<B: Bundle> {
+    pub(crate) bundle: Mutex<Option<B>>,
+}
+
+impl<B: Bundle> Effect for InsertBundleEffect<B> {
+    // For a static bundle, we can just insert it once.
+    fn start(&self, _owner: Entity, target: Entity, world: &mut World) {
+        world
+            .entity_mut(target)
+            .insert(self.bundle.lock().unwrap().take().unwrap());
     }
 }

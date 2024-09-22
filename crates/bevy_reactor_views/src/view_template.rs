@@ -24,8 +24,8 @@ pub trait ViewTemplate {
 }
 
 impl<VT: ViewTemplate + Send + Sync + 'static> IntoView for VT {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(ViewTemplateView { template: self })
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(ViewTemplateView { template: self })
     }
 }
 
@@ -41,14 +41,14 @@ pub struct ViewTemplateView<VT: ViewTemplate> {
 
 impl<VT: ViewTemplate + Send + Sync> View for ViewTemplateView<VT> {
     fn build(
-        &mut self,
+        &self,
         owner: Entity,
         world: &mut World,
         scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
     ) {
         let mut cx = Cx::new(world, owner, scope);
-        let mut view = self.template.create(&mut cx).into_view();
+        let view = self.template.create(&mut cx).into_view();
         view.build(owner, world, scope, out);
     }
 }

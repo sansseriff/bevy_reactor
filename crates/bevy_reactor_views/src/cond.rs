@@ -90,7 +90,7 @@ impl<
     > View for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     fn build(
-        &mut self,
+        &self,
         owner: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
@@ -122,8 +122,8 @@ impl<
         NegFn: Fn() -> Neg + Send + Sync + 'static,
     > IntoView for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(self)
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(self)
     }
 }
 
@@ -160,7 +160,7 @@ impl<
         world: &mut World,
     ) {
         world.entity_mut(owner).despawn_descendants();
-        let mut state_view = (branch)().into_view();
+        let state_view = (branch)().into_view();
         let mut children = Vec::new();
         state_view.build(owner, world, scope, &mut children);
         world.entity_mut(owner).replace_children(&children);

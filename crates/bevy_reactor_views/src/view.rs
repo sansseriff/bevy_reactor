@@ -16,7 +16,7 @@ pub trait View: Send + Sync {
     /// * `scope`: The parent tracking scope which owns any reactions created by this view.
     /// * `out`: A mutable reference to a vector where the output entities will be stored.
     fn build(
-        &mut self,
+        &self,
         owner: Entity,
         world: &mut World,
         scope: &mut TrackingScope,
@@ -45,34 +45,40 @@ impl ViewCell {
 }
 
 pub trait IntoView {
-    fn into_view(self) -> Box<dyn View + 'static>;
+    fn into_view(self) -> Arc<dyn View + 'static>;
 }
 
 impl IntoView for &str {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(TextStatic::new(self.to_string()))
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(TextStatic::new(self.to_string()))
     }
 }
 
 impl IntoView for String {
-    fn into_view(self) -> Box<dyn View + 'static> {
-        Box::new(TextStatic::new(self))
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(TextStatic::new(self))
+    }
+}
+
+impl IntoView for Arc<dyn View + 'static> {
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        self
     }
 }
 
 pub trait IntoViewVec {
-    fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>);
+    fn into_view_vec(self, out: &mut Vec<Arc<dyn View + 'static>>);
 }
 
 impl<V: IntoView> IntoViewVec for V {
-    fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>) {
+    fn into_view_vec(self, out: &mut Vec<Arc<dyn View + 'static>>) {
         out.push(self.into_view());
     }
 }
 
 impl<V: View> View for Option<V> {
     fn build(
-        &mut self,
+        &self,
         owner: Entity,
         world: &mut World,
         scope: &mut TrackingScope,
@@ -89,8 +95,22 @@ macro_rules! impl_view_tuple {
         impl<$(
             $view: IntoViewVec + Send + Sync + 'static,
         )+> IntoViewVec for ( $( $view, )* ) {
-            fn into_view_vec(self, out: &mut Vec<Box<dyn View + 'static>>) {
+            fn into_view_vec(self, out: &mut Vec<Arc<dyn View + 'static>>) {
                 $( self.$idx.into_view_vec(out); )*
+            }
+        }
+
+        impl<$(
+            $view: View + 'static,
+        )+> View for ( $( $view, )* ) {
+            fn build(
+                &self,
+                owner: Entity,
+                world: &mut World,
+                scope: &mut TrackingScope,
+                out: &mut Vec<Entity>,
+            ) {
+                $( self.$idx.build(owner, world, scope, out); )*
             }
         }
     };
@@ -116,7 +136,7 @@ impl_view_tuple!(V0, 0; V1, 1; V2, 2; V3, 3; V4, 4; V5, 5; V6, 6; V7, 7; V8, 8; 
 #[allow(unused)]
 impl View for () {
     fn build(
-        &mut self,
+        &self,
         owner: Entity,
         world: &mut World,
         scope: &mut TrackingScope,
