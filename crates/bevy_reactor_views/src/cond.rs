@@ -53,9 +53,9 @@ impl From<bool> for CondState {
 pub struct Cond<
     Test: TestCondition + 'static,
     Pos: IntoView,
-    PosFn: Fn() -> Pos + Send + Sync,
+    PosFn: Send + Sync + Fn() -> Pos,
     Neg: IntoView,
-    NegFn: Fn() -> Neg + Send + Sync,
+    NegFn: Send + Sync + Fn() -> Neg,
 > {
     reaction: Arc<Mutex<CondReaction<Test, Pos, PosFn, Neg, NegFn>>>,
 }
@@ -63,9 +63,9 @@ pub struct Cond<
 impl<
         Test: TestCondition,
         Pos: IntoView,
-        PosFn: Fn() -> Pos + Send + Sync,
+        PosFn: Send + Sync + Fn() -> Pos,
         Neg: IntoView,
-        NegFn: Fn() -> Neg + Send + Sync,
+        NegFn: Send + Sync + Fn() -> Neg,
     > Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     /// Construct a new conditional View.
@@ -84,9 +84,9 @@ impl<
 impl<
         Test: TestCondition,
         Pos: IntoView + 'static,
-        PosFn: Fn() -> Pos + Send + Sync + 'static,
+        PosFn: Send + Sync + Fn() -> Pos + 'static,
         Neg: IntoView + 'static,
-        NegFn: Fn() -> Neg + Send + Sync + 'static,
+        NegFn: Send + Sync + Fn() -> Neg + 'static,
     > View for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     fn build(
@@ -117,9 +117,9 @@ impl<
 impl<
         Test: TestCondition,
         Pos: IntoView + 'static,
-        PosFn: Fn() -> Pos + Send + Sync + 'static,
+        PosFn: Send + Sync + Fn() -> Pos + 'static,
         Neg: IntoView + 'static,
-        NegFn: Fn() -> Neg + Send + Sync + 'static,
+        NegFn: Send + Sync + Fn() -> Neg + 'static,
     > IntoView for Cond<Test, Pos, PosFn, Neg, NegFn>
 {
     fn into_view(self) -> Arc<dyn View + 'static> {
@@ -146,9 +146,9 @@ struct CondReaction<
 impl<
         Test: TestCondition,
         Pos: IntoView + 'static,
-        PosFn: Fn() -> Pos + Send + Sync + 'static,
+        PosFn: Send + Sync + Fn() -> Pos + 'static,
         Neg: IntoView + 'static,
-        NegFn: Fn() -> Neg + Send + Sync + 'static,
+        NegFn: Send + Sync + Fn() -> Neg + 'static,
     > CondReaction<Test, Pos, PosFn, Neg, NegFn>
 {
     /// Helper function to build either the true or false branch content.
@@ -170,9 +170,9 @@ impl<
 impl<
         Test: TestCondition,
         Pos: IntoView + 'static,
-        PosFn: Fn() -> Pos + Send + Sync + 'static,
+        PosFn: Send + Sync + Fn() -> Pos + 'static,
         Neg: IntoView + 'static,
-        NegFn: Fn() -> Neg + Send + Sync + 'static,
+        NegFn: Send + Sync + Fn() -> Neg + 'static,
     > Reaction for CondReaction<Test, Pos, PosFn, Neg, NegFn>
 {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {

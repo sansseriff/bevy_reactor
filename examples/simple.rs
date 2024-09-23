@@ -11,8 +11,8 @@ use bevy::{
     },
 };
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
+use bevy_reactor_views::*;
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -26,7 +26,7 @@ fn main() {
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // .add_plugins((CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend))
-        .add_plugins(ReactorPlugin)
+        .add_plugins(ReactorViewsPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_counter))
         .run();
@@ -39,31 +39,35 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(mut commands: Commands) {
-    commands.spawn(ViewRoot::new(
+    commands.spawn(
         Element::<NodeBundle>::new()
             .style(style_test)
             .insert(BorderColor(palettes::css::LIME.into()))
-            .insert_computed(|cx| {
-                let counter = cx.use_resource::<Counter>();
-                BackgroundColor(if counter.count & 1 == 0 {
-                    palettes::css::DARK_GRAY.into()
-                } else {
-                    palettes::css::MAROON.into()
-                })
-            })
-            .create_effect(|cx, ent| {
-                let count = cx.use_resource::<Counter>().count;
-                let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-                border.0 = if count & 1 == 0 {
-                    palettes::css::LIME.into()
-                } else {
-                    palettes::css::RED.into()
-                };
-            })
+            // .insert_computed(|cx| {
+            //     let counter = cx.use_resource::<Counter>();
+            //     BackgroundColor(if counter.count & 1 == 0 {
+            //         palettes::css::DARK_GRAY.into()
+            //     } else {
+            //         palettes::css::MAROON.into()
+            //     })
+            // })
+            .style_dyn(
+                |rcx| {
+                    let counter = rcx.use_resource::<Counter>();
+                    counter.count & 1 == 0
+                },
+                |even, sb| {
+                    sb.border_color(if even {
+                        palettes::css::LIME
+                    } else {
+                        palettes::css::MAROON
+                    });
+                },
+            )
             .children((
                 Element::<NodeBundle>::new(),
-                text("Count: "),
-                text_computed(|cx| {
+                "Count: ",
+                TextComputed::new(|cx| {
                     let counter = cx.use_resource::<Counter>();
                     format!("{}", counter.count)
                 }),
@@ -78,26 +82,27 @@ fn setup_view_root(mut commands: Commands) {
                     || "[Even]",
                     || "[Odd]",
                 ),
-                DynamicKeyed::new(
-                    |cx| cx.use_resource::<Counter>().count,
-                    |count| format!(":{}:", count),
-                ),
-                For::each(
-                    |cx| {
-                        let counter = cx.use_resource::<Counter>();
-                        [counter.count, counter.count + 1, counter.count + 2].into_iter()
-                    },
-                    |item| format!("item: {}", item),
-                ),
-            )),
-    ));
+                // DynamicKeyed::new(
+                //     |cx| cx.use_resource::<Counter>().count,
+                //     |count| format!(":{}:", count),
+                // ),
+                // For::each(
+                //     |cx| {
+                //         let counter = cx.use_resource::<Counter>();
+                //         [counter.count, counter.count + 1, counter.count + 2].into_iter()
+                //     },
+                //     |item| format!("item: {}", item),
+                // ),
+            ))
+            .to_root(),
+    );
 }
 
 struct NestedView;
 
 impl ViewTemplate for NestedView {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        text_computed(|cx| {
+        TextComputed::new(|cx| {
             let counter = cx.use_resource::<Counter>();
             format!("{}", counter.count)
         })

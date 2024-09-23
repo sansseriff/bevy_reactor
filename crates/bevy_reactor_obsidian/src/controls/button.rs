@@ -248,11 +248,11 @@ impl ViewTemplate for Button {
             // .insert_if(self.autofocus, AutoFocus)
             .observe(
                 move |mut trigger: Trigger<Pointer<Click>>,
-                      mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>,
+                      mut q_state: Query<(&mut Pressed, Has<Disabled>)>,
                       mut commands: Commands| {
                     let (pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
                     trigger.propagate(false);
-                    if pressed.0 && disabled.is_none() {
+                    if pressed.0 && !disabled {
                         // println!("Click: {}", pressed.0);
                         if let Some(on_click) = on_click {
                             commands.run_callback(on_click, ());
@@ -262,40 +262,40 @@ impl ViewTemplate for Button {
             )
             .observe(
                 |mut trigger: Trigger<Pointer<Down>>,
-                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
                     trigger.propagate(false);
                     let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if disabled.is_none() {
+                    if !disabled {
                         pressed.0 = true;
                     }
                 },
             )
             .observe(
                 |mut trigger: Trigger<Pointer<Up>>,
-                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
                     trigger.propagate(false);
                     let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if disabled.is_none() {
+                    if !disabled {
                         pressed.0 = false;
                     }
                 },
             )
             .observe(
                 |mut trigger: Trigger<Pointer<DragEnd>>,
-                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
                     trigger.propagate(false);
                     let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if disabled.is_none() {
+                    if !disabled {
                         pressed.0 = false;
                     }
                 },
             )
             .observe(
                 |mut trigger: Trigger<Pointer<Cancel>>,
-                 mut q_state: Query<(&mut Pressed, Option<&mut Disabled>)>| {
+                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
                     trigger.propagate(false);
                     let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if disabled.is_none() {
+                    if !disabled {
                         pressed.0 = false;
                     }
                 },

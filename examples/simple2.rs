@@ -54,7 +54,7 @@ fn setup_view_root(mut commands: Commands) {
                     });
                 },
             )
-            // .insert(BorderColor(palettes::css::LIME.into()))
+            .insert(BorderColor(palettes::css::LIME.into()))
             // .insert_computed(|cx| {
             //     let counter = cx.use_resource::<Counter>();
             //     BackgroundColor(if counter.count & 1 == 0 {

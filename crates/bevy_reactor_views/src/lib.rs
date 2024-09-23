@@ -2,10 +2,10 @@ mod cond;
 mod effect;
 mod element;
 mod style;
+mod switch;
 mod text;
 mod view;
 mod view_template;
-mod vcx;
 
 pub mod prelude {
     pub use crate::{
@@ -22,12 +22,12 @@ use bevy_mod_stylebuilder::StyleBuilderPlugin;
 use bevy_reactor_signals::{ReactionSet, SignalsPlugin, TrackingScope};
 pub use cond::Cond;
 pub use element::Element;
+pub use switch::Switch;
 pub use text::{TextComputed, TextStatic};
 use view::ViewCell;
 pub use view::ViewRoot;
 pub use view::{IntoView, IntoViewVec, View};
 pub use view_template::ViewTemplate;
-pub use vcx::Vcx;
 
 pub struct ReactorViewsPlugin;
 
