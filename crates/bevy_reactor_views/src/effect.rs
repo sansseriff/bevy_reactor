@@ -5,9 +5,7 @@ pub trait Effect: Sync + Send {
     /// Start the effect.
     ///
     /// Arguments:
-    /// - `owner`: The entity that tracks ownership of this reaction, the reaction
-    ///     will be deleted when the owner is deleted.
-    /// - `display`: The display entity that will be modified.
+    /// - `owner`: The entity that this effect is attached to.
     /// - `world`: The Bevy world.
-    fn start(self: Box<Self>, owner: Entity, display: Entity, world: &mut World);
+    fn start(self: Box<Self>, owner: Entity, world: &mut World);
 }

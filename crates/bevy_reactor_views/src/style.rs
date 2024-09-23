@@ -16,8 +16,8 @@ pub struct StaticStyleEffect<S: StyleTuple> {
 
 impl<S: StyleTuple> Effect for StaticStyleEffect<S> {
     // For a style builder, run the builder over the target entity.
-    fn start(self: Box<Self>, _owner: Entity, target: Entity, world: &mut World) {
-        let mut target = world.entity_mut(target);
+    fn start(self: Box<Self>, owner: Entity, world: &mut World) {
+        let mut target = world.entity_mut(owner);
         let mut style = ui::Style::default();
         if let Some(s) = target.get::<ui::Style>() {
             style.clone_from(s);
@@ -40,9 +40,9 @@ impl<
     > Effect for DynamicStyleEffect<D, VF, SF>
 {
     // For a style builder, run the builder over the target entity.
-    fn start(self: Box<Self>, owner: Entity, target: Entity, world: &mut World) {
+    fn start(self: Box<Self>, target: Entity, world: &mut World) {
         // Spawn a new entity with the effect.
-        let effect_owner = world.spawn_empty().set_parent(owner).id();
+        let effect_owner = world.spawn_empty().set_parent(target).id();
         let mut scope = TrackingScope::new(world.change_tick());
 
         let reaction = DynamicStyleReaction {

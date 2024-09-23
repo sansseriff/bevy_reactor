@@ -168,7 +168,7 @@ impl<B: Bundle + Default> View for Element<B> {
         // Insert components from effects.
         let mut effects = self.effects.lock().unwrap();
         for effect in effects.drain(..) {
-            effect.start(display, display, world);
+            effect.start(display, world);
         }
 
         // Build child nodes.
@@ -201,8 +201,8 @@ pub struct InsertBundleEffect<B: Bundle> {
 
 impl<B: Bundle> Effect for InsertBundleEffect<B> {
     // For a static bundle, we can just insert it once.
-    fn start(self: Box<Self>, _owner: Entity, target: Entity, world: &mut World) {
-        world.entity_mut(target).insert(self.bundle);
+    fn start(self: Box<Self>, owner: Entity, world: &mut World) {
+        world.entity_mut(owner).insert(self.bundle);
     }
 }
 
@@ -216,7 +216,7 @@ pub struct ConditionalInsertComponentEffect<C: Component, F: Fn() -> C> {
 impl<C: Component, F: Fn() -> C + Send + Sync + 'static> Effect
     for ConditionalInsertComponentEffect<C, F>
 {
-    fn start(self: Box<Self>, owner: Entity, _display: Entity, world: &mut World) {
+    fn start(self: Box<Self>, owner: Entity, world: &mut World) {
         // Spawn a new entity with the effect.
         let effect_owner = world.spawn_empty().set_parent(owner).id();
         let mut scope = TrackingScope::new(world.change_tick());
