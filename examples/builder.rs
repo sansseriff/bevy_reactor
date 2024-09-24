@@ -12,7 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Rcx, RunContextRead};
+use bevy_reactor_signals::{Callback, Rcx, RunCallback, RunContextRead};
 use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -57,18 +57,25 @@ fn setup_view_root(world: &mut World) {
             },
         )
         .create_children(|builder| {
-            builder.text("Count: ").invoke(NestedView).cond(
-                |rcx: &Rcx| {
-                    let counter = rcx.use_resource::<Counter>();
-                    counter.count & 1 == 0
-                },
-                |builder| {
-                    builder.text("[Even]");
-                },
-                |builder| {
-                    builder.text("[Odd]");
-                },
-            );
+            let on_click = builder.create_callback(|| {
+                println!("Clicked!");
+            });
+            builder
+                .text("Count: ")
+                .invoke(NestedView)
+                .cond(
+                    |rcx: &Rcx| {
+                        let counter = rcx.use_resource::<Counter>();
+                        counter.count & 1 == 0
+                    },
+                    |builder| {
+                        builder.text("[Even]");
+                    },
+                    |builder| {
+                        builder.text("[Odd]");
+                    },
+                )
+                .invoke(Clickable { on_click });
         });
     // commands.spawn(
     //     Element::<NodeBundle>::new()
@@ -150,6 +157,26 @@ impl UiTemplate for NestedView {
             let counter = rcx.use_resource::<Counter>();
             format!("{}", counter.count)
         });
+    }
+}
+
+struct Clickable {
+    on_click: Callback,
+}
+
+impl UiTemplate for Clickable {
+    fn build(&self, builder: &mut UiBuilder) {
+        let on_click = self.on_click;
+        builder
+            .spawn(NodeBundle::default())
+            .observe(
+                move |_event: Trigger<Pointer<Click>>, mut commands: Commands| {
+                    commands.run_callback(on_click, ());
+                },
+            )
+            .create_children(|builder| {
+                builder.text("Click Me!");
+            });
     }
 }
 
