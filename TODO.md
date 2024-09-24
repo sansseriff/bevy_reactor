@@ -1,16 +1,17 @@
 # TODO
 
-- text: use trigger for text styles
 - builder:
-  - style vs. styles
   - cond
   - switch
-  - invoke
+  - invoke / nested / UiTemplate
+  - callbacks (ownership)
+  - Spacer
   - effect
   - insert_if
   - insert_dyn
-  - UiTemplate
-  - Spacer
+  - create_mutable
+  - create_derived
+  - create_effect
 - Run to convergence.
 - cleanup with component hooks.
 - Checkbox bug in inspector

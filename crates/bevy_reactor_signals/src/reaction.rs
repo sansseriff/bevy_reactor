@@ -33,7 +33,21 @@ impl ReactionCell {
     }
 }
 
-/// In some cases, reactions are targeted at an entity other than the owner, where the entity
-/// id is not known until the reaction is started. This component tracks the target entity.
-#[derive(Component)]
-pub struct ReactionTarget(pub Entity);
+// /// Command which performs the initial (startup) reaction.
+// pub struct InitialReactionCommand(Entity);
+
+// impl Command for InitialReactionCommand {
+//     fn apply(self, world: &mut World) {
+//         let entity = self.0;
+//         let Some(reaction) = world.get::<ReactionCell>(entity).map(|r| r.0.clone()) else {
+//             return;
+//         };
+//         let Some(mut tracking) = world.get_mut::<TrackingScope>(entity) else {
+//             return;
+//         };
+//         reaction
+//             .lock()
+//             .unwrap()
+//             .react(entity, world, &mut *tracking);
+//     }
+// }

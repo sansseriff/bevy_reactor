@@ -6,7 +6,7 @@ use bevy::{
     hierarchy::BuildChildren,
 };
 
-use bevy_reactor_signals::{Cx, Rcx, Reaction, ReactionCell, ReactionTarget, TrackingScope};
+use bevy_reactor_signals::{Cx, Rcx, Reaction, ReactionCell, TrackingScope};
 
 /// A reactive effect that modifies a target entity.
 pub trait EntityEffect: Sync + Send {
@@ -62,7 +62,6 @@ where
         let reaction_id = world
             .spawn((
                 ReactionCell(reaction_arc.clone()),
-                ReactionTarget(target),
                 Name::new("EffectTarget::start_reaction"),
             ))
             .set_parent(owner)
@@ -173,11 +172,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
 
         // Store the reaction in a handle and add it to the world.
         let reaction_id = world
-            .spawn((
-                ReactionCell(self.reaction.clone()),
-                ReactionTarget(target),
-                reaction_name,
-            ))
+            .spawn((ReactionCell(self.reaction.clone()), reaction_name))
             .set_parent(owner)
             .id();
 
@@ -207,11 +202,12 @@ impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> ComputedBundleReaction<B,
 
 impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for ComputedBundleReaction<B, F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        let mut re = Rcx::new(world, owner, tracking);
-        let b = (self.factory)(&mut re);
-        let mut entt = world.entity_mut(target);
-        entt.insert(b);
+        todo!();
+        // let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
+        // let mut re = Rcx::new(world, owner, tracking);
+        // let b = (self.factory)(&mut re);
+        // let mut entt = world.entity_mut(target);
+        // entt.insert(b);
     }
 }
 
@@ -290,8 +286,8 @@ impl<F: FnMut(&mut Cx, Entity)> UpdateReaction<F> {
 
 impl<F: FnMut(&mut Cx, Entity)> Reaction for UpdateReaction<F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
-        let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        let mut cx = Cx::new(world, owner, tracking);
-        (self.effect)(&mut cx, target);
+        // let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
+        // let mut cx = Cx::new(world, owner, tracking);
+        // (self.effect)(&mut cx, target);
     }
 }

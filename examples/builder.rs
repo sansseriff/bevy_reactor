@@ -12,7 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Cx, RunContextRead};
+use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
 use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -57,10 +57,24 @@ fn setup_view_root(world: &mut World) {
             },
         )
         .with_children(|builder| {
-            builder.text("Count: ").text_computed(|cx| {
-                let counter = cx.use_resource::<Counter>();
-                format!("{}", counter.count)
-            });
+            builder
+                .text("Count: ")
+                .text_computed(|rcx| {
+                    let counter = rcx.use_resource::<Counter>();
+                    format!("{} ", counter.count)
+                })
+                .cond(
+                    |rcx: &Rcx| {
+                        let counter = rcx.use_resource::<Counter>();
+                        counter.count & 1 == 0
+                    },
+                    |builder| {
+                        builder.text("[Even]");
+                    },
+                    |builder| {
+                        builder.text("[Odd]");
+                    },
+                );
         });
     // commands.spawn(
     //     Element::<NodeBundle>::new()

@@ -22,7 +22,7 @@ impl TextStatic {
 impl View for TextStatic {
     fn build(
         &self,
-        parent: Entity,
+        _parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
@@ -65,7 +65,7 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> TextComputed<F> {
 impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> View for TextComputed<F> {
     fn build(
         &self,
-        parent: Entity,
+        _parent: Entity,
         world: &mut World,
         _scope: &mut TrackingScope,
         out: &mut Vec<Entity>,
