@@ -5,6 +5,7 @@ pub mod controls;
 pub mod cursor;
 // pub mod focus_signal;
 pub mod hover_signal;
+mod materials;
 pub mod rounded_corners;
 pub mod size;
 pub mod typography;
@@ -20,6 +21,7 @@ pub mod prelude {
 }
 
 pub struct ObsidianUiPlugin;
+use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 
 impl Plugin for ObsidianUiPlugin {
     fn build(&self, app: &mut App) {
@@ -52,29 +54,28 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/shaders/gradient_rect.wgsl");
         embedded_asset!(app, "assets/shaders/swatch_rect.wgsl");
         embedded_asset!(app, "assets/shaders/slider_rect.wgsl");
-        app
-            // app.add_plugins((
-            //     UiMaterialPlugin::<GradientRectMaterial>::default(),
-            //     UiMaterialPlugin::<SliderRectMaterial>::default(),
-            //     UiMaterialPlugin::<SwatchRectMaterial>::default(),
+        app.add_plugins((
+            UiMaterialPlugin::<GradientRectMaterial>::default(),
+            UiMaterialPlugin::<SliderRectMaterial>::default(),
+            UiMaterialPlugin::<SwatchRectMaterial>::default(),
             //     hooks::BistableTransitionPlugin,
             //     animation::AnimatedTransitionPlugin,
             //     focus::KeyboardInputPlugin,
-            // ))
-            // .add_plugins((
-            //     EventListenerPlugin::<scrolling::ScrollWheel>::default(),
-            //     EventListenerPlugin::<MenuCloseEvent>::default(),
-            // ))
-            // .add_event::<scrolling::ScrollWheel>()
-            .add_systems(
-                Update,
-                (
-                    // scrolling::handle_scroll_events,
-                    // scrolling::update_scroll_positions,
-                    hover_signal::update_hover_states,
-                    cursor::update_cursor,
-                ),
-            );
+        ))
+        // .add_plugins((
+        //     EventListenerPlugin::<scrolling::ScrollWheel>::default(),
+        //     EventListenerPlugin::<MenuCloseEvent>::default(),
+        // ))
+        // .add_event::<scrolling::ScrollWheel>()
+        .add_systems(
+            Update,
+            (
+                // scrolling::handle_scroll_events,
+                // scrolling::update_scroll_positions,
+                hover_signal::update_hover_states,
+                cursor::update_cursor,
+            ),
+        );
         // .init_resource::<RecentColors>()
         // .add_systems(PostUpdate, floating::position_floating);
     }

@@ -144,3 +144,9 @@ impl View for () {
     ) {
     }
 }
+
+impl IntoView for () {
+    fn into_view(self) -> Arc<dyn View + 'static> {
+        Arc::new(())
+    }
+}

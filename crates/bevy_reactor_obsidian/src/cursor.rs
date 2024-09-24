@@ -80,7 +80,6 @@ pub(crate) fn update_cursor(
     hover_map: Option<Res<HoverMap>>,
     parent_query: Query<&Parent>,
     cursor_query: Query<&CursorIcon>,
-    // mut custom_cursor_query: Query<(Entity, &mut CustomCursor, &mut UiImage, &mut Style)>,
     mut q_windows: Query<(Entity, &mut Window, Option<&CursorIcon>)>,
 ) {
     let cursor = hover_map.and_then(|hover_map| match hover_map.get(&PointerId::Mouse) {

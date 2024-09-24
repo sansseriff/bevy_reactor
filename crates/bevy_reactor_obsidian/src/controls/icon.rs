@@ -1,14 +1,15 @@
-use bevy::{asset::AssetPath, prelude::*};
+use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
 use bevy_reactor_signals::{Cx, IntoSignal, Signal};
+use bevy_reactor_views::{Element, IntoView, ViewTemplate};
 
 use crate::colors;
 
 /// Control that displays an icon.
+#[derive(Clone)]
 pub struct Icon {
     /// Asset path for the icon
-    pub icon: String,
+    pub icon: HandleOrOwnedPath<Image>,
 
     /// Size of the icon in pixels.
     pub size: Vec2,
@@ -21,10 +22,10 @@ pub struct Icon {
 }
 
 impl Icon {
-    /// Create a new icon.
-    pub fn new(icon: &str) -> Self {
+    /// Create a new `Icon` from a `&str` or `Handle<Image>`.
+    pub fn new(icon: impl Into<HandleOrOwnedPath<Image>>) -> Self {
         Self {
-            icon: icon.to_string(),
+            icon: icon.into(),
             ..default()
         }
     }
@@ -51,7 +52,7 @@ impl Icon {
 impl Default for Icon {
     fn default() -> Self {
         Self {
-            icon: "".to_string(),
+            icon: HandleOrOwnedPath::default(),
             size: Vec2::splat(12.0),
             color: Signal::Constant(colors::FOREGROUND.into()),
             style: StyleHandle::default(),
@@ -61,24 +62,22 @@ impl Default for Icon {
 
 impl ViewTemplate for Icon {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        let color = self.color;
         let icon = self.icon.clone();
         let size = self.size;
+        let color = self.color;
 
         Element::<NodeBundle>::new()
             .style((
                 move |sb: &mut StyleBuilder| {
-                    sb.width(size.x)
-                        .height(size.y)
-                        .background_image(AssetPath::parse(&icon));
+                    sb.width(size.x).height(size.y).background_image(&icon);
                 },
                 self.style.clone(),
             ))
-            .create_effect(move |cx, ent| {
-                let color = color.get(cx);
-                let mut ent = cx.world_mut().entity_mut(ent);
-                let mut uii = ent.get_mut::<UiImage>().unwrap();
-                uii.color = color;
-            })
+            .style_dyn(
+                move |rcx| color.get(rcx),
+                |color, sb| {
+                    sb.background_image_color(color);
+                },
+            )
     }
 }

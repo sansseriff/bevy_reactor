@@ -1,8 +1,7 @@
 use bevy::{color::Srgba, prelude::*, ui};
-use bevy_mod_picking::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
+use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
+use bevy_reactor_views::{Cond, Element, IntoView, ViewTemplate};
 // use bevy_tabindex::TabIndex;
 
 use crate::materials::SwatchRectMaterial;
@@ -108,31 +107,31 @@ impl ViewTemplate for Swatch {
             .named("Swatch")
             .style((style_swatch, self.style.clone()))
             .insert((material.clone(), {
-                let on_click = self.on_click;
-                On::<Pointer<Click>>::run(move |world: &mut World| {
-                    let color = color.get(world);
-                    if let Some(on_click) = on_click {
-                        world.run_callback(on_click, color);
-                    }
-                })
+                // let on_click = self.on_click;
+                // On::<Pointer<Click>>::run(move |world: &mut World| {
+                //     let color = color.get(world);
+                //     if let Some(on_click) = on_click {
+                //         world.run_callback(on_click, color);
+                //     }
+                // })
             }))
             .children(Cond::new(
                 selected,
                 || Element::<NodeBundle>::new().style(style_selection),
                 || (),
             ))
-            .create_effect(move |cx, ent| {
-                let radius = cx.use_component::<BorderRadius>(ent);
-                if let Some(radius) = radius {
-                    let radius = Vec4::from_array(resolve_border_radius(radius));
-                    let mut ui_materials = cx
-                        .world_mut()
-                        .get_resource_mut::<Assets<SwatchRectMaterial>>()
-                        .unwrap();
-                    let material = ui_materials.get_mut(material.id()).unwrap();
-                    material.border_radius = radius;
-                }
-            })
+        // .effect(move |cx, ent| {
+        //     let radius = cx.use_component::<BorderRadius>(ent);
+        //     if let Some(radius) = radius {
+        //         let radius = Vec4::from_array(resolve_border_radius(radius));
+        //         let mut ui_materials = cx
+        //             .world_mut()
+        //             .get_resource_mut::<Assets<SwatchRectMaterial>>()
+        //             .unwrap();
+        //         let material = ui_materials.get_mut(material.id()).unwrap();
+        //         material.border_radius = radius;
+        //     }
+        // })
     }
 }
 
