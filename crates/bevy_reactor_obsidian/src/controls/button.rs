@@ -16,7 +16,9 @@ use bevy::{
     window::SystemCursorIcon,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, TextBuilder, UiBuilder, UiTemplate};
+use bevy_reactor_builder::{
+    CreateChilden, EntityStyleBuilder, InsertComponentBuilder, TextBuilder, UiBuilder, UiTemplate,
+};
 use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, RunContextRead, Signal};
 
 use super::{Disabled, IsDisabled};
@@ -232,7 +234,7 @@ impl UiTemplate for Button {
                 },
                 self.style.clone(),
             ))
-            // .insert_if(self.disabled, || Disabled)
+            .insert_if(self.disabled, || Disabled)
             .insert((
                 // TabIndex(self.tab_index),
                 Pressed(false),
@@ -368,6 +370,7 @@ pub(crate) fn button_bg_color(
         ButtonVariant::Danger => colors::DESTRUCTIVE,
         ButtonVariant::Selected => colors::U4,
     };
+    // println!("Disabled: {}", is_disabled);
     match (is_disabled, is_pressed, is_hovering) {
         (true, _, _) => base_color.with_alpha(0.2),
         (_, true, true) => base_color.lighter(0.07),

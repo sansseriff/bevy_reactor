@@ -2,7 +2,7 @@ use std::{marker::PhantomData, sync::Arc};
 
 use bevy::{ecs::world::DeferredWorld, prelude::*, ui::GhostNode};
 
-use crate::{Rcx, Signal, TrackingScope};
+use crate::{Rcx, TrackingScope};
 
 pub(crate) trait DerivedFnRef<R> {
     fn call(&self, cx: &mut Rcx) -> R;

@@ -62,105 +62,109 @@ fn setup_view_root(world: &mut World) {
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
-                    builder.invoke(Button::new().children(|b| {
-                        b.text("Default");
-                    }));
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Primary)
-                            .labeled("Primary"),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Danger)
-                            .labeled("Danger"),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Selected)
-                            .labeled("Selected"),
-                    );
-                    builder.invoke(Button::new().minimal(true).labeled("Minimal"));
+                    builder
+                        .invoke(Button::new().children(|b| {
+                            b.text("Default");
+                        }))
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Primary)
+                                .labeled("Primary"),
+                        )
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Danger)
+                                .labeled("Danger"),
+                        )
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Selected)
+                                .labeled("Selected"),
+                        )
+                        .invoke(Button::new().minimal(true).labeled("Minimal"));
                 });
             builder.text("Variants (disabled)");
             builder
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
-                    builder.invoke(Button::new().labeled("Default").disabled(true));
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Primary)
-                            .labeled("Primary")
-                            .disabled(true),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Danger)
-                            .labeled("Danger")
-                            .disabled(true),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .variant(ButtonVariant::Selected)
-                            .labeled("Selected")
-                            .disabled(true),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .minimal(true)
-                            .labeled("Minimal")
-                            .disabled(true),
-                    );
+                    builder
+                        .invoke(Button::new().labeled("Default").disabled(true))
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Primary)
+                                .labeled("Primary")
+                                .disabled(true),
+                        )
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Danger)
+                                .labeled("Danger")
+                                .disabled(true),
+                        )
+                        .invoke(
+                            Button::new()
+                                .variant(ButtonVariant::Selected)
+                                .labeled("Selected")
+                                .disabled(true),
+                        )
+                        .invoke(
+                            Button::new()
+                                .minimal(true)
+                                .labeled("Minimal")
+                                .disabled(true),
+                        );
                 });
             builder.text("Size");
             builder
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
-                    builder.invoke(Button::new().labeled("Size: Xl").size(Size::Xl));
-                    builder.invoke(Button::new().labeled("Size: Lg").size(Size::Lg));
-                    builder.invoke(Button::new().labeled("Size: Md").size(Size::Md));
-                    builder.invoke(Button::new().labeled("Size: Sm").size(Size::Sm));
-                    builder.invoke(Button::new().labeled("Size: Xs").size(Size::Xs));
-                    builder.invoke(Button::new().labeled("Size: Xxs").size(Size::Xxs));
-                    builder.invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
+                    builder
+                        .invoke(Button::new().labeled("Size: Xl").size(Size::Xl))
+                        .invoke(Button::new().labeled("Size: Lg").size(Size::Lg))
+                        .invoke(Button::new().labeled("Size: Md").size(Size::Md))
+                        .invoke(Button::new().labeled("Size: Sm").size(Size::Sm))
+                        .invoke(Button::new().labeled("Size: Xs").size(Size::Xs))
+                        .invoke(Button::new().labeled("Size: Xxs").size(Size::Xxs))
+                        .invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
                 });
             builder.text("Corners");
             builder
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: All")
-                            .corners(RoundedCorners::All),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: Top")
-                            .corners(RoundedCorners::Top),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: Bottom")
-                            .corners(RoundedCorners::Bottom),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: Left")
-                            .corners(RoundedCorners::Left),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: Right")
-                            .corners(RoundedCorners::Right),
-                    );
-                    builder.invoke(
-                        Button::new()
-                            .labeled("corners: None")
-                            .corners(RoundedCorners::None),
-                    );
+                    builder
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: All")
+                                .corners(RoundedCorners::All),
+                        )
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: Top")
+                                .corners(RoundedCorners::Top),
+                        )
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: Bottom")
+                                .corners(RoundedCorners::Bottom),
+                        )
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: Left")
+                                .corners(RoundedCorners::Left),
+                        )
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: Right")
+                                .corners(RoundedCorners::Right),
+                        )
+                        .invoke(
+                            Button::new()
+                                .labeled("corners: None")
+                                .corners(RoundedCorners::None),
+                        );
                 });
             // "IconButton",
             // Element::<NodeBundle>::new().style(style_row).children((
