@@ -6,7 +6,8 @@ use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 pub trait EntityStyleBuilder {
-    fn style(&mut self, styles: impl StyleTuple) -> &mut Self;
+    fn style<S: FnOnce(&mut StyleBuilder)>(&mut self, style: S) -> &mut Self;
+    fn styles(&mut self, styles: impl StyleTuple) -> &mut Self;
     fn style_dyn<
         D: 'static,
         VF: Fn(&Rcx) -> D + Send + Sync + 'static,
@@ -19,7 +20,18 @@ pub trait EntityStyleBuilder {
 }
 
 impl<'w> EntityStyleBuilder for EntityWorldMut<'w> {
-    fn style(&mut self, styles: impl StyleTuple) -> &mut Self {
+    fn style<S: FnOnce(&mut StyleBuilder)>(&mut self, style_fn: S) -> &mut Self {
+        let mut style = ui::Style::default();
+        if let Some(s) = self.get::<ui::Style>() {
+            style.clone_from(s);
+        }
+        let mut sb = StyleBuilder::new(self, style);
+        style_fn(&mut sb);
+        sb.finish();
+        self
+    }
+
+    fn styles(&mut self, styles: impl StyleTuple) -> &mut Self {
         let mut style = ui::Style::default();
         if let Some(s) = self.get::<ui::Style>() {
             style.clone_from(s);

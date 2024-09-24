@@ -13,7 +13,6 @@ pub trait TextBuilder {
 impl<'w> TextBuilder for WorldChildBuilder<'w> {
     /// Create a static text entity with a single section.
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
-        // let style = get_inherited_text_styles(self.world(), parent).unwrap_or_default();
         self.spawn((
             Name::new("TextStatic"),
             TextBundle {
@@ -30,7 +29,6 @@ impl<'w> TextBuilder for WorldChildBuilder<'w> {
         &mut self,
         text_fn: F,
     ) -> &mut Self {
-        // let style = get_inherited_text_styles(world, parent).unwrap_or_default();
         let mut node = self.spawn(Name::new("TextComputed"));
         let tick = node.world().last_change_tick();
         let mut tracking = TrackingScope::new(tick);

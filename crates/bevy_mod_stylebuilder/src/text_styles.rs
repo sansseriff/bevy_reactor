@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-use bevy::{ecs::system::SystemState, prelude::*};
+use bevy::prelude::*;
 
 /// Struct that holds the properties for text rendering, which can be inherited. This allows
 /// setting for font face, size and color to be established at a parent level and inherited by
@@ -45,15 +45,6 @@ impl InheritableFontStyles {
 #[derive(Component)]
 pub struct UseInheritedTextStyles;
 
-/// Returns the inherited text styles for the given entity.
-#[allow(clippy::type_complexity)]
-pub fn get_inherited_text_styles(world: &mut World, entity: Entity) -> Option<TextStyle> {
-    let mut st: SystemState<(Query<Ref<InheritableFontStyles>, ()>, Query<&Parent, ()>)> =
-        SystemState::new(world);
-    let (inherited, parents) = st.get(world);
-    compute_inherited_style(entity, &inherited, &parents)
-}
-
 pub(crate) fn update_text_styles(
     mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
     inherited: Query<Ref<InheritableFontStyles>>,
@@ -77,6 +68,21 @@ pub(crate) fn update_text_styles(
                     section.style = style.clone();
                 }
             }
+        }
+    }
+}
+
+pub(crate) fn set_initial_text_style(
+    trigger: Trigger<OnAdd, UseInheritedTextStyles>,
+    q_inherited: Query<Ref<InheritableFontStyles>, ()>,
+    mut q_text: Query<&mut Text, ()>,
+    q_parents: Query<&Parent, ()>,
+) {
+    if let Ok(mut text) = q_text.get_mut(trigger.entity()) {
+        let style =
+            compute_inherited_style(trigger.entity(), &q_inherited, &q_parents).unwrap_or_default();
+        for section in text.sections.iter_mut() {
+            section.style = style.clone();
         }
     }
 }

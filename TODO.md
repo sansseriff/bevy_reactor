@@ -1,11 +1,16 @@
 # TODO
 
-- Split Cx and Rcx. Cx is now `TemplateBuildContext` (need shorter name).
-- `For` nodes.
-- `Switch` nodes.
-- Figure out how to avoid boxing children.
-- Observers.
-
+- text: use trigger for text styles
+- builder:
+  - style vs. styles
+  - cond
+  - switch
+  - invoke
+  - effect
+  - insert_if
+  - insert_dyn
+  - UiTemplate
+  - Spacer
 - Run to convergence.
 - cleanup with component hooks.
 - Checkbox bug in inspector

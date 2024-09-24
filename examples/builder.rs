@@ -12,7 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
+use bevy_reactor_signals::{Cx, RunContextRead};
 use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -42,7 +42,7 @@ const X_EXTENT: f32 = 14.5;
 fn setup_view_root(world: &mut World) {
     world
         .spawn(NodeBundle { ..default() })
-        .style(style_test)
+        .styles(style_test)
         .style_dyn(
             |rcx| {
                 let counter = rcx.use_resource::<Counter>();

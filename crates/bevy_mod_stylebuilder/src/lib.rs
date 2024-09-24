@@ -30,8 +30,8 @@ pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
 pub use builder_visibility::StyleBuilderVisibility;
 pub use builder_z_index::StyleBuilderZIndex;
-use text_styles::update_text_styles;
-pub use text_styles::{get_inherited_text_styles, InheritableFontStyles, UseInheritedTextStyles};
+use text_styles::{set_initial_text_style, update_text_styles};
+pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
 
 #[cfg(feature = "mod_picking")]
@@ -150,6 +150,7 @@ pub struct StyleBuilderPlugin;
 
 impl Plugin for StyleBuilderPlugin {
     fn build(&self, app: &mut bevy::app::App) {
+        app.world_mut().observe(set_initial_text_style);
         app.add_systems(PostUpdate, update_text_styles.in_set(StyleBuilderSystemSet));
     }
 }
