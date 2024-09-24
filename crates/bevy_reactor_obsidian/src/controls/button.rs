@@ -16,8 +16,8 @@ use bevy::{
     window::SystemCursorIcon,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunCallback, RunContextRead, Signal};
-use bevy_reactor_views::*;
+use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, TextBuilder, UiBuilder, UiTemplate};
+use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, RunContextRead, Signal};
 
 use super::{Disabled, IsDisabled};
 
@@ -75,7 +75,7 @@ pub struct Button {
     pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub children: Arc<dyn View>,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
 
     /// Additional styles to be applied to the button.
     pub style: StyleHandle,
@@ -139,8 +139,18 @@ impl Button {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: IntoView>(mut self, children: V) -> Self {
-        self.children = children.into_view();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
+        self
+    }
+
+    /// Set a child which is a text label.
+    pub fn labeled(mut self, label: impl Into<String>) -> Self {
+        let s: String = label.into();
+        self.children = Arc::new(move |builder| {
+            // TODO: Figure out how to avoid the double-copy here.
+            builder.text(s.clone());
+        });
         self
     }
 
@@ -181,7 +191,7 @@ impl Default for Button {
             variant: Signal::default(),
             size: Size::default(),
             disabled: default(),
-            children: Arc::new(()),
+            children: Arc::new(|_builder| {}),
             style: StyleHandle::none(),
             on_click: None,
             tab_index: 0,
@@ -192,11 +202,9 @@ impl Default for Button {
     }
 }
 
-impl ViewTemplate for Button {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let id = cx.create_entity();
+impl UiTemplate for Button {
+    fn build(&self, builder: &mut UiBuilder) {
         let variant = self.variant;
-        let hovering = cx.create_hover_signal(id);
         let focused = Signal::Constant(false);
 
         let corners = self.corners;
@@ -205,9 +213,13 @@ impl ViewTemplate for Button {
         let size = self.size;
         let on_click = self.on_click;
 
-        Element::<NodeBundle>::for_entity(id)
-            .named("Button")
-            .style((
+        let button = builder.spawn((NodeBundle::default(), Name::new("Button")));
+        let button_id = button.id();
+        let hovering = builder.create_hover_signal(button_id);
+        let mut button = builder.world_mut().entity_mut(button_id);
+
+        button
+            .styles((
                 typography::text_default,
                 style_button,
                 move |ss: &mut StyleBuilder| {
@@ -220,7 +232,7 @@ impl ViewTemplate for Button {
                 },
                 self.style.clone(),
             ))
-            .insert_if(self.disabled, || Disabled)
+            // .insert_if(self.disabled, || Disabled)
             .insert((
                 // TabIndex(self.tab_index),
                 Pressed(false),
@@ -300,9 +312,9 @@ impl ViewTemplate for Button {
                     }
                 },
             )
-            .children((
-                Element::<NodeBundle>::new()
-                    .named("Button::Background")
+            .create_children(|builder| {
+                builder
+                    .spawn((NodeBundle::default(), Name::new("Button::Background")))
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
                     .style_dyn(
@@ -310,8 +322,8 @@ impl ViewTemplate for Button {
                             if minimal {
                                 colors::TRANSPARENT
                             } else {
-                                let pressed = rcx.use_component::<Pressed>(id).unwrap();
-                                let disabled = rcx.is_disabled(id);
+                                let pressed = rcx.use_component::<Pressed>(button_id).unwrap();
+                                let disabled = rcx.is_disabled(button_id);
                                 button_bg_color(
                                     variant.get(rcx),
                                     disabled,
@@ -337,9 +349,10 @@ impl ViewTemplate for Button {
                                     .outline_offset(0);
                             }
                         },
-                    ),
-                self.children.clone(),
-            ))
+                    );
+                let children = self.children.as_ref();
+                (children)(builder);
+            });
     }
 }
 

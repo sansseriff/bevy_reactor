@@ -3,7 +3,6 @@
 - builder:
   - switch
   - hover and focus signals.
-  - callbacks (ownership)
   - effect
   - insert_if
   - insert_dyn

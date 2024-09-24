@@ -1,5 +1,5 @@
 use bevy::prelude::{BuildChildren, Bundle, Entity, EntityWorldMut, IntoSystem, World};
-use bevy_reactor_signals::{Callback, CallbackOwner};
+use bevy_reactor_signals::{create_derived, Callback, CallbackOwner, Rcx, Signal};
 
 pub struct UiBuilder<'w> {
     /// Bevy World
@@ -59,7 +59,7 @@ impl<'w> UiBuilder<'w> {
     // for_index()
 
     /// Create a new callback which is owned by the parent entity.
-    fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
         &mut self,
         callback: S,
     ) -> Callback<P> {
@@ -77,6 +77,22 @@ impl<'w> UiBuilder<'w> {
             }
         }
         result
+    }
+
+    /// Create a new [`Derived`] in this context. This represents a readable signal which
+    /// is computed from other signals. The result is not memoized, but is recomputed whenever
+    /// the dependencies change.
+    ///
+    /// Arguments:
+    /// * `compute` - The function that computes the output. This will be called with a single
+    ///    parameter, which is an [`Rcx`] object.
+    pub fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
+        &mut self,
+        compute: F,
+    ) -> Signal<R> {
+        let derived = create_derived(self.world, compute);
+        self.world.entity_mut(self.parent).add_child(derived.id());
+        Signal::Derived(derived)
     }
 }
 

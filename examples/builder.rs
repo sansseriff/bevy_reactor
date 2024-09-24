@@ -12,8 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Callback, Rcx, RunCallback, RunContextRead};
-use bevy_reactor_views::prelude::*;
+use bevy_reactor_signals::{Callback, Rcx, RunCallback, RunContextRead, SignalsPlugin};
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -27,7 +26,9 @@ fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins(ReactorViewsPlugin)
+        .add_plugins(SignalsPlugin)
+        .add_plugins(StyleBuilderPlugin)
+        // .add_plugins(ReactorViewsPlugin)
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_counter))
         .run();
@@ -116,23 +117,6 @@ fn setup_view_root(world: &mut World) {
     //         })
     //         .children((
     //             Element::<NodeBundle>::new(),
-    //             // TextStatic::new("Hello, world!".to_string()),
-    //             "Count: ",
-    //             TextComputed::new(|cx| {
-    //                 let counter = cx.use_resource::<Counter>();
-    //                 format!("{}", counter.count)
-    //             }),
-    //             ", ",
-    //             NestedView,
-    //             ": ",
-    //             Cond::new(
-    //                 |cx: &Rcx| {
-    //                     let counter = cx.use_resource::<Counter>();
-    //                     counter.count & 1 == 0
-    //                 },
-    //                 || "[Even]",
-    //                 || "[Odd]",
-    //             ),
     //             // DynamicKeyed::new(
     //             //     |cx| cx.use_resource::<Counter>().count,
     //             //     |count| format!(":{}:", count),

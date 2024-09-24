@@ -6,6 +6,7 @@ use bevy::{
     ui,
 };
 use bevy_mod_stylebuilder::*;
+use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
 use bevy_reactor_obsidian::{controls::Button, prelude::*};
 use bevy_reactor_views::prelude::*;
 
@@ -42,8 +43,8 @@ fn main() {
         .run();
 }
 
-fn setup_view_root(mut commands: Commands) {
-    let camera = commands
+fn setup_view_root(world: &mut World) {
+    let camera = world
         .spawn((Camera2dBundle {
             camera: Camera::default(),
             camera_2d: Camera2d {},
@@ -51,100 +52,138 @@ fn setup_view_root(mut commands: Commands) {
         },))
         .id();
 
-    commands.spawn(
-        Element::<NodeBundle>::new()
-            .insert(TargetCamera(camera))
-            .style(style_test)
-            .children((
-                "Variants",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    Button::new().children("Default"),
-                    Button::new()
-                        .variant(ButtonVariant::Primary)
-                        .children("Primary"),
-                    Button::new()
-                        .variant(ButtonVariant::Danger)
-                        .children("Danger"),
-                    Button::new()
-                        .variant(ButtonVariant::Selected)
-                        .children("Selected"),
-                    Button::new().minimal(true).children("Minimal"),
-                )),
-                "Variants (disabled)",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    Button::new().children("Default").disabled(true),
-                    Button::new()
-                        .variant(ButtonVariant::Primary)
-                        .children("Primary")
-                        .disabled(true),
-                    Button::new()
-                        .variant(ButtonVariant::Danger)
-                        .children("Danger")
-                        .disabled(true),
-                    Button::new()
-                        .variant(ButtonVariant::Selected)
-                        .children("Selected")
-                        .disabled(true),
-                    Button::new()
-                        .minimal(true)
-                        .children("Minimal")
-                        .disabled(true),
-                )),
-                "Size",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    Button::new().children("Size: Xl").size(Size::Xl),
-                    Button::new().children("Size: Lg").size(Size::Lg),
-                    Button::new().children("Size: Md").size(Size::Md),
-                    Button::new().children("Size: Sm").size(Size::Sm),
-                    Button::new().children("Size: Xs").size(Size::Xs),
-                    Button::new().children("Size: Xxs").size(Size::Xxs),
-                    Button::new().children("Size: Xxxs").size(Size::Xxxs),
-                )),
-                "Corners",
-                Element::<NodeBundle>::new().style(style_row).children((
-                    Button::new()
-                        .children("corners: All")
-                        .corners(RoundedCorners::All),
-                    Button::new()
-                        .children("corners: Top")
-                        .corners(RoundedCorners::Top),
-                    Button::new()
-                        .children("corners: Bottom")
-                        .corners(RoundedCorners::Bottom),
-                    Button::new()
-                        .children("corners: Left")
-                        .corners(RoundedCorners::Left),
-                    Button::new()
-                        .children("corners: Right")
-                        .corners(RoundedCorners::Right),
-                    Button::new()
-                        .children("corners: None")
-                        .corners(RoundedCorners::None),
-                )),
-                // "IconButton",
-                // Element::<NodeBundle>::new().style(style_row).children((
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png"),
-                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                //     //     .variant(ButtonVariant::Primary),
-                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                //     //     .variant(ButtonVariant::Danger),
-                //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-                //     //     .variant(ButtonVariant::Selected),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
-                // )),
-                // "IconButton Size",
-                // Element::<NodeBundle>::new().style(style_row).children((
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
-                //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
-                // )),
-            ))
-            .to_root(),
-    );
+    world
+        .spawn(NodeBundle::default())
+        .insert(TargetCamera(camera))
+        .style(style_test)
+        .create_children(|builder| {
+            builder.text("Variants");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder.invoke(Button::new().children(|b| {
+                        b.text("Default");
+                    }));
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Primary)
+                            .labeled("Primary"),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Danger)
+                            .labeled("Danger"),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Selected)
+                            .labeled("Selected"),
+                    );
+                    builder.invoke(Button::new().minimal(true).labeled("Minimal"));
+                });
+            builder.text("Variants (disabled)");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder.invoke(Button::new().labeled("Default").disabled(true));
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Primary)
+                            .labeled("Primary")
+                            .disabled(true),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Danger)
+                            .labeled("Danger")
+                            .disabled(true),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .variant(ButtonVariant::Selected)
+                            .labeled("Selected")
+                            .disabled(true),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .minimal(true)
+                            .labeled("Minimal")
+                            .disabled(true),
+                    );
+                });
+            builder.text("Size");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder.invoke(Button::new().labeled("Size: Xl").size(Size::Xl));
+                    builder.invoke(Button::new().labeled("Size: Lg").size(Size::Lg));
+                    builder.invoke(Button::new().labeled("Size: Md").size(Size::Md));
+                    builder.invoke(Button::new().labeled("Size: Sm").size(Size::Sm));
+                    builder.invoke(Button::new().labeled("Size: Xs").size(Size::Xs));
+                    builder.invoke(Button::new().labeled("Size: Xxs").size(Size::Xxs));
+                    builder.invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
+                });
+            builder.text("Corners");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: All")
+                            .corners(RoundedCorners::All),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: Top")
+                            .corners(RoundedCorners::Top),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: Bottom")
+                            .corners(RoundedCorners::Bottom),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: Left")
+                            .corners(RoundedCorners::Left),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: Right")
+                            .corners(RoundedCorners::Right),
+                    );
+                    builder.invoke(
+                        Button::new()
+                            .labeled("corners: None")
+                            .corners(RoundedCorners::None),
+                    );
+                });
+            // "IconButton",
+            // Element::<NodeBundle>::new().style(style_row).children((
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png"),
+            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+            //     //     .variant(ButtonVariant::Primary),
+            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+            //     //     .variant(ButtonVariant::Danger),
+            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
+            //     //     .variant(ButtonVariant::Selected),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
+            // )),
+            // "IconButton Size",
+            // Element::<NodeBundle>::new().style(style_row).children((
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
+            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
+            // )),
+        });
 }
 
 pub fn close_on_esc(input: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {

@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use std::{marker::PhantomData, sync::Arc};
 
-use bevy::{ecs::world::DeferredWorld, prelude::*};
+use bevy::{ecs::world::DeferredWorld, prelude::*, ui::GhostNode};
 
-use crate::{Rcx, TrackingScope};
+use crate::{Rcx, Signal, TrackingScope};
 
 pub(crate) trait DerivedFnRef<R> {
     fn call(&self, cx: &mut Rcx) -> R;
@@ -16,13 +16,27 @@ impl<R, F: Fn(&mut Rcx) -> R> DerivedFnRef<R> for F {
 
 /// Contains a boxed, type-erased function which returns a reactive result.
 #[derive(Component)]
-pub(crate) struct DerivedCell<R>(pub(crate) Arc<dyn DerivedFnRef<R> + Send + Sync>);
+pub struct DerivedCell<R>(pub(crate) Arc<dyn DerivedFnRef<R> + Send + Sync>);
+
+impl<R> DerivedCell<R> {
+    /// Construct a new `DerivedCell` from a function.
+    pub fn new<F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(f: F) -> Self {
+        Self(Arc::new(f))
+    }
+}
 
 /// A [`Derived`] is a readonly value that is computed from other signals.
 #[derive(PartialEq)]
 pub struct Derived<R> {
     pub(crate) id: Entity,
     pub(crate) marker: std::marker::PhantomData<R>,
+}
+
+impl<R> Derived<R> {
+    /// Return the id of the entity which holds the derived calculation.
+    pub fn id(&self) -> Entity {
+        self.id
+    }
 }
 
 impl<T> Copy for Derived<T> {}
@@ -238,5 +252,17 @@ impl<'w> ReadDerivedInternal for DeferredWorld<'w> {
             }
             _ => panic!("No derived found for {:?}", derived),
         }
+    }
+}
+
+/// Helper function for creating deriveds.
+pub fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
+    world: &mut World,
+    compute: F,
+) -> Derived<R> {
+    let derived = world.spawn((DerivedCell::new(compute), GhostNode)).id();
+    Derived {
+        id: derived,
+        marker: PhantomData,
     }
 }
