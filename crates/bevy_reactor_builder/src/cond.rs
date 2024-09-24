@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::{ecs::world::World, ui::GhostNode};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, Signal, TrackingScope};
 
+use crate::UiBuilder;
+
 /// Trait that abstracts over the boolean condition that controls the If. We use this trait
 /// to allow boolean signals to be passed directly as conditions.
 pub trait TestCondition: Send + Sync {
@@ -60,6 +62,42 @@ pub trait CondBuilder {
 }
 
 impl<'w> CondBuilder for WorldChildBuilder<'w> {
+    fn cond<
+        Test: TestCondition + 'static,
+        PosFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
+        NegFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
+    >(
+        &mut self,
+        test: Test,
+        pos: PosFn,
+        neg: NegFn,
+    ) -> &mut Self {
+        // Create an entity to represent the condition.
+        let mut cond_owner = self.spawn(Name::new("Cond"));
+        let cond_owner_id = cond_owner.id();
+
+        // Create a tracking scope and reaction.
+        let mut tracking = TrackingScope::new(cond_owner.world().last_change_tick());
+        let mut reaction = CondReaction {
+            test,
+            pos,
+            neg,
+            state: CondState::Unset,
+        };
+
+        // Safety: this should be save because we don't use cond_owner any more after this
+        // point.
+        let world = unsafe { cond_owner.world_mut() };
+        // Trigger the initial reaction.
+        reaction.react(cond_owner_id, world, &mut tracking);
+        world
+            .entity_mut(cond_owner_id)
+            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        self
+    }
+}
+
+impl<'w> CondBuilder for UiBuilder<'w> {
     fn cond<
         Test: TestCondition + 'static,
         PosFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,

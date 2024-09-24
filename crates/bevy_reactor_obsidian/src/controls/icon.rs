@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
+use bevy_reactor_builder::{EntityStyleBuilder, UiBuilder, UiTemplate};
 use bevy_reactor_signals::{Cx, IntoSignal, Signal};
 use bevy_reactor_views::{Element, IntoView, ViewTemplate};
 
@@ -79,5 +80,28 @@ impl ViewTemplate for Icon {
                     sb.background_image_color(color);
                 },
             )
+    }
+}
+
+impl UiTemplate for Icon {
+    fn build(&self, builder: &mut UiBuilder) {
+        let icon = self.icon.clone();
+        let size = self.size;
+        let color = self.color;
+
+        builder
+            .spawn(NodeBundle { ..default() })
+            .styles((
+                move |sb: &mut StyleBuilder| {
+                    sb.width(size.x).height(size.y).background_image(&icon);
+                },
+                self.style.clone(),
+            ))
+            .style_dyn(
+                move |rcx| color.get(rcx),
+                |color, sb| {
+                    sb.background_image_color(color);
+                },
+            );
     }
 }

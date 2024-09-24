@@ -14,7 +14,8 @@ mod reaction;
 mod signal;
 mod tracking_scope;
 
-pub use callback::{Callback, RunCallback};
+use callback::cleanup_callbacks;
+pub use callback::{Callback, CallbackOwner, RunCallback};
 pub use cx::Cx;
 pub use cx::Rcx;
 pub use cx::RunContextRead;
@@ -43,7 +44,7 @@ pub struct ReactionSet;
 impl Plugin for SignalsPlugin {
     fn build(&self, app: &mut App) {
         cleanup_tracking_scopes(app.world_mut());
-        // cleanup_view_roots(app.world_mut());
+        cleanup_callbacks(app.world_mut());
         app.add_systems(Update, run_reactions.in_set(ReactionSet));
     }
 }

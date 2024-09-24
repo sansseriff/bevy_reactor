@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_mod_stylebuilder::UseInheritedTextStyles;
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
+use crate::UiBuilder;
+
 pub trait TextBuilder {
     fn text(&mut self, s: impl Into<String>) -> &mut Self;
     fn text_computed<F: FnMut(&Rcx) -> String + Send + Sync + 'static>(
@@ -11,6 +13,48 @@ pub trait TextBuilder {
 }
 
 impl<'w> TextBuilder for WorldChildBuilder<'w> {
+    /// Create a static text entity with a single section.
+    fn text(&mut self, s: impl Into<String>) -> &mut Self {
+        self.spawn((
+            Name::new("TextStatic"),
+            TextBundle {
+                text: Text::from_section(s.into(), TextStyle::default()),
+                ..default()
+            },
+            UseInheritedTextStyles,
+        ));
+        self
+    }
+
+    /// Create a computed text entity.
+    fn text_computed<F: FnMut(&Rcx) -> String + Send + Sync + 'static>(
+        &mut self,
+        text_fn: F,
+    ) -> &mut Self {
+        let mut node = self.spawn(Name::new("TextComputed"));
+        let tick = node.world().last_change_tick();
+        let mut tracking = TrackingScope::new(tick);
+        let re = Rcx::new(node.world(), node.id(), &mut tracking);
+        let mut reaction = TextComputedReaction {
+            node: node.id(),
+            text_fn,
+        };
+        let text = (reaction.text_fn)(&re);
+        node.insert((
+            tracking,
+            Name::new("TextComputed"),
+            TextBundle {
+                text: Text::from_section(text, TextStyle::default()),
+                ..default()
+            },
+            UseInheritedTextStyles,
+            ReactionCell::new(reaction),
+        ));
+        self
+    }
+}
+
+impl<'w> TextBuilder for UiBuilder<'w> {
     /// Create a static text entity with a single section.
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
         self.spawn((

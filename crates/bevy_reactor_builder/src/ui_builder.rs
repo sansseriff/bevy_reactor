@@ -1,26 +1,21 @@
-use std::cell::RefCell;
+use bevy::prelude::{BuildChildren, Bundle, Entity, EntityWorldMut, IntoSystem, World};
+use bevy_reactor_signals::{Callback, CallbackOwner};
 
-use bevy::prelude::{Entity, EntityWorldMut, World};
-use bevy_reactor_signals::TrackingScope;
-
-pub struct UiBuilder<'p, 'w> {
+pub struct UiBuilder<'w> {
     /// Bevy World
     world: &'w mut World,
 
-    /// The entity that owns the tracking scope (or will own it).
-    owner: Entity,
-
-    /// Set of reactive resources referenced by the presenter.
-    tracking: RefCell<&'p mut TrackingScope>,
+    /// The entity that will be the parent of all of the children and other resources created
+    /// in this scope.
+    parent: Entity,
 }
 
-impl<'p, 'w> UiBuilder<'p, 'w> {
+impl<'w> UiBuilder<'w> {
     /// Construct a new reactive context.
-    pub fn new(world: &'w mut World, owner: Entity, tracking: &'p mut TrackingScope) -> Self {
+    pub fn new(world: &'w mut World, owner: Entity) -> Self {
         Self {
             world,
-            owner,
-            tracking: RefCell::new(tracking),
+            parent: owner,
         }
     }
 
@@ -34,24 +29,67 @@ impl<'p, 'w> UiBuilder<'p, 'w> {
         self.world
     }
 
+    /// Returns the parent entity
+    pub fn parent(&self) -> Entity {
+        self.parent
+    }
+
+    /// Spawn a new child of the parent entity with the given bundle.
+    pub fn spawn(&mut self, bundle: impl Bundle) -> EntityWorldMut {
+        let mut ent = self.world.spawn(bundle);
+        ent.set_parent(self.parent);
+        ent
+    }
+
+    /// Spawn a new, empty child of the parent entity.
+    pub fn spawn_empty(&mut self) -> EntityWorldMut {
+        let mut ent = self.world.spawn_empty();
+        ent.set_parent(self.parent);
+        ent
+    }
+
     // pub fn entity(&mut self) {
 
     // }
 
     // entity(id)
-    // spawn()
     // cond()
     // switch()
     // for_each()
     // for_index()
+
+    /// Create a new callback which is owned by the parent entity.
+    fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+        &mut self,
+        callback: S,
+    ) -> Callback<P> {
+        let id = self.world_mut().register_system(callback);
+        let result = Callback::new(id);
+        let parent = self.parent();
+        match self.world.get_mut::<CallbackOwner>(parent) {
+            Some(mut owner) => {
+                owner.add(result);
+            }
+            None => {
+                let mut owner = CallbackOwner::new();
+                owner.add(result);
+                self.world.entity_mut(parent).insert(owner);
+            }
+        }
+        result
+    }
 }
 
-pub trait BuildChildren {
-    fn build_children(&mut self) -> Self;
+pub trait CreateChilden {
+    fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self;
 }
 
-impl<'w> BuildChildren for EntityWorldMut<'w> {
-    fn build_children(&mut self) -> Self {
-        todo!()
+impl<'w> CreateChilden for EntityWorldMut<'w> {
+    fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self {
+        let parent = self.id();
+        self.world_scope(|world| {
+            spawn_children(&mut UiBuilder { world, parent });
+        });
+        self
     }
 }

@@ -14,6 +14,20 @@ pub struct Callback<P = ()> {
     pub(crate) id: SystemId<P, ()>,
 }
 
+impl<P> Callback<P> {
+    /// Construct a new callback
+    pub fn new(id: SystemId<P, ()>) -> Self {
+        Self { id }
+    }
+}
+
+impl<P> Copy for Callback<P> {}
+impl<P> Clone for Callback<P> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
 pub trait AnyCallback: 'static {
     fn remove(&self, world: &mut World);
     fn type_id(&self) -> TypeId;
@@ -41,11 +55,32 @@ impl<P: 'static> AnyCallback for Callback<P> {
     }
 }
 
-impl<P> Copy for Callback<P> {}
-impl<P> Clone for Callback<P> {
-    fn clone(&self) -> Self {
-        *self
+/// Component which tracks ownership of callbacks.
+#[derive(Component, Default)]
+pub struct CallbackOwner(Vec<Arc<dyn AnyCallback + Send + Sync>>);
+
+impl CallbackOwner {
+    /// Construct a new `CallbackOwner` component.
+    pub fn new() -> Self {
+        Self::default()
     }
+
+    /// Add an entry to the list of owned callbacks.
+    pub fn add<P: 'static>(&mut self, callback: Callback<P>) {
+        self.0.push(Arc::new(callback));
+    }
+}
+
+pub(crate) fn cleanup_callbacks(world: &mut World) {
+    world
+        .register_component_hooks::<CallbackOwner>()
+        .on_remove(|mut world, entity, _component| {
+            let mut callbacks = world.get_mut::<CallbackOwner>(entity).unwrap();
+            let mut callbacks = std::mem::take(&mut callbacks.0);
+            for callback in callbacks.drain(..) {
+                world.commands().queue(UnregisterCallbackCmd(callback));
+            }
+        });
 }
 
 /// A trait for invoking callbacks.

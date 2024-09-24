@@ -12,7 +12,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
+use bevy_reactor_signals::{Rcx, RunContextRead};
 use bevy_reactor_views::prelude::*;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -56,25 +56,19 @@ fn setup_view_root(world: &mut World) {
                 });
             },
         )
-        .with_children(|builder| {
-            builder
-                .text("Count: ")
-                .text_computed(|rcx| {
+        .create_children(|builder| {
+            builder.text("Count: ").invoke(NestedView).cond(
+                |rcx: &Rcx| {
                     let counter = rcx.use_resource::<Counter>();
-                    format!("{} ", counter.count)
-                })
-                .cond(
-                    |rcx: &Rcx| {
-                        let counter = rcx.use_resource::<Counter>();
-                        counter.count & 1 == 0
-                    },
-                    |builder| {
-                        builder.text("[Even]");
-                    },
-                    |builder| {
-                        builder.text("[Odd]");
-                    },
-                );
+                    counter.count & 1 == 0
+                },
+                |builder| {
+                    builder.text("[Even]");
+                },
+                |builder| {
+                    builder.text("[Odd]");
+                },
+            );
         });
     // commands.spawn(
     //     Element::<NodeBundle>::new()
@@ -150,12 +144,12 @@ fn setup_view_root(world: &mut World) {
 
 struct NestedView;
 
-impl ViewTemplate for NestedView {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        TextComputed::new(|cx| {
-            let counter = cx.use_resource::<Counter>();
+impl UiTemplate for NestedView {
+    fn build(&self, builder: &mut UiBuilder) {
+        builder.text_computed(|rcx| {
+            let counter = rcx.use_resource::<Counter>();
             format!("{}", counter.count)
-        })
+        });
     }
 }
 
