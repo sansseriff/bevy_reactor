@@ -1,5 +1,11 @@
-use bevy::prelude::{BuildChildren, Bundle, Entity, EntityWorldMut, IntoSystem, World};
-use bevy_reactor_signals::{create_derived, Callback, CallbackOwner, Rcx, Signal};
+use bevy::{
+    prelude::{BuildChildren, Bundle, Entity, EntityWorldMut, IntoSystem, World},
+    ui::GhostNode,
+};
+use bevy_reactor_signals::{
+    create_derived, Callback, CallbackOwner, Ecx, Rcx, Reaction, ReactionCell, Signal,
+    TrackingScope,
+};
 
 pub struct UiBuilder<'w> {
     /// Bevy World
@@ -94,6 +100,22 @@ impl<'w> UiBuilder<'w> {
         self.world.entity_mut(self.parent).add_child(derived.id());
         Signal::Derived(derived)
     }
+
+    /// Create a reactive effect which is owned by the parent entity.
+    pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Ecx)>(
+        &mut self,
+        effect: F,
+    ) -> &mut Self {
+        let mut scope = TrackingScope::new(self.world().last_change_tick());
+        let mut reaction = EffectReaction { effect };
+        let owner = self.parent;
+        let effect_owner = self.world.spawn_empty().set_parent(owner).id();
+        reaction.react(effect_owner, self.world, &mut scope);
+        self.world
+            .entity_mut(effect_owner)
+            .insert((scope, ReactionCell::new(reaction), GhostNode));
+        self
+    }
 }
 
 pub trait CreateChilden {
@@ -107,5 +129,17 @@ impl<'w> CreateChilden for EntityWorldMut<'w> {
             spawn_children(&mut UiBuilder { world, parent });
         });
         self
+    }
+}
+
+/// General effect reaction.
+pub struct EffectReaction<F: FnMut(&mut Ecx)> {
+    effect: F,
+}
+
+impl<F: FnMut(&mut Ecx)> Reaction for EffectReaction<F> {
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let mut ecx = Ecx::new(world, owner, tracking);
+        (self.effect)(&mut ecx);
     }
 }

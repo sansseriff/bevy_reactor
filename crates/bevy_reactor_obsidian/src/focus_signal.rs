@@ -40,14 +40,14 @@ pub trait CreateFocusSignal {
 impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
     fn create_focus_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let focus = cx.use_resource::<Focus>();
+            let focus = cx.read_resource::<Focus>();
             focus.0 == Some(target)
         })
     }
 
     fn create_focus_within_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let focus = cx.use_resource::<Focus>();
+            let focus = cx.read_resource::<Focus>();
             match focus.0 {
                 Some(focus) => is_descendant(cx.world(), &focus, &target),
                 None => false,
@@ -57,19 +57,19 @@ impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
 
     fn create_focus_visible_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let visible = cx.use_resource::<FocusVisible>();
-            let focus = cx.use_resource::<Focus>();
+            let visible = cx.read_resource::<FocusVisible>();
+            let focus = cx.read_resource::<Focus>();
             visible.0 && focus.0 == Some(target)
         })
     }
 
     fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let visible = cx.use_resource::<FocusVisible>();
+            let visible = cx.read_resource::<FocusVisible>();
             if !visible.0 {
                 return false;
             }
-            let focus = cx.use_resource::<Focus>();
+            let focus = cx.read_resource::<Focus>();
             match focus.0 {
                 Some(focus) => is_descendant(cx.world(), &focus, &target),
                 None => false,

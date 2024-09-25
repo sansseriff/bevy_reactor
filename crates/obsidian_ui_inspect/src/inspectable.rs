@@ -40,12 +40,12 @@ impl<T: Resource + Reflect> Default for InspectableResource<T> {
 
 impl<T: Resource + Reflect> InspectableRoot for InspectableResource<T> {
     fn name(&self, cx: &Cx) -> String {
-        let res = cx.use_resource::<T>();
+        let res = cx.read_resource::<T>();
         res.reflect_short_type_path().to_string()
     }
 
     fn reflect_path<'a>(&self, cx: &'a Cx, path: &ParsedPath) -> Option<&'a dyn Reflect> {
-        let res = cx.use_resource::<T>();
+        let res = cx.read_resource::<T>();
         match res.reflect_path(path) {
             Ok(result) => Some(result),
             Err(ReflectPathError::InvalidAccess(_)) => None,

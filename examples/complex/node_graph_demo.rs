@@ -266,14 +266,14 @@ impl ViewTemplate for NodeGraphDemo {
             .children((
                 For::each(
                     |cx| {
-                        let graph = cx.use_resource::<DemoGraphRoot>();
+                        let graph = cx.read_resource::<DemoGraphRoot>();
                         graph.edges.clone().into_iter()
                     },
                     |id| EdgeTemplate { id: *id },
                 ),
                 For::each(
                     |cx| {
-                        let graph = cx.use_resource::<DemoGraphRoot>();
+                        let graph = cx.read_resource::<DemoGraphRoot>();
                         graph.nodes.clone().into_iter()
                     },
                     |id| NodeTemplate { id: *id },

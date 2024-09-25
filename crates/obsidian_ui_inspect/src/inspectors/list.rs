@@ -178,7 +178,7 @@ struct ListItemInspector {
 
 impl ViewTemplate for ListItemInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let factories = cx.use_resource::<InspectorFactoryRegistry>();
+        let factories = cx.read_resource::<InspectorFactoryRegistry>();
         // Either create an inspector for the field, or return an empty view.
         factories
             .create_inspector(cx, self.field.clone())

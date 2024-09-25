@@ -466,7 +466,7 @@ impl ViewTemplate for RecentColorsGrid {
         let state = self.state;
         let rgb = cx.create_memo(move |cx| state.map(cx, |st| st.rgb));
         let on_change = self.on_change;
-        let recent_colors = cx.create_derived(|cx| cx.use_resource::<RecentColors>().0.clone());
+        let recent_colors = cx.create_derived(|cx| cx.read_resource::<RecentColors>().0.clone());
 
         SwatchGrid::new(recent_colors)
             .style(style_recent_colors)

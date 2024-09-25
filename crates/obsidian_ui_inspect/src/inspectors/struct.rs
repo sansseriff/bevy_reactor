@@ -149,7 +149,7 @@ struct NamedFieldInspector {
 
 impl ViewTemplate for NamedFieldInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let factories = cx.use_resource::<InspectorFactoryRegistry>();
+        let factories = cx.read_resource::<InspectorFactoryRegistry>();
         let field = self.field.clone();
         let Some(reflect) = field.reflect(cx) else {
             return ().into_view();

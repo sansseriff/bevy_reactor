@@ -30,7 +30,7 @@ impl ViewTemplate for EnumInspector {
                 target: self.0.clone(),
             },
             Dynamic::new(move |cx| {
-                let factories = cx.use_resource::<InspectorFactoryRegistry>();
+                let factories = cx.read_resource::<InspectorFactoryRegistry>();
                 if let Some(reflect) = field.reflect(cx) {
                     if let ReflectRef::Enum(en) = reflect.reflect_ref() {
                         let variant = en.variant_type();

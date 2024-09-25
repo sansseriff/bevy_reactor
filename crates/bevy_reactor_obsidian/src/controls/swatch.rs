@@ -1,7 +1,8 @@
+use bevy::ecs::world::DeferredWorld;
 use bevy::{color::Srgba, prelude::*, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
-use bevy_reactor_views::{Cond, Element, IntoView, ViewTemplate};
+use bevy_reactor_builder::{CondBuilder, CreateChilden, EntityStyleBuilder, UiTemplate};
+use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
 // use bevy_tabindex::TabIndex;
 
 use crate::materials::SwatchRectMaterial;
@@ -9,8 +10,8 @@ use crate::materials::SwatchRectMaterial;
 use crate::colors;
 
 fn style_swatch(ss: &mut StyleBuilder) {
-    ss.min_width(8)
-        .min_height(8)
+    ss.min_width(12)
+        .min_height(12)
         .display(ui::Display::Flex)
         .color(colors::FOREGROUND)
         .padding(2);
@@ -69,18 +70,19 @@ impl Swatch {
     }
 
     /// Set whether the swatch should be rendered in a 'selected' state.
-    pub fn selected(mut self, selected: impl Into<Signal<bool>>) -> Self {
-        self.selected = selected.into();
+    pub fn selected(mut self, selected: impl IntoSignal<bool>) -> Self {
+        self.selected = selected.into_signal();
         self
     }
 }
 
-impl ViewTemplate for Swatch {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for Swatch {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
         let color = self.color;
         let selected = self.selected;
+        let on_click = self.on_click;
 
-        let mut ui_materials = cx
+        let mut ui_materials = builder
             .world_mut()
             .get_resource_mut::<Assets<SwatchRectMaterial>>()
             .unwrap();
@@ -90,11 +92,12 @@ impl ViewTemplate for Swatch {
         });
 
         // Update material color
-        cx.create_effect({
+        builder.create_effect({
             let material = material.clone();
-            move |cx| {
-                let color = color.get(cx);
-                let mut ui_materials = cx
+            move |rcx| {
+                let color = color.get(rcx);
+                // println!("Update color: {}", color.to_hex());
+                let mut ui_materials = rcx
                     .world_mut()
                     .get_resource_mut::<Assets<SwatchRectMaterial>>()
                     .unwrap();
@@ -103,23 +106,30 @@ impl ViewTemplate for Swatch {
             }
         });
 
-        Element::<MaterialNodeBundle<SwatchRectMaterial>>::new()
-            .named("Swatch")
-            .style((style_swatch, self.style.clone()))
-            .insert((material.clone(), {
-                // let on_click = self.on_click;
-                // On::<Pointer<Click>>::run(move |world: &mut World| {
-                //     let color = color.get(world);
-                //     if let Some(on_click) = on_click {
-                //         world.run_callback(on_click, color);
-                //     }
-                // })
-            }))
-            .children(Cond::new(
-                selected,
-                || Element::<NodeBundle>::new().style(style_selection),
-                || (),
-            ))
+        builder
+            .spawn((MaterialNodeBundle::<SwatchRectMaterial> {
+                material: material.clone(),
+                ..default()
+            }, Name::new("Swatch")))
+            .styles((style_swatch, self.style.clone()))
+            .observe(
+                move |mut trigger: Trigger<Pointer<Click>>,
+                world: DeferredWorld,
+                      mut commands: Commands| {
+                    trigger.propagate(false);
+                        if let Some(on_click) = on_click {
+                            let c = color.get(&world);
+                            commands.run_callback(on_click, c);
+                        }
+                },
+            )
+            .create_children(|builder| {
+                builder.cond(
+                    selected,
+                    |builder| { builder.spawn(NodeBundle::default()).style(style_selection);},
+                    |_builder| {},
+                );
+            })
         // .effect(move |cx, ent| {
         //     let radius = cx.use_component::<BorderRadius>(ent);
         //     if let Some(radius) = radius {
@@ -132,11 +142,12 @@ impl ViewTemplate for Swatch {
         //         material.border_radius = radius;
         //     }
         // })
+        ;
     }
 }
 
 // For now we only support pixel units.
-fn resolve_border_radius(&values: &BorderRadius) -> [f32; 4] {
+fn _resolve_border_radius(&values: &BorderRadius) -> [f32; 4] {
     [
         values.top_left,
         values.top_right,

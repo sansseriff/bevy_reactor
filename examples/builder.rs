@@ -26,9 +26,7 @@ fn main() {
     App::new()
         .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
-        .add_plugins(SignalsPlugin)
-        .add_plugins(StyleBuilderPlugin)
-        // .add_plugins(ReactorViewsPlugin)
+        .add_plugins((SignalsPlugin, StyleBuilderPlugin))
         .add_systems(Startup, (setup, setup_view_root))
         .add_systems(Update, (close_on_esc, rotate, update_counter))
         .run();
@@ -46,7 +44,7 @@ fn setup_view_root(world: &mut World) {
         .styles(style_test)
         .style_dyn(
             |rcx| {
-                let counter = rcx.use_resource::<Counter>();
+                let counter = rcx.read_resource::<Counter>();
                 counter.count & 1 == 0
             },
             |even, sb| {
@@ -66,7 +64,7 @@ fn setup_view_root(world: &mut World) {
                 .invoke(NestedView)
                 .cond(
                     |rcx: &Rcx| {
-                        let counter = rcx.use_resource::<Counter>();
+                        let counter = rcx.read_resource::<Counter>();
                         counter.count & 1 == 0
                     },
                     |builder| {
@@ -83,7 +81,7 @@ fn setup_view_root(world: &mut World) {
     //         .style(style_test)
     //         .style_dyn(
     //             |rcx| {
-    //                 let counter = rcx.use_resource::<Counter>();
+    //                 let counter = rcx.read_resource::<Counter>();
     //                 counter.count & 1 == 0
     //             },
     //             |even, sb| {
@@ -96,7 +94,7 @@ fn setup_view_root(world: &mut World) {
     //         )
     //         .insert(BorderColor(palettes::css::LIME.into()))
     //         // .insert_computed(|cx| {
-    //         //     let counter = cx.use_resource::<Counter>();
+    //         //     let counter = cx.read_resource::<Counter>();
     //         //     BackgroundColor(if counter.count & 1 == 0 {
     //         //         palettes::css::DARK_GRAY.into()
     //         //     } else {
@@ -104,7 +102,7 @@ fn setup_view_root(world: &mut World) {
     //         //     })
     //         // })
     //         // .create_effect(|cx, ent| {
-    //         //     let count = cx.use_resource::<Counter>().count;
+    //         //     let count = cx.read_resource::<Counter>().count;
     //         //     let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
     //         //     border.0 = if count & 1 == 0 {
     //         //         palettes::css::LIME.into()
@@ -118,12 +116,12 @@ fn setup_view_root(world: &mut World) {
     //         .children((
     //             Element::<NodeBundle>::new(),
     //             // DynamicKeyed::new(
-    //             //     |cx| cx.use_resource::<Counter>().count,
+    //             //     |cx| cx.read_resource::<Counter>().count,
     //             //     |count| format!(":{}:", count),
     //             // ),
     //             // For::each(
     //             //     |cx| {
-    //             //         let counter = cx.use_resource::<Counter>();
+    //             //         let counter = cx.read_resource::<Counter>();
     //             //         [counter.count, counter.count + 1, counter.count + 2].into_iter()
     //             //     },
     //             //     |item| format!("item: {}", item),
@@ -138,7 +136,7 @@ struct NestedView;
 impl UiTemplate for NestedView {
     fn build(&self, builder: &mut UiBuilder) {
         builder.text_computed(|rcx| {
-            let counter = rcx.use_resource::<Counter>();
+            let counter = rcx.read_resource::<Counter>();
             format!("{}", counter.count)
         });
     }

@@ -58,7 +58,7 @@ Here's an example of a context parameter, which is traditionally named `cx`:
 
 ```rust
 element.insert_computed(|cx| {
-    let counter = cx.use_resource::<Counter>();
+    let counter = cx.read_resource::<Counter>();
     BackgroundColor(if counter.count & 1 == 0 {
         Color::DARK_GRAY
     } else {
@@ -149,7 +149,7 @@ A derived signal is a signal resulting from a computation that depends on other 
 /// A signal derived from a resource.
 let panel_width = cx
     .create_derived(|cx| {
-        let res = cx.use_resource::<PanelWidth>();
+        let res = cx.read_resource::<PanelWidth>();
         res.0
     });
 ```
@@ -262,7 +262,7 @@ Element::<NodeBundle>::new()
         Element::<NodeBundle>::new(),
         text("Count: "),
         text_computed(|cx| {
-            let counter = cx.use_resource::<Counter>();
+            let counter = cx.read_resource::<Counter>();
             format!("{}", counter.count)
         }),
         ": ",
@@ -292,7 +292,7 @@ Conditional rendering is accomplished using the `Cond` struct:
 element.children(
     Cond::new(
         |cx| {
-            let counter = cx.use_resource::<Counter>();
+            let counter = cx.read_resource::<Counter>();
             counter.count & 1 == 0
         },
         || "[Even]",
@@ -315,7 +315,7 @@ that actually changed are re-rendered.
 element.children(
     For::each(
         |cx| {
-            let counter = cx.use_resource::<Counter>();
+            let counter = cx.read_resource::<Counter>();
             [counter.count, counter.count + 1, counter.count + 2].into_iter()
         },
         |item| format!("item: {}", item),
@@ -461,7 +461,7 @@ and will be despawned when the scope is destroyed.
 ```rust
 GradientSlider::new()
     .gradient(cx.create_derived(|cx| {
-        let rgb = cx.use_resource::<ColorEditState>().rgb;
+        let rgb = cx.read_resource::<ColorEditState>().rgb;
         ColorGradient::new(&[
             Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
             Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
@@ -470,7 +470,7 @@ GradientSlider::new()
     .min(0.)
     .max(255.)
     .value(cx.create_derived(|cx| {
-        cx.use_resource::<ColorEditState>().rgb.red * 255.0
+        cx.read_resource::<ColorEditState>().rgb.red * 255.0
     })),
     .style(style_slider)
     .precision(1)

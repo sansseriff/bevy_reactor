@@ -53,7 +53,7 @@ struct NestedView;
 
 impl ViewTemplate for NestedView {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Switch::new(|cx: &Rcx| cx.use_resource::<State<GameState>>().get().clone())
+        Switch::new(|cx: &Rcx| cx.read_resource::<State<GameState>>().get().clone())
             .case(GameState::Intro, || "Intro")
             .case(GameState::Pause, || "Pause")
             .fallback(|| "Play")

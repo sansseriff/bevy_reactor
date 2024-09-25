@@ -77,7 +77,7 @@ impl ViewTemplate for TupleStructElements {
         // If there's only one field, then hoist it up a level and don't show field index.
         // TODO: If the singular field is a struct or vector, hoist that as well.
         if length == 1 {
-            let factories = cx.use_resource::<InspectorFactoryRegistry>();
+            let factories = cx.read_resource::<InspectorFactoryRegistry>();
             let mut path = field.value_path.clone();
             path.0.push(OffsetAccess {
                 access: bevy::reflect::Access::TupleIndex(0),
@@ -127,7 +127,7 @@ struct TupleItemInspector {
 
 impl ViewTemplate for TupleItemInspector {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let factories = cx.use_resource::<InspectorFactoryRegistry>();
+        let factories = cx.read_resource::<InspectorFactoryRegistry>();
         // Either create an inspector for the field, or return an empty view.
         factories
             .create_inspector(cx, self.field.clone())

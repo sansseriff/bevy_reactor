@@ -241,7 +241,7 @@ impl ViewTemplate for DemoUi {
         let name = cx.create_mutable("filename.txt".to_string());
 
         let panel_width = cx.create_derived(|cx| {
-            let res = cx.use_resource::<PanelWidth>();
+            let res = cx.read_resource::<PanelWidth>();
             res.0
         });
 
@@ -288,7 +288,7 @@ impl ViewTemplate for DemoUi {
                                 .children("Preview")
                                 .corners(RoundedCorners::Left)
                                 .variant(cx.create_derived(|cx| {
-                                    let st = cx.use_resource::<State<EditorState>>();
+                                    let st = cx.read_resource::<State<EditorState>>();
                                     if *st.get() == EditorState::Preview {
                                         ButtonVariant::Selected
                                     } else {
@@ -306,7 +306,7 @@ impl ViewTemplate for DemoUi {
                                 .children("Materials")
                                 .corners(RoundedCorners::None)
                                 .variant(cx.create_derived(|cx| {
-                                    let st = cx.use_resource::<State<EditorState>>();
+                                    let st = cx.read_resource::<State<EditorState>>();
                                     if *st.get() == EditorState::Graph {
                                         ButtonVariant::Selected
                                     } else {
@@ -324,7 +324,7 @@ impl ViewTemplate for DemoUi {
                                 .children("Split")
                                 .corners(RoundedCorners::Right)
                                 .variant(cx.create_derived(|cx| {
-                                    let st = cx.use_resource::<State<EditorState>>();
+                                    let st = cx.read_resource::<State<EditorState>>();
                                     if *st.get() == EditorState::Split {
                                         ButtonVariant::Selected
                                     } else {
@@ -428,7 +428,7 @@ fn graph_view_style(ss: &mut StyleBuilder) {
 impl ViewTemplate for CenterPanel {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let panel_height = cx.create_derived(|cx| {
-            let res = cx.use_resource::<PanelHeight>();
+            let res = cx.read_resource::<PanelHeight>();
             res.0
         });
 
@@ -439,7 +439,7 @@ impl ViewTemplate for CenterPanel {
 
         Element::<NodeBundle>::new()
             .children((Cond::new(
-                |cx: &Rcx| *cx.use_resource::<State<EditorState>>().get() == EditorState::Graph,
+                |cx: &Rcx| *cx.read_resource::<State<EditorState>>().get() == EditorState::Graph,
                 || NodeGraphDemo {},
                 move || {
                     Fragment::new((
@@ -455,7 +455,8 @@ impl ViewTemplate for CenterPanel {
                             ),
                         Cond::new(
                             |cx: &Rcx| {
-                                *cx.use_resource::<State<EditorState>>().get() == EditorState::Split
+                                *cx.read_resource::<State<EditorState>>().get()
+                                    == EditorState::Split
                             },
                             move || {
                                 Fragment::new((
@@ -490,7 +491,7 @@ impl ViewTemplate for ReactionsTable {
         ListView::new()
             .children(For::each(
                 |cx| {
-                    let tracing = cx.use_resource::<TrackingScopeTracing>();
+                    let tracing = cx.read_resource::<TrackingScopeTracing>();
                     tracing.0.clone().into_iter()
                 },
                 |ent| {
@@ -513,7 +514,7 @@ impl ViewTemplate for ReactionsTable {
 // fn _overlay_views(cx: &mut Cx<Entity>) -> impl View {
 //     let id = cx.create_entity();
 //     let hovering = cx.create_hover_signal(id);
-//     // let color = cx.create_derived(|cx| LinearRgba::from(cx.use_resource::<ColorEditState>().rgb));
+//     // let color = cx.create_derived(|cx| LinearRgba::from(cx.read_resource::<ColorEditState>().rgb));
 //     let color: Signal<LinearRgba> = cx.create_derived(move |cx| {
 //         if hovering.get(cx) {
 //             colors::ACCENT.into()
@@ -547,7 +548,7 @@ struct TransformOverlayDemo;
 
 impl ViewTemplate for TransformOverlayDemo {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let selected = cx.create_derived(|cx| cx.use_resource::<SelectedShape>().0);
+        let selected = cx.create_derived(|cx| cx.read_resource::<SelectedShape>().0);
 
         let on_change = Some(cx.create_callback(move |cx, new_pos| {
             let selected = selected.get(cx).unwrap();

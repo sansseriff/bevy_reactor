@@ -2,6 +2,7 @@
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
+    color::palettes,
     prelude::*,
     ui,
 };
@@ -62,31 +63,17 @@ fn setup_view_root(world: &mut World) {
         .insert(TargetCamera(camera))
         .style(style_test)
         .create_children(|builder| {
-            builder.text("Variants");
+            builder.text("Swatch");
             builder
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
                     builder
-                        .invoke(Button::new().children(|b| {
-                            b.text("Default");
-                        }))
-                        .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Primary)
-                                .labeled("Primary"),
-                        )
-                        .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Danger)
-                                .labeled("Danger"),
-                        )
-                        .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Selected)
-                                .labeled("Selected"),
-                        )
-                        .invoke(Button::new().minimal(true).labeled("Minimal"));
+                        .invoke(Swatch::new(palettes::css::GOLDENROD))
+                        .invoke(Swatch::new(palettes::css::LIME))
+                        .invoke(Swatch::new(palettes::css::RED))
+                        .invoke(Swatch::new(Srgba::NONE))
+                        .invoke(Swatch::new(palettes::css::BLUE).selected(true));
                 });
             builder.text("Variants (disabled)");
             builder

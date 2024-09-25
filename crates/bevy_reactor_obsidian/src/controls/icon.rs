@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{EntityStyleBuilder, UiBuilder, UiTemplate};
-use bevy_reactor_signals::{Cx, IntoSignal, Signal};
-use bevy_reactor_views::{Element, IntoView, ViewTemplate};
+use bevy_reactor_signals::{IntoSignal, Signal};
 
 use crate::colors;
 
@@ -58,28 +57,6 @@ impl Default for Icon {
             color: Signal::Constant(colors::FOREGROUND.into()),
             style: StyleHandle::default(),
         }
-    }
-}
-
-impl ViewTemplate for Icon {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        let icon = self.icon.clone();
-        let size = self.size;
-        let color = self.color;
-
-        Element::<NodeBundle>::new()
-            .style((
-                move |sb: &mut StyleBuilder| {
-                    sb.width(size.x).height(size.y).background_image(&icon);
-                },
-                self.style.clone(),
-            ))
-            .style_dyn(
-                move |rcx| color.get(rcx),
-                |color, sb| {
-                    sb.background_image_color(color);
-                },
-            )
     }
 }
 
