@@ -2,8 +2,10 @@
 
 use bevy::{color::palettes, prelude::*};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_signals::{Cx, Rcx, RunContextRead};
-use bevy_reactor_views::{prelude::*, Switch};
+use bevy_reactor_builder::{
+    CreateChilden, EntityStyleBuilder, InvokeUiTemplate, SwitchBuilder, TextBuilder, UiTemplate,
+};
+use bevy_reactor_signals::{Rcx, RunContextRead, SignalsPlugin};
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
@@ -24,14 +26,14 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_state(GameState::Intro)
-        .add_plugins(ReactorViewsPlugin)
+        .add_plugins((SignalsPlugin, StyleBuilderPlugin))
         .add_systems(Startup, setup_view_root)
         .add_systems(Update, (close_on_esc, handle_key_input))
         .run();
 }
 
-fn setup_view_root(mut commands: Commands) {
-    let camera = commands
+fn setup_view_root(world: &mut World) {
+    let camera = world
         .spawn((Camera2dBundle {
             camera: Camera::default(),
             camera_2d: Camera2d {},
@@ -39,24 +41,36 @@ fn setup_view_root(mut commands: Commands) {
         },))
         .id();
 
-    commands.spawn(
-        Element::<NodeBundle>::new()
-            .style(style_test)
-            .insert(TargetCamera(camera))
-            .insert(BorderColor(palettes::css::LIME.into()))
-            .children((Element::<NodeBundle>::new(), "State: ", NestedView))
-            .to_root(),
-    );
+    world
+        .spawn(NodeBundle::default())
+        .style(style_test)
+        .insert(TargetCamera(camera))
+        .insert(BorderColor(palettes::css::LIME.into()))
+        .create_children(|builder| {
+            builder.text("State: ");
+            builder.invoke(StateName);
+        });
 }
 
-struct NestedView;
+struct StateName;
 
-impl ViewTemplate for NestedView {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Switch::new(|cx: &Rcx| cx.read_resource::<State<GameState>>().get().clone())
-            .case(GameState::Intro, || "Intro")
-            .case(GameState::Pause, || "Pause")
-            .fallback(|| "Play")
+impl UiTemplate for StateName {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
+        builder.switch(
+            |cx: &Rcx| cx.read_resource::<State<GameState>>().get().clone(),
+            |builder| {
+                builder
+                    .case(GameState::Intro, |builder| {
+                        builder.text("Intro");
+                    })
+                    .case(GameState::Pause, |builder| {
+                        builder.text("Pause");
+                    })
+                    .fallback(|builder| {
+                        builder.text("Play");
+                    });
+            },
+        );
     }
 }
 

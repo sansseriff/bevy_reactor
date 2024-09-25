@@ -120,10 +120,19 @@ impl<'w> UiBuilder<'w> {
 
 pub trait CreateChilden {
     fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self;
+    fn create_children_mut(&mut self, spawn_children: impl FnMut(&mut UiBuilder)) -> &mut Self;
 }
 
 impl<'w> CreateChilden for EntityWorldMut<'w> {
     fn create_children(&mut self, spawn_children: impl FnOnce(&mut UiBuilder)) -> &mut Self {
+        let parent = self.id();
+        self.world_scope(|world| {
+            spawn_children(&mut UiBuilder { world, parent });
+        });
+        self
+    }
+
+    fn create_children_mut(&mut self, mut spawn_children: impl FnMut(&mut UiBuilder)) -> &mut Self {
         let parent = self.id();
         self.world_scope(|world| {
             spawn_children(&mut UiBuilder { world, parent });

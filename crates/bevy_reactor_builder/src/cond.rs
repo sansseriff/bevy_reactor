@@ -3,7 +3,7 @@ use bevy::{ecs::world::World, ui::GhostNode};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::test_condition::TestCondition;
-use crate::UiBuilder;
+use crate::{CreateChilden, UiBuilder};
 
 /// The state of the conditional branch, which is initially "unset".
 #[derive(PartialEq)]
@@ -28,8 +28,8 @@ pub trait CondBuilder {
     /// on a test condition.
     fn cond<
         Test: TestCondition + 'static,
-        PosFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
-        NegFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
+        PosFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
+        NegFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
     >(
         &mut self,
         test: Test,
@@ -41,8 +41,8 @@ pub trait CondBuilder {
 impl<'w> CondBuilder for WorldChildBuilder<'w> {
     fn cond<
         Test: TestCondition + 'static,
-        PosFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
-        NegFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
+        PosFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
+        NegFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
     >(
         &mut self,
         test: Test,
@@ -77,8 +77,8 @@ impl<'w> CondBuilder for WorldChildBuilder<'w> {
 impl<'w> CondBuilder for UiBuilder<'w> {
     fn cond<
         Test: TestCondition + 'static,
-        PosFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
-        NegFn: Send + Sync + Fn(&mut WorldChildBuilder) + 'static,
+        PosFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
+        NegFn: Send + Sync + Fn(&mut UiBuilder) + 'static,
     >(
         &mut self,
         test: Test,
@@ -111,11 +111,8 @@ impl<'w> CondBuilder for UiBuilder<'w> {
 }
 
 /// A reaction that handles the conditional rendering logic.
-struct CondReaction<
-    Test: TestCondition,
-    PosFn: Fn(&mut WorldChildBuilder),
-    NegFn: Fn(&mut WorldChildBuilder),
-> where
+struct CondReaction<Test: TestCondition, PosFn: Fn(&mut UiBuilder), NegFn: Fn(&mut UiBuilder)>
+where
     Self: Send + Sync,
 {
     test: Test,
@@ -126,26 +123,26 @@ struct CondReaction<
 
 impl<
         Test: TestCondition,
-        PosFn: Send + Sync + Fn(&mut WorldChildBuilder),
-        NegFn: Send + Sync + Fn(&mut WorldChildBuilder),
+        PosFn: Send + Sync + Fn(&mut UiBuilder),
+        NegFn: Send + Sync + Fn(&mut UiBuilder),
     > CondReaction<Test, PosFn, NegFn>
 {
     /// Helper function to build either the true or false branch content.
-    fn build_branch_state<Factory: Fn(&mut WorldChildBuilder)>(
+    fn build_branch_state<Factory: Fn(&mut UiBuilder)>(
         &self,
         branch: &Factory,
         owner: Entity,
         world: &mut World,
     ) {
         world.entity_mut(owner).despawn_descendants();
-        world.entity_mut(owner).with_children(branch);
+        world.entity_mut(owner).create_children_mut(branch);
     }
 }
 
 impl<
         Test: TestCondition,
-        PosFn: Send + Sync + Fn(&mut WorldChildBuilder),
-        NegFn: Send + Sync + Fn(&mut WorldChildBuilder),
+        PosFn: Send + Sync + Fn(&mut UiBuilder),
+        NegFn: Send + Sync + Fn(&mut UiBuilder),
     > Reaction for CondReaction<Test, PosFn, NegFn>
 {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
