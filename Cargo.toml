@@ -18,7 +18,6 @@ bevy = "0.15.0-dev"
 bevy_reactor_builder = { path = "crates/bevy_reactor_builder" }
 bevy_reactor_obsidian = { path = "crates/bevy_reactor_obsidian" }
 bevy_reactor_signals = { path = "crates/bevy_reactor_signals" }
-bevy_reactor_views = { path = "crates/bevy_reactor_views" }
 bevy_mod_picking = "0.20.1"
 bevy_mod_stylebuilder = { path = "crates/bevy_mod_stylebuilder" }
 
@@ -38,7 +37,6 @@ opt-level = 3
 [dev-dependencies]
 # obsidian_ui = { path = "crates/obsidian_ui" }
 # obsidian_ui_inspect = { path = "crates/obsidian_ui_inspect" }
-bevy_reactor_views = { workspace = true }
 bevy_reactor_obsidian = { workspace = true }
 # bevy_reactor_overlays = { path = "crates/bevy_reactor_overlays" }
 # bevy_picking_backdrop = { path = "crates/bevy_picking_backdrop" }

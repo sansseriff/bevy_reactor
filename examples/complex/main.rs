@@ -3,21 +3,23 @@ mod node_graph_demo;
 mod reflect_demo;
 mod transform_overlay;
 
+use bevy_mod_picking::backends::raycast::RaycastPickable;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_overlays as overlays;
+use bevy_reactor_obsidian::prelude::*;
+// use bevy_reactor_overlays as overlays;
 use bevy_reactor_signals::{Cx, Rcx, RunContextRead, RunContextSetup, TrackingScopeTracing};
 use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
-use obsidian_ui::{
-    colors,
-    controls::{
-        Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
-        Splitter, SplitterDirection, TextInput, TextInputProps, ToolButton, ToolPalette,
-    },
-    cursor::StyleBuilderCursor,
-    focus::TabGroup,
-    typography, viewport, ObsidianUiPlugin, RoundedCorners,
-};
-use obsidian_ui_inspect::InspectorPlugin;
+// use obsidian_ui::{
+//     colors,
+//     controls::{
+//         Button, ButtonVariant, Checkbox, Dialog, DialogFooter, DialogHeader, ListView, Slider,
+//         Splitter, SplitterDirection, TextInput, TextInputProps, ToolButton, ToolPalette,
+//     },
+//     cursor::StyleBuilderCursor,
+//     focus::TabGroup,
+//     typography, viewport, ObsidianUiPlugin, RoundedCorners,
+// };
+// use obsidian_ui_inspect::InspectorPlugin;
 use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
 use transform_overlay::TransformOverlay;
 

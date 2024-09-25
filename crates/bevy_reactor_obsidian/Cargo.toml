@@ -8,5 +8,4 @@ publish = false
 bevy = { workspace = true }
 bevy_mod_stylebuilder = { workspace = true }
 bevy_reactor_signals = { workspace = true }
-bevy_reactor_views = { workspace = true }
 bevy_reactor_builder = { workspace = true }

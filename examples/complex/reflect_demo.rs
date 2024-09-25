@@ -3,7 +3,6 @@ use std::sync::Arc;
 use bevy::prelude::*;
 use bevy_reactor::*;
 use bevy_reactor_signals::Cx;
-use obsidian_ui_inspect::{InspectableResource, Inspector, Precision, ValueRange};
 
 #[derive(Debug, Reflect, Clone, Default)]
 pub enum TestEnum {
