@@ -174,27 +174,46 @@ fn setup_view_root(world: &mut World) {
                                 .corners(RoundedCorners::None),
                         );
                 });
-            // "IconButton",
-            // Element::<NodeBundle>::new().style(style_row).children((
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png"),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Primary),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Danger),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Selected),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
-            // )),
-            // "IconButton Size",
-            // Element::<NodeBundle>::new().style(style_row).children((
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
-            // )),
+            builder.text("IconButton");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder
+                        .invoke(IconButton::new("obsidian_ui://icons/chevron_left.png"))
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
+                        );
+                });
+            builder.text("IconButton Size");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
+                        )
+                        .invoke(
+                            IconButton::new("obsidian_ui://icons/chevron_left.png")
+                                .size(Size::Xxxs),
+                        );
+                });
         });
 }
 

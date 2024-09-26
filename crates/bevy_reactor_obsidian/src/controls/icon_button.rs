@@ -1,15 +1,15 @@
 use super::{Button, Icon};
-use crate::{colors, size::Size, RoundedCorners};
+use crate::{colors, prelude::RoundedCorners, size::Size};
 use bevy::prelude::*;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, Signal};
+use bevy_reactor_builder::{InvokeUiTemplate, UiBuilder, UiTemplate};
+use bevy_reactor_signals::{Callback, IntoSignal, Signal};
 
 /// A widget which displays a button containing an icon.
 #[derive(Default)]
 pub struct IconButton {
     /// Asset path for the icon
-    pub icon: String,
+    pub icon: HandleOrOwnedPath<Image>,
 
     /// Color variant - default, primary or danger.
     // pub variant: Signal<ButtonVariant>,
@@ -41,9 +41,9 @@ pub struct IconButton {
 
 impl IconButton {
     /// Construct a new `IconButton`.
-    pub fn new(icon: &str) -> Self {
+    pub fn new(icon: impl Into<HandleOrOwnedPath<Image>>) -> Self {
         Self {
-            icon: icon.to_string(),
+            icon: icon.into(),
             ..default()
         }
     }
@@ -103,9 +103,19 @@ impl IconButton {
     }
 }
 
-impl ViewTemplate for IconButton {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for IconButton {
+    fn build(&self, builder: &mut UiBuilder) {
         let disabled = self.disabled;
+        let size = self.size;
+        let icon = self.icon.clone();
+        let icon_color = builder.create_derived(move |rcx| {
+            if disabled.get(rcx) {
+                Color::from(colors::DIM).with_alpha(0.2)
+            } else {
+                Color::from(colors::DIM)
+            }
+        });
+
         Button {
             size: self.size,
             disabled,
@@ -122,24 +132,17 @@ impl ViewTemplate for IconButton {
             corners: self.corners,
             ..default()
         }
-        .children(
-            Icon::new(&self.icon)
-                .color(cx.create_derived(move |cx| {
-                    if disabled.get(cx) {
-                        Color::from(colors::DIM).with_alpha(0.2)
-                    } else {
-                        Color::from(colors::DIM)
-                    }
-                }))
-                .size(match self.size {
-                    Size::Xl => Vec2::splat(20.),
-                    Size::Lg => Vec2::splat(18.),
-                    Size::Md => Vec2::splat(16.),
-                    Size::Sm => Vec2::splat(14.),
-                    Size::Xs => Vec2::splat(12.),
-                    Size::Xxs => Vec2::splat(11.),
-                    Size::Xxxs => Vec2::splat(10.),
-                }),
-        )
+        .children(move |builder| {
+            builder.invoke(Icon::new(icon.clone()).color(icon_color).size(match size {
+                Size::Xl => Vec2::splat(20.),
+                Size::Lg => Vec2::splat(18.),
+                Size::Md => Vec2::splat(16.),
+                Size::Sm => Vec2::splat(14.),
+                Size::Xs => Vec2::splat(12.),
+                Size::Xxs => Vec2::splat(11.),
+                Size::Xxxs => Vec2::splat(10.),
+            }));
+        })
+        .build(builder);
     }
 }
