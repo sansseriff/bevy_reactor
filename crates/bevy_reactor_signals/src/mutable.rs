@@ -114,6 +114,21 @@ where
     }
 }
 
+/// Function to create a mutable
+pub fn create_mutable<T: Send + Sync + 'static>(
+    world: &mut World,
+    parent: Entity,
+    init: T,
+) -> Mutable<T> {
+    let cell = world.spawn(MutableCell::<T>(init)).set_parent(parent).id();
+    let component = world.init_component::<MutableCell<T>>();
+    Mutable {
+        cell,
+        component,
+        marker: PhantomData,
+    }
+}
+
 /// Trait for low-level read-access to mutables given an entity id.
 pub trait ReadMutable {
     /// Read the value of a mutable variable using Copy semantics. Calling this function adds the

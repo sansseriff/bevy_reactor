@@ -3,8 +3,8 @@ use bevy::{
     ui::GhostNode,
 };
 use bevy_reactor_signals::{
-    create_derived, Callback, CallbackOwner, Ecx, Rcx, Reaction, ReactionCell, Signal,
-    TrackingScope,
+    create_derived, create_mutable, Callback, CallbackOwner, Ecx, Mutable, Rcx, Reaction,
+    ReactionCell, Signal, TrackingScope,
 };
 
 pub struct UiBuilder<'w> {
@@ -83,6 +83,14 @@ impl<'w> UiBuilder<'w> {
             }
         }
         result
+    }
+
+    /// Create a new [`Mutable`] in this context.
+    pub fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
+    where
+        T: Send + Sync + 'static,
+    {
+        create_mutable(self.world, self.parent, init)
     }
 
     /// Create a new [`Derived`] in this context. This represents a readable signal which

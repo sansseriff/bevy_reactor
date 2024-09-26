@@ -3,6 +3,7 @@
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     color::palettes,
+    ecs::world::DeferredWorld,
     prelude::*,
     ui,
 };
@@ -21,7 +22,7 @@ fn style_test(ss: &mut StyleBuilder) {
         .top(0)
         .bottom(0)
         .row_gap(4)
-        .background_color(colors::U1);
+        .background_color(colors::BACKGROUND);
 }
 
 fn style_row(ss: &mut StyleBuilder) {
@@ -75,35 +76,48 @@ fn setup_view_root(world: &mut World) {
                         .invoke(Swatch::new(Srgba::NONE))
                         .invoke(Swatch::new(palettes::css::BLUE).selected(true));
                 });
-            builder.text("Variants (disabled)");
+            builder.text("Checkbox");
             builder
                 .spawn(NodeBundle::default())
                 .style(style_row)
                 .create_children(|builder| {
+                    let checked_1 = builder.create_mutable(true);
+                    let checked_2 = builder.create_mutable(false);
+                    let on_change_1 = builder.create_callback(
+                        move |value: In<bool>, mut world: DeferredWorld| {
+                            checked_1.set(&mut world, *value);
+                        },
+                    );
+                    let on_change_2 = builder.create_callback(
+                        move |value: In<bool>, mut world: DeferredWorld| {
+                            checked_2.set(&mut world, *value);
+                        },
+                    );
                     builder
-                        .invoke(Button::new().labeled("Default").disabled(true))
                         .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Primary)
-                                .labeled("Primary")
+                            Checkbox::new()
+                                .labeled("Checked")
+                                .checked(checked_1)
+                                .on_change(on_change_1),
+                        )
+                        .invoke(
+                            Checkbox::new()
+                                .labeled("Checked (disabled)")
+                                .checked(checked_1)
+                                .on_change(on_change_1)
                                 .disabled(true),
                         )
                         .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Danger)
-                                .labeled("Danger")
-                                .disabled(true),
+                            Checkbox::new()
+                                .labeled("Unchecked")
+                                .checked(checked_2)
+                                .on_change(on_change_2),
                         )
                         .invoke(
-                            Button::new()
-                                .variant(ButtonVariant::Selected)
-                                .labeled("Selected")
-                                .disabled(true),
-                        )
-                        .invoke(
-                            Button::new()
-                                .minimal(true)
-                                .labeled("Minimal")
+                            Checkbox::new()
+                                .labeled("Unchecked (disabled)")
+                                .checked(checked_2)
+                                .on_change(on_change_2)
                                 .disabled(true),
                         );
                 });
