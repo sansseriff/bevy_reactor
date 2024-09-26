@@ -7,6 +7,7 @@ use bevy::{
         world::{Command, DeferredWorld},
     },
     prelude::*,
+    ui::GhostNode,
 };
 
 /// Contains a mutable reactive value.
@@ -120,7 +121,10 @@ pub fn create_mutable<T: Send + Sync + 'static>(
     parent: Entity,
     init: T,
 ) -> Mutable<T> {
-    let cell = world.spawn(MutableCell::<T>(init)).set_parent(parent).id();
+    let cell = world
+        .spawn((MutableCell::<T>(init), GhostNode))
+        .set_parent(parent)
+        .id();
     let component = world.init_component::<MutableCell<T>>();
     Mutable {
         cell,

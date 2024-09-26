@@ -1,7 +1,7 @@
 //! Example of a simple UI layout
-mod node_graph_demo;
-mod reflect_demo;
-mod transform_overlay;
+// mod node_graph_demo;
+// mod reflect_demo;
+// mod transform_overlay;
 
 use bevy_mod_picking::backends::raycast::RaycastPickable;
 use bevy_mod_stylebuilder::*;

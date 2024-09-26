@@ -9,7 +9,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
-use bevy_reactor_obsidian::{controls::Button, prelude::*};
+use bevy_reactor_obsidian::{controls::Button, input_dispatch::DefaultKeyHandler, prelude::*};
 use bevy_reactor_signals::SignalsPlugin;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -61,7 +61,8 @@ fn setup_view_root(world: &mut World) {
 
     world
         .spawn(NodeBundle::default())
-        .insert(TargetCamera(camera))
+        .insert((TargetCamera(camera), TabGroup::default(), DefaultKeyHandler))
+        .observe(handle_tab_navigation)
         .style(style_test)
         .create_children(|builder| {
             builder.text("Swatch");
@@ -172,27 +173,6 @@ fn setup_view_root(world: &mut World) {
                                 .corners(RoundedCorners::None),
                         );
                 });
-            // "IconButton",
-            // Element::<NodeBundle>::new().style(style_row).children((
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png"),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Primary),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Danger),
-            //     // IconButton::new("obsidian_ui://icons/chevron_left.png")
-            //     //     .variant(ButtonVariant::Selected),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").minimal(true),
-            // )),
-            // "IconButton Size",
-            // Element::<NodeBundle>::new().style(style_row).children((
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xl),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Lg),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Md),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Sm),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xs),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxs),
-            //     IconButton::new("obsidian_ui://icons/chevron_left.png").size(Size::Xxxs),
-            // )),
         });
 }
 
