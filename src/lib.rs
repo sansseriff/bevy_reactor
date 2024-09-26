@@ -2,7 +2,7 @@
 
 #![warn(missing_docs)]
 
-mod compositor;
+// mod compositor;
 mod cond;
 mod dynamic;
 mod dynamic_keyed;
@@ -23,7 +23,7 @@ mod text;
 mod view;
 mod with_styles;
 
-pub use compositor::Compositor;
+// pub use compositor::Compositor;
 pub use cond::Cond;
 pub use dynamic::Dynamic;
 pub use dynamic_keyed::DynamicKeyed;

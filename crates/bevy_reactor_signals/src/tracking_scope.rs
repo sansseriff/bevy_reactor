@@ -14,7 +14,7 @@ use crate::ReactionCell;
 pub struct TrackingScope {
     /// List of entities that are owned by this scope.
     /// TODO: Remove this.
-    pub(crate) owned: Vec<Entity>,
+    owned: Vec<Entity>,
 
     /// Set of components that we are currently subscribed to.
     component_deps: HashSet<(Entity, ComponentId)>,
@@ -24,11 +24,11 @@ pub struct TrackingScope {
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
-    pub tick: Tick,
+    pub(crate) tick: Tick,
 
     /// List of cleanup functions to call when the scope is dropped.
     #[allow(clippy::type_complexity)]
-    pub cleanups: Vec<Box<dyn FnOnce(&mut DeferredWorld) + 'static + Sync + Send>>,
+    pub(crate) cleanups: Vec<Box<dyn FnOnce(&mut DeferredWorld) + 'static + Sync + Send>>,
 }
 
 /// A resource which, if inserted, displays the view entities that have reacted this frame.

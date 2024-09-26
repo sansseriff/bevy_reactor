@@ -2,10 +2,7 @@ use bevy::prelude::*;
 use bevy_mod_stylebuilder::StyleBuilderPlugin;
 use bevy_reactor_signals::SignalsPlugin;
 
-use crate::{
-    attach_child_views, build_added_view_roots, compositor::update_compositor_size,
-    hover::update_hover_states,
-};
+use crate::{attach_child_views, build_added_view_roots, hover::update_hover_states};
 
 /// Plugin that adds the reactive UI system to the app.
 pub struct ReactorPlugin;
@@ -27,7 +24,6 @@ impl Plugin for ReactorPlugin {
                     attach_child_views.after(ReactionSet),
                     // update_text_styles.after(attach_child_views),
                     update_hover_states,
-                    update_compositor_size,
                 ),
             );
     }

@@ -1,16 +1,8 @@
 # TODO
 
 - builder:
-  - keyboard stuff.
-  - hover and focus signals.
   - effect
-  - insert_if
   - insert_dyn
-  - create_mutable
-  - create_derived
-  - create_effect
-  - Button
-  - Checkbox
 - Run to convergence.
 - cleanup with component hooks.
 - Checkbox bug in inspector

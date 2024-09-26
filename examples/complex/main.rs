@@ -3,12 +3,11 @@
 // mod reflect_demo;
 // mod transform_overlay;
 
-use bevy_mod_picking::backends::raycast::RaycastPickable;
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_obsidian::prelude::*;
+use bevy_reactor_obsidian::{cursor::StyleBuilderCursor, prelude::*};
 // use bevy_reactor_overlays as overlays;
 use bevy_reactor_signals::{Cx, Rcx, RunContextRead, RunContextSetup, TrackingScopeTracing};
-use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
+// use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 // use obsidian_ui::{
 //     colors,
 //     controls::{
@@ -20,14 +19,15 @@ use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 //     typography, viewport, ObsidianUiPlugin, RoundedCorners,
 // };
 // use obsidian_ui_inspect::InspectorPlugin;
-use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
-use transform_overlay::TransformOverlay;
+// use reflect_demo::{ResourcePropertyInspector, TestStruct, TestStruct2, TestStruct3};
+// use transform_overlay::TransformOverlay;
 
 use std::f32::consts::PI;
 
 use bevy::{
     asset::io::{file::FileAssetReader, AssetSource},
     color::palettes,
+    ecs::world::DeferredWorld,
     prelude::*,
     render::{
         render_asset::RenderAssetUsages,
@@ -157,19 +157,19 @@ fn main() {
         )
         .init_resource::<SelectedShape>()
         .init_resource::<TrackingScopeTracing>()
-        .init_resource::<DemoGraphRoot>()
-        .insert_resource(TestStruct {
-            unlit: Some(true),
-            ..default()
-        })
-        .insert_resource(TestStruct2 {
-            nested: TestStruct::default(),
-            ..default()
-        })
-        .insert_resource(TestStruct3(true))
+        // .init_resource::<DemoGraphRoot>()
+        // .insert_resource(TestStruct {
+        //     unlit: Some(true),
+        //     ..default()
+        // })
+        // .insert_resource(TestStruct2 {
+        //     nested: TestStruct::default(),
+        //     ..default()
+        // })
+        // .insert_resource(TestStruct3(true))
         .insert_resource(PanelWidth(200.))
         .insert_resource(PanelHeight(300.))
-        .init_resource::<viewport::ViewportInset>()
+        // .init_resource::<viewport::ViewportInset>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
         .insert_state(EditorState::Preview)
@@ -184,12 +184,12 @@ fn main() {
         //     BevyUiBackend,
         //     RaycastBackend,
         // ))
-        .add_plugins(InspectorPlugin)
+        // .add_plugins(InspectorPlugin)
         .add_plugins((
             ReactorPlugin,
             ObsidianUiPlugin,
-            overlays::OverlaysPlugin,
-            BackdropBackend,
+            // overlays::OverlaysPlugin,
+            // BackdropBackend,
         ))
         .add_systems(Startup, (setup, setup_ui.pipe(setup_view_root)))
         .add_systems(
@@ -198,10 +198,10 @@ fn main() {
                 close_on_esc,
                 rotate.run_if(in_state(EditorState::Preview)),
                 rotate.run_if(in_state(EditorState::Split)),
-                viewport::update_viewport_inset.run_if(in_state(EditorState::Preview)),
-                viewport::update_viewport_inset.run_if(in_state(EditorState::Split)),
-                viewport::update_camera_viewport.run_if(in_state(EditorState::Preview)),
-                viewport::update_camera_viewport.run_if(in_state(EditorState::Split)),
+                // viewport::update_viewport_inset.run_if(in_state(EditorState::Preview)),
+                // viewport::update_viewport_inset.run_if(in_state(EditorState::Split)),
+                // viewport::update_camera_viewport.run_if(in_state(EditorState::Preview)),
+                // viewport::update_camera_viewport.run_if(in_state(EditorState::Split)),
             ),
         )
         .add_systems(OnEnter(EditorState::Preview), enter_preview_mode)
@@ -227,11 +227,11 @@ impl ViewTemplate for DemoUi {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let mut inc_count = 0;
         let mut dec_count = 0;
-        let clicked_increment = cx.create_callback_mut(move |_cx, _| {
+        let clicked_increment = cx.create_callback(move || {
             inc_count += 1;
             println!("Increment clicked: {} times", inc_count);
         });
-        let clicked_decrement = cx.create_callback_mut(move |_cx, _| {
+        let clicked_decrement = cx.create_callback(move || {
             dec_count += 1;
             println!("Decrement clicked: {} times", dec_count);
         });
@@ -254,26 +254,26 @@ impl ViewTemplate for DemoUi {
                 Dialog::new()
                     .width(ui::Val::Px(400.))
                     .open(checked_1.signal())
-                    .on_close(cx.create_callback(move |cx, _| {
-                        checked_1.set(cx, false);
+                    .on_close(cx.create_callback(move |mut world: DeferredWorld| {
+                        checked_1.set(&mut world, false);
                     }))
                     .children((
-                        DialogHeader::new().children("Dialog Header"),
-                        "Dialog Body",
-                        DialogFooter::new().children((
-                            Button::new()
-                                .children("Cancel")
-                                .on_click(cx.create_callback(move |cx, _| {
-                                    checked_1.set(cx, false);
-                                })),
-                            Button::new()
-                                .children("Close")
-                                .variant(ButtonVariant::Primary)
-                                .autofocus(true)
-                                .on_click(cx.create_callback(move |cx, _| {
-                                    checked_1.set(cx, false);
-                                })),
-                        )),
+                        // DialogHeader::new().children("Dialog Header"),
+                        // "Dialog Body",
+                        // DialogFooter::new().children((
+                        //     Button::new()
+                        //         .children("Cancel")
+                        //         .on_click(cx.create_callback(move |cx, _| {
+                        //             checked_1.set(cx, false);
+                        //         })),
+                        //     Button::new()
+                        //         .children("Close")
+                        //         .variant(ButtonVariant::Primary)
+                        //         .autofocus(true)
+                        //         .on_click(cx.create_callback(move |cx, _| {
+                        //             checked_1.set(cx, false);
+                        //         })),
+                        // )),
                     )),
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
@@ -284,73 +284,73 @@ impl ViewTemplate for DemoUi {
                         style.width = ui::Val::Px(width);
                     })
                     .children((
-                        ToolPalette::new().columns(3).children((
-                            ToolButton::new()
-                                .children("Preview")
-                                .corners(RoundedCorners::Left)
-                                .variant(cx.create_derived(|cx| {
-                                    let st = cx.read_resource::<State<EditorState>>();
-                                    if *st.get() == EditorState::Preview {
-                                        ButtonVariant::Selected
-                                    } else {
-                                        ButtonVariant::Default
-                                    }
-                                }))
-                                .on_click(cx.create_callback(|cx, _| {
-                                    if let Some(mut mode) =
-                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                                    {
-                                        mode.set(EditorState::Preview);
-                                    }
-                                })),
-                            ToolButton::new()
-                                .children("Materials")
-                                .corners(RoundedCorners::None)
-                                .variant(cx.create_derived(|cx| {
-                                    let st = cx.read_resource::<State<EditorState>>();
-                                    if *st.get() == EditorState::Graph {
-                                        ButtonVariant::Selected
-                                    } else {
-                                        ButtonVariant::Default
-                                    }
-                                }))
-                                .on_click(cx.create_callback(|cx, _| {
-                                    if let Some(mut mode) =
-                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                                    {
-                                        mode.set(EditorState::Graph);
-                                    }
-                                })),
-                            ToolButton::new()
-                                .children("Split")
-                                .corners(RoundedCorners::Right)
-                                .variant(cx.create_derived(|cx| {
-                                    let st = cx.read_resource::<State<EditorState>>();
-                                    if *st.get() == EditorState::Split {
-                                        ButtonVariant::Selected
-                                    } else {
-                                        ButtonVariant::Default
-                                    }
-                                }))
-                                .on_click(cx.create_callback(|cx, _| {
-                                    if let Some(mut mode) =
-                                        cx.world_mut().get_resource_mut::<NextState<EditorState>>()
-                                    {
-                                        mode.set(EditorState::Split);
-                                    }
-                                })),
-                        )),
+                        // ToolPalette::new().columns(3).children((
+                        //     ToolButton::new()
+                        //         .children("Preview")
+                        //         .corners(RoundedCorners::Left)
+                        //         .variant(cx.create_derived(|cx| {
+                        //             let st = cx.read_resource::<State<EditorState>>();
+                        //             if *st.get() == EditorState::Preview {
+                        //                 ButtonVariant::Selected
+                        //             } else {
+                        //                 ButtonVariant::Default
+                        //             }
+                        //         }))
+                        //         .on_click(cx.create_callback(|cx, _| {
+                        //             if let Some(mut mode) =
+                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                        //             {
+                        //                 mode.set(EditorState::Preview);
+                        //             }
+                        //         })),
+                        //     ToolButton::new()
+                        //         .children("Materials")
+                        //         .corners(RoundedCorners::None)
+                        //         .variant(cx.create_derived(|cx| {
+                        //             let st = cx.read_resource::<State<EditorState>>();
+                        //             if *st.get() == EditorState::Graph {
+                        //                 ButtonVariant::Selected
+                        //             } else {
+                        //                 ButtonVariant::Default
+                        //             }
+                        //         }))
+                        //         .on_click(cx.create_callback(|cx, _| {
+                        //             if let Some(mut mode) =
+                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                        //             {
+                        //                 mode.set(EditorState::Graph);
+                        //             }
+                        //         })),
+                        //     ToolButton::new()
+                        //         .children("Split")
+                        //         .corners(RoundedCorners::Right)
+                        //         .variant(cx.create_derived(|cx| {
+                        //             let st = cx.read_resource::<State<EditorState>>();
+                        //             if *st.get() == EditorState::Split {
+                        //                 ButtonVariant::Selected
+                        //             } else {
+                        //                 ButtonVariant::Default
+                        //             }
+                        //         }))
+                        //         .on_click(cx.create_callback(|cx, _| {
+                        //             if let Some(mut mode) =
+                        //                 cx.world_mut().get_resource_mut::<NextState<EditorState>>()
+                        //             {
+                        //                 mode.set(EditorState::Split);
+                        //             }
+                        //         })),
+                        // )),
                         Element::<NodeBundle>::new()
                             .style(style_button_row)
                             .children((
-                                Button::new()
-                                    .children("Open…")
-                                    .on_click(clicked_increment)
-                                    .style(style_button_flex),
-                                Button::new()
-                                    .children("Save")
-                                    .on_click(clicked_decrement)
-                                    .style(style_button_flex),
+                                // Button::new()
+                                //     .children("Open…")
+                                //     .on_click(clicked_increment)
+                                //     .style(style_button_flex),
+                                // Button::new()
+                                //     .children("Save")
+                                //     .on_click(clicked_decrement)
+                                //     .style(style_button_flex),
                             )),
                         Element::<NodeBundle>::new()
                             .style(style_column_group)
@@ -359,14 +359,16 @@ impl ViewTemplate for DemoUi {
                                     .style(|ss: &mut StyleBuilder| {
                                         ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
                                     })
-                                    .label("Include Author Name")
+                                    .labeled("Include Author Name")
                                     .checked(checked_1.signal())
-                                    .on_change(cx.create_callback(move |cx, checked| {
-                                        println!("Include Author Name: {}", checked);
-                                        checked_1.set(cx, checked);
-                                    })),
+                                    .on_change(cx.create_callback(
+                                        move |mut world: DeferredWorld| {
+                                            println!("Include Author Name: {}", checked);
+                                            checked_1.set(&mut world, checked);
+                                        },
+                                    )),
                                 Checkbox::new()
-                                    .label("Include Metadata")
+                                    .labeled("Include Metadata")
                                     .checked(checked_2.signal())
                                     .on_change(cx.create_callback(move |cx, checked| {
                                         println!("Include Metadata: {}", checked);
@@ -395,9 +397,9 @@ impl ViewTemplate for DemoUi {
                             )),
                             ..default()
                         }),
-                        ResourcePropertyInspector::<TestStruct>::new(),
-                        ResourcePropertyInspector::<TestStruct2>::new(),
-                        ResourcePropertyInspector::<TestStruct3>::new(),
+                        // ResourcePropertyInspector::<TestStruct>::new(),
+                        // ResourcePropertyInspector::<TestStruct2>::new(),
+                        // ResourcePropertyInspector::<TestStruct3>::new(),
                         ReactionsTable,
                     )),
                 Splitter::new()
@@ -545,25 +547,25 @@ impl ViewTemplate for ReactionsTable {
 //     .insert(TargetCamera(cx.props))
 // }
 
-struct TransformOverlayDemo;
+// struct TransformOverlayDemo;
 
-impl ViewTemplate for TransformOverlayDemo {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let selected = cx.create_derived(|cx| cx.read_resource::<SelectedShape>().0);
+// impl ViewTemplate for TransformOverlayDemo {
+//     fn create(&self, cx: &mut Cx) -> impl IntoView {
+//         let selected = cx.create_derived(|cx| cx.read_resource::<SelectedShape>().0);
 
-        let on_change = Some(cx.create_callback(move |cx, new_pos| {
-            let selected = selected.get(cx).unwrap();
-            let mut entity = cx.world_mut().entity_mut(selected);
-            let mut transform = entity.get_mut::<Transform>().unwrap();
-            transform.translation = new_pos;
-        }));
+//         let on_change = Some(cx.create_callback(move |cx, new_pos| {
+//             let selected = selected.get(cx).unwrap();
+//             let mut entity = cx.world_mut().entity_mut(selected);
+//             let mut transform = entity.get_mut::<Transform>().unwrap();
+//             transform.translation = new_pos;
+//         }));
 
-        TransformOverlay {
-            target: selected,
-            on_change,
-        }
-    }
-}
+//         TransformOverlay {
+//             target: selected,
+//             on_change,
+//         }
+//     }
+// }
 
 // Setup 3d shapes
 fn setup(
@@ -591,21 +593,21 @@ fn setup(
     let shapes_parent = commands
         .spawn((
             SpatialBundle { ..default() },
-            BackdropPickable,
-            On::<Pointer<Down>>::run(
-                |mut event: ListenerMut<Pointer<Down>>,
-                 shapes: Query<&Shape>,
-                 mut selection: ResMut<SelectedShape>| {
-                    if shapes.get(event.target).is_ok() {
-                        selection.0 = Some(event.target);
-                        // println!("Pointer down on shape {:?}", event.target);
-                    } else {
-                        selection.0 = None;
-                        // println!("Pointer down on backdrop {:?}", event.target);
-                    }
-                    event.stop_propagation();
-                },
-            ),
+            // BackdropPickable,
+            // On::<Pointer<Down>>::run(
+            //     |mut event: ListenerMut<Pointer<Down>>,
+            //      shapes: Query<&Shape>,
+            //      mut selection: ResMut<SelectedShape>| {
+            //         if shapes.get(event.target).is_ok() {
+            //             selection.0 = Some(event.target);
+            //             // println!("Pointer down on shape {:?}", event.target);
+            //         } else {
+            //             selection.0 = None;
+            //             // println!("Pointer down on backdrop {:?}", event.target);
+            //         }
+            //         event.stop_propagation();
+            //     },
+            // ),
         ))
         .id();
 
@@ -625,7 +627,7 @@ fn setup(
                 },
                 Shape,
                 // PickableBundle::default(),
-                RaycastPickable,
+                // RaycastPickable,
             ))
             .set_parent(shapes_parent);
     }
@@ -673,9 +675,9 @@ fn enter_preview_mode(mut commands: Commands) {
                     .looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
                 ..default()
             },
-            viewport::ViewportCamera,
+            // viewport::ViewportCamera,
             RaycastPickable,
-            BackdropPickable,
+            // BackdropPickable,
         ))
         .id();
 
@@ -685,7 +687,7 @@ fn enter_preview_mode(mut commands: Commands) {
 
 fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
     commands.entity(preview.camera).despawn();
-    commands.add(DespawnViewRoot::new(preview.overlay));
+    commands.queue(DespawnViewRoot::new(preview.overlay));
     commands.remove_resource::<PreviewEntities>()
 }
 
