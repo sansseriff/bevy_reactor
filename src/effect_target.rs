@@ -104,10 +104,10 @@ where
 
     /// Add a computed bundle to the element.
     fn insert_computed<T: Bundle, F: Send + Sync + 'static + FnMut(&mut Rcx) -> T>(
-        mut self,
-        factory: F,
+        self,
+        _factory: F,
     ) -> Self {
-        self.add_reaction(ComputedBundleReaction::new(factory));
+        // self.add_reaction(ComputedBundleReaction::new(factory));
         self
     }
 }
@@ -182,28 +182,5 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
 
         // Store the scope in the reaction entity.
         world.entity_mut(reaction_id).insert(scope);
-    }
-}
-
-/// Calls a closure which computes a bundle reactively, returns the bundle as a result.
-/// This is then inserted into the target.
-pub struct ComputedBundleReaction<B: Bundle, F: FnMut(&mut Rcx) -> B> {
-    factory: F,
-}
-
-impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> ComputedBundleReaction<B, F> {
-    pub(crate) fn new(factory: F) -> Self {
-        Self { factory }
-    }
-}
-
-impl<B: Bundle, F: Sync + Send + FnMut(&mut Rcx) -> B> Reaction for ComputedBundleReaction<B, F> {
-    fn react(&mut self, _owner: Entity, _world: &mut World, _tracking: &mut TrackingScope) {
-        todo!();
-        // let target = world.entity(owner).get::<ReactionTarget>().unwrap().0;
-        // let mut re = Rcx::new(world, owner, tracking);
-        // let b = (self.factory)(&mut re);
-        // let mut entt = world.entity_mut(target);
-        // entt.insert(b);
     }
 }

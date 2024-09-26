@@ -3,9 +3,10 @@ use bevy::{
     ecs::{entity::Entity, world::World},
     hierarchy::Parent,
 };
-use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
+use bevy_reactor_builder::UiBuilder;
+use bevy_reactor_signals::{RunContextRead, Signal};
 
-use crate::focus::FocusVisible;
+use crate::input_dispatch::KeyboardFocusVisible;
 
 /// True if the given entity is a descendant of the given ancestor.
 fn is_descendant(world: &World, e: &Entity, ancestor: &Entity) -> bool {
@@ -37,7 +38,7 @@ pub trait CreateFocusSignal {
     fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool>;
 }
 
-impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
+impl<'w> CreateFocusSignal for UiBuilder<'w> {
     fn create_focus_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
             let focus = cx.read_resource::<Focus>();
@@ -57,7 +58,7 @@ impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
 
     fn create_focus_visible_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let visible = cx.read_resource::<FocusVisible>();
+            let visible = cx.read_resource::<KeyboardFocusVisible>();
             let focus = cx.read_resource::<Focus>();
             visible.0 && focus.0 == Some(target)
         })
@@ -65,7 +66,7 @@ impl<'p, 'w> CreateFocusSignal for Cx<'p, 'w> {
 
     fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool> {
         self.create_derived(move |cx| {
-            let visible = cx.read_resource::<FocusVisible>();
+            let visible = cx.read_resource::<KeyboardFocusVisible>();
             if !visible.0 {
                 return false;
             }

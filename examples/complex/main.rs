@@ -173,11 +173,10 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(DefaultPickingPlugins)
         .insert_state(EditorState::Preview)
-        .insert_resource(DebugPickingMode::Disabled)
-        .insert_resource(RaycastBackendSettings {
-            require_markers: true,
-            ..default()
-        })
+        // .insert_resource(RaycastBackendSettings {
+        //     require_markers: true,
+        //     ..default()
+        // })
         // .add_plugins((
         //     CorePlugin,
         //     InputPlugin,

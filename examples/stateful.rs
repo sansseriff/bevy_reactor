@@ -3,7 +3,8 @@
 use bevy::{color::palettes, prelude::*};
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{
-    CreateChilden, EntityStyleBuilder, InvokeUiTemplate, SwitchBuilder, TextBuilder, UiTemplate,
+    CreateChilden, EntityStyleBuilder, InvokeUiTemplate, SwitchBuilder, TextBuilder, UiBuilder,
+    UiTemplate,
 };
 use bevy_reactor_signals::{Rcx, RunContextRead, SignalsPlugin};
 
@@ -55,9 +56,9 @@ fn setup_view_root(world: &mut World) {
 struct StateName;
 
 impl UiTemplate for StateName {
-    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
+    fn build(&self, builder: &mut UiBuilder) {
         builder.switch(
-            |cx: &Rcx| cx.read_resource::<State<GameState>>().get().clone(),
+            |rcx: &Rcx| rcx.read_resource::<State<GameState>>().get().clone(),
             |builder| {
                 builder
                     .case(GameState::Intro, |builder| {

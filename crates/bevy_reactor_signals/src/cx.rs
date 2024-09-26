@@ -221,9 +221,7 @@ impl<'p, 'w> Cx<'p, 'w> {
         callback: S,
     ) -> Callback<P> {
         let id = self.world_mut().register_system(callback);
-        let result = Callback { id };
-        self.tracking.borrow_mut().add_callback(Arc::new(result));
-        result
+        Callback { id }
     }
 
     // /// Return a reference to the Component `C` on the given entity. Adds the component to

@@ -3,7 +3,6 @@ use bevy::{
     prelude::*,
     render::view::cursor::{CursorIcon, CustomCursor},
 };
-// use bevy_mod_picking::{focus::HoverMap, picking_core::Pickable, pointer::PointerId};
 use bevy_mod_stylebuilder::{MaybeHandleOrPath, StyleBuilder};
 
 #[allow(missing_docs)]

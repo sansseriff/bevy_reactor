@@ -4,7 +4,6 @@ use bevy::{
     prelude::*,
 };
 use bevy_reactor_builder::UiBuilder;
-// use bevy_mod_picking::{focus::HoverMap, pointer::PointerId};
 use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
 
 /// Component which tracks whether the pointer is hovering over an entity.

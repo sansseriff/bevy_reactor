@@ -1,8 +1,15 @@
 use std::sync::Arc;
 
 use crate::{
-    colors, cursor::StyleBuilderCursor, hover_signal::CreateHoverSignal, prelude::RoundedCorners,
-    size::Size, typography,
+    colors,
+    cursor::StyleBuilderCursor,
+    focus_signal::CreateFocusSignal,
+    hover_signal::CreateHoverSignal,
+    input_dispatch::{FocusKeyboardInput, KeyboardFocus, KeyboardFocusVisible},
+    prelude::RoundedCorners,
+    size::Size,
+    tab_navigation::{AutoFocus, TabIndex},
+    typography,
 };
 use bevy::{
     a11y::{
@@ -207,7 +214,6 @@ impl Default for Button {
 impl UiTemplate for Button {
     fn build(&self, builder: &mut UiBuilder) {
         let variant = self.variant;
-        let focused = Signal::Constant(false);
 
         let corners = self.corners;
         let minimal = self.minimal;
@@ -218,6 +224,7 @@ impl UiTemplate for Button {
         let button = builder.spawn((NodeBundle::default(), Name::new("Button")));
         let button_id = button.id();
         let hovering = builder.create_hover_signal(button_id);
+        let focused = builder.create_focus_visible_signal(button_id);
         let mut button = builder.world_mut().entity_mut(button_id);
 
         button
@@ -236,30 +243,30 @@ impl UiTemplate for Button {
             ))
             .insert_if(self.disabled, || Disabled)
             .insert((
-                // TabIndex(self.tab_index),
+                TabIndex(self.tab_index),
                 Pressed(false),
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
-                // On::<KeyPressEvent>::run({
-                //     let on_click = self.on_click;
-                //     move |world: &mut World| {
-                //         if !disabled.get(world) {
-                //             let mut event = world
-                //                 .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                //                 .unwrap();
-                //             if !event.repeat
-                //                 && (event.key_code == KeyCode::Enter
-                //                     || event.key_code == KeyCode::Space)
-                //             {
-                //                 event.stop_propagation();
-                //                 if let Some(on_click) = on_click {
-                //                     world.run_callback(on_click, ());
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }),
             ))
-            // .insert_if(self.autofocus, AutoFocus)
+            .insert_if(self.autofocus, || AutoFocus)
+            .observe(
+                move |mut trigger: Trigger<FocusKeyboardInput>,
+                      mut q_state: Query<Has<Disabled>>,
+                      mut commands: Commands| {
+                    let disabled = q_state.get_mut(trigger.entity()).unwrap();
+                    if !disabled {
+                        let event = &trigger.event().0;
+                        if !event.repeat
+                            && (event.key_code == KeyCode::Enter
+                                || event.key_code == KeyCode::Space)
+                        {
+                            if let Some(on_click) = on_click {
+                                trigger.propagate(false);
+                                commands.run_callback(on_click, ());
+                            }
+                        }
+                    }
+                },
+            )
             .observe(
                 move |mut trigger: Trigger<Pointer<Click>>,
                       mut q_state: Query<(&mut Pressed, Has<Disabled>)>,
@@ -275,12 +282,16 @@ impl UiTemplate for Button {
                 },
             )
             .observe(
-                |mut trigger: Trigger<Pointer<Down>>,
-                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
+                move |mut trigger: Trigger<Pointer<Down>>,
+                      mut q_state: Query<(&mut Pressed, Has<Disabled>)>,
+                      mut focus: ResMut<KeyboardFocus>,
+                      mut focus_visible: ResMut<KeyboardFocusVisible>| {
                     trigger.propagate(false);
                     let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
                     if !disabled {
                         pressed.0 = true;
+                        focus.0 = Some(button_id);
+                        focus_visible.0 = false;
                     }
                 },
             )

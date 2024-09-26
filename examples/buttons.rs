@@ -7,7 +7,9 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
-use bevy_reactor_obsidian::{controls::Button, prelude::*};
+use bevy_reactor_obsidian::{
+    controls::Button, input_dispatch::DefaultKeyHandler, prelude::*, tab_navigation::TabGroup,
+};
 use bevy_reactor_signals::SignalsPlugin;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -59,7 +61,8 @@ fn setup_view_root(world: &mut World) {
 
     world
         .spawn(NodeBundle::default())
-        .insert(TargetCamera(camera))
+        .insert((TargetCamera(camera), TabGroup::default(), DefaultKeyHandler))
+        .observe(handle_tab_navigation)
         .style(style_test)
         .create_children(|builder| {
             builder.text("Variants");

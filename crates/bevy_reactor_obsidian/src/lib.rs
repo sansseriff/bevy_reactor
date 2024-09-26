@@ -3,24 +3,29 @@ use bevy::{asset::embedded_asset, prelude::*};
 pub mod colors;
 pub mod controls;
 pub mod cursor;
-// pub mod focus_signal;
+pub mod focus_signal;
 pub mod hover_signal;
+pub mod input_dispatch;
 mod materials;
 pub mod rounded_corners;
 pub mod size;
+pub mod tab_navigation;
 pub mod typography;
 
 pub mod prelude {
     pub use crate::colors;
     pub use crate::controls::*;
     // pub use crate::cursor::Cursor;
+    pub use crate::focus_signal::CreateFocusSignal;
     pub use crate::rounded_corners::RoundedCorners;
     pub use crate::size::Size;
+    pub use crate::tab_navigation::{handle_tab_navigation, TabGroup, TabIndex};
     pub use crate::typography;
     pub use crate::ObsidianUiPlugin;
 }
 
 pub struct ObsidianUiPlugin;
+use input_dispatch::InputDispatchPlugin;
 use materials::{GradientRectMaterial, SliderRectMaterial, SwatchRectMaterial};
 
 impl Plugin for ObsidianUiPlugin {
@@ -58,6 +63,7 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
+            InputDispatchPlugin,
             //     hooks::BistableTransitionPlugin,
             //     animation::AnimatedTransitionPlugin,
             //     focus::KeyboardInputPlugin,

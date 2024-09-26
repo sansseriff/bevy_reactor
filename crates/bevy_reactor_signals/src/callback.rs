@@ -1,4 +1,4 @@
-use std::{any::TypeId, sync::Arc};
+use std::sync::Arc;
 
 use bevy::{
     ecs::{
@@ -7,6 +7,8 @@ use bevy::{
     },
     prelude::*,
 };
+
+use crate::Ecx;
 
 /// Contains a reference to a callback. `P` is the type of the props.
 #[derive(PartialEq, Debug)]
@@ -30,28 +32,12 @@ impl<P> Clone for Callback<P> {
 
 pub trait AnyCallback: 'static {
     fn remove(&self, world: &mut World);
-    fn type_id(&self) -> TypeId;
-}
-
-impl dyn AnyCallback + Send + Sync {
-    /// Get the original typed callback.
-    pub fn downcast<P: 'static>(&self) -> Callback<P> {
-        if TypeId::of::<P>() == self.type_id() {
-            // Safe because we just checked the type.
-            unsafe { *(self as *const dyn AnyCallback as *const Callback<P>) }
-        } else {
-            panic!("downcast failed")
-        }
-    }
 }
 
 impl<P: 'static> AnyCallback for Callback<P> {
     fn remove(&self, world: &mut World) {
         // println!("Removing callback");
         world.remove_system(self.id).unwrap();
-    }
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<P>()
     }
 }
 
@@ -113,12 +99,11 @@ impl<'w> RunCallback for DeferredWorld<'w> {
     }
 }
 
-// impl<'p, 'w> RunCallback for Rcx<'p, 'w> {
-//     fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
-//         self.world().commands().run_callback(callback, props);
-//         // self.world_mut().run_callback(callback, props);
-//     }
-// }
+impl<'p, 'w> RunCallback for Ecx<'p, 'w> {
+    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+        self.world_mut().run_callback(callback, props);
+    }
+}
 
 impl<'w, 's> RunCallback for Commands<'w, 's> {
     fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
