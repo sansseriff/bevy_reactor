@@ -4,6 +4,7 @@ mod disabled;
 mod icon;
 mod icon_button;
 mod spacer;
+mod splitter;
 mod swatch;
 
 pub use button::{Button, ButtonVariant};
@@ -12,4 +13,5 @@ pub use disabled::{Disabled, IsDisabled};
 pub use icon::Icon;
 pub use icon_button::IconButton;
 pub use spacer::Spacer;
+pub use splitter::Splitter;
 pub use swatch::Swatch;

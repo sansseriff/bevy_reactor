@@ -7,6 +7,7 @@ use bevy::{
     },
     color::Luminance,
     ecs::world::DeferredWorld,
+    input::ButtonState,
     prelude::*,
     render::view::cursor::CursorIcon,
     ui,
@@ -47,7 +48,7 @@ fn style_checkbox_border(ss: &mut StyleBuilder) {
 
 fn style_checkbox_inner(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
-        .background_image("obsidian_ui://textures/checkmark.png")
+        .background_image("embedded://bevy_reactor_obsidian/assets/icons/checkmark.png")
         .position(ui::PositionType::Absolute)
         .left(2)
         .top(2)
@@ -174,7 +175,8 @@ impl UiTemplate for Checkbox {
                     let is_checked = checked.get(&world);
                     if !disabled {
                         let event = &trigger.event().0;
-                        if !event.repeat
+                        if event.state == ButtonState::Pressed
+                            && !event.repeat
                             && (event.key_code == KeyCode::Enter
                                 || event.key_code == KeyCode::Space)
                         {

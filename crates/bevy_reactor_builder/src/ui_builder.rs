@@ -54,13 +54,11 @@ impl<'w> UiBuilder<'w> {
         ent
     }
 
-    // pub fn entity(&mut self) {
+    /// Return an `EntityWorldMut` for the given entity.
+    pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut<'_> {
+        self.world.entity_mut(entity)
+    }
 
-    // }
-
-    // entity(id)
-    // cond()
-    // switch()
     // for_each()
     // for_index()
 

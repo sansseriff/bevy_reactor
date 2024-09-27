@@ -1,10 +1,12 @@
-use bevy::{color::Luminance, prelude::*, ui};
-use bevy_mod_picking::{events::PointerCancel, prelude::*};
+use bevy::{
+    color::Luminance, ecs::world::DeferredWorld, prelude::*, render::view::cursor::CursorIcon, ui,
+    window::SystemCursorIcon,
+};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
+use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, UiBuilder, UiTemplate};
+use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
 
-use crate::{colors, cursor::StyleBuilderCursor};
+use crate::{colors, cursor::StyleBuilderCursor, hover_signal::CreateHoverSignal};
 
 /// The direction of the splitter. Represents the direction of the bar, not the items being split.
 #[derive(Clone, PartialEq, Default)]
@@ -31,7 +33,7 @@ fn style_vsplitter(ss: &mut StyleBuilder) {
         .gap(8)
         .width(9)
         .background_color(colors::U2)
-        .cursor(CursorIcon::ColResize);
+        .cursor(CursorIcon::System(SystemCursorIcon::ColResize));
 }
 
 // The decorative handle inside the splitter.
@@ -50,7 +52,7 @@ fn style_hsplitter(ss: &mut StyleBuilder) {
         .gap(8)
         .height(9)
         .background_color(colors::U2)
-        .cursor(CursorIcon::RowResize);
+        .cursor(CursorIcon::System(SystemCursorIcon::RowResize));
 }
 
 // The decorative handle inside the splitter.
@@ -108,11 +110,14 @@ impl Default for Splitter {
     }
 }
 
-impl ViewTemplate for Splitter {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let id = cx.create_entity();
-        let hovering = cx.create_hover_signal(id);
-        let drag_state = cx.create_mutable::<DragState>(DragState::default());
+impl UiTemplate for Splitter {
+    fn build(&self, builder: &mut UiBuilder) {
+        let id = builder
+            .spawn((NodeBundle::default(), Name::new("Splitter")))
+            .id();
+        let hovering = builder.create_hover_signal(id);
+        let drag_state = builder.create_mutable::<DragState>(DragState::default());
+        let on_change = self.on_change;
         let current_offset = self.value;
         let direction = self.direction.clone();
         let style_splitter = match self.direction {
@@ -123,78 +128,89 @@ impl ViewTemplate for Splitter {
             SplitterDirection::Horizontal => style_hsplitter_inner,
             SplitterDirection::Vertical => style_vsplitter_inner,
         };
-        Element::<NodeBundle>::for_entity(id)
-            .named("Splitter")
-            // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).dragging))
+
+        builder
+            .entity_mut(id)
             .style(style_splitter)
-            .insert((
-                On::<Pointer<DragStart>>::run(move |world: &mut World| {
+            .observe(
+                move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
                     // Save initial value to use as drag offset.
+                    trigger.propagate(false);
+                    let offset = current_offset.get(&world);
                     drag_state.set(
-                        world,
+                        &mut world,
                         DragState {
                             dragging: true,
-                            offset: current_offset.get(world),
+                            offset,
                         },
                     );
-                }),
-                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let offset = current_offset.get(&world);
                     drag_state.set(
-                        world,
+                        &mut world,
                         DragState {
                             dragging: false,
-                            offset: current_offset.get(world),
+                            offset,
                         },
                     );
-                }),
-                On::<Pointer<Drag>>::run({
-                    let on_change = self.on_change;
-                    move |world: &mut World| {
-                        let event = world
-                            .get_resource::<ListenerInput<Pointer<Drag>>>()
-                            .unwrap();
-                        let ev = event.distance;
-                        let ds = drag_state.get(world);
-                        if let Some(on_change) = on_change {
-                            if ds.dragging {
-                                match direction {
-                                    SplitterDirection::Horizontal => {
-                                        world.run_callback(on_change, ds.offset - ev.y);
-                                    }
-                                    SplitterDirection::Vertical => {
-                                        world.run_callback(on_change, ev.x + ds.offset);
-                                    }
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<Cancel>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let offset = current_offset.get(&world);
+                    drag_state.set(
+                        &mut world,
+                        DragState {
+                            dragging: false,
+                            offset,
+                        },
+                    );
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<Drag>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let event = trigger.event();
+                    let ev = event.distance;
+                    let ds = drag_state.get(&world);
+                    if let Some(on_change) = on_change {
+                        if ds.dragging {
+                            match direction {
+                                SplitterDirection::Horizontal => {
+                                    world.run_callback(on_change, ds.offset - ev.y);
+                                }
+                                SplitterDirection::Vertical => {
+                                    world.run_callback(on_change, ev.x + ds.offset);
                                 }
                             }
                         }
                     }
-                }),
-                On::<Pointer<PointerCancel>>::run(move |world: &mut World| {
-                    println!("Splitter Cancel");
-                    drag_state.set(
-                        world,
-                        DragState {
-                            dragging: false,
-                            offset: current_offset.get(world),
+                },
+            )
+            .create_children(|builder| {
+                builder
+                    .spawn(NodeBundle::default())
+                    .style(style_splitter_inner)
+                    .style_dyn(
+                        move |rcx| {
+                            // Color change on hover / drag
+                            let ds = drag_state.get(rcx);
+                            let is_hovering = hovering.get(rcx);
+                            match (ds.dragging, is_hovering) {
+                                (true, _) => colors::U3.lighter(0.05),
+                                (false, true) => colors::U3.lighter(0.02),
+                                (false, false) => colors::U3,
+                            }
+                        },
+                        |color, sb| {
+                            sb.background_color(color);
                         },
                     );
-                }),
-            ))
-            .children(
-                Element::<NodeBundle>::new()
-                    .style(style_splitter_inner)
-                    .create_effect(move |cx, ent| {
-                        // Color change on hover / drag
-                        let ds = drag_state.get(cx);
-                        let is_hovering = hovering.get(cx);
-                        let color = match (ds.dragging, is_hovering) {
-                            (true, _) => colors::U3.lighter(0.05),
-                            (false, true) => colors::U3.lighter(0.02),
-                            (false, false) => colors::U3,
-                        };
-                        let mut bg = cx.world_mut().get_mut::<BackgroundColor>(ent).unwrap();
-                        bg.0 = color.into();
-                    }),
-            )
+            });
     }
 }
