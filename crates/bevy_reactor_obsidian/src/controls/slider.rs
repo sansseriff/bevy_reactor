@@ -21,8 +21,6 @@ enum DragType {
     #[default]
     None = 0,
     Dragging,
-    HoldDecrement,
-    HoldIncrement,
 }
 
 #[derive(Clone, PartialEq, Default, Copy)]
@@ -48,20 +46,6 @@ fn style_overlay(ss: &mut StyleBuilder) {
         .cursor(CursorIcon::System(SystemCursorIcon::ColResize));
 }
 
-fn style_button(ss: &mut StyleBuilder) {
-    ss.width(12)
-        .height(ui::Val::Percent(100.))
-        .display(ui::Display::Flex)
-        .flex_direction(ui::FlexDirection::Row)
-        .align_items(ui::AlignItems::Center)
-        .justify_content(ui::JustifyContent::Center)
-        .cursor(CursorIcon::System(SystemCursorIcon::Pointer));
-}
-
-fn style_button_icon(ss: &mut StyleBuilder) {
-    ss.height(16).width(12).flex_grow(0.1).pointer_events(false);
-}
-
 fn style_slider_button(ss: &mut StyleBuilder) {
     ss.height(20.).padding(0).max_width(12).flex_grow(0.2);
 }
@@ -76,10 +60,6 @@ fn style_label(ss: &mut StyleBuilder) {
         .font_size(14)
         .padding((6, 0))
         .color(colors::FOREGROUND);
-}
-
-fn style_label_spacer(ss: &mut StyleBuilder) {
-    ss.flex_grow(1.);
 }
 
 /// Horizontal slider widget
