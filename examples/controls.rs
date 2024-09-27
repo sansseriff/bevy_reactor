@@ -32,6 +32,15 @@ fn style_row(ss: &mut StyleBuilder) {
         .column_gap(4);
 }
 
+fn style_column(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .width(300)
+        .flex_direction(FlexDirection::Column)
+        .align_items(ui::AlignItems::Start)
+        .align_items(ui::AlignItems::Center)
+        .row_gap(4);
+}
+
 fn main() {
     App::new()
         .register_asset_source(
@@ -80,7 +89,7 @@ fn setup_view_root(world: &mut World) {
             builder.text("Checkbox");
             builder
                 .spawn(NodeBundle::default())
-                .style(style_row)
+                .style(style_column)
                 .create_children(|builder| {
                     let checked_1 = builder.create_mutable(true);
                     let checked_2 = builder.create_mutable(false);
@@ -122,18 +131,35 @@ fn setup_view_root(world: &mut World) {
                                 .disabled(true),
                         );
                 });
-            builder.text("Size");
+            builder.text("Slider");
             builder
                 .spawn(NodeBundle::default())
-                .style(style_row)
+                .styles((style_column, |sb: &mut StyleBuilder| {
+                    sb.align_items(ui::AlignItems::Stretch);
+                }))
                 .create_children(|builder| {
+                    let value = builder.create_mutable::<f32>(50.);
+                    let on_change = builder.create_callback(
+                        move |new_value: In<f32>, mut world: DeferredWorld| {
+                            value.set(&mut world, *new_value);
+                        },
+                    );
                     builder
-                        .invoke(Button::new().labeled("Size: Xl").size(Size::Xl))
-                        .invoke(Button::new().labeled("Size: Lg").size(Size::Lg))
-                        .invoke(Button::new().labeled("Size: Md").size(Size::Md))
-                        .invoke(Button::new().labeled("Size: Sm").size(Size::Sm))
-                        .invoke(Button::new().labeled("Size: Xs").size(Size::Xs))
-                        .invoke(Button::new().labeled("Size: Xxs").size(Size::Xxs))
+                        .invoke(
+                            Slider::new()
+                                .min(0.)
+                                .max(100.)
+                                .value(value)
+                                .on_change(on_change),
+                        )
+                        .invoke(
+                            Slider::new()
+                                .min(0.)
+                                .max(100.)
+                                .value(value)
+                                .label("Value:")
+                                .on_change(on_change),
+                        )
                         .invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
                 });
             builder.text("Corners");

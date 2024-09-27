@@ -35,7 +35,7 @@ pub trait SwitchBuilder {
     fn switch<
         Value: Send + Sync + PartialEq + 'static,
         VF: SwitchTestValue<Value> + 'static,
-        CF: FnOnce(&mut CaseBuilder<Value>),
+        CF: Fn(&mut CaseBuilder<Value>),
     >(
         &mut self,
         value_fn: VF,
@@ -47,7 +47,7 @@ impl<'w> SwitchBuilder for UiBuilder<'w> {
     fn switch<
         Value: Send + Sync + PartialEq + 'static,
         VF: SwitchTestValue<Value> + 'static,
-        CF: FnOnce(&mut CaseBuilder<Value>),
+        CF: Fn(&mut CaseBuilder<Value>),
     >(
         &mut self,
         value_fn: VF,

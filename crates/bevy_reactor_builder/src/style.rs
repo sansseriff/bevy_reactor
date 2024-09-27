@@ -70,7 +70,7 @@ impl<'w> EntityStyleBuilder for EntityWorldMut<'w> {
     }
 }
 
-pub struct DynamicStyleReaction<D, VF: Fn(&Rcx) -> D, SF: Fn(D, &mut StyleBuilder)> {
+struct DynamicStyleReaction<D, VF: Fn(&Rcx) -> D, SF: Fn(D, &mut StyleBuilder)> {
     target: Entity,
     deps_fn: VF,
     style_fn: SF,

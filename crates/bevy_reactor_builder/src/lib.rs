@@ -1,4 +1,5 @@
 mod cond;
+mod effect;
 mod insert;
 mod style;
 mod switch;
@@ -8,6 +9,7 @@ mod ui_builder;
 mod ui_template;
 
 pub use cond::CondBuilder;
+pub use effect::EntityEffectBuilder;
 pub use insert::InsertComponentBuilder;
 pub use style::EntityStyleBuilder;
 pub use switch::SwitchBuilder;
