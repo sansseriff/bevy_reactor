@@ -1,8 +1,7 @@
-use bevy::{color::Srgba, prelude::*, ui};
-use bevy_mod_picking::prelude::*;
+use bevy::{color::Srgba, ecs::world::DeferredWorld, prelude::*, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, RunContextSetup, RunContextWrite, Signal};
+use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, UiBuilder, UiTemplate};
+use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
 
 use crate::materials::GradientRectMaterial;
 
@@ -97,7 +96,7 @@ fn style_track(ss: &mut StyleBuilder) {
 }
 
 fn style_thumb(ss: &mut StyleBuilder) {
-    ss.background_image("obsidian_ui://textures/gradient_thumb.png")
+    ss.background_image("embedded://bevy_reactor_obsidian/assets/icons/gradient_thumb.png")
         .position(ui::PositionType::Absolute)
         .top(0)
         .bottom(0)
@@ -201,11 +200,12 @@ impl Default for GradientSlider {
     }
 }
 
-impl ViewTemplate for GradientSlider {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let slider_id = cx.create_entity();
-        // let hovering = cx.create_hover_signal(slider_id);
-        let drag_state = cx.create_mutable::<DragState>(DragState::default());
+impl UiTemplate for GradientSlider {
+    fn build(&self, builder: &mut UiBuilder) {
+        let slider_id = builder
+            .spawn((NodeBundle::default(), Name::new("GradientSlider")))
+            .id();
+        let drag_state = builder.create_mutable::<DragState>(DragState::default());
 
         // Pain point: Need to capture all props for closures.
         let min = self.min;
@@ -217,8 +217,8 @@ impl ViewTemplate for GradientSlider {
         // This should really be an effect.
         let color_stops: Signal<(usize, [Vec4; 8])> = {
             let gradient = self.gradient;
-            cx.create_derived(move |cc| {
-                gradient.map(cc, |g| {
+            builder.create_derived(move |rcx| {
+                gradient.map(rcx, |g| {
                     let mut result: [Vec4; 8] = [Vec4::default(); 8];
                     let num_color_stops = g.len();
                     for (i, color) in g.colors[0..num_color_stops].iter().enumerate() {
@@ -231,7 +231,7 @@ impl ViewTemplate for GradientSlider {
             })
         };
 
-        let mut gradient_material_assets = cx
+        let mut gradient_material_assets = builder
             .world_mut()
             .get_resource_mut::<Assets<GradientRectMaterial>>()
             .unwrap();
@@ -242,11 +242,11 @@ impl ViewTemplate for GradientSlider {
         });
 
         // Effect to update the material handle.
-        cx.create_effect({
+        builder.create_effect({
             let material = gradient_material.clone();
-            move |cx| {
-                let (num_color_stops, color_stops) = color_stops.get(cx);
-                let mut ui_materials = cx
+            move |rcx| {
+                let (num_color_stops, color_stops) = color_stops.get(rcx);
+                let mut ui_materials = rcx
                     .world_mut()
                     .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
@@ -256,18 +256,15 @@ impl ViewTemplate for GradientSlider {
             }
         });
 
-        Element::<NodeBundle>::for_entity(slider_id)
-            .named("GradientSlider")
-            .style((style_slider, self.style.clone()))
-            .insert((
-                On::<Pointer<Down>>::run(move |world: &mut World| {
-                    let min = min.get(world);
-                    let max = max.get(world);
-                    let mut event = world
-                        .get_resource_mut::<ListenerInput<Pointer<Down>>>()
-                        .unwrap();
-                    event.stop_propagation();
-                    let hit_x = event.pointer_location.position.x;
+        builder
+            .entity_mut(slider_id)
+            .styles((style_slider, self.style.clone()))
+            .observe(
+                move |mut trigger: Trigger<Pointer<Down>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let min = min.get(&world);
+                    let max = max.get(&world);
+                    let hit_x = trigger.event().pointer_location.position.x;
                     let ent = world.entity(slider_id);
                     let node = ent.get::<Node>();
                     let transform = ent.get::<GlobalTransform>();
@@ -278,7 +275,7 @@ impl ViewTemplate for GradientSlider {
                         let range = max - min;
                         let pointer_pos = hit_x - rect.min.x - THUMB_WIDTH / 2.;
                         let thumb_pos =
-                            value.get(world) - min * slider_width / range + THUMB_WIDTH / 2.;
+                            value.get(&world) - min * slider_width / range + THUMB_WIDTH / 2.;
                         if range > 0. && (pointer_pos - thumb_pos).abs() >= THUMB_WIDTH / 2. {
                             let new_value = min + (pointer_pos * range) / slider_width;
                             if let Some(on_change) = on_change {
@@ -286,50 +283,53 @@ impl ViewTemplate for GradientSlider {
                             }
                         };
                     }
-                }),
-                On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                    // Save initial value to use as drag offset.
-                    let mut event = world
-                        .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
-                        .unwrap();
-                    event.stop_propagation();
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let offset = value.get(&world);
                     drag_state.set(
-                        world,
+                        &mut world,
                         DragState {
                             dragging: true,
-                            offset: value.get(world),
+                            offset,
                         },
                     );
-                }),
-                On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                    let ds = drag_state.get(world);
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let ds = drag_state.get(&world);
+                    let offset = value.get(&world);
                     if ds.dragging {
                         drag_state.set(
-                            world,
+                            &mut world,
                             DragState {
                                 dragging: false,
-                                offset: value.get(world),
+                                offset,
                             },
                         );
                     }
-                }),
-                On::<Pointer<Drag>>::run(move |world: &mut World| {
-                    let ds = drag_state.get(world);
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<Pointer<Drag>>, mut world: DeferredWorld| {
+                    let ds = drag_state.get(&world);
                     if ds.dragging {
-                        let event = world
-                            .get_resource::<ListenerInput<Pointer<Drag>>>()
-                            .unwrap();
+                        trigger.propagate(false);
                         let ent = world.entity(slider_id);
                         let node = ent.get::<Node>();
                         let transform = ent.get::<GlobalTransform>();
                         if let (Some(node), Some(transform)) = (node, transform) {
                             // Measure node width and slider value.
                             let slider_width = node.logical_rect(transform).width();
-                            let min = min.get(world);
-                            let max = max.get(world);
+                            let min = min.get(&world);
+                            let max = max.get(&world);
                             let range = max - min;
                             let new_value = if range > 0. {
-                                ds.offset + (event.distance.x * range) / slider_width
+                                ds.offset + (trigger.event().distance.x * range) / slider_width
                             } else {
                                 min + range * 0.5
                             };
@@ -340,33 +340,36 @@ impl ViewTemplate for GradientSlider {
                             }
                         }
                     }
-                }),
-            ))
-            .children((
-                Element::<MaterialNodeBundle<GradientRectMaterial>>::new()
+                },
+            )
+            .create_children(|builder| {
+                builder
+                    .spawn(MaterialNodeBundle::<GradientRectMaterial>::default())
                     .insert(gradient_material.clone())
-                    .style(style_gradient),
-                Element::<NodeBundle>::new()
-                    .named("GradientSlider::Track")
+                    .style(style_gradient);
+                builder
+                    .spawn((NodeBundle::default(), Name::new("GradientSlider::Track")))
                     .style(style_track)
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .named("GradientSlider::Thumb")
+                    .create_children(|builder| {
+                        builder
+                            .spawn((NodeBundle::default(), Name::new("GradientSlider::Thumb")))
                             .style(style_thumb)
-                            .create_effect(move |cx, ent| {
-                                let min = min.get(cx);
-                                let max = max.get(cx);
-                                let value = value.get(cx);
-                                let percent = if max > min {
-                                    ((value - min) / (max - min)).clamp(0., 1.)
-                                } else {
-                                    0.
-                                };
-
-                                let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
-                                style.left = ui::Val::Percent(percent * 100.);
-                            }),
-                    ),
-            ))
+                            .style_dyn(
+                                move |rcx| {
+                                    let min = min.get(rcx);
+                                    let max = max.get(rcx);
+                                    let value = value.get(rcx);
+                                    if max > min {
+                                        ((value - min) / (max - min)).clamp(0., 1.)
+                                    } else {
+                                        0.
+                                    }
+                                },
+                                |percent, sb| {
+                                    sb.left(ui::Val::Percent(percent * 100.));
+                                },
+                            );
+                    });
+            });
     }
 }

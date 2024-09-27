@@ -1,6 +1,7 @@
 mod button;
 mod checkbox;
 mod disabled;
+mod gradient_slider;
 mod icon;
 mod icon_button;
 mod slider;
@@ -11,6 +12,7 @@ mod swatch;
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
 pub use disabled::{Disabled, IsDisabled};
+pub use gradient_slider::{ColorGradient, GradientSlider};
 pub use icon::Icon;
 pub use icon_button::IconButton;
 pub use slider::Slider;

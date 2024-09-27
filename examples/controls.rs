@@ -9,7 +9,7 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
-use bevy_reactor_obsidian::{controls::Button, input_dispatch::DefaultKeyHandler, prelude::*};
+use bevy_reactor_obsidian::{input_dispatch::DefaultKeyHandler, prelude::*};
 use bevy_reactor_signals::SignalsPlugin;
 
 fn style_test(ss: &mut StyleBuilder) {
@@ -159,45 +159,38 @@ fn setup_view_root(world: &mut World) {
                                 .value(value)
                                 .label("Value:")
                                 .on_change(on_change),
-                        )
-                        .invoke(Button::new().labeled("Size: Xxxs").size(Size::Xxxs));
+                        );
                 });
-            builder.text("Corners");
+
+            builder.text("GradientSlider");
             builder
                 .spawn(NodeBundle::default())
-                .style(style_row)
+                .styles((style_column, |sb: &mut StyleBuilder| {
+                    sb.align_items(ui::AlignItems::Stretch);
+                }))
                 .create_children(|builder| {
-                    builder
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: All")
-                                .corners(RoundedCorners::All),
-                        )
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: Top")
-                                .corners(RoundedCorners::Top),
-                        )
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: Bottom")
-                                .corners(RoundedCorners::Bottom),
-                        )
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: Left")
-                                .corners(RoundedCorners::Left),
-                        )
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: Right")
-                                .corners(RoundedCorners::Right),
-                        )
-                        .invoke(
-                            Button::new()
-                                .labeled("corners: None")
-                                .corners(RoundedCorners::None),
-                        );
+                    let red = builder.create_mutable::<f32>(128.);
+                    let red_gradient = builder.create_derived(move |_rcx| {
+                        ColorGradient::new(&[
+                            Srgba::new(0.0, 0.0, 0.0, 1.0),
+                            Srgba::new(1.0, 0.0, 0.0, 1.0),
+                        ])
+                    });
+                    let on_change_red = builder.create_callback(
+                        move |new_value: In<f32>, mut world: DeferredWorld| {
+                            red.set(&mut world, *new_value);
+                        },
+                    );
+                    builder.invoke(
+                        GradientSlider::new()
+                            .gradient(red_gradient)
+                            .min(0.)
+                            .max(255.)
+                            .value(red)
+                            // .style(style_slider)
+                            .precision(1)
+                            .on_change(on_change_red),
+                    );
                 });
         });
 }
