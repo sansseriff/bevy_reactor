@@ -3,6 +3,7 @@
 - builder:
   - effect
   - insert_dyn
+  - for
 - Run to convergence.
 - cleanup with component hooks.
 - Checkbox bug in inspector
