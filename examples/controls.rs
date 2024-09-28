@@ -192,6 +192,23 @@ fn setup_view_root(world: &mut World) {
                             .on_change(on_change_red),
                     );
                 });
+
+            builder.text("DisclosureToggle");
+            builder
+                .spawn(NodeBundle::default())
+                .create_children(|builder| {
+                    let expanded = builder.create_mutable(false);
+                    let on_change = builder.create_callback(
+                        move |value: In<bool>, mut world: DeferredWorld| {
+                            expanded.set(&mut world, *value);
+                        },
+                    );
+                    builder.invoke(
+                        DisclosureToggle::new()
+                            .expanded(expanded)
+                            .on_change(on_change),
+                    );
+                });
         });
 }
 

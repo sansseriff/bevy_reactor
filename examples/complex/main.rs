@@ -186,8 +186,8 @@ fn main() {
         // ))
         // .add_plugins(InspectorPlugin)
         .add_plugins((
-            ReactorPlugin,
-            ObsidianUiPlugin,
+            // ReactorPlugin,
+            // ObsidianUiPlugin,
             // overlays::OverlaysPlugin,
             // BackdropBackend,
         ))

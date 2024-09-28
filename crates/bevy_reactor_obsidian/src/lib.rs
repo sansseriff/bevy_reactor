@@ -1,5 +1,6 @@
 use bevy::{asset::embedded_asset, prelude::*};
 
+pub mod animation;
 pub mod colors;
 pub mod controls;
 pub mod cursor;
@@ -15,7 +16,6 @@ pub mod typography;
 pub mod prelude {
     pub use crate::colors;
     pub use crate::controls::*;
-    // pub use crate::cursor::Cursor;
     pub use crate::focus_signal::CreateFocusSignal;
     pub use crate::rounded_corners::RoundedCorners;
     pub use crate::size::Size;
@@ -65,7 +65,7 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
             InputDispatchPlugin,
             //     hooks::BistableTransitionPlugin,
-            //     animation::AnimatedTransitionPlugin,
+            animation::AnimatedTransitionPlugin,
             //     focus::KeyboardInputPlugin,
         ))
         // .add_plugins((
