@@ -207,7 +207,7 @@ impl<'p, 'w> Cx<'p, 'w> {
     /// Spawn an empty [`Entity`]. The entity will be despawned when the tracking scope is dropped.
     pub fn create_owned_entity(&mut self) -> Entity {
         let entity = self.world_mut().spawn_empty().id();
-        self.tracking.borrow_mut().add_owned(entity);
+        // self.tracking.borrow_mut().add_owned(entity);
         entity
     }
 
@@ -411,8 +411,8 @@ impl<'p, 'w> RunContextSetup<'p> for Cx<'p, 'w> {
         self.owner
     }
 
-    fn add_owned(&self, entity: Entity) {
-        self.tracking.borrow_mut().add_owned(entity);
+    fn add_owned(&self, _entity: Entity) {
+        // self.tracking.borrow_mut().add_owned(entity);
     }
 }
 

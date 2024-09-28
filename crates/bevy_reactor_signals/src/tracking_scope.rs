@@ -12,10 +12,6 @@ use crate::ReactionCell;
 /// A component that tracks the dependencies of a reactive task.
 #[derive(Component)]
 pub struct TrackingScope {
-    /// List of entities that are owned by this scope.
-    /// TODO: Remove this.
-    owned: Vec<Entity>,
-
     /// Set of components that we are currently subscribed to.
     component_deps: HashSet<(Entity, ComponentId)>,
 
@@ -27,6 +23,9 @@ pub struct TrackingScope {
     pub(crate) tick: Tick,
 
     /// List of cleanup functions to call when the scope is dropped.
+    /// TODO: This is a concept taken from Solid, but I don't actually use it anywhere.
+    /// The envisioned use case is for effects that need to undo the changes of the previous action
+    /// (like stopping a timer or unsubscibing to a listener) before performing the next action.
     #[allow(clippy::type_complexity)]
     pub(crate) cleanups: Vec<Box<dyn FnOnce(&mut DeferredWorld) + 'static + Sync + Send>>,
 }
@@ -45,18 +44,11 @@ impl TrackingScope {
     /// Create a new tracking scope.
     pub fn new(tick: Tick) -> Self {
         Self {
-            owned: Vec::new(),
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
             tick,
             cleanups: Vec::new(),
         }
-    }
-
-    /// Add an entity which is owned by this scope. When the scope is dropped, the entity
-    /// will be despawned.
-    pub fn add_owned(&mut self, owned: Entity) {
-        self.owned.push(owned);
     }
 
     /// Add a cleanup function which will be run once before the next reaction.
@@ -133,13 +125,8 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
         .on_remove(|mut world, entity, _component| {
             let mut scope = world.get_mut::<TrackingScope>(entity).unwrap();
             let mut cleanups = std::mem::take(&mut scope.cleanups);
-            let mut owned = std::mem::take(&mut scope.owned);
-            // let mut hooks = std::mem::take(&mut scope.hook_states);
             for cleanup_fn in cleanups.drain(..) {
                 cleanup_fn(&mut world);
-            }
-            for ent in owned.drain(..) {
-                world.commands().queue(DespawnEntityCmd(ent));
             }
         });
 }
@@ -167,6 +154,7 @@ fn run_cleanups(world: &mut World, changed: &[Entity]) {
 }
 
 /// Run reactions whose dependencies have changed.
+/// TODO: Add "Run to convergence" logic (copy from Quill)
 pub(crate) fn run_reactions(world: &mut World) {
     let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
     let mut changed: Vec<Entity> = Vec::with_capacity(64);
