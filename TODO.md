@@ -3,7 +3,7 @@
 - builder:
   - effect
   - insert_dyn
-  - for
+  - border radius for swatch.
 - Run to convergence.
 - cleanup with component hooks.
 - Checkbox bug in inspector

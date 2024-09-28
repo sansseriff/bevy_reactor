@@ -65,6 +65,24 @@ fn setup_view_root(world: &mut World) {
         .observe(handle_tab_navigation)
         .style(style_test)
         .create_children(|builder| {
+            // builder.spawn(GhostNode).create_children(|builder| {
+            //     builder.spawn(GhostNode).create_children(|builder| {
+            //         builder.text("One");
+            //     });
+            //     builder.spawn(GhostNode).create_children(|builder| {
+            //         builder.text("Two");
+            //     });
+            //     builder.spawn(GhostNode).create_children(|builder| {
+            //         builder.text("Three");
+            //     });
+            // });
+            // builder.for_index(
+            //     |_| vec!["One", "Two", "Three"].into_iter(),
+            //     |item, _, builder| {
+            //         builder.text(item.to_owned());
+            //     },
+            //     |_| {},
+            // );
             builder.for_each(
                 |rcx| {
                     let suits = rcx.read_resource::<List>();
@@ -83,14 +101,14 @@ fn update_list(
     key: Res<ButtonInput<KeyCode>>,
     mut random: ResMut<Random32>,
 ) {
-    if key.pressed(KeyCode::Space) {
+    if key.just_pressed(KeyCode::Space) {
         println!("-- Space pressed --");
         let i = (random.next() as usize) % SUITS.len();
         list.items.push(SUITS[i].to_string());
         while list.items.len() > 10 {
             list.items.remove(0);
         }
-    } else if key.pressed(KeyCode::Minus) {
+    } else if key.just_pressed(KeyCode::Minus) {
         println!("-- Minus pressed --");
         list.items.pop();
     }

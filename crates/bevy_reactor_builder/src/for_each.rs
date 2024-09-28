@@ -75,11 +75,11 @@ impl<'w> ForEachBuilder for UiBuilder<'w> {
         fallback: FallbackFn,
     ) -> &mut Self {
         // Create an entity to represent the condition.
-        let mut cond_owner = self.spawn(Name::new("Cond"));
-        let cond_owner_id = cond_owner.id();
+        let mut owner = self.spawn(Name::new("Cond"));
+        let owner_id = owner.id();
 
         // Create a tracking scope and reaction.
-        let mut tracking = TrackingScope::new(cond_owner.world().last_change_tick());
+        let mut tracking = TrackingScope::new(owner.world().last_change_tick());
         let mut reaction = ForEachReaction {
             items,
             cmp,
@@ -91,11 +91,11 @@ impl<'w> ForEachBuilder for UiBuilder<'w> {
 
         // Safety: this should be save because we don't use cond_owner any more after this
         // point.
-        let world = unsafe { cond_owner.world_mut() };
+        let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.
-        reaction.react(cond_owner_id, world, &mut tracking);
+        reaction.react(owner_id, world, &mut tracking);
         world
-            .entity_mut(cond_owner_id)
+            .entity_mut(owner_id)
             .insert((GhostNode, tracking, ReactionCell::new(reaction)));
         self
     }
@@ -149,7 +149,7 @@ impl<
     fn build_recursive(
         &self,
         world: &mut World,
-        owner: Entity,
+        // owner: Entity,
         prev_state: &[ListItem<Item>],
         prev_range: Range<usize>,
         next_items: &[Item],
@@ -175,7 +175,6 @@ impl<
             for i in next_range {
                 let child_id = world.spawn(GhostNode).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
-                world.entity_mut(owner).add_child(child_id);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -194,7 +193,7 @@ impl<
                 // Both prev and next have entries before lcs, so recurse
                 self.build_recursive(
                     world,
-                    owner,
+                    // owner,
                     prev_state,
                     prev_range.start..prev_start,
                     next_items,
@@ -213,7 +212,6 @@ impl<
             for i in next_range.start..next_start {
                 let child_id = world.spawn(GhostNode).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
-                world.entity_mut(owner).add_child(child_id);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -224,7 +222,6 @@ impl<
         // For items that match, copy over the view and value.
         for i in 0..lcs_length {
             let prev = &prev_state[prev_start + i];
-            world.entity_mut(owner).add_child(prev.child);
             out.push(prev.clone());
         }
 
@@ -236,7 +233,7 @@ impl<
                 // Both prev and next have entries after lcs, so recurse
                 self.build_recursive(
                     world,
-                    owner,
+                    // owner,
                     prev_state,
                     prev_end..prev_range.end,
                     next_items,
@@ -255,7 +252,6 @@ impl<
             for i in next_end..next_range.end {
                 let child_id = world.spawn(GhostNode).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
-                world.entity_mut(owner).add_child(child_id);
                 out.push(ListItem {
                     child: child_id,
                     item: next_items[i].clone(),
@@ -276,27 +272,24 @@ impl<
 {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         // Create a reactive context and call the test condition.
-        let rcx = Rcx::new(world, owner, tracking);
-        let iter = (self.items)(&rcx);
+        let iter = (self.items)(&Rcx::new(world, owner, tracking));
         let hint = iter.size_hint().0;
         let items: Vec<Item> = iter.collect();
         let mut next_state: Vec<ListItem<Item>> = Vec::with_capacity(hint);
         let next_len = items.len();
         let prev_len = self.state.len();
 
-        // Clear the list of children before generating the new items.
-        // TODO: At some point we might be able to do incrementally, so that children which
-        // didn't change might not need to be removed and then re-added.
-        world.entity_mut(owner).clear_children();
         self.build_recursive(
             world,
-            owner,
+            // owner,
             &self.state,
             0..prev_len,
             &items,
             0..next_len,
             &mut next_state,
         );
+        let children: Vec<Entity> = next_state.iter().map(|i| i.child).collect();
+        world.entity_mut(owner).replace_children(&children);
         self.state = std::mem::take(&mut next_state);
 
         // Handle fallback

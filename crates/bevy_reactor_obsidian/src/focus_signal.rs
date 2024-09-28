@@ -40,39 +40,39 @@ pub trait CreateFocusSignal {
 
 impl<'w> CreateFocusSignal for UiBuilder<'w> {
     fn create_focus_signal(&mut self, target: Entity) -> Signal<bool> {
-        self.create_derived(move |cx| {
-            let focus = cx.read_resource::<Focus>();
+        self.create_derived(move |rcx| {
+            let focus = rcx.read_resource::<Focus>();
             focus.0 == Some(target)
         })
     }
 
     fn create_focus_within_signal(&mut self, target: Entity) -> Signal<bool> {
-        self.create_derived(move |cx| {
-            let focus = cx.read_resource::<Focus>();
+        self.create_derived(move |rcx| {
+            let focus = rcx.read_resource::<Focus>();
             match focus.0 {
-                Some(focus) => is_descendant(cx.world(), &focus, &target),
+                Some(focus) => is_descendant(rcx.world(), &focus, &target),
                 None => false,
             }
         })
     }
 
     fn create_focus_visible_signal(&mut self, target: Entity) -> Signal<bool> {
-        self.create_derived(move |cx| {
-            let visible = cx.read_resource::<KeyboardFocusVisible>();
-            let focus = cx.read_resource::<Focus>();
+        self.create_derived(move |rcx| {
+            let visible = rcx.read_resource::<KeyboardFocusVisible>();
+            let focus = rcx.read_resource::<Focus>();
             visible.0 && focus.0 == Some(target)
         })
     }
 
     fn create_focus_within_visible_signal(&mut self, target: Entity) -> Signal<bool> {
-        self.create_derived(move |cx| {
-            let visible = cx.read_resource::<KeyboardFocusVisible>();
+        self.create_derived(move |rcx| {
+            let visible = rcx.read_resource::<KeyboardFocusVisible>();
             if !visible.0 {
                 return false;
             }
-            let focus = cx.read_resource::<Focus>();
+            let focus = rcx.read_resource::<Focus>();
             match focus.0 {
-                Some(focus) => is_descendant(cx.world(), &focus, &target),
+                Some(focus) => is_descendant(rcx.world(), &focus, &target),
                 None => false,
             }
         })

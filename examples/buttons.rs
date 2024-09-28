@@ -214,6 +214,58 @@ fn setup_view_root(world: &mut World) {
                                 .size(Size::Xxxs),
                         );
                 });
+            builder.text("ToolPalette");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    builder.invoke(ToolPalette::new().columns(3).children(|builder| {
+                        builder
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "obsidian_ui://icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .selected(true)
+                                    .corners(RoundedCorners::TopLeft),
+                            )
+                            .invoke(ToolButton::new().children(|builder| {
+                                builder.invoke(Icon::new("obsidian_ui://icons/chevron_left.png"));
+                            }))
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "obsidian_ui://icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::TopRight),
+                            )
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "obsidian_ui://icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::BottomLeft),
+                            )
+                            .invoke(ToolButton::new().children(|builder| {
+                                builder.invoke(Icon::new("obsidian_ui://icons/chevron_left.png"));
+                            }))
+                            .invoke(
+                                ToolButton::new()
+                                    .children(|builder| {
+                                        builder.invoke(Icon::new(
+                                            "obsidian_ui://icons/chevron_left.png",
+                                        ));
+                                    })
+                                    .corners(RoundedCorners::BottomRight),
+                            );
+                    }));
+                });
         });
 }
 

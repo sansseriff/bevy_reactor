@@ -9,6 +9,8 @@ mod slider;
 mod spacer;
 mod splitter;
 mod swatch;
+mod swatch_grid;
+mod tool_palette;
 
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
@@ -21,3 +23,5 @@ pub use slider::Slider;
 pub use spacer::Spacer;
 pub use splitter::Splitter;
 pub use swatch::Swatch;
+pub use swatch_grid::SwatchGrid;
+pub use tool_palette::{ToolButton, ToolPalette};

@@ -180,9 +180,9 @@ impl UiTemplate for DisclosureToggle {
                 },
             )
             .create_children(|builder| {
-                let icon_color = builder.create_derived(move |cx| {
-                    let is_disabled = disabled.get(cx);
-                    let is_hover = hovering.get(cx);
+                let icon_color = builder.create_derived(move |rcx| {
+                    let is_disabled = disabled.get(rcx);
+                    let is_hover = hovering.get(rcx);
                     match (is_disabled, is_hover) {
                         (true, _) => Color::from(colors::DIM).with_alpha(0.2),
                         (false, true) => Color::from(colors::FOREGROUND),

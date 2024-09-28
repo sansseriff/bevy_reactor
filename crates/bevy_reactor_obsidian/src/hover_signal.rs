@@ -41,8 +41,8 @@ pub trait CreateHoverSignal {
 impl<'p, 'w> CreateHoverSignal for Cx<'p, 'w> {
     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
         self.world_mut().entity_mut(target).insert(Hovering(false));
-        let hovering = self.create_derived(move |cx| {
-            cx.use_component::<Hovering>(target)
+        let hovering = self.create_derived(move |rcx| {
+            rcx.use_component::<Hovering>(target)
                 .map(|h| h.0)
                 .unwrap_or(false)
         });

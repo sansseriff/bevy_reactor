@@ -1,7 +1,7 @@
 use bevy::{
     ecs::{
         component::{ComponentId, Tick},
-        world::{Command, DeferredWorld},
+        world::DeferredWorld,
     },
     prelude::*,
     utils::HashSet,
@@ -119,6 +119,7 @@ impl TrackingScope {
     }
 }
 
+/// Component hook which runs the cleanups when a tracking scope is despawned.
 pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
     world
         .register_component_hooks::<TrackingScope>()
@@ -129,15 +130,6 @@ pub(crate) fn cleanup_tracking_scopes(world: &mut World) {
                 cleanup_fn(&mut world);
             }
         });
-}
-
-struct DespawnEntityCmd(Entity);
-
-impl Command for DespawnEntityCmd {
-    fn apply(self, world: &mut World) {
-        world.entity_mut(self.0).remove_parent();
-        world.despawn(self.0);
-    }
 }
 
 fn run_cleanups(world: &mut World, changed: &[Entity]) {

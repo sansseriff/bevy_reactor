@@ -357,8 +357,8 @@ impl UiTemplate for Slider {
                                     builder.invoke(Spacer);
                                 }
                                 builder.text_computed({
-                                    move |cx| {
-                                        let value = value.get(cx);
+                                    move |rcx| {
+                                        let value = value.get(rcx);
                                         format!("{:.*}", precision, value)
                                     }
                                 });

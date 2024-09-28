@@ -1,4 +1,6 @@
-use crate::{size::Size, RoundedCorners};
+use std::sync::Arc;
+
+use crate::{prelude::RoundedCorners, size::Size};
 use bevy::{
     a11y::{
         accesskit::{NodeBuilder, Role},
@@ -8,8 +10,10 @@ use bevy::{
     ui,
 };
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, IntoSignal, Signal};
+use bevy_reactor_builder::{
+    CreateChilden, EntityStyleBuilder, InvokeUiTemplate, UiBuilder, UiTemplate,
+};
+use bevy_reactor_signals::{Callback, IntoSignal, Signal};
 
 use super::{Button, ButtonVariant};
 
@@ -28,19 +32,29 @@ struct ToolPaletteContext {
 }
 
 /// ToolPalette - a grid of tool buttons
-#[derive(Default)]
 pub struct ToolPalette {
     /// Button size.
     pub size: Size,
 
     /// The buttons to display.
-    pub children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
 
     /// Additional styles to be applied to the palette.
     pub style: StyleHandle,
 
     /// Number of button columns
     pub columns: u16,
+}
+
+impl Default for ToolPalette {
+    fn default() -> Self {
+        Self {
+            size: Default::default(),
+            children: Arc::new(|_builder| {}),
+            style: Default::default(),
+            columns: Default::default(),
+        }
+    }
 }
 
 impl ToolPalette {
@@ -56,8 +70,8 @@ impl ToolPalette {
     }
 
     /// Set the child views for this element.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 
@@ -74,36 +88,37 @@ impl ToolPalette {
     }
 }
 
-impl ViewTemplate for ToolPalette {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for ToolPalette {
+    fn build(&self, builder: &mut UiBuilder) {
         let columns = self.columns;
 
-        cx.insert(ToolPaletteContext { size: self.size });
-
-        Element::<NodeBundle>::new()
-            .named("ToolPalette")
-            .style((
+        builder
+            .spawn((NodeBundle::default(), Name::new("ToolPalette")))
+            .styles((
                 style_tool_palette,
                 move |ss: &mut StyleBuilder| {
                     ss.grid_template_columns(vec![ui::RepeatedGridTrack::auto(columns)]);
                 },
                 self.style.clone(),
             ))
+            .insert(ToolPaletteContext { size: self.size })
             .insert(AccessibilityNode::from(NodeBuilder::new(Role::Group)))
-            .children(self.children.clone())
+            .create_children(|builder| {
+                (self.children.as_ref())(builder);
+            });
     }
 }
 
 /// A button in a ToolPalette.
 pub struct ToolButton {
     /// Color variant - default, primary or danger.
-    pub(crate) variant: Signal<ButtonVariant>,
+    pub variant: Signal<ButtonVariant>,
 
     /// Whether the button is disabled.
-    pub(crate) disabled: Signal<bool>,
+    pub disabled: Signal<bool>,
 
     /// The content to display inside the button.
-    pub(crate) children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
 
     /// Callback called when clicked
     pub(crate) on_click: Option<Callback>,
@@ -125,20 +140,32 @@ impl ToolButton {
     }
 
     /// Set the button color variant.
-    pub fn variant(mut self, variant: impl IntoSignal<ButtonVariant>) -> Self {
+    pub fn variant(&mut self, variant: impl IntoSignal<ButtonVariant>) -> &mut Self {
         self.variant = variant.into_signal();
         self
     }
 
+    /// Method which switches between `default` and `selected` style variants based on a boolean.
+    /// Often used for toggle buttons or toolbar items.
+    pub fn selected(mut self, selected: bool) -> Self {
+        self.variant = if selected {
+            ButtonVariant::Selected
+        } else {
+            ButtonVariant::Default
+        }
+        .into_signal();
+        self
+    }
+
     /// Set the button disabled state.
-    pub fn disabled(mut self, disabled: impl IntoSignal<bool>) -> Self {
+    pub fn disabled(&mut self, disabled: impl IntoSignal<bool>) -> &mut Self {
         self.disabled = disabled.into_signal();
         self
     }
 
     /// Set the child views for this element.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 
@@ -172,7 +199,7 @@ impl Default for ToolButton {
         Self {
             variant: Default::default(),
             disabled: Default::default(),
-            children: Default::default(),
+            children: Arc::new(|_builder| {}),
             on_click: Default::default(),
             tab_index: 0,
             corners: RoundedCorners::None,
@@ -181,19 +208,20 @@ impl Default for ToolButton {
     }
 }
 
-impl ViewTemplate for ToolButton {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        let context = cx.use_inherited_component::<ToolPaletteContext>().unwrap();
+impl UiTemplate for ToolButton {
+    fn build(&self, builder: &mut UiBuilder) {
+        let context = builder
+            .use_inherited_component::<ToolPaletteContext>()
+            .unwrap();
         let mut btn = Button::new()
             .size(context.size)
             .variant(self.variant)
             .disabled(self.disabled)
-            .children(self.children.clone())
-            // .on_click(self.on_click)
             .tab_index(self.tab_index)
             .autofocus(self.autofocus)
             .corners(self.corners);
+        btn.children = self.children.clone();
         btn.on_click = self.on_click;
-        btn
+        builder.invoke(btn);
     }
 }

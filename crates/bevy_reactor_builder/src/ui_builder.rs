@@ -1,5 +1,7 @@
 use bevy::{
-    prelude::{BuildChildren, Bundle, Entity, EntityWorldMut, IntoSystem, World},
+    prelude::{
+        BuildChildren, Bundle, Component, Entity, EntityWorldMut, IntoSystem, Parent, World,
+    },
     ui::GhostNode,
 };
 use bevy_reactor_signals::{
@@ -121,6 +123,23 @@ impl<'w> UiBuilder<'w> {
             .entity_mut(effect_owner)
             .insert((scope, ReactionCell::new(reaction), GhostNode));
         self
+    }
+
+    /// Return a reference to the Component `C` on the owner entity of the current
+    /// context, or one of it's ancestors. This searches up the entity tree until it finds
+    /// a component of the given type.
+    pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
+        let mut entity = self.parent;
+        loop {
+            let ec = self.world.entity(entity).get::<C>();
+            if ec.is_some() {
+                return ec;
+            }
+            match self.world.entity(entity).get::<Parent>() {
+                Some(parent) => entity = **parent,
+                _ => return None,
+            }
+        }
     }
 }
 

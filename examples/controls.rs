@@ -86,6 +86,31 @@ fn setup_view_root(world: &mut World) {
                         .invoke(Swatch::new(Srgba::NONE))
                         .invoke(Swatch::new(palettes::css::BLUE).selected(true));
                 });
+
+            builder.text("SwatchGrid");
+            builder
+                .spawn(NodeBundle::default())
+                .style(style_row)
+                .create_children(|builder| {
+                    let selected = builder.create_mutable::<Srgba>(palettes::css::BLUE);
+                    let on_change = builder.create_callback(
+                        move |color: In<Srgba>, mut world: DeferredWorld| {
+                            selected.set(&mut world, *color);
+                        },
+                    );
+                    builder.invoke(
+                        SwatchGrid::new(vec![
+                            palettes::css::BLUE,
+                            palettes::css::RED,
+                            palettes::css::GREEN,
+                            palettes::css::REBECCA_PURPLE,
+                        ])
+                        .grid_size(UVec2::new(12, 4))
+                        .selected(selected.signal())
+                        .on_change(on_change),
+                    );
+                });
+
             builder.text("Checkbox");
             builder
                 .spawn(NodeBundle::default())

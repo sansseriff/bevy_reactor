@@ -48,7 +48,7 @@ where
         owner: Entity,
         _target: Entity,
         world: &mut World,
-        parent_scope: &mut TrackingScope,
+        _parent_scope: &mut TrackingScope,
     ) {
         // Create a tracking scope for the reaction.
         let mut scope = TrackingScope::new(world.change_tick());
@@ -68,7 +68,7 @@ where
             .id();
 
         // Add the reaction id to the parent scope so that it can be despawned later.
-        parent_scope.add_owned(reaction_id);
+        // parent_scope.add_owned(reaction_id);
 
         // Call `react` the first time, update the scope with initial deps.
         // Note that we need to insert the ReactionTarget first!
@@ -150,7 +150,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
         owner: Entity,
         _target: Entity,
         world: &mut World,
-        parent_scope: &mut TrackingScope,
+        _parent_scope: &mut TrackingScope,
     ) {
         // Compute debug name for reaction.
         let reaction_name = world
@@ -174,7 +174,7 @@ impl<R: Reaction + Send + Sync + 'static> EntityEffect for RunReactionEffect<R> 
             .id();
 
         // Add the reaction id to the parent scope so that it can be despawned later.
-        parent_scope.add_owned(reaction_id);
+        // parent_scope.add_owned(reaction_id);
 
         // Call `react` the first time, update the scope with initial deps.
         // Note that we need to insert the ReactionTarget first!

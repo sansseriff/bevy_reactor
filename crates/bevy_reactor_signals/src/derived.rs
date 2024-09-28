@@ -5,12 +5,12 @@ use bevy::{ecs::world::DeferredWorld, prelude::*, ui::GhostNode};
 use crate::{Rcx, TrackingScope};
 
 pub(crate) trait DerivedFnRef<R> {
-    fn call(&self, cx: &mut Rcx) -> R;
+    fn call(&self, rcx: &mut Rcx) -> R;
 }
 
 impl<R, F: Fn(&mut Rcx) -> R> DerivedFnRef<R> for F {
-    fn call(&self, cx: &mut Rcx) -> R {
-        self(cx)
+    fn call(&self, rcx: &mut Rcx) -> R {
+        self(rcx)
     }
 }
 
@@ -131,8 +131,8 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx)
+                let mut rcx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut rcx)
             }
             _ => panic!("No derived found for {:?}", derived),
         }
@@ -146,8 +146,8 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx).clone()
+                let mut rcx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut rcx).clone()
             }
             _ => panic!("No derived found for {:?}", derived),
         }
@@ -166,8 +166,8 @@ impl ReadDerivedInternal for World {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                f(&derived_fn.call(&mut cx))
+                let mut rcx = Rcx::new(self, derived, scope);
+                f(&derived_fn.call(&mut rcx))
             }
             _ => panic!("No derived found for {:?}", derived),
         }
@@ -212,8 +212,8 @@ impl<'w> ReadDerivedInternal for DeferredWorld<'w> {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx)
+                let mut rcx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut rcx)
             }
             _ => panic!("No derived found for {:?}", derived),
         }
@@ -227,8 +227,8 @@ impl<'w> ReadDerivedInternal for DeferredWorld<'w> {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                derived_fn.call(&mut cx).clone()
+                let mut rcx = Rcx::new(self, derived, scope);
+                derived_fn.call(&mut rcx).clone()
             }
             _ => panic!("No derived found for {:?}", derived),
         }
@@ -247,8 +247,8 @@ impl<'w> ReadDerivedInternal for DeferredWorld<'w> {
         match derived_entity.get::<DerivedCell<R>>() {
             Some(cell) => {
                 let derived_fn = cell.0.clone();
-                let mut cx = Rcx::new(self, derived, scope);
-                f(&derived_fn.call(&mut cx))
+                let mut rcx = Rcx::new(self, derived, scope);
+                f(&derived_fn.call(&mut rcx))
             }
             _ => panic!("No derived found for {:?}", derived),
         }

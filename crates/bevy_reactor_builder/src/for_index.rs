@@ -37,11 +37,11 @@ impl<'w> ForIndexBuilder for UiBuilder<'w> {
         fallback: FallbackFn,
     ) -> &mut Self {
         // Create an entity to represent the condition.
-        let mut cond_owner = self.spawn(Name::new("Cond"));
-        let cond_owner_id = cond_owner.id();
+        let mut owner = self.spawn(Name::new("Cond"));
+        let owner_id = owner.id();
 
         // Create a tracking scope and reaction.
-        let mut tracking = TrackingScope::new(cond_owner.world().last_change_tick());
+        let mut tracking = TrackingScope::new(owner.world().last_change_tick());
         let mut reaction = ForIndexReaction {
             items,
             each,
@@ -52,11 +52,11 @@ impl<'w> ForIndexBuilder for UiBuilder<'w> {
 
         // Safety: this should be save because we don't use cond_owner any more after this
         // point.
-        let world = unsafe { cond_owner.world_mut() };
+        let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.
-        reaction.react(cond_owner_id, world, &mut tracking);
+        reaction.react(owner_id, world, &mut tracking);
         world
-            .entity_mut(cond_owner_id)
+            .entity_mut(owner_id)
             .insert((GhostNode, tracking, ReactionCell::new(reaction)));
         self
     }
@@ -115,9 +115,8 @@ impl<
                 }
             } else {
                 // Append new items.
-                let child = world.spawn(GhostNode).id();
-                world.entity_mut(owner).add_child(child);
                 let child_id = world.spawn(GhostNode).id();
+                world.entity_mut(owner).add_child(child_id);
                 (self.each)(&item, index, &mut UiBuilder::new(world, child_id));
                 self.state.push(ListItem {
                     child: child_id,
