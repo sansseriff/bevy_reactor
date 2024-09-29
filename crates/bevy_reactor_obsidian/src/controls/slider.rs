@@ -278,7 +278,7 @@ impl UiTemplate for Slider {
                         let transform = ent.get::<GlobalTransform>();
                         if let (Some(node), Some(transform)) = (node, transform) {
                             // Measure node width and slider value.
-                            let slider_width = node.logical_rect(transform).width();
+                            let slider_width = node.size().x;
                             let min = min.get(&world);
                             let max = max.get(&world);
                             let range = max - min;
@@ -311,7 +311,7 @@ impl UiTemplate for Slider {
             .create_children(|builder| {
                 let dec_disabled =
                     builder.create_derived(move |rcx| value.get(rcx) <= min.get(rcx));
-                let dec_click = builder.create_callback(move |mut world: DeferredWorld| {
+                let dec_click = builder.create_callback(move |_in: In<()>, mut world: DeferredWorld| {
                     let min = min.get(&world);
                     let max = max.get(&world);
                     let next_value = (value.get(&world) - step).clamp(min, max);
@@ -321,7 +321,7 @@ impl UiTemplate for Slider {
                 });
                 let inc_disabled =
                     builder.create_derived(move |rcx| value.get(rcx) >= max.get(rcx));
-                let inc_click = builder.create_callback(move |mut world: DeferredWorld| {
+                let inc_click = builder.create_callback(move |_in: In<()>, mut world: DeferredWorld| {
                     let min = min.get(&world);
                     let max = max.get(&world);
                     let next_value = (value.get(&world) + step).clamp(min, max);

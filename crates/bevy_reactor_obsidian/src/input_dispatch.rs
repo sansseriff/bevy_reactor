@@ -4,7 +4,7 @@ use bevy::{a11y::Focus, ecs::world::DeferredWorld, input::keyboard::KeyboardInpu
 pub struct FocusKeyboardInput(pub KeyboardInput);
 
 impl Event for FocusKeyboardInput {
-    type Traversal = Parent;
+    type Traversal = &'static Parent;
 
     const AUTO_PROPAGATE: bool = true;
 }

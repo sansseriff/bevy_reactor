@@ -1,16 +1,18 @@
-use bevy::{input::mouse::MouseWheel, prelude::*, ui};
-use bevy_mod_picking::{focus::HoverMap, pointer::PointerId, prelude::EntityEvent};
+use bevy::{
+    ecs::world::DeferredWorld,
+    input::mouse::MouseWheel,
+    picking::{focus::HoverMap, pointer::PointerId},
+    prelude::*,
+    ui,
+};
 
-/// Mouse wheel entity event
-#[derive(Clone, Event, EntityEvent, Debug)]
-#[can_bubble]
-pub struct ScrollWheel {
-    /// Event target
-    #[target]
-    pub target: Entity,
+#[derive(Clone, Debug, Component)]
+pub struct ScrollWheelEvent(pub MouseWheel);
 
-    /// Mouse wheel delta
-    pub delta: Vec2,
+impl Event for ScrollWheelEvent {
+    type Traversal = &'static Parent;
+
+    const AUTO_PROPAGATE: bool = true;
 }
 
 /// Component that enables scrolling on an element
@@ -86,21 +88,19 @@ pub(crate) fn update_scroll_positions(
     query_scrollbar: Query<(&ScrollBar, &Children)>,
     mut query_scrollbar_thumb: Query<&mut Style, (With<ScrollBarThumb>, Without<ScrollContent>)>,
 ) {
-    for (node, mut scrolling, gt, children) in query.iter_mut() {
+    for (node, mut scrolling, _gt, children) in query.iter_mut() {
         // Measure size and update scroll width and height
-        let scroll_size = node.logical_rect(gt);
-        scrolling.visible_size.x = scroll_size.width();
-        scrolling.visible_size.y = scroll_size.height();
+        scrolling.visible_size.x = node.size().x;
+        scrolling.visible_size.y = node.size().y;
 
         // Measure size of content
         if let Some(child) = children
             .iter()
             .find(|chid| query_content.get(**chid).is_ok())
         {
-            let (content, mut style, content_gt) = query_content.get_mut(*child).unwrap();
-            let content_size = content.logical_rect(content_gt);
-            scrolling.content_size.x = content_size.width();
-            scrolling.content_size.y = content_size.height();
+            let (content, mut style, _content_gt) = query_content.get_mut(*child).unwrap();
+            scrolling.content_size.x = content.size().x;
+            scrolling.content_size.y = content.size().y;
 
             scrolling.scroll_left = scrolling
                 .scroll_left
@@ -166,24 +166,13 @@ pub(crate) fn update_scroll_positions(
 
 pub(crate) fn handle_scroll_events(
     mut scroll_evr: EventReader<MouseWheel>,
-    mut writer: EventWriter<ScrollWheel>,
     hover_map: Res<HoverMap>,
+    mut world: DeferredWorld,
 ) {
     if let Some(hover) = hover_map.get(&PointerId::Mouse) {
-        use bevy::input::mouse::MouseScrollUnit;
         for ev in scroll_evr.read() {
-            match ev.unit {
-                MouseScrollUnit::Line => {
-                    // Ignore for now.
-                }
-                MouseScrollUnit::Pixel => {
-                    for k in hover.keys() {
-                        writer.send(ScrollWheel {
-                            target: *k,
-                            delta: Vec2 { x: ev.x, y: ev.y },
-                        });
-                    }
-                }
+            for k in hover.keys() {
+                world.trigger_targets(ScrollWheelEvent(*ev), *k);
             }
         }
     }

@@ -227,11 +227,11 @@ impl ViewTemplate for DemoUi {
     fn create(&self, cx: &mut Cx) -> impl IntoView {
         let mut inc_count = 0;
         let mut dec_count = 0;
-        let clicked_increment = cx.create_callback(move || {
+        let clicked_increment = cx.create_callback(move |_in: In<()>| {
             inc_count += 1;
             println!("Increment clicked: {} times", inc_count);
         });
-        let clicked_decrement = cx.create_callback(move || {
+        let clicked_decrement = cx.create_callback(move |_in: In<()>| {
             dec_count += 1;
             println!("Decrement clicked: {} times", dec_count);
         });

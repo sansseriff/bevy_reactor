@@ -56,7 +56,7 @@ fn setup_view_root(world: &mut World) {
             },
         )
         .create_children(|builder| {
-            let on_click = builder.create_callback(|| {
+            let on_click = builder.create_callback(|_in: In<()>| {
                 println!("Clicked!");
             });
             builder

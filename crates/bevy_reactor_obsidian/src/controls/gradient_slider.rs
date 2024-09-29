@@ -270,7 +270,8 @@ impl UiTemplate for GradientSlider {
                     let transform = ent.get::<GlobalTransform>();
                     if let (Some(node), Some(transform)) = (node, transform) {
                         // If not clicking on thumb, then snap thumb to new location.
-                        let rect = node.logical_rect(transform);
+                        let rect =
+                            Rect::from_center_size(transform.translation().xy(), node.size());
                         let slider_width = rect.width() - THUMB_WIDTH;
                         let range = max - min;
                         let pointer_pos = hit_x - rect.min.x - THUMB_WIDTH / 2.;
@@ -322,9 +323,9 @@ impl UiTemplate for GradientSlider {
                         let ent = world.entity(slider_id);
                         let node = ent.get::<Node>();
                         let transform = ent.get::<GlobalTransform>();
-                        if let (Some(node), Some(transform)) = (node, transform) {
+                        if let (Some(node), Some(_transform)) = (node, transform) {
                             // Measure node width and slider value.
-                            let slider_width = node.logical_rect(transform).width();
+                            let slider_width = node.size().x;
                             let min = min.get(&world);
                             let max = max.get(&world);
                             let range = max - min;

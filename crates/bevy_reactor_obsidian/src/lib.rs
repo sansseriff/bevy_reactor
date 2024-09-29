@@ -9,6 +9,7 @@ pub mod hover_signal;
 pub mod input_dispatch;
 mod materials;
 pub mod rounded_corners;
+pub mod scrolling;
 pub mod size;
 pub mod tab_navigation;
 pub mod typography;
@@ -66,18 +67,15 @@ impl Plugin for ObsidianUiPlugin {
             InputDispatchPlugin,
             //     hooks::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
-            //     focus::KeyboardInputPlugin,
         ))
         // .add_plugins((
-        //     EventListenerPlugin::<scrolling::ScrollWheel>::default(),
         //     EventListenerPlugin::<MenuCloseEvent>::default(),
         // ))
-        // .add_event::<scrolling::ScrollWheel>()
         .add_systems(
             Update,
             (
-                // scrolling::handle_scroll_events,
-                // scrolling::update_scroll_positions,
+                scrolling::handle_scroll_events,
+                scrolling::update_scroll_positions,
                 hover_signal::update_hover_states,
                 cursor::update_cursor,
             ),

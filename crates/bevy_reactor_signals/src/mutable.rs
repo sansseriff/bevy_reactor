@@ -125,7 +125,7 @@ pub fn create_mutable<T: Send + Sync + 'static>(
         .spawn((MutableCell::<T>(init), GhostNode))
         .set_parent(parent)
         .id();
-    let component = world.init_component::<MutableCell<T>>();
+    let component = world.register_component::<MutableCell<T>>();
     Mutable {
         cell,
         component,
@@ -258,7 +258,7 @@ impl CreateMutable for World {
         T: Send + Sync + 'static,
     {
         let cell = self.world_mut().spawn(MutableCell::<T>(init)).id();
-        let component = self.world_mut().init_component::<MutableCell<T>>();
+        let component = self.world_mut().register_component::<MutableCell<T>>();
         Mutable {
             cell,
             component,

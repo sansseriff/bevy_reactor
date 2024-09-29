@@ -5,6 +5,7 @@ mod disclosure_toggle;
 mod gradient_slider;
 mod icon;
 mod icon_button;
+mod scrollview;
 mod slider;
 mod spacer;
 mod splitter;

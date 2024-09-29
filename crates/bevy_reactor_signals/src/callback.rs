@@ -12,13 +12,13 @@ use crate::Ecx;
 
 /// Contains a reference to a callback. `P` is the type of the props.
 #[derive(PartialEq, Debug)]
-pub struct Callback<P = ()> {
-    pub(crate) id: SystemId<P, ()>,
+pub struct Callback<P: 'static = ()> {
+    pub(crate) id: SystemId<In<P>, ()>,
 }
 
 impl<P> Callback<P> {
     /// Construct a new callback
-    pub fn new(id: SystemId<P, ()>) -> Self {
+    pub fn new(id: SystemId<In<P>, ()>) -> Self {
         Self { id }
     }
 }
@@ -72,7 +72,7 @@ pub(crate) fn cleanup_callbacks(world: &mut World) {
 /// A trait for invoking callbacks.
 pub trait RunCallback {
     /// Invoke a callback with the given props.
-    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P);
+    fn run_callback<P: Send>(&mut self, callback: Callback<P>, props: P);
 }
 
 /// A mutable reactive context. This allows write access to reactive data sources.
@@ -82,7 +82,7 @@ impl RunCallback for World {
     /// Arguments:
     /// * `callback` - The callback to invoke.
     /// * `props` - The props to pass to the callback.
-    fn run_callback<P: 'static>(&mut self, callback: Callback<P>, props: P) {
+    fn run_callback<P>(&mut self, callback: Callback<P>, props: P) {
         self.run_system_with_input(callback.id, props).unwrap();
     }
 }
@@ -94,19 +94,19 @@ impl<'w> RunCallback for DeferredWorld<'w> {
     /// Arguments:
     /// * `callback` - The callback to invoke.
     /// * `props` - The props to pass to the callback.
-    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+    fn run_callback<P: Send>(&mut self, callback: Callback<P>, props: P) {
         self.commands().run_system_with_input(callback.id, props);
     }
 }
 
 impl<'p, 'w> RunCallback for Ecx<'p, 'w> {
-    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+    fn run_callback<P: Send>(&mut self, callback: Callback<P>, props: P) {
         self.world_mut().run_callback(callback, props);
     }
 }
 
 impl<'w, 's> RunCallback for Commands<'w, 's> {
-    fn run_callback<P: 'static + Send>(&mut self, callback: Callback<P>, props: P) {
+    fn run_callback<P: Send>(&mut self, callback: Callback<P>, props: P) {
         self.run_system_with_input(callback.id, props)
     }
 }

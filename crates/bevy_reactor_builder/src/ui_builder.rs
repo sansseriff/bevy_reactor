@@ -1,6 +1,6 @@
 use bevy::{
     prelude::{
-        BuildChildren, Bundle, Component, Entity, EntityWorldMut, IntoSystem, Parent, World,
+        BuildChildren, Bundle, Component, Entity, EntityWorldMut, In, IntoSystem, Parent, World,
     },
     ui::GhostNode,
 };
@@ -61,11 +61,8 @@ impl<'w> UiBuilder<'w> {
         self.world.entity_mut(entity)
     }
 
-    // for_each()
-    // for_index()
-
     /// Create a new callback which is owned by the parent entity.
-    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+    pub fn create_callback<P: Send, M, S: IntoSystem<In<P>, (), M> + 'static>(
         &mut self,
         callback: S,
     ) -> Callback<P> {

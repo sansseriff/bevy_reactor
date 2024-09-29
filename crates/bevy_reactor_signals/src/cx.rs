@@ -68,7 +68,7 @@ pub trait RunContextSetup<'p> {
             .spawn(MutableCell::<T>(init))
             .set_parent(owner)
             .id();
-        let component = self.world_mut().init_component::<MutableCell<T>>();
+        let component = self.world_mut().register_component::<MutableCell<T>>();
         self.add_owned(cell);
         Mutable {
             cell,
@@ -216,7 +216,11 @@ impl<'p, 'w> Cx<'p, 'w> {
     ///
     /// Note: This function takes no deps argument, the callback is only registered once the first
     /// time it is called. Subsequent calls will return the original callback.
-    pub fn create_callback<P: Send + Sync + 'static, M, S: IntoSystem<P, (), M> + 'static>(
+    pub fn create_callback<
+        P: SystemInput + Send + Sync + 'static,
+        M,
+        S: IntoSystem<In<P>, (), M> + 'static,
+    >(
         &mut self,
         callback: S,
     ) -> Callback<P> {
