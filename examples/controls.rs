@@ -1,12 +1,6 @@
 //! Example of a simple UI layout
 
-use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
-    color::palettes,
-    ecs::world::DeferredWorld,
-    prelude::*,
-    ui,
-};
+use bevy::{color::palettes, ecs::world::DeferredWorld, prelude::*, ui};
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
 use bevy_reactor_obsidian::{input_dispatch::DefaultKeyHandler, prelude::*};
@@ -43,11 +37,6 @@ fn style_column(ss: &mut StyleBuilder) {
 
 fn main() {
     App::new()
-        .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
-        )
         .add_plugins((
             DefaultPlugins,
             SignalsPlugin,

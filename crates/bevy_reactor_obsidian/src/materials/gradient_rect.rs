@@ -5,7 +5,7 @@ use bevy::render::render_resource::*;
 #[derive(AsBindGroup, Asset, TypePath, Debug, Clone)]
 pub(crate) struct GradientRectMaterial {
     #[uniform(0)]
-    pub(crate) num_color_stops: i32,
+    pub(crate) num_color_stops: IVec4,
     #[uniform(1)]
     pub(crate) color_stops: [Vec4; 8],
     #[uniform(3)]
@@ -14,6 +14,6 @@ pub(crate) struct GradientRectMaterial {
 
 impl UiMaterial for GradientRectMaterial {
     fn fragment_shader() -> ShaderRef {
-        "obsidian_ui://shaders/gradient_rect.wgsl".into()
+        "embedded://bevy_reactor_obsidian/assets/shaders/gradient_rect.wgsl".into()
     }
 }

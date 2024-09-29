@@ -208,7 +208,7 @@ impl UiTemplate for Slider {
         let material = ui_materials.add(SliderRectMaterial {
             color_lo: LinearRgba::from(colors::U1).to_vec4(),
             color_hi: LinearRgba::from(colors::U3).to_vec4(),
-            value: 0.5,
+            value: Vec4::new(0.5, 0., 0., 0.),
             radius: RoundedCorners::All.to_vec(4.),
         });
         let material_id = material.id();
@@ -229,7 +229,7 @@ impl UiTemplate for Slider {
                 .get_resource_mut::<Assets<SliderRectMaterial>>()
                 .unwrap();
             let material = ui_materials.get_mut(material_id).unwrap();
-            material.value = pos;
+            material.value.x = pos;
         });
 
         builder
@@ -275,8 +275,7 @@ impl UiTemplate for Slider {
                         let distance = trigger.event().distance;
                         let ent = world.entity_mut(slider_id);
                         let node = ent.get::<Node>();
-                        let transform = ent.get::<GlobalTransform>();
-                        if let (Some(node), Some(transform)) = (node, transform) {
+                        if let Some(node) = node {
                             // Measure node width and slider value.
                             let slider_width = node.size().x;
                             let min = min.get(&world);
@@ -330,7 +329,7 @@ impl UiTemplate for Slider {
                     }
                 });
                 builder
-                    .spawn((NodeBundle::default(), Name::new("Slider:Overlay")))
+                    .spawn((NodeBundle::default(), Name::new("Slider::Overlay")))
                     .style(style_overlay)
                     .create_children(move |builder| {
                         builder.cond(

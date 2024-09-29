@@ -146,11 +146,6 @@ pub struct PreviewEntities {
 fn main() {
     App::new()
         .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
-        )
-        .register_asset_source(
             "demo",
             AssetSource::build()
                 .with_reader(|| Box::new(FileAssetReader::new("examples/complex/assets"))),

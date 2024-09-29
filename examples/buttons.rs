@@ -36,8 +36,11 @@ fn main() {
     App::new()
         .register_asset_source(
             "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
+            AssetSource::build().with_reader(|| {
+                Box::new(FileAssetReader::new(
+                    "crates/bevy_reactor_obsidian/src/assets",
+                ))
+            }),
         )
         .add_plugins((
             DefaultPlugins,

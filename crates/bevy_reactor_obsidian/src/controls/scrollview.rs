@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
-use bevy::{prelude::*, ui};
+use bevy::{ecs::world::DeferredWorld, prelude::*, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_builder::{
-    CreateChilden, EntityStyleBuilder, InvokeUiTemplate, UiBuilder, UiTemplate,
-};
+use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, UiBuilder, UiTemplate};
 use bevy_reactor_signals::Mutable;
 
 use crate::scrolling::{ScrollArea, ScrollBar, ScrollBarThumb, ScrollContent, ScrollWheelEvent};
@@ -179,33 +177,45 @@ impl UiTemplate for ScrollView {
                 .spawn((NodeBundle::default(), Name::new("ScrollView::ScrollArea")))
                 .id();
 
+            // Horizontal scroll bar
             let id_scrollbar_x = if enable_x {
-                Some(builder.spawn_empty().id())
+                Some(build_scrollbar(builder, id_scroll_area, drag_state, false))
             } else {
                 None
             };
+
+            // Vertical scroll bar
             let id_scrollbar_y = if enable_y {
-                Some(builder.spawn_empty().id())
+                Some(build_scrollbar(builder, id_scroll_area, drag_state, true))
             } else {
                 None
             };
 
             builder
                 .entity_mut(id_scroll_area)
-                .insert((
-                    ScrollArea {
-                        id_scrollbar_x,
-                        id_scrollbar_y,
-                        ..default()
-                    },
-                    // On::<ScrollWheel>::listener_component_mut::<ScrollArea>(
-                    //     move |ev, scrolling| {
-                    //         ev.stop_propagation();
-                    //         scrolling.scroll_by(-ev.delta.x, -ev.delta.y);
-                    //     },
-                    // ),
-                ))
+                .insert((ScrollArea {
+                    id_scrollbar_x,
+                    id_scrollbar_y,
+                    ..default()
+                },))
                 .style(style_scroll_region)
+                .observe(
+                    move |mut trigger: Trigger<ScrollWheelEvent>, mut world: DeferredWorld| {
+                        trigger.propagate(false);
+                        if let Some(mut scroll_area) = world.get_mut::<ScrollArea>(id_scroll_area) {
+                            let event = &trigger.event().0;
+                            match event.unit {
+                                bevy::input::mouse::MouseScrollUnit::Line => {
+                                    // TODO: Get inherited font size
+                                    scroll_area.scroll_by(-event.x * 14., -event.y * 14.);
+                                }
+                                bevy::input::mouse::MouseScrollUnit::Pixel => {
+                                    scroll_area.scroll_by(-event.x, -event.y);
+                                }
+                            }
+                        }
+                    },
+                )
                 .create_children(|builder| {
                     builder
                         .spawn((NodeBundle::default(), Name::new("ScrollView::ScrollRegion")))
@@ -215,160 +225,130 @@ impl UiTemplate for ScrollView {
                             (self.children.as_ref())(builder);
                         });
                 });
-
-            // Horizontal scroll bar
-            if let Some(id_scrollbar) = id_scrollbar_x {
-                builder.invoke(Scrollbar::new(ScrollbarProps {
-                    id_scroll_area,
-                    id_scrollbar,
-                    drag_state,
-                    vertical: false,
-                }));
-            }
-
-            if let Some(id_scrollbar) = id_scrollbar_y {
-                builder.invoke(Scrollbar::new(ScrollbarProps {
-                    id_scroll_area,
-                    id_scrollbar,
-                    drag_state,
-                    vertical: true,
-                }));
-            }
         });
     }
 }
 
-/// Properties for the `Scrollbar` widget.
-#[derive(Clone)]
-pub struct ScrollbarProps {
+fn build_scrollbar(
+    builder: &mut UiBuilder,
     id_scroll_area: Entity,
-    id_scrollbar: Entity,
     drag_state: Mutable<DragState>,
     vertical: bool,
-}
+) -> Entity {
+    let scrollbar_id = builder
+        .spawn((NodeBundle::default(), Name::new("Scrollbar")))
+        .id();
 
-/// Scrollbar widget.
-pub struct Scrollbar(ScrollbarProps);
+    builder
+        .entity_mut(scrollbar_id)
+        .insert((ScrollBar {
+            id_scroll_area,
+            vertical,
+            min_thumb_size: 10.,
+        },))
+        .style(if vertical {
+            style_scrollbar_y
+        } else {
+            style_scrollbar_x
+        })
+        .observe(
+            // Click outside of thumb
+            move |mut trigger: Trigger<Pointer<Click>>,
+                  mut world: DeferredWorld,
+                  q_thumb: Query<(&Node, &GlobalTransform)>| {
+                trigger.propagate(false);
+                let id_scrollbar = trigger.entity();
+                let Some(children) = world.get::<Children>(id_scrollbar) else {
+                    return;
+                };
 
-impl Scrollbar {
-    /// Create a new `Scrollbar`.
-    pub fn new(props: ScrollbarProps) -> Self {
-        Self(props)
-    }
-}
+                let Some(id_thumb) = children.iter().next() else {
+                    return;
+                };
 
-impl UiTemplate for Scrollbar {
-    fn build(&self, builder: &mut UiBuilder) {
-        let vertical = self.0.vertical;
-        let drag_state = self.0.drag_state;
-        let id_scroll_area = self.0.id_scroll_area;
-        let id_thumb = builder
-            .spawn((NodeBundle::default(), Name::new("Scrollbar")))
-            .id();
-        builder
-            .entity_mut(id_thumb)
-            .insert((
-                ScrollBar {
-                    id_scroll_area,
-                    vertical,
-                    min_thumb_size: 10.,
-                },
-                // Click outside of thumb
-                // On::<Pointer<DragStart>>::run(
-                //     move |mut ev: ListenerMut<Pointer<DragStart>>,
-                //           mut query: Query<&mut ScrollArea>,
-                //           query_thumb: Query<(
-                //         &Node,
-                //         &mut ScrollBarThumb,
-                //         &GlobalTransform,
-                //     )>| {
-                //         ev.stop_propagation();
-                //         if let Ok(mut scroll_area) = query.get_mut(id_scroll_area) {
-                //             if let Ok((thumb, _, transform)) = query_thumb.get(id_thumb) {
-                //                 // Get thumb rectangle
-                //                 let rect = thumb.logical_rect(transform);
-                //                 handle_track_click(
-                //                     &mut scroll_area,
-                //                     vertical,
-                //                     ev.pointer_location.position,
-                //                     rect,
-                //                 );
-                //             }
-                //         };
-                //     },
-                // ),
-            ))
-            .style(if vertical {
-                style_scrollbar_y
-            } else {
-                style_scrollbar_x
-            })
-            .create_children(|builder| {
-                builder
-                    .entity_mut(id_thumb)
-                    // .class_names(CLS_DRAG.if_true(cx.read_atom(drag_state).mode == mode))
-                    .style(if vertical {
-                        style_scrollbar_y_thumb
-                    } else {
-                        style_scrollbar_x_thumb
-                    })
-                    .insert((
-                        ScrollBarThumb,
-                        // Click/Drag on thumb
-                        // On::<Pointer<DragStart>>::run(move |world: &mut World| {
-                        //     let mut event = world
-                        //         .get_resource_mut::<ListenerInput<Pointer<DragStart>>>()
-                        //         .unwrap();
-                        //     event.stop_propagation();
-                        //     if let Some(scroll_area) = world.get::<ScrollArea>(id_scroll_area) {
-                        //         drag_state.set(
-                        //             world,
-                        //             DragState {
-                        //                 mode: DragMode::DragY,
-                        //                 offset: if vertical {
-                        //                     scroll_area.scroll_top
-                        //                 } else {
-                        //                     scroll_area.scroll_left
-                        //                 },
-                        //             },
-                        //         );
-                        //     }
-                        // }),
-                        // On::<Pointer<Drag>>::run(move |world: &mut World| {
-                        //     let mut event = world
-                        //         .get_resource_mut::<ListenerInput<Pointer<Drag>>>()
-                        //         .unwrap();
-                        //     event.stop_propagation();
-                        //     let distance = event.distance;
-                        //     let ds = drag_state.get(world);
-                        //     if let Some(mut scroll_area) =
-                        //         world.get_mut::<ScrollArea>(id_scroll_area)
-                        //     {
-                        //         handle_thumb_drag(&mut scroll_area, &ds, distance);
-                        //     }
-                        // }),
-                        // On::<Pointer<DragEnd>>::run(move |world: &mut World| {
-                        //     let mut event = world
-                        //         .get_resource_mut::<ListenerInput<Pointer<DragEnd>>>()
-                        //         .unwrap();
-                        //     event.stop_propagation();
-                        //     drag_state.set(
-                        //         world,
-                        //         DragState {
-                        //             mode: DragMode::None,
-                        //             offset: 0.,
-                        //         },
-                        //     );
-                        // }),
-                        // On::<Pointer<PointerCancel>>::run(
-                        //     move |mut ev: ListenerMut<Pointer<DragEnd>>, mut atoms: AtomStore| {
-                        //         ev.stop_propagation();
-                        //         handle_thumb_drag_end(&mut atoms, drag_state);
-                        //     },
-                        // ),
-                    ));
-            });
-    }
+                if let Ok((thumb, transform)) = q_thumb.get(*id_thumb) {
+                    // Get thumb rectangle
+                    let rect = Rect::from_center_size(transform.translation().xy(), thumb.size());
+                    if let Some(mut scroll_area) = world.get_mut::<ScrollArea>(id_scroll_area) {
+                        handle_track_click(
+                            &mut scroll_area,
+                            vertical,
+                            trigger.event().pointer_location.position,
+                            rect,
+                        );
+                    }
+                }
+            },
+        )
+        .create_children(|builder| {
+            builder
+                .spawn((NodeBundle::default(), Name::new("Scrollbar::Thumb")))
+                .style(if vertical {
+                    style_scrollbar_y_thumb
+                } else {
+                    style_scrollbar_x_thumb
+                })
+                .insert((ScrollBarThumb,));
+        })
+        .observe(
+            move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
+                trigger.propagate(false);
+                if let Some(scroll_area) = world.get::<ScrollArea>(id_scroll_area) {
+                    let scroll_top = scroll_area.scroll_top;
+                    let scroll_left = scroll_area.scroll_left;
+                    drag_state.set(
+                        &mut world,
+                        if vertical {
+                            DragState {
+                                mode: DragMode::DragY,
+                                offset: scroll_top,
+                            }
+                        } else {
+                            DragState {
+                                mode: DragMode::DragX,
+                                offset: scroll_left,
+                            }
+                        },
+                    );
+                }
+            },
+        )
+        .observe(
+            move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
+                trigger.propagate(false);
+                drag_state.set(
+                    &mut world,
+                    DragState {
+                        mode: DragMode::None,
+                        offset: 0.,
+                    },
+                );
+            },
+        )
+        .observe(
+            move |mut trigger: Trigger<Pointer<Cancel>>, mut world: DeferredWorld| {
+                trigger.propagate(false);
+                drag_state.set(
+                    &mut world,
+                    DragState {
+                        mode: DragMode::None,
+                        offset: 0.,
+                    },
+                );
+            },
+        )
+        .observe(
+            move |mut trigger: Trigger<Pointer<Drag>>, mut world: DeferredWorld| {
+                trigger.propagate(false);
+                let ds = drag_state.get(&world);
+                if let Some(mut scroll_area) = world.get_mut::<ScrollArea>(id_scroll_area) {
+                    let distance = trigger.event().distance;
+                    handle_thumb_drag(&mut scroll_area, &ds, distance);
+                }
+            },
+        );
+
+    scrollbar_id
 }
 
 fn handle_thumb_drag(scroll_area: &mut ScrollArea, ds: &DragState, distance: Vec2) {

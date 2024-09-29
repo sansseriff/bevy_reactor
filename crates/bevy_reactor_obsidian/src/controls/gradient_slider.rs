@@ -237,7 +237,7 @@ impl UiTemplate for GradientSlider {
             .unwrap();
         let gradient_material = gradient_material_assets.add(GradientRectMaterial {
             color_stops: [Srgba::default().to_vec4(); 8],
-            num_color_stops: 2,
+            num_color_stops: IVec4::new(2, 0, 0, 0),
             cap_size: THUMB_WIDTH * 0.5,
         });
 
@@ -251,7 +251,7 @@ impl UiTemplate for GradientSlider {
                     .get_resource_mut::<Assets<GradientRectMaterial>>()
                     .unwrap();
                 let material = ui_materials.get_mut(material.id()).unwrap();
-                material.num_color_stops = num_color_stops as i32;
+                material.num_color_stops.x = num_color_stops as i32;
                 material.color_stops = color_stops;
             }
         });

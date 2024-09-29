@@ -14,9 +14,17 @@ pub enum SplitterDirection {
     /// The splitter bar runs horizontally, and splits the items above and below it.
     Horizontal,
 
+    /// The splitter bar runs horizontally, and splits the items above and below it; however
+    /// dragging is inverted. Used for panels on the bottom.
+    HorizontalReverse,
+
     /// The splitter bar runs vertically, and splits the items to the left and right of it.
     #[default]
     Vertical,
+
+    /// The splitter bar runs vertically, and splits the items to the left and right of it.
+    /// However, dragging is inverted. Used for panels on the right.
+    VerticalReverse,
 }
 
 #[derive(Clone, PartialEq, Default, Copy)]
@@ -121,12 +129,16 @@ impl UiTemplate for Splitter {
         let current_offset = self.value;
         let direction = self.direction.clone();
         let style_splitter = match self.direction {
-            SplitterDirection::Horizontal => style_hsplitter,
-            SplitterDirection::Vertical => style_vsplitter,
+            SplitterDirection::Horizontal | SplitterDirection::HorizontalReverse => style_hsplitter,
+            SplitterDirection::Vertical | SplitterDirection::VerticalReverse => style_vsplitter,
         };
         let style_splitter_inner = match self.direction {
-            SplitterDirection::Horizontal => style_hsplitter_inner,
-            SplitterDirection::Vertical => style_vsplitter_inner,
+            SplitterDirection::Horizontal | SplitterDirection::HorizontalReverse => {
+                style_hsplitter_inner
+            }
+            SplitterDirection::Vertical | SplitterDirection::VerticalReverse => {
+                style_vsplitter_inner
+            }
         };
 
         builder
@@ -184,8 +196,14 @@ impl UiTemplate for Splitter {
                                 SplitterDirection::Horizontal => {
                                     world.run_callback(on_change, ds.offset - ev.y);
                                 }
+                                SplitterDirection::HorizontalReverse => {
+                                    world.run_callback(on_change, ds.offset + ev.y);
+                                }
                                 SplitterDirection::Vertical => {
                                     world.run_callback(on_change, ev.x + ds.offset);
+                                }
+                                SplitterDirection::VerticalReverse => {
+                                    world.run_callback(on_change, ds.offset - ev.x);
                                 }
                             }
                         }

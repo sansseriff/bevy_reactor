@@ -1,10 +1,6 @@
 //! Example of a simple UI layout
 
-use bevy::{
-    asset::io::{file::FileAssetReader, AssetSource},
-    prelude::*,
-    ui,
-};
+use bevy::{prelude::*, ui};
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
 use bevy_reactor_obsidian::{input_dispatch::DefaultKeyHandler, prelude::*};
@@ -27,11 +23,6 @@ fn main() {
     App::new()
         .init_resource::<List>()
         .init_resource::<Random32>()
-        .register_asset_source(
-            "obsidian_ui",
-            AssetSource::build()
-                .with_reader(|| Box::new(FileAssetReader::new("crates/obsidian_ui/assets"))),
-        )
         .add_plugins((
             DefaultPlugins,
             SignalsPlugin,
