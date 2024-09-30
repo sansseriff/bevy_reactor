@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_reactor_builder::UiBuilder;
-use bevy_reactor_signals::{RunContextRead, Signal};
+use bevy_reactor_signals::Signal;
 
 /// Component which tracks whether the pointer is hovering over an entity.
 #[derive(Default, Component)]

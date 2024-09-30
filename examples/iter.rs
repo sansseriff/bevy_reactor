@@ -4,7 +4,7 @@ use bevy::{prelude::*, ui};
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
 use bevy_reactor_obsidian::{input_dispatch::DefaultKeyHandler, prelude::*};
-use bevy_reactor_signals::{RunContextRead, SignalsPlugin};
+use bevy_reactor_signals::SignalsPlugin;
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)

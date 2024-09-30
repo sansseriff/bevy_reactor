@@ -6,7 +6,7 @@ use bevy_reactor_builder::{
     CreateChilden, EntityStyleBuilder, InvokeUiTemplate, SwitchBuilder, TextBuilder, UiBuilder,
     UiTemplate,
 };
-use bevy_reactor_signals::{Rcx, RunContextRead, SignalsPlugin};
+use bevy_reactor_signals::{Rcx, SignalsPlugin};
 
 fn style_test(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)

@@ -6,8 +6,7 @@ use bevy::{
 };
 
 use crate::{
-    derived::ReadDerivedInternal, Derived, Mutable, ReadDerived, ReadMutable, RunContextRead,
-    TrackingScope,
+    derived::ReadDerivedInternal, Derived, Mutable, ReadDerived, ReadMutable, TrackingScope,
 };
 
 /// Immutable reactive context, used for reactive closures such as derived signals.
@@ -37,6 +36,22 @@ impl<'p, 'w> Rcx<'p, 'w> {
     /// Access to immutable world from reactive context.
     pub fn world(&self) -> &World {
         self.world
+    }
+
+    /// Return a reference to the resource of the given type. Calling this function
+    /// adds the resource as a dependency of the current tracking scope.
+    pub fn read_resource<T: Resource>(&self) -> &T {
+        self.tracking.borrow_mut().track_resource::<T>(self.world);
+        self.world.resource::<T>()
+    }
+
+    /// Return a reference to the Component `C` on the given entity. Calling this function
+    /// adds the component as a dependency of the current tracking scope.
+    pub fn read_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+        self.tracking
+            .borrow_mut()
+            .track_component::<C>(entity, self.world);
+        self.world.entity(entity).get::<C>()
     }
 
     /// Return a reference to the Component `C` on the owner entity of the current
@@ -128,19 +143,5 @@ impl<'p, 'w> ReadDerived for Rcx<'p, 'w> {
     {
         self.world
             .read_derived_map_with_scope(derived.id, &mut self.tracking.borrow_mut(), f)
-    }
-}
-
-impl<'p, 'w> RunContextRead for Rcx<'p, 'w> {
-    fn read_resource<T: Resource>(&self) -> &T {
-        self.tracking.borrow_mut().track_resource::<T>(self.world);
-        self.world.resource::<T>()
-    }
-
-    fn read_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.tracking
-            .borrow_mut()
-            .track_component::<C>(entity, self.world);
-        self.world.entity(entity).get::<C>()
     }
 }
