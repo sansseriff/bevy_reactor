@@ -337,7 +337,7 @@ impl UiTemplate for Button {
                             if minimal {
                                 colors::TRANSPARENT
                             } else {
-                                let pressed = rcx.use_component::<Pressed>(button_id).unwrap();
+                                let pressed = rcx.read_component::<Pressed>(button_id).unwrap();
                                 let disabled = rcx.is_disabled(button_id);
                                 button_bg_color(
                                     variant.get(rcx),

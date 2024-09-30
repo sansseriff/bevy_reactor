@@ -185,7 +185,7 @@ impl UiTemplate for SpinBox {
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let show_buttons = builder.create_derived(move |rcx| {
             // Show buttons when spinbox is wide enough.
-            let node = rcx.use_component::<Node>(spinbox_id).unwrap();
+            let node = rcx.read_component::<Node>(spinbox_id).unwrap();
             node.size().x >= 48.
         });
 

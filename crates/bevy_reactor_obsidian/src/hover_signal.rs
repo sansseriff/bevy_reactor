@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_reactor_builder::UiBuilder;
-use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
+use bevy_reactor_signals::{RunContextRead, Signal};
 
 /// Component which tracks whether the pointer is hovering over an entity.
 #[derive(Default, Component)]
@@ -38,23 +38,11 @@ pub trait CreateHoverSignal {
     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool>;
 }
 
-impl<'p, 'w> CreateHoverSignal for Cx<'p, 'w> {
-    fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
-        self.world_mut().entity_mut(target).insert(Hovering(false));
-        let hovering = self.create_derived(move |rcx| {
-            rcx.use_component::<Hovering>(target)
-                .map(|h| h.0)
-                .unwrap_or(false)
-        });
-        hovering
-    }
-}
-
 impl<'w> CreateHoverSignal for UiBuilder<'w> {
     fn create_hover_signal(&mut self, target: Entity) -> Signal<bool> {
         self.world_mut().entity_mut(target).insert(Hovering(false));
         let hovering = self.create_derived(move |rcx| {
-            rcx.use_component::<Hovering>(target)
+            rcx.read_component::<Hovering>(target)
                 .map(|h| h.0)
                 .unwrap_or(false)
         });

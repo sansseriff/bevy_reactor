@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{signal::Signal, RunContextWrite};
+use crate::signal::Signal;
 use bevy::{
     ecs::{
         component::ComponentId,
@@ -42,14 +42,12 @@ impl<T> Clone for Mutable<T> {
 
 impl<T> Mutable<T>
 where
-    T: PartialEq + Send + Sync + 'static,
+    T: Send + Sync + 'static,
 {
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
-    pub fn update<R: RunContextWrite, F: FnOnce(Mut<T>)>(&self, cx: &mut R, updater: F) {
-        let value = cx.world_mut().get_mut::<MutableCell<T>>(self.cell).unwrap();
-        let inner = value.map_unchanged(|v| &mut v.0);
-        (updater)(inner);
+    pub fn update<W: WriteMutable, F: FnOnce(Mut<T>)>(&self, w: &mut W, updater: F) {
+        w.update_mutable(self.id(), updater);
     }
 }
 
@@ -171,6 +169,12 @@ pub trait WriteMutable {
     fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
     where
         T: Send + Sync + Clone + PartialEq + 'static;
+
+    /// Update a mutable value in place using a callback. The callback is passed a
+    /// `Mut<T>` which can be used to modify the value.
+    fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static;
 }
 
 /// Trait for creating new mutable variables.
@@ -250,6 +254,15 @@ impl WriteMutable for World {
     {
         self.commands().queue(UpdateMutableCell { mutable, value });
     }
+
+    fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static,
+    {
+        let value = self.get_mut::<MutableCell<T>>(mutable).unwrap();
+        let inner = value.map_unchanged(|v| &mut v.0);
+        (updater)(inner);
+    }
 }
 
 impl CreateMutable for World {
@@ -257,8 +270,8 @@ impl CreateMutable for World {
     where
         T: Send + Sync + 'static,
     {
-        let cell = self.world_mut().spawn(MutableCell::<T>(init)).id();
-        let component = self.world_mut().register_component::<MutableCell<T>>();
+        let cell = self.spawn(MutableCell::<T>(init)).id();
+        let component = self.register_component::<MutableCell<T>>();
         Mutable {
             cell,
             component,
@@ -319,11 +332,20 @@ impl<'w> WriteMutable for DeferredWorld<'w> {
     {
         self.commands().queue(UpdateMutableCell { mutable, value });
     }
+
+    fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
+    where
+        T: Send + Sync + 'static,
+    {
+        let value = self.get_mut::<MutableCell<T>>(mutable).unwrap();
+        let inner = value.map_unchanged(|v| &mut v.0);
+        (updater)(inner);
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cx::Cx, RunContextSetup, TrackingScope};
+    use crate::{Rcx, TrackingScope};
 
     use super::*;
 
@@ -332,30 +354,31 @@ mod tests {
         let mut world = World::default();
         let mut scope = TrackingScope::new(world.change_tick());
         let owner = world.spawn_empty().id();
-        let mut cx = Cx::new(&mut world, owner, &mut scope);
 
-        let mutable = cx.create_mutable::<i32>(0);
+        let mutable = world.create_mutable::<i32>(0);
         let reader = mutable.signal();
-        let reader2 = cx.create_mutable::<i32>(0).signal();
+        let reader2 = world.create_mutable::<i32>(0).signal();
+        let rcx = Rcx::new(&world, owner, &mut scope);
 
         // Check initial values
-        assert_eq!(reader.get(&cx), 0);
-        assert_eq!(reader2.get(&cx), 0);
+        assert_eq!(reader.get(&rcx), 0);
+        assert_eq!(reader2.get(&rcx), 0);
 
         // Update signals
-        mutable.set(&mut cx, 1);
+        mutable.set(&mut world, 1);
+        let rcx = Rcx::new(&world, owner, &mut scope);
 
         // Values should not have changed yet
-        assert_eq!(reader.get(&cx), 0);
-        assert_eq!(reader2.get(&cx), 0);
+        assert_eq!(reader.get(&rcx), 0);
+        assert_eq!(reader2.get(&rcx), 0);
 
         // Now commit the changes
         world.flush_commands();
 
         // Signals should have changed
-        let cx = Cx::new(&mut world, owner, &mut scope);
-        assert_eq!(reader.get(&cx), 1);
-        assert_eq!(reader2.get(&cx), 0);
+        let rcx = Rcx::new(&world, owner, &mut scope);
+        assert_eq!(reader.get(&rcx), 1);
+        assert_eq!(reader2.get(&rcx), 0);
     }
 
     #[test]
@@ -363,29 +386,30 @@ mod tests {
         let mut world = World::default();
         let mut scope = TrackingScope::new(world.change_tick());
         let owner = world.spawn_empty().id();
-        let mut cx = Cx::new(&mut world, owner, &mut scope);
 
-        let mutable = cx.create_mutable("Hello".to_string());
+        let mutable = world.create_mutable("Hello".to_string());
         let reader = mutable.signal();
-        let reader2 = cx.create_mutable::<i32>(0).signal();
+        let reader2 = world.create_mutable::<i32>(0).signal();
+        let rcx = Rcx::new(&world, owner, &mut scope);
 
         // Check initial values
-        assert_eq!(reader.get_clone(&cx), "Hello".to_string());
-        assert_eq!(reader2.get(&cx), 0);
+        assert_eq!(reader.get_clone(&rcx), "Hello".to_string());
+        assert_eq!(reader2.get(&rcx), 0);
 
         // Update signals
-        mutable.set_clone(&mut cx, "Goodbye".to_string());
+        mutable.set_clone(&mut world, "Goodbye".to_string());
+        let rcx = Rcx::new(&world, owner, &mut scope);
 
         // Values should not have changed yet
-        assert_eq!(reader.get_clone(&cx), "Hello".to_string());
-        assert_eq!(reader2.get(&cx), 0);
+        assert_eq!(reader.get_clone(&rcx), "Hello".to_string());
+        assert_eq!(reader2.get(&rcx), 0);
 
         // Now commit the changes
         world.flush_commands();
 
         // Signals should have changed
-        let cx = Cx::new(&mut world, owner, &mut scope);
-        assert_eq!(reader.get_clone(&cx), "Goodbye".to_string());
-        assert_eq!(reader2.get(&cx), 0);
+        let rcx = Rcx::new(&world, owner, &mut scope);
+        assert_eq!(reader.get_clone(&rcx), "Goodbye".to_string());
+        assert_eq!(reader2.get(&rcx), 0);
     }
 }

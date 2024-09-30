@@ -1,7 +1,6 @@
 # TODO
 
 - builder:
-  - spinbox
   - dialog
   - menu
   - menu bar
@@ -11,6 +10,7 @@
   - insert_dyn
   - border radius for swatch.
   - more efficient for_each?
+  - rewrite README
 - Run to convergence.
 - Checkbox bug in inspector
   - caused by run reactions?

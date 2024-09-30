@@ -7,11 +7,10 @@ use std::{
 use bevy::{ecs::world::DeferredWorld, prelude::*};
 
 use crate::{
-    callback::Callback,
-    derived::{Derived, DerivedCell, ReadDerived, ReadDerivedInternal},
-    mutable::{MutableCell, ReadMutable, WriteMutable},
+    derived::{Derived, ReadDerived, ReadDerivedInternal},
+    mutable::{MutableCell, ReadMutable},
     tracking_scope::TrackingScope,
-    Mutable, Rcx, Reaction, ReactionCell, Signal,
+    Mutable, Reaction, ReactionCell, Signal,
 };
 
 /// An immutable reactive context, used for reactive closures such as derived signals.
@@ -22,18 +21,7 @@ pub trait RunContextRead {
 
     /// Return a reference to the Component `C` on the given entity. Calling this function
     /// adds the component as a dependency of the current tracking scope.
-    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C>;
-
-    /// Return a reference to the Component `C` on the given entity. Calling this function
-    /// does not add the component as a dependency of the current tracking scope.
-    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C>;
-}
-
-/// A mutable reactive context. This allows write access to reactive data sources.
-/// TODO: This is going away.
-pub trait RunContextWrite: RunContextRead {
-    /// The current Bevy [`World`].
-    fn world_mut(&mut self) -> &mut World;
+    fn read_component<C: Component>(&self, entity: Entity) -> Option<&C>;
 }
 
 /// A "setup context" is similar to a reactive context, but can also be used to create
@@ -48,14 +36,6 @@ pub trait RunContextSetup<'p> {
 
     /// Entity that owns this context.
     fn owner(&self) -> Entity;
-
-    /// Set the debug name of the owner entity.
-    fn set_owner_name(&mut self, name: &str) {
-        let owner = self.owner();
-        self.world_mut()
-            .entity_mut(owner)
-            .insert(Name::new(name.to_string()));
-    }
 
     /// Create a new [`Mutable`] in this context.
     fn create_mutable<T>(&mut self, init: T) -> Mutable<T>
@@ -75,30 +55,6 @@ pub trait RunContextSetup<'p> {
             component,
             marker: PhantomData,
         }
-    }
-
-    /// Create a new [`Derived`] in this context. This represents a readable signal which
-    /// is computed from other signals. The result is not memoized, but is recomputed whenever
-    /// the dependencies change.
-    ///
-    /// Arguments:
-    /// * `compute` - The function that computes the output. This will be called with a single
-    ///    parameter, which is an [`Rcx`] object.
-    fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
-        &mut self,
-        compute: F,
-    ) -> Signal<R> {
-        let owner = self.owner();
-        let derived = self
-            .world_mut()
-            .spawn(DerivedCell::<R>(Arc::new(compute)))
-            .set_parent(owner)
-            .id();
-        self.add_owned(derived);
-        Signal::Derived(Derived {
-            id: derived,
-            marker: PhantomData,
-        })
     }
 
     /// Create a new [`Memo`] in this context. This represents a readable signal which
@@ -125,7 +81,7 @@ pub trait RunContextSetup<'p> {
             let prev_value = mutable.get_clone(cx);
             let value = compute(cx);
             if value != prev_value {
-                mutable.set_clone(cx, value);
+                mutable.set_clone(cx.world_mut(), value);
             }
         }));
         self.world_mut().entity_mut(mutable.cell).insert((
@@ -135,25 +91,6 @@ pub trait RunContextSetup<'p> {
         ));
 
         signal
-    }
-
-    /// Create an effect. This is a function that is associated with an entity, and which
-    /// re-runs whenever any of it's dependencies change.
-    ///
-    /// Arguments:
-    /// * `effect` - The function that computes the output. This will be called with a single
-    ///    parameter, which is a [`Cx`] object.
-    fn create_effect<F: Send + Sync + 'static + FnMut(&mut Cx)>(&mut self, effect: F) {
-        let owner = self.owner();
-        let ticks = self.world_mut().change_tick();
-        let action = Arc::new(Mutex::new(effect));
-        let mut scope = TrackingScope::new(ticks);
-        let entity = self.world_mut().spawn_empty().set_parent(owner).id();
-        self.add_owned(entity);
-        action.lock().unwrap()(&mut Cx::new(self.world_mut(), entity, &mut scope));
-        self.world_mut()
-            .entity_mut(entity)
-            .insert((scope, ReactionCell(action)));
     }
 }
 
@@ -173,7 +110,7 @@ pub struct Cx<'p, 'w> {
     world: &'w mut World,
 
     /// The entity that owns the tracking scope (or will own it).
-    owner: Entity,
+    _owner: Entity,
 
     /// Set of reactive resources referenced by the presenter.
     pub(crate) tracking: RefCell<&'p mut TrackingScope>,
@@ -181,114 +118,17 @@ pub struct Cx<'p, 'w> {
 
 impl<'p, 'w> Cx<'p, 'w> {
     /// Construct a new reactive context.
-    pub fn new(world: &'w mut World, owner: Entity, tracking: &'p mut TrackingScope) -> Self {
+    fn new(world: &'w mut World, owner: Entity, tracking: &'p mut TrackingScope) -> Self {
         Self {
             world,
-            owner,
+            _owner: owner,
             tracking: RefCell::new(tracking),
         }
     }
 
-    /// Access to world from reactive context.
-    pub fn world(&self) -> &World {
-        self.world
-    }
-
     /// Access to mutable world from reactive context.
-    pub fn world_mut(&mut self) -> &mut World {
+    fn world_mut(&mut self) -> &mut World {
         self.world
-    }
-
-    /// Spawn an empty [`Entity`]. The caller is responsible for despawning the entity.
-    pub fn create_entity(&mut self) -> Entity {
-        self.world_mut().spawn_empty().id()
-    }
-
-    /// Spawn an empty [`Entity`]. The entity will be despawned when the tracking scope is dropped.
-    pub fn create_owned_entity(&mut self) -> Entity {
-        let entity = self.world_mut().spawn_empty().id();
-        // self.tracking.borrow_mut().add_owned(entity);
-        entity
-    }
-
-    /// Create a new callback in this context. This registers a one-shot system with the world.
-    /// The callback will be unregistered when the tracking scope is dropped.
-    ///
-    /// Note: This function takes no deps argument, the callback is only registered once the first
-    /// time it is called. Subsequent calls will return the original callback.
-    pub fn create_callback<
-        P: SystemInput + Send + Sync + 'static,
-        M,
-        S: IntoSystem<In<P>, (), M> + 'static,
-    >(
-        &mut self,
-        callback: S,
-    ) -> Callback<P> {
-        let id = self.world_mut().register_system(callback);
-        Callback { id }
-    }
-
-    // /// Return a reference to the Component `C` on the given entity. Adds the component to
-    // /// the current tracking scope.
-    // pub fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-    //     let component = self
-    //         .world
-    //         .components()
-    //         .component_id::<C>()
-    //         .expect("Unknown component type");
-
-    //     match self.world.get_entity(entity) {
-    //         Some(c) => {
-    //             self.tracking
-    //                 .borrow_mut()
-    //                 .track_component_id(entity, component);
-    //             c.get::<C>()
-    //         }
-    //         None => None,
-    //     }
-    // }
-
-    // /// Return a reference to the Component `C` on the given entity. Does not add the component
-    // /// to the tracking scope.
-    // pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-    //     match self.world.get_entity(entity) {
-    //         Some(c) => c.get::<C>(),
-    //         None => None,
-    //     }
-    // }
-
-    // /// Return a reference to the Component `C` on the owner entity of the current
-    // /// context, or one of it's ancestors. This searches up the entity tree until it finds
-    // /// a component of the given type.
-    // pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
-    //     let mut entity = self.owner;
-    //     loop {
-    //         let ec = self.use_component(entity);
-    //         if ec.is_some() {
-    //             return ec;
-    //         }
-    //         match self.world.entity(entity).get::<Parent>() {
-    //             Some(parent) => entity = **parent,
-    //             _ => return None,
-    //         }
-    //     }
-    // }
-
-    // /// Return a reference to the Component `C` on the given entity. This version does not
-    // /// add the component to the tracking scope, and is intended for components that update
-    // /// frequently.
-    // pub fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-    //     match self.bc.world.get_entity(entity) {
-    //         Some(c) => c.get::<C>(),
-    //         None => None,
-    //     }
-    // }
-
-    /// Insert a component on the owner entity of the current context. This component can
-    /// be accessed by this context any any child contexts via [`use_inherited_component`].
-    pub fn insert(&mut self, component: impl Component) {
-        let owner = self.owner;
-        self.world_mut().entity_mut(owner).insert(component);
     }
 
     /// Add a cleanup function which is run once before the next reaction, or when the owner
@@ -340,22 +180,6 @@ impl<'p, 'w> ReadMutable for Cx<'p, 'w> {
     }
 }
 
-impl<'p, 'w> WriteMutable for Cx<'p, 'w> {
-    fn write_mutable<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Copy + PartialEq + 'static,
-    {
-        self.world.write_mutable(mutable, value);
-    }
-
-    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static,
-    {
-        self.world.write_mutable_clone(mutable, value);
-    }
-}
-
 impl<'p, 'w> ReadDerived for Cx<'p, 'w> {
     fn read_derived<R>(&self, derived: &Derived<R>) -> R
     where
@@ -379,63 +203,5 @@ impl<'p, 'w> ReadDerived for Cx<'p, 'w> {
     {
         self.world
             .read_derived_map_with_scope(derived.id, &mut self.tracking.borrow_mut(), f)
-    }
-}
-
-impl<'p, 'w> RunContextRead for Cx<'p, 'w> {
-    fn read_resource<T: Resource>(&self) -> &T {
-        self.tracking.borrow_mut().track_resource::<T>(self.world);
-        self.world.resource::<T>()
-    }
-
-    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.tracking
-            .borrow_mut()
-            .track_component::<C>(entity, self.world);
-        self.world.entity(entity).get::<C>()
-    }
-
-    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.world.entity(entity).get::<C>()
-    }
-}
-
-impl<'p, 'w> RunContextWrite for Cx<'p, 'w> {
-    fn world_mut(&mut self) -> &mut World {
-        self.world
-    }
-}
-
-impl<'p, 'w> RunContextSetup<'p> for Cx<'p, 'w> {
-    fn world_mut(&mut self) -> &mut World {
-        self.world
-    }
-
-    fn owner(&self) -> Entity {
-        self.owner
-    }
-
-    fn add_owned(&self, _entity: Entity) {
-        // self.tracking.borrow_mut().add_owned(entity);
-    }
-}
-
-impl RunContextRead for World {
-    fn read_resource<T: Resource>(&self) -> &T {
-        self.resource::<T>()
-    }
-
-    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.entity(entity).get::<C>()
-    }
-
-    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
-        self.entity(entity).get::<C>()
-    }
-}
-
-impl RunContextWrite for World {
-    fn world_mut(&mut self) -> &mut World {
-        self
     }
 }

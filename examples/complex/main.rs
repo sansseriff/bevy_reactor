@@ -35,7 +35,6 @@ use bevy::{
     },
     ui,
 };
-use bevy_reactor::*;
 
 fn style_main(ss: &mut StyleBuilder) {
     ss.position(ui::PositionType::Absolute)

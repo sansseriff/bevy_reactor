@@ -48,7 +48,7 @@ impl<'p, 'w> Ecx<'p, 'w> {
     pub fn use_inherited_component<C: Component>(&self) -> Option<&C> {
         let mut entity = self.owner;
         loop {
-            let ec = self.use_component(entity);
+            let ec = self.read_component(entity);
             if ec.is_some() {
                 return ec;
             }
@@ -140,14 +140,10 @@ impl<'p, 'w> RunContextRead for Ecx<'p, 'w> {
         self.world.resource::<T>()
     }
 
-    fn use_component<C: Component>(&self, entity: Entity) -> Option<&C> {
+    fn read_component<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.tracking
             .borrow_mut()
             .track_component::<C>(entity, self.world);
-        self.world.entity(entity).get::<C>()
-    }
-
-    fn use_component_untracked<C: Component>(&self, entity: Entity) -> Option<&C> {
         self.world.entity(entity).get::<C>()
     }
 }
