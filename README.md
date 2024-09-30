@@ -1,35 +1,18 @@
 # Overview
 
 **bevy_reactor** is a framework for fine-grained reactivity in Bevy. It implements reactive
-concepts such as signals built on Bevy primitives such as entities and components.
+concepts, such as signals, built on Bevy primitives: entities and components.
 
 ## Features
 
-- Reactive data sources: `Mutable`, `Derived` and `Signal`.
-- Tracked ownership.
-- Copyable callback handles.
-- Create entities that respond to reactive data sources such as mutable variables, Bevy resources
-  and components.
-- Simplified styling system.
-
-## Examples
-
-The most comprehensive example is named `complex`:
-
-```sh
-cargo run --example complex
-```
-
-## Getting Started
-
-To use this library, you'll need to install the `ReactorPlugin` plugin. You'll also need
-to create a view hierarchy and store it in a `ViewRoot` component.
-
-In addition, if you plan on using this for UI, you'll want to install the
-[bevy_mod_picking](https://github.com/aevyrie/bevy_mod_picking)
-plugins: `(CorePlugin, InputPlugin, InteractionPlugin, BevyUiBackend)`.
-
-# Usage
+- Create hierarchies of entities that respond to reactive data sources such as mutable
+  variables, Bevy resources and ECS components.
+- Uses Bevy's built-in change detection for triggering reactions.
+- Builder API allows easy construction of dynamic scenes and user interfaces.
+- Copyable callback handles allows easily passing callbacks as parameters.
+- Tracked ownership and automatic cleanup of reactions and callbacks.
+- Simplified styling system eases the complexity of `bevy_ui`'s styling components, and allows
+  for dynamic styling.
 
 ## Fine-Grained Reactivity
 
@@ -41,113 +24,284 @@ VDOM unnecessary.
 
 In coarse-grained frameworks like React or Dioxus, the "component" functions are re-run each
 time the display graph is recomputed. In fine-grained frameworks, the component functions are
-only executed once, but individual micro-closures defined within that function are run many times.
+only executed once, but individual "micro-closures" defined within that function are run many times.
 
-## Reactive Contexts
+## Crates
 
-Within the reactive framework, there are different kinds of execution contexts. Some contexts
-are "reactive" meaning that they automatically re-run when needed. Other kinds of contexts
-can be categorized as "handlers" (that is, respond to events or callbacks), or "setup"
-contexts: functions that create the various reactive elements but are not themselves reactive.
+The `bevy_reactor` project contains a number of crates:
 
-A "run context parameter" is a parameter which is passed to the functions running in these execution
-contexts. There are different types of run context parameter, depending on the type of execution
-context.
+- `bevy_reactor_signals` is the lowest-level layer, and represents the basic mechanisms
+  for reactions and signals.
+- `bevy_reactor_builders` contains the `UiBuilder` and `UiTemplate` types, which are used for
+  constructing and updating dynamic user interfaces and scenes.
+- `bevy_reactor_obsidian` provides the Obsidian widget library, an opinionated set of UI widgets
+  intended for making editors and other utility programs. Obsidian widgets support common
+  control types such as buttons, sliders, and splitter bars. The widgets also support accessibility
+  and tab-navigation.
+- `bevy_mod_stylebuilder` provides a set of convenience APIs for defining styles in Bevy user
+  interfaces.
+- Future crates:
+  - `bevy_reactor_inspect` - a world inspector widget
+  - `bevy_reactor_overlays` - reactive gizmos
+  - `bevy_reactor_node_graph` - generic node-graph editor, for things like shader editors.
 
-Here's an example of a context parameter, which is traditionally named `cx`:
+## Examples
 
-```rust
-element.insert_computed(|cx| {
-    let counter = cx.read_resource::<Counter>();
-    BackgroundColor(if counter.count & 1 == 0 {
-        Color::DARK_GRAY
-    } else {
-        Color::MAROON
-    })
-})
+There are several examples which demonstrate various aspects of `bevy_reactor`:
+
+- The `builder` example shows the basic use of builders.
+- The `buttons` example shows various kinds of buttons.
+- The `controls` example shows other kinds of controls.
+
+The most comprehensive example is named `complex` (note, currently broken):
+
+```sh
+cargo run --example complex
 ```
 
-The `Cx` parameter type is the most general and powerful. It's actually an amalgam of several traits,
-which includes:
+## Getting Started
 
-- `ReadMutable` - methods for reading to instances of `Mutable`.
-- `WriteMutable` - methods for writing to instances of `Derived`.
-- `ReadDerived` - methods for reading from instances of `Derived`.
-- `RunContextWrite` - a trait that defines methods running callbacks and doing other actions
-  which may mutate the world but which don't cause structural changes.
-- `RunContextSetup` - a trait that defines methods for _creating_ new mutables, callbacks,
-  memos and effects.
+To use this library, you'll need to install a number of plugins:
 
-The `Cx` type also has a `props` attribute which allows properties to be passed to the function
-running in the execution context. Not all context param types have this.
+- `SignalsPlugin` enables the basic operations of signals and reactions.
+- `StyleBuilderPlugin` is required for using style builders.
+- `ObsidianUiPlugin` is required for using the Obsidian widget library.
 
-Different types of execution contexts will have different types of context parameters. For example,
-a memo callback, which computes a value reactively, will have an `Rcx` context paramter that allows
-reading of reactive signals but does not allow writing or creating.
+# Usage
 
-In addition, the Bevy `World` implements these same traits, but non-reactively. This means you
-can access mutables and callbacks even if you are not in a reactive context. Writing to a mutable
-this way will still trigger reactions, but reading a mutable won't create a tracking dependency.
+## Introduction to Reactive Contexts
+
+A _reactive function_ is one that automatically re-runs whenever its dependencies change.
+The dependencies are data structures, such as ECS resources and components, which know when they
+have changed.
+
+Reactive functions are always passed a _reaction context_ parameter whose type is `Rcx`. This
+parameter has various methods that allow access to Bevy data, such as resources and components.
+These methods automatically add the accessed item to a _tracking scope_. For example, if you
+access a resource via `rcx.read_resource::<ResourceType>()`, the resource is added to the
+current tracking scope; this means that in the future, each time the resource changes, the reactive
+function will be run again.
+
+Here's an example of a context parameter, which is traditionally named `rcx` (short for
+"reactive context"):
+
+```rust
+// Spawn a new entity, returning an `EntityWorldMut`.
+let element = world.spawn_empty();
+
+// Conditionally add a component to the entity.
+element.insert_if(|rcx| rcx.read_resource::<Counter>().count & 1 == 0, || Disabled)
+```
+
+The `insert_if` method takes two arguments:
+
+- A reactive boolean function.
+- A function which returns an ECS component.
+
+The first function is run immediately, and then re-run whenever its dependencies change.
+In this example, there's only one dependency, which in this case is the resource `Counter`.
+Note that `Counter` was added as a dependency by the simple act of reading it's value, there's
+no explicit `subscribe` or `unsubscribe` step.
+
+This function returns a boolean value. Whenever this value changes, if it's true it will insert
+the component generated by the second function, otherwise if it's false it will remove the
+component.
+
+In other words, the "if" isn't just evaluated one time: instead, it sticks around for the life
+of the entity, and constantly ensures that the existence or non-existence of the component is
+always kept in sync with the current state of the boolean predicate.
+
+## Building Reactive Scenes and User Interfaces
+
+`bevy_reactor` adds new builder methods, such as `.insert_if()` to Bevy's `EntityWorldMut` via
+extension traits. These methods include:
+
+- `insert_if` - conditionally inserts a component.
+- `styles` - applies a list of _style builders_ to the entity (see later section for explanation
+  of style builders).
+- `style_dyn` - attaches a _dynamic style_ to the entity.
+- `effect` - attaches a reactive effect function to the entity. The effect can perform any
+  desired mutations to the entity.
+- `create_children(builder_fn)` - calls `builder_fn` with a new `UiBuilder` instance.
+
+`UiBuilder` is a struct that is used to build the children of a parent entity:
+
+```rust
+element.create_children(|builder| {
+    builder.spawn((NodeBundle::default(), Name::new("Child 1")));
+    builder.spawn((NodeBundle::default(), Name::new("Child 2")));
+});
+```
+
+This is very similar to the existing `with_children()` method, except that the builder function
+is passed a `UiBuilder` which has a lot of additional methods.
+
+`UiBuilder` can do more than just spawning entities. It can also create reactions and
+reactive data sources:
+
+- `.cond()` creates a conditional branch, essentially an "if" statement which constructs either
+  the "true" branch or the "false" branch depending on a test condition. If the condition changes,
+  then the previous branch is despawned and the new branch constructed.
+- `.switch()` is a more elaborate conditional branch, similar to a C "switch" statement.
+- `.for_each()` will accept a reactive array value, and generate children for each array element.
+  This generates a reactive loop which will "diff" the array from the previous value, and
+  create and destroy the generated entities for array values which changed, preserving
+  the ones that stayed the same.
+- `.for_each_cmp()` is similar to `for_each` but allows specifying a custom comparator function
+  for the array elements.
+- `.for_index()` uses a different, and simpler algorithm for looping: instead of the "diff"
+  algorithm used by `for_each`, it operates strictly by array index.
+- `.text_computed()` creates dynamic text block.
+- `.create_effect()` creates a generalized, side-effectful reaction which is "owned" by the
+  parent entity, meaning that the reaction is despawned when the parent is.
+- `.create_mutable()` creates a local mutable variable which is owned by the parent entity.
+- `.create_derived()` creates a derived computation which is owned by the parent entity.
+- `.invoke()` is used to call a template (see subsequent section).
+
+`UiBuilder` also has some conveniece methods that are non-reactive, but useful when constructing
+complex hierarchies:
+
+- `.text()` creates a static (non-reactive) text block.
+- `.create_callback()` registers a new one-shot system. This system is "owned" by the parent
+  entity, meaning that it will be unregistered when the parent is despawned.
+
+### Example using `cond`:
+
+Here's an example of how to use `.cond()`:
+
+```rust
+builder.cond(
+    // The test condition
+    |rcx: &Rcx| {
+        let counter = rcx.read_resource::<Counter>();
+        counter.count & 1 == 0
+    },
+    // The true branch
+    |builder| {
+        builder.text("Counter is even");
+    },
+    // The false branch
+    |builder| {
+        builder.text("Counter is odd");
+    },
+)
+```
+
+The `cond` method takes three arguments:
+
+- A reactive boolean condition. This can be a reactive function, as shown; but it can also
+  be a `Signal<bool>` which we'll talk about subsequently.
+- A builder function for the true branch. This is called when the condition is true.
+- A builder function for the false branch. This is called when the condition is false.
+
+When `.cond()` is called, the condition is evaluated immediately, and either the true or false
+branch is constructed. Each branch can produce multiple children, or none. Later, if the data
+dependencies change, the condition function will be run again, and if the result is different
+from the previous time, then the old children will be despawned and new children built in their
+place.
+
+### Example using `for_each`:
+
+Here's an example using `for_each`:
+
+```rust
+builder.for_each(
+    // Reactive function which returns the array of items
+    |rcx| {
+        let suits = rcx.read_resource::<CardSuits>();
+        suits.items.clone().into_iter()
+    },
+    // Function which builds the children for each array
+    |item, builder| {
+        builder.text(item.clone());
+    },
+    // Fallback function, called when the array is empty.
+    |builder| {
+        builder.text("List is empty!");
+    },
+);
+```
+
+In this example, we read a list of strings from a resource. (It doesn't have to be strings,
+`for_each` will work with any data type that is `PartialEq` and `Clone`). This function returns
+an iterator over the elements. The output of this iterator will be "diffed" with the previous
+array (which is initially empty). For any "new" array elements (that is, elements which were not
+present before), the second argument will be called to build child entities for that array.
+
+In cases where the array is empty, it can be handy to render a placeholder, such as
+"Search returned no results". The third argument can be used for this, it provides a "fallback"
+function which is called when the array is empty. If you don't need a fallback, you can just
+give it an empty builder.
 
 ## Mutables and Signals
 
-The simplest type of reactive data source is a `Mutable`, which is simply a variable. You can
-create a mutable via `create_mutable()`:
+Up to this point, all of our reactions have depended on Bevy resources via `.read_resource()`.
+However, there are many other kinds of data dependencies available in `bevy_reactor`.
+
+For example, you can also read components using `.read_component()` - but to use this, you have
+to know the entity id.
+
+In user-interfaces, it is often useful to be able to pass around references to reactive variables,
+such that a parent widget can create a local variable and then pass a reference to that variable
+to a child widget. This is a bit more complex than simply passing a Rust reference, because we
+want the variable to remain reactive.
+
+The `UiBuilder::create_mutable(value)` method creates a new `Mutable<T>`.
 
 ```rust
-let pressed = cx.create_mutable::<bool>(false);
+let pressed = builder.create_mutable::<bool>(false);
 ```
 
-The return result is a `Mutable<T>`, which is a handle used to access the variable. Internally,
-the mutable is simply a Bevy `Entity`, but with some extra type information. Because it's an entity,
-it can be freely passed around, copied, captured in closures, and so on.
+Mutables are like handles that point to a reactive variable. Internally, the mutable is simply a
+Bevy `Entity`, but with some extra type information. Because it's an entity, it can be freely
+passed around, copied, captured in closures, and so on.
 
-Creating a mutable this way causes the entity to be added to the "owned" list for the current
-tracking scope. This means that when that scope is destroyed - when the object that owns this
-execution context is despawned - all of the mutables, memos, effects and other reactive elements
-will also be despawned.
+Creating a mutable this way causes the entity to be added as a child of the builder's parent
+entity. This means that when that parent is despawed, all of the mutables will also be despawned.
 
 Accessing the data in a mutable can be done in one of several ways:
 
 - Getting the data via `mutable.get(context)`;
 - Setting the data via `mutable.set(context, value)`;
+- Updating the data via `mutable.update(context, updater_fn)`;
 - Getting a reference to the data via `mutable.as_ref(context)`;
 - Transforming the data via `mutable.map(context, mapper_fn)`;
 - Accessing the data via a signal: `mutable.signal()`;
 
-The reason we need to pass in a context object (which can be `Cx`, `Rcx` or `World`) is because
-we the actual data is stored in Bevy's ECS and we need a way to retrieve it. `Mutable<T>` is just
-a handle, it doesn't contain the data itself - but it does contain a type parameter which remembers
-what kind of data is being stored.
+The `context` object can be a reactive context like `Rcx`, but it can also be a `World` or
+`DeferredWorld`. The reason we need the context object is because the actual data is stored in
+Bevy's ECS and we need a way to retrieve it. `Mutable<T>` is just a handle, it doesn't contain
+the data itself - but it does contain a type parameter which remembers what kind of data
+is being stored.
 
-All of the functions which read the mutable value (`.get()`, `.as_ref()`, `.map()`) also create
-a dependency entry in the current tracking scope, which will cause the computation to be re-run
-when the value of the mutable changes.
-
-The call `mutable.signal()` returns a reactive signal object. What makes this this different from
-the `get()` method is that the receiver is type-erased, in other words, you can pass around a
-`Signal` object without revealing the fact that the signal came from a `Mutable`. This is handy
-because there are other kinds of reactive objects (like memos and derivations) which can also
-produce signals. The function that reads the signal can work regardless of where the signal
-came from.
-
-Signals have an API which is similar to mutables: `.get(context)`, `.map(context, mapper)` and so
-on.
-
-Mutables are transactional: when you write to a mutable, the change does not take effect until
-the next frame. There's an ECS system that "commits" the pending changes.
+If the context is a reactive context, such as `Rcx`, then reading the mutable will also create
+a dependency on that variable. Passing a `World` or `DeferredWorld` will also read the value,
+but will not create a dependency.
 
 The `.get()`, `.set()` and `.signal()` methods given above assume that the data in the mutable
 implements `Copy`. There is also a `.get_clone()` method, which works with data types that
 implement `Clone`.
 
-## Derived Signals
+The call `mutable.signal()` returns a reactive signal object. Signals are objects that are used
+to access the data from a reactive data source.
 
-A derived signal is a signal resulting from a computation that depends on other signals.
+Why would you use a signal instead of simply calling `mutable.get()`? The reason is because
+signals can represent other kinds of reactive data sources besides mutables. For example, say
+you have a button widget that has a 'disabled' attribute. We want this attribute to be reactive,
+so that the disabled state of the button will change when the data changes. By making `disabled`
+a signal, we gain the flexibility to pass in different kinds of reactive values, including
+constants, mutables, derived computations, and so on.
+
+Signals have an API which is similar to mutables: `.get(context)`, `.map(context, mapper)` and so
+on.
+
+## Derived Computation
+
+A derived computation is a signal resulting from a computation that depends on other signals.
 
 ```rust
 /// A signal derived from a resource.
-let panel_width = cx
+let panel_width = builder
     .create_derived(|cx| {
         let res = cx.read_resource::<PanelWidth>();
         res.0
@@ -160,7 +314,7 @@ dependencies change, the caller of the derived will be re-run.
 
 Derived signals are not memoized, however, for that we need to use `Memo` (still to be implemented).
 
-## Tracking Scopes and Reactions
+## Internals: Tracking Scopes and Reactions
 
 This section talks about some internal aspects of the framework which are not visible to the
 outside, but which are important to understand.
@@ -170,193 +324,100 @@ accessed within a run context. This includes mutables, resources, components, an
 else. It uses Bevy's change detection to determine whether a dependency has changed.
 
 Tracking scopes are implemented as ECS components. They are often paired with "reactions",
-which is another type of component that contains an action function and a cleanup function.
+which is another type of component that contains an action function.
 The action function is run whenever the tracking scope indicates that one or more dependencies
 have changed. When this happens, the tracking scope is first cleared; the reaction is expected
 to re-subscribe to any dependencies that are needed.
 
-The cleanup function is called when the scope is despawned.
-
 Tracking scopes, reactions and mutables form the basis of more advanced reactive constructs
 like memos and derivations.
 
-Tracking scopes are also "owners" meaning they have a list of entities that should be despawned
-along with the tracking scope.
-
 ## Callbacks
 
-A `Callback` is a handle to a closure. Like mutables, the closure function is stored in an ECS
-component. Also like mutables, the handle can be passed around freely, and is destroyed when
-the current tracking scope is despawned.
+A `Callback` is just a wrapper around a one-shot `SystemId`. The only real difference between
+callbacks and one-shot systems is that callbacks are "entity scoped", meaning that they are
+automatically unregistered whenever their parent entity is despawned.
 
 To create a callback, call `.create_callback()`:
 
 ```rust
-let button_clicked = cx.create_callback(|cx| {
+let button_clicked = cx.create_callback(|_: In<()>| {
     println!("Button was clicked");
-});
-```
-
-You can also call `.create_callback_mut()` which creates a mutable (`FnMut`) callback:
-
-```rust
-let mut click_count = 0;
-let button_clicked = cx.create_callback_mut(move |cx| {
-    click_count += 1;
-    println!("Button clicked: {} times", click_count);
 });
 ```
 
 To call the callback, you need to call `.run_callback()`:
 
 ```rust
-cx.run_callback(button_click, ());
-// Or
 world.run_callback(button_click, ());
 ```
 
-## Views and Elements
+## UiTemplates
 
-`View` is a trait that describes an object that generates an entity tree. A view is kind of
-like a template: it's an entity, but it's not the entity that is actually rendered, rather
-it's a factory which both creates and updates the "display graph" - what would correspond to the
-"DOM" in a browser.
+One important feature of the UI framework is to be able to define "widgets", that is, re-usable
+modular sub-trees which have predefined behaviors.
 
-The most common type of `View` is called `Element`. Elements are very general: they can create
-any kind of entity, although they are most often used to create UI nodes:
+One simple way to implement this would be to make widgets functions: to create a button, call
+`button()`. The problem with this approach is that most widgets have a large number of parameters,
+and so the function signature would quickly get complicated.
 
-```rust
-Element::<NodeBundle>::new()
-    .children((
-        Element::<NodeBundle>::new(),
-        Element::<NodeBundle>::new(),
-    ))
-```
+Also, most of the time we're only setting a small number of parameters, so we end up writing a lot
+of boilerplate to pass in the default values.
 
-Another kind of view is `Text`, which creates a text entity. Note that `bevy_reactor` currently
-only supports creating text nodes with a single string. (The reason for this because Bevy's
-implementation of how text works may change.)
+To avoid this, we could use the "parameter builder" pattern, where you have some struct that
+contains all the function parameters, and use a fluent API to populate them. This object then gets
+passed into the function.
 
-All views, including elements, have a lifecycle:
+But if we're going to go through the trouble of defining a struct with all these properties, then
+why do we need a standalone function at all? Why not just make it a method on the parameter object
+and "cut out the middleman"?
 
-- When the view is first constructed, it does nothing until the `.build()` method is called. Before
-  that happens, you can call various methods to customize the view, such as adding children
-  and effects.
-- The framework calls the `.build()` method, which actually creates the display entities,
-  attaching children, and starting any effects.
-- Each view has a `TrackingScope`, and is similar to a `Reaction`. When the view's dependencies
-  change, the `.react()` function of the view is called.
-- When the view is ready to be despawned, the `.raze()` method is called to ensure that all
-  resources are despanwed as well, including the display graph.
-
-## Element Children
-
-The `Element` object has a method `.children()` which accepts either a single child, or
-a variable-length tuple of children. Any object that implements the `IntoView` trait can
-be passed as a child view, so for example text strings implement `IntoView` and automatically
-generate a text node.
+This is what the `UiTemplate` trait does. It's actually a very simple trait:
 
 ```rust
-Element::<NodeBundle>::new()
-    .children((
-        Element::<NodeBundle>::new(),
-        text("Count: "),
-        text_computed(|cx| {
-            let counter = cx.read_resource::<Counter>();
-            format!("{}", counter.count)
-        }),
-        ": ",
-    )),
-```
-
-## Element Effects
-
-Because views don't immediately create entities, but only do so during the build phase, any
-customizations to the display graph have to be deferred until after the display entity exists.
-To this end, the `Element` has a list of `effects` which are applied to the display entity
-after creation.
-
-Effects are very general, and can do things like insert children, add components, modify styles,
-and so on. Effects can also spawn reactions, which are persistent tasks that modify the entity
-in response to reactive signals and other dependencies.
-
-The most general effect is created by the `.create_effect()` method, which takes the display
-entity and lets you make any changes you want. However, there are more ergonomic helper methods
-such as `.insert_computed()` and `.styled()` which remove some of the boilerplate.
-
-## Conditional Rendering
-
-Conditional rendering is accomplished using the `Cond` struct:
-
-```rust
-element.children(
-    Cond::new(
-        |cx| {
-            let counter = cx.read_resource::<Counter>();
-            counter.count & 1 == 0
-        },
-        || "[Even]",
-        || "[Odd]",
-    ))
-```
-
-The first argument is a `test` expression, and is a reactive function which returns a boolean.
-The other two arguments are the `true` and `false` branch. Note that these are closures, which
-means that the body of the branch is not evaluated for the branch that is not taken.
-
-## Rendering Lists
-
-The `For::each()` method takes two arguments: A closure which returns an iterator,
-and a closure which renders a view for each element. Internally the `For` view keeps track
-of the array elements, and does a `diff` when the array changes, so that only the elements
-that actually changed are re-rendered.
-
-```rust
-element.children(
-    For::each(
-        |cx| {
-            let counter = cx.read_resource::<Counter>();
-            [counter.count, counter.count + 1, counter.count + 2].into_iter()
-        },
-        |item| format!("item: {}", item),
-    ))
-```
-
-There is also `For::index` which doesn't do this diffing, and operates strictly by array
-index.
-
-## Custom View Templates
-
-An object that implements the `ViewTemplate` trait represents a re-usable factory or template
-for views.
-
-```rust
-struct MyWidget {
-    label: String,
+pub trait UiTemplate {
+    fn build(&self, builder: &mut UiBuilder);
 }
+```
 
-impl ViewTemplate for MyWidget {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
-        Element::new().children(self.label.clone())
+A template is nothing more than a struct which implements this trait. The struct can have whatever
+properties it needs, and can be initialized in whatever way you want. Once the template is
+constructed, you can execute it by calling `builder.invoke(template)`.
+
+Here's an example of invoking the Obsidian `Button` template:
+
+```rust=
+builder
+    .invoke(
+        Button::new()
+            .variant(ButtonVariant::Primary)
+            .labeled("Primary"),
+    )
+    .invoke(
+        Button::new()
+            .variant(ButtonVariant::Danger)
+            .labeled("Danger"),
+    )
+```
+
+Note that templates don't live very long: they are constructed and immediately executed; once
+executed, they are dropped.
+
+Interally, the button template just calls the builder argument:
+
+```rust
+impl UiTemplate for Button {
+    fn build(&self, builder: &mut UiBuilder) {
+        // Note: This example is massively simplified.
+        // The real button template is 2 pages long.
+        let label: String = self.label.into();
+        builder.spawn()
+           .style(button_style)
+           .observe(click_handler)
+           .create_children(|builder| {
+               builder.text(label)
+           });
     }
-}
-```
-
-To invoke the template, simply include it as a child widget:
-
-```rust
-Element::<NodeBundle>::new()
-    .children((
-        MyWidget { label: "Hello" },
-        ": ",
-    )),
-```
-
-Alternatively, you can create spawn the template as a UI root by calling `.to_root()`:
-
-```rust
-fn setup_view_root(mut commands: Commands) {
-    commands.spawn(MyWidget.to_root());
 }
 ```
 
@@ -382,9 +443,8 @@ fn style_button_size_md(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xxxs.height());
 }
 
-Element::<NodeBundle>::for_entity(id)
-    .named("button")
-    .with_styles((
+builder.spawn(NodeBundle::default())
+    .styles((
         style_button,
         style_button_size_md,
     ))
@@ -403,79 +463,21 @@ The style functions are simply executed once, in order, during the build phase. 
 is that it provides a way to re-use styles without having to repeat the same properties over
 and over again.
 
-## Hover Signal
+## Obsidian UI
 
-The `CreateHoverSignal` trait adds a `.create_hover_signal(entity)` method to `Cx`. This
-creates a derived reactive signal which can be used in conjunction with
-[bevy_mod_picking](https://github.com/aevyrie/bevy_mod_picking) to determine whether an element,
-or one of it's descendants, is currently being hovered by the mouse.
+The `bevy_reactor_obsidian` create defines a standard set of styles: colors, sizes, fonts and
+other definitions that provide a consistent, "editor-like" look and feel, along with a collection
+of common widgets.
 
-```rust
-let button_id = cx.create_entity();
-let hovering = cx.create_hover_signal(button_id);
+Obsidian also provides a bunch of utilities for building widgets, including:
 
-Element::<NodeBundle>::from_id(button_id)
-    .insert(BorderColor::default())
-    .create_effect(move |cx, ent| {
-        let is_pressed = pressed.get(cx);
-        let is_hovering = hovering.get(cx);
-        let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-        border.0 = match (is_pressed, is_hovering) {
-            (true, _) => Color::WHITE,
-            (false, true) => Color::LIME_GREEN,
-            (false, false) => Color::RED,
-        };
-    })
-```
+- Signals for detecting hover states.
+- Signals for detecting keyboard focus states.
+- Positioning algorithms for floating popups.
+- Scrolling regions.
 
-The function takes an entity id as input; to use this effectively you'll want to pre-allocate
-the entity id before creating the view nodes.
+### Hover Signal
 
-# Examples
-
-Here's an example showing a complex example of using derived signals and callbacks.
-The `GradientSlider` widget displays a horizontal slider that has a gradient background, and can
-be used for building a color editor. The inputs to the slider are signals:
-
-- The `gradient` signal tells the slider what colors to display in the background. In this
-  example, we're using a resource `ColorEditState` to hold the current RGB value. The slider
-  is editing the `red` component, so the gradient varies the red channel from 0 to 1 while
-  keeping the green, blue and alpha channels constant. Because the `gradient` parameter
-  is wrapped in a `.create_derived()`, it will calculate a new gradient when the color changes.
-- The `min` and `max` parameters are also signals, however in this case they are constants,
-  so we pass `Signal::Constant()` as the value.
-- The `value` parameter tells the slider where to display the "thumb" component. It's also
-  derived from the current color, but multiplied by 255 to make it easier to edit.
-- The `style` parameter allows us to add additional styles to the widget, such as adding a
-  `flex_grow` value so that the slider will stretch to fill the available space.
-- The `precision` parameter indicates how many decimal places the output value should be rounded
-  to. This parameter is not a signal, which means it is not reactive: it cannot be changed
-  once the slider has been created.
-- The `on_change` parameter accepts a callback which is called whenever the slider thumb is
-  dragged. In this case, a callback is created which mutates the resource with the new
-  RGB color value.
-
-The derived signals and callbacks are automatically added as children of the current scope,
-and will be despawned when the scope is destroyed.
-
-```rust
-GradientSlider::new()
-    .gradient(cx.create_derived(|cx| {
-        let rgb = cx.read_resource::<ColorEditState>().rgb;
-        ColorGradient::new(&[
-            Srgba::new(0.0, rgb.green, rgb.blue, 1.0),
-            Srgba::new(1.0, rgb.green, rgb.blue, 1.0),
-        ])
-    }))
-    .min(0.)
-    .max(255.)
-    .value(cx.create_derived(|cx| {
-        cx.read_resource::<ColorEditState>().rgb.red * 255.0
-    })),
-    .style(style_slider)
-    .precision(1)
-    .on_change(cx.create_callback(move |cx| {
-        cx.world_mut().resource_mut::<ColorEditState>().rgb.red =
-            cx.props / 255.0;
-    })),
-```
+The `CreateHoverSignal` trait adds a `.create_hover_signal(entity)` method to `UiBuilder`. This
+creates a derived reactive signal which can be used in conjunction with the `HoverMap`
+which returns the entity currently being hovered by the mouse.
