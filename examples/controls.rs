@@ -207,6 +207,28 @@ fn setup_view_root(world: &mut World) {
                     );
                 });
 
+            builder.text("SpinBox");
+            builder
+                .spawn(NodeBundle::default())
+                .styles((style_column, |sb: &mut StyleBuilder| {
+                    sb.align_items(ui::AlignItems::Stretch);
+                }))
+                .create_children(|builder| {
+                    let value = builder.create_mutable::<f32>(50.);
+                    let on_change = builder.create_callback(
+                        move |new_value: In<f32>, mut world: DeferredWorld| {
+                            value.set(&mut world, *new_value);
+                        },
+                    );
+                    builder.invoke(
+                        SpinBox::new()
+                            .min(0.)
+                            .max(100.)
+                            .value(value)
+                            .on_change(on_change),
+                    );
+                });
+
             builder.text("DisclosureToggle");
             builder
                 .spawn(NodeBundle::default())
