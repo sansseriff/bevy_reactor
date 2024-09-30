@@ -1,11 +1,17 @@
 # TODO
 
 - builder:
+  - spinbox
+  - dialog
+  - menu
+  - menu bar
+  - floating
+  - viewport
   - effect
   - insert_dyn
   - border radius for swatch.
+  - more efficient for_each?
 - Run to convergence.
-- cleanup with component hooks.
 - Checkbox bug in inspector
   - caused by run reactions?
   - Need "run to convergence".
