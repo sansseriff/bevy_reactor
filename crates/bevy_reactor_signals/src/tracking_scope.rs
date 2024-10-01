@@ -145,46 +145,81 @@ fn run_cleanups(world: &mut World, changed: &[Entity]) {
     }
 }
 
-/// Run reactions whose dependencies have changed.
-/// TODO: Add "Run to convergence" logic (copy from Quill)
+const MAX_DIVERGENCE_CT: usize = 32;
+
+/// Run reactions whose dependencies have changed. This uses a "run to convergence" strategy:
+/// running a reaction may trigger other reactions, so we loop until there are no more reactions
+/// left to run. However, to avoid an infinite loop we require that the reactions eventually
+/// reach a quiescent state. We count the number of "divergences" (cycles where the number
+/// of reactions didn't decrease) and impose a strict limit on the number of such cycles.
 pub(crate) fn run_reactions(world: &mut World) {
-    let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
-    let mut changed: Vec<Entity> = Vec::with_capacity(64);
-    let tick = world.change_tick();
-    for (entity, scope, _) in scopes.iter(world) {
-        // if let Some(name) = world.entity(entity).get::<Name>() {
-        //     println!("Running reaction for {}", name);
-        // }
-        if scope.dependencies_changed(world, tick) {
-            changed.push(entity);
+    let is_tracing = world.get_resource_mut::<TrackingScopeTracing>().is_some();
+    let mut all_reactions: Vec<Entity> = Vec::new();
+    let mut iteration_ct: usize = 0;
+    let mut divergence_ct: usize = 0;
+    let mut prev_change_ct: usize = 0;
+
+    loop {
+        // If this is the first iteration, use the world's change tick, otherwise bump the
+        // tick and use that.
+        let this_run = if iteration_ct > 0 {
+            world.increment_change_tick()
+        } else {
+            world.change_tick()
+        };
+
+        // Find all tracking scopes that have changes.
+        let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
+        let mut changed: Vec<Entity> = Vec::with_capacity(64);
+        for (entity, scope, _) in scopes.iter(world) {
+            if scope.dependencies_changed(world, this_run) {
+                changed.push(entity);
+            }
         }
+
+        // Quit if there are no changes.
+        if changed.is_empty() {
+            break;
+        }
+
+        // In debug mode, record the changed reactions in a resource.
+        if is_tracing {
+            all_reactions.extend(changed.clone());
+        }
+
+        // Run any registered cleanup functions.
+        run_cleanups(world, &changed);
+
+        // Run reactions
+        for scope_entity in changed.iter() {
+            // Run the reaction
+            let cell = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
+            let mut next_scope = TrackingScope::new(this_run);
+            let inner = cell.0.clone();
+            let mut lock = inner.lock().unwrap();
+            lock.react(*scope_entity, world, &mut next_scope);
+
+            // Replace deps and cleanups in the current scope with the next scope.
+            let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
+            scope.take_deps(&mut next_scope);
+            scope.tick = this_run;
+        }
+
+        // Check for divergence.
+        iteration_ct += 1;
+        let change_ct = changed.len();
+        if change_ct >= prev_change_ct {
+            divergence_ct += 1;
+            if divergence_ct > MAX_DIVERGENCE_CT {
+                panic!("Reactions failed to converge, num changes: {}", change_ct);
+            }
+        }
+        prev_change_ct = change_ct;
     }
 
-    // Record the changed entities for debugging purposes.
+    // Record the changed entities for diagnostic purposes.
     if let Some(mut tracing) = world.get_resource_mut::<TrackingScopeTracing>() {
-        // Check for empty first to avoid setting mutation flag.
-        if !tracing.0.is_empty() {
-            tracing.0.clear();
-        }
-        if !changed.is_empty() {
-            tracing.0.extend(changed.iter().copied());
-        }
-    }
-
-    run_cleanups(world, &changed);
-
-    for scope_entity in changed.iter() {
-        // Run the reaction
-        let cell = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
-        let mut next_scope = TrackingScope::new(tick);
-        let inner = cell.0.clone();
-        let mut lock = inner.lock().unwrap();
-        lock.react(*scope_entity, world, &mut next_scope);
-
-        // Replace deps and cleanups in the current scope with the next scope.
-        let (_, mut scope, _) = scopes.get_mut(world, *scope_entity).unwrap();
-        scope.take_deps(&mut next_scope);
-        scope.tick = tick;
+        std::mem::swap(&mut tracing.0, &mut all_reactions);
     }
 }
 

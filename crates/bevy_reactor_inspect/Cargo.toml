@@ -1,0 +1,12 @@
+[package]
+name = "bevy_reactor_inspect"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bevy = { workspace = true }
+bevy_mod_stylebuilder = { workspace = true }
+bevy_reactor_signals = { workspace = true }
+bevy_reactor_builder = { workspace = true }
+bevy_reactor_obsidian = { workspace = true }

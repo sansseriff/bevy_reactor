@@ -4,9 +4,10 @@
 // mod transform_overlay;
 
 use bevy_mod_stylebuilder::*;
+use bevy_reactor_builder::{UiBuilder, UiTemplate};
 use bevy_reactor_obsidian::{cursor::StyleBuilderCursor, prelude::*};
 // use bevy_reactor_overlays as overlays;
-use bevy_reactor_signals::{Cx, Rcx, RunContextSetup, TrackingScopeTracing};
+use bevy_reactor_signals::{Rcx, TrackingScopeTracing};
 // use node_graph_demo::{DemoGraphRoot, NodeGraphDemo};
 // use obsidian_ui::{
 //     colors,
@@ -217,25 +218,25 @@ fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
 
 struct DemoUi(Entity);
 
-impl ViewTemplate for DemoUi {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for DemoUi {
+    fn build(&self, builder: &mut UiBuilder) {
         let mut inc_count = 0;
         let mut dec_count = 0;
-        let clicked_increment = cx.create_callback(move |_in: In<()>| {
+        let clicked_increment = builder.create_callback(move |_in: In<()>| {
             inc_count += 1;
             println!("Increment clicked: {} times", inc_count);
         });
-        let clicked_decrement = cx.create_callback(move |_in: In<()>| {
+        let clicked_decrement = builder.create_callback(move |_in: In<()>| {
             dec_count += 1;
             println!("Decrement clicked: {} times", dec_count);
         });
 
-        let checked_1 = cx.create_mutable(false);
-        let checked_2 = cx.create_mutable(true);
-        let red = cx.create_mutable::<f32>(128.);
-        let name = cx.create_mutable("filename.txt".to_string());
+        let checked_1 = builder.create_mutable(false);
+        let checked_2 = builder.create_mutable(true);
+        let red = builder.create_mutable::<f32>(128.);
+        let name = builder.create_mutable("filename.txt".to_string());
 
-        let panel_width = cx.create_derived(|cx| {
+        let panel_width = builder.create_derived(|cx| {
             let res = cx.read_resource::<PanelWidth>();
             res.0
         });
@@ -422,8 +423,8 @@ fn graph_view_style(ss: &mut StyleBuilder) {
     ss.display(Display::Flex).width(ui::Val::Percent(100.));
 }
 
-impl ViewTemplate for CenterPanel {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for CenterPanel {
+    fn build(&self, builder: &mut UiBuilder) {
         let panel_height = cx.create_derived(|cx| {
             let res = cx.read_resource::<PanelHeight>();
             res.0
