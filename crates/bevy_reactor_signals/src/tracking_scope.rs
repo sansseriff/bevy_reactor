@@ -1,3 +1,5 @@
+use std::sync::atomic::AtomicBool;
+
 use bevy::{
     ecs::{
         component::{ComponentId, Tick},
@@ -17,6 +19,16 @@ pub struct TrackingScope {
 
     /// Set of resources that we are currently subscribed to.
     resource_deps: HashSet<ComponentId>,
+
+    /// Allows a tracking scope to be explictly marked as changed for reasons other than
+    /// a component or resource dependency mutation.
+    changed: AtomicBool,
+
+    /// A flag indicating that this tracking scope is always out of date and should run
+    /// every frame. This is used for data structures that don't have change detection.
+    /// Generally you only want to use this inside of a memoized computation.
+    /// Note: This is highly experimental and may be removed.
+    always_changed: bool,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -46,6 +58,8 @@ impl TrackingScope {
         Self {
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
+            changed: AtomicBool::new(false),
+            always_changed: false,
             tick,
             cleanups: Vec::new(),
         }
@@ -85,10 +99,23 @@ impl TrackingScope {
         self.component_deps.insert((entity, component));
     }
 
+    /// Mark the scope as changed for reasons other than a component or resource dependency.
+    pub fn set_changed(&self) {
+        self.changed
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Mark the scope as one that is always out of date and should run every frame.
+    pub fn set_always_changed(&mut self) {
+        self.always_changed = true;
+    }
+
     /// Returns true if any of the dependencies of this scope have been updated since
     /// the previous reaction.
     pub fn dependencies_changed(&self, world: &World, tick: Tick) -> bool {
-        self.components_changed(world, tick) || self.resources_changed(world, tick)
+        self.components_changed(world, tick)
+            || self.resources_changed(world, tick)
+            || self.changed.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     fn components_changed(&self, world: &World, tick: Tick) -> bool {
@@ -116,6 +143,7 @@ impl TrackingScope {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
         self.cleanups = std::mem::take(&mut other.cleanups);
+        self.always_changed = other.always_changed;
     }
 }
 
@@ -172,7 +200,11 @@ pub(crate) fn run_reactions(world: &mut World) {
         let mut scopes = world.query::<(Entity, &mut TrackingScope, &ReactionCell)>();
         let mut changed: Vec<Entity> = Vec::with_capacity(64);
         for (entity, scope, _) in scopes.iter(world) {
-            if scope.dependencies_changed(world, this_run) {
+            // We only test the 'always changed' flag the first time through the loop; otherwise
+            // we would never get to convergence.
+            if scope.dependencies_changed(world, this_run)
+                || (iteration_ct == 0 && scope.always_changed)
+            {
                 changed.push(entity);
             }
         }
