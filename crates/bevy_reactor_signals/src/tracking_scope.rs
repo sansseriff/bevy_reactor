@@ -24,11 +24,9 @@ pub struct TrackingScope {
     /// a component or resource dependency mutation.
     changed: AtomicBool,
 
-    /// A flag indicating that this tracking scope is always out of date and should run
-    /// every frame. This is used for data structures that don't have change detection.
-    /// Generally you only want to use this inside of a memoized computation.
-    /// Note: This is highly experimental and may be removed.
-    always_changed: bool,
+    /// A flag indicating that this tracking scope should be considered out of date at the
+    /// beginning of the next inter-system interval, but not immediately.
+    deferred_change: bool,
 
     /// Engine tick used for determining if components have changed. This represents the
     /// time of the previous reaction.
@@ -59,7 +57,7 @@ impl TrackingScope {
             component_deps: HashSet::default(),
             resource_deps: HashSet::default(),
             changed: AtomicBool::new(false),
-            always_changed: false,
+            deferred_change: false,
             tick,
             cleanups: Vec::new(),
         }
@@ -105,9 +103,13 @@ impl TrackingScope {
             .store(true, std::sync::atomic::Ordering::Relaxed);
     }
 
-    /// Mark the scope as one that is always out of date and should run every frame.
-    pub fn set_always_changed(&mut self) {
-        self.always_changed = true;
+    /// Set a flag that indicates that this tracking scope should be considered out of date at the
+    /// beginning of the next inter-system interval, but not immediately. This is used for
+    /// data structures that don't have change detection, and which therefore need to be polled
+    /// every frame. Generally, you only want to use this feature inside of a memoized computation.
+    /// Note: This is highly experimental and may be removed.
+    pub fn set_deferred_change(&mut self) {
+        self.deferred_change = true;
     }
 
     /// Returns true if any of the dependencies of this scope have been updated since
@@ -143,7 +145,6 @@ impl TrackingScope {
         self.component_deps = std::mem::take(&mut other.component_deps);
         self.resource_deps = std::mem::take(&mut other.resource_deps);
         self.cleanups = std::mem::take(&mut other.cleanups);
-        self.always_changed = other.always_changed;
     }
 }
 
@@ -203,7 +204,7 @@ pub(crate) fn run_reactions(world: &mut World) {
             // We only test the 'always changed' flag the first time through the loop; otherwise
             // we would never get to convergence.
             if scope.dependencies_changed(world, this_run)
-                || (iteration_ct == 0 && scope.always_changed)
+                || (iteration_ct == 0 && scope.deferred_change)
             {
                 changed.push(entity);
             }

@@ -2,10 +2,7 @@ use std::marker::PhantomData;
 
 use crate::signal::Signal;
 use bevy::{
-    ecs::{
-        component::ComponentId,
-        world::{Command, DeferredWorld},
-    },
+    ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
     ui::GhostNode,
 };
@@ -109,7 +106,7 @@ where
     /// * `cx`: The reactive context.
     /// * `value`: The new value.
     pub fn set_clone<R: WriteMutable>(&self, cx: &mut R, value: T) {
-        cx.write_mutable_clone(self.cell, value);
+        cx.write_mutable(self.cell, value);
     }
 }
 
@@ -162,13 +159,7 @@ pub trait WriteMutable {
     /// the value being set matches the existing value.
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)
     where
-        T: Send + Sync + Copy + PartialEq + 'static;
-
-    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
-    /// value being set matches the existing value.
-    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static;
+        T: Send + Sync + PartialEq + 'static;
 
     /// Update a mutable value in place using a callback. The callback is passed a
     /// `Mut<T>` which can be used to modify the value.
@@ -185,22 +176,22 @@ pub trait CreateMutable {
         T: Send + Sync + 'static;
 }
 
-/// Custom command which updates the state of a mutable cell.
-/// (Not used yet, waiting on changes in Bevy 0.14)
-pub(crate) struct UpdateMutableCell<T> {
-    pub(crate) mutable: Entity,
-    pub(crate) value: T,
-}
+// /// Custom command which updates the state of a mutable cell.
+// /// (Not used yet, waiting on changes in Bevy 0.14)
+// pub(crate) struct UpdateMutableCell<T> {
+//     pub(crate) mutable: Entity,
+//     pub(crate) value: T,
+// }
 
-impl<T: Send + Sync + 'static + PartialEq> Command for UpdateMutableCell<T> {
-    fn apply(self, world: &mut World) {
-        let mut mutable_ent = world.entity_mut(self.mutable);
-        let mut mutable = mutable_ent.get_mut::<MutableCell<T>>().unwrap();
-        if mutable.0 != self.value {
-            mutable.0 = self.value;
-        }
-    }
-}
+// impl<T: Send + Sync + 'static + PartialEq> Command for UpdateMutableCell<T> {
+//     fn apply(self, world: &mut World) {
+//         let mut mutable_ent = world.entity_mut(self.mutable);
+//         let mut mutable = mutable_ent.get_mut::<MutableCell<T>>().unwrap();
+//         if mutable.0 != self.value {
+//             mutable.0 = self.value;
+//         }
+//     }
+// }
 
 impl ReadMutable for World {
     fn read_mutable<T>(&self, mutable: &Mutable<T>) -> T
@@ -237,22 +228,17 @@ impl ReadMutable for World {
 }
 
 impl WriteMutable for World {
-    /// Write the value of a mutable variable using Copy semantics. Does nothing if
-    /// the value being set matches the existing value.
+    /// Write the value of a mutable variable. Does nothing if the value being set matches the
+    /// existing value.
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().queue(UpdateMutableCell { mutable, value });
-    }
-
-    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
-    /// value being set matches the existing value.
-    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static,
-    {
-        self.commands().queue(UpdateMutableCell { mutable, value });
+        let mut entt = self.entity_mut(mutable);
+        let mut cell = entt.get_mut::<MutableCell<T>>().unwrap();
+        if cell.0 != value {
+            cell.0 = value;
+        }
     }
 
     fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)
@@ -315,22 +301,17 @@ impl<'w> ReadMutable for DeferredWorld<'w> {
 }
 
 impl<'w> WriteMutable for DeferredWorld<'w> {
-    /// Write the value of a mutable variable using Copy semantics. Does nothing if
-    /// the value being set matches the existing value.
+    /// Write the value of a mutable variable. Does nothing if the value being set matches the
+    /// existing value.
     fn write_mutable<T>(&mut self, mutable: Entity, value: T)
     where
         T: Send + Sync + PartialEq + 'static,
     {
-        self.commands().queue(UpdateMutableCell { mutable, value });
-    }
-
-    /// Write the value of a mutable variable using Clone semantics. Does nothing if the
-    /// value being set matches the existing value.
-    fn write_mutable_clone<T>(&mut self, mutable: Entity, value: T)
-    where
-        T: Send + Sync + Clone + PartialEq + 'static,
-    {
-        self.commands().queue(UpdateMutableCell { mutable, value });
+        let mut entt = self.entity_mut(mutable);
+        let mut cell = entt.get_mut::<MutableCell<T>>().unwrap();
+        if cell.0 != value {
+            cell.0 = value;
+        }
     }
 
     fn update_mutable<T, F: FnOnce(Mut<T>)>(&mut self, mutable: Entity, updater: F)

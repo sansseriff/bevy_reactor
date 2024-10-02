@@ -62,7 +62,7 @@ impl<'w> CondBuilder for WorldChildBuilder<'w> {
             state: CondState::Unset,
         };
 
-        // Safety: this should be save because we don't use cond_owner any more after this
+        // Safety: this should be safe because we don't use cond_owner any more after this
         // point.
         let world = unsafe { cond_owner.world_mut() };
         // Trigger the initial reaction.
@@ -98,7 +98,7 @@ impl<'w> CondBuilder for UiBuilder<'w> {
             state: CondState::Unset,
         };
 
-        // Safety: this should be save because we don't use cond_owner any more after this
+        // Safety: this should be safe because we don't use cond_owner any more after this
         // point.
         let world = unsafe { cond_owner.world_mut() };
         // Trigger the initial reaction.

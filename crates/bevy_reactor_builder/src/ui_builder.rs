@@ -1,12 +1,14 @@
 use bevy::{
+    core::Name,
     prelude::{
-        BuildChildren, Bundle, Component, Entity, EntityWorldMut, In, IntoSystem, Parent, World,
+        BuildChildren, Bundle, Component, DespawnRecursiveExt, Entity, EntityWorldMut, In,
+        IntoSystem, Parent, World,
     },
     ui::GhostNode,
 };
 use bevy_reactor_signals::{
     create_derived, create_mutable, Callback, CallbackOwner, Ecx, Mutable, Rcx, Reaction,
-    ReactionCell, Signal, TrackingScope,
+    ReactionCell, Signal, TrackingScope, WriteMutable,
 };
 
 pub struct UiBuilder<'w> {
@@ -106,6 +108,35 @@ impl<'w> UiBuilder<'w> {
         Signal::Derived(derived)
     }
 
+    /// Create a new memoized computation in this context. This represents a readable signal which
+    /// is computed from other signals. The result is memoized, which means that downstream
+    /// dependants will not be notified unless the output changes.
+    ///
+    /// Arguments:
+    /// * `compute` - The function that computes the output. This will be called with a single
+    ///    parameter, which is a [`Rcx`] object.
+    pub fn create_memo<
+        R: 'static + PartialEq + Send + Sync + Clone,
+        F: Send + Sync + 'static + Fn(&mut Rcx) -> R,
+    >(
+        &mut self,
+        compute: F,
+    ) -> Signal<R> {
+        let owner = self.parent;
+        let ticks = self.world_mut().change_tick();
+        let mut scope = TrackingScope::new(ticks);
+        let init = compute(&mut Rcx::new(self.world_mut(), owner, &mut scope));
+        let mutable = self.create_mutable(init);
+        let signal = mutable.signal();
+        self.world_mut().entity_mut(mutable.id()).insert((
+            ReactionCell::new(MemoReaction(compute)),
+            scope,
+            Name::new(format!("Memo::<{}>", std::any::type_name::<R>())),
+        ));
+
+        signal
+    }
+
     /// Create a reactive effect which is owned by the parent entity.
     pub fn create_effect<F: Send + Sync + 'static + FnMut(&mut Ecx)>(
         &mut self,
@@ -137,6 +168,42 @@ impl<'w> UiBuilder<'w> {
                 _ => return None,
             }
         }
+    }
+
+    /// A general mechanism for dynamically-computed children.
+    ///
+    /// Arguments:
+    /// * compute: A reactive function which computes a result.
+    /// * build: A builder function which consumes the result of the previous argument.
+    ///
+    /// Each time the `compute` function reacts, regardless of whether the result is changed or
+    /// not, the children are despawned and rebuilt.
+    pub fn computed<
+        D: 'static,
+        F: Send + Sync + 'static + Fn(&Rcx) -> D,
+        B: Send + Sync + 'static + Fn(D, &mut UiBuilder),
+    >(
+        &mut self,
+        compute: F,
+        build: B,
+    ) -> &mut Self {
+        // Create an entity to represent the condition.
+        let mut owner = self.spawn(Name::new("Computed"));
+        let owner_id = owner.id();
+
+        // Create a tracking scope and reaction.
+        let mut tracking = TrackingScope::new(owner.world().last_change_tick());
+        let mut reaction = ComputedReaction { compute, build };
+
+        // Safety: this should be safe because we don't use owner any more after this
+        // point.
+        let world = unsafe { owner.world_mut() };
+        // Trigger the initial reaction.
+        reaction.react(owner_id, world, &mut tracking);
+        world
+            .entity_mut(owner_id)
+            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        self
     }
 }
 
@@ -172,5 +239,45 @@ impl<F: FnMut(&mut Ecx)> Reaction for EffectReaction<F> {
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let mut ecx = Ecx::new(world, owner, tracking);
         (self.effect)(&mut ecx);
+    }
+}
+
+/// General effect reaction.
+pub struct MemoReaction<
+    R: 'static + PartialEq + Send + Sync + Clone,
+    F: Send + Sync + 'static + Fn(&mut Rcx) -> R,
+>(F);
+
+impl<
+        R: 'static + PartialEq + Send + Sync + Clone,
+        F: Send + Sync + 'static + Fn(&mut Rcx) -> R,
+    > Reaction for MemoReaction<R, F>
+{
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        let mut rcx = Rcx::new(world, owner, tracking);
+        let value = (self.0)(&mut rcx);
+        world.write_mutable(owner, value);
+    }
+}
+
+/// A reaction that handles the conditional rendering logic.
+struct ComputedReaction<D, F: Fn(&Rcx) -> D, B: Fn(D, &mut UiBuilder)>
+where
+    Self: Send + Sync,
+{
+    compute: F,
+    build: B,
+}
+
+impl<D, F: Send + Sync + Fn(&Rcx) -> D, B: Send + Sync + Fn(D, &mut UiBuilder)> Reaction
+    for ComputedReaction<D, F, B>
+{
+    fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
+        // Create a reactive context and call the test condition.
+        let re = Rcx::new(world, owner, tracking);
+        let deps: D = (self.compute)(&re);
+        world.entity_mut(owner).despawn_descendants();
+        let mut builder = UiBuilder::new(world, owner);
+        (self.build)(deps, &mut builder);
     }
 }

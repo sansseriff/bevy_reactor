@@ -71,6 +71,12 @@ impl<'p, 'w> Rcx<'p, 'w> {
         }
     }
 
+    /// Indicate that we want to consider the current tracking scope out of date at the next
+    /// inter-system interval.
+    pub fn set_deferred_change(&self) {
+        self.tracking.borrow_mut().set_deferred_change();
+    }
+
     /// Add a cleanup function which is run once before the next reaction, or when the owner
     /// entity for this context is despawned.
     pub fn on_cleanup(&mut self, cleanup: impl FnOnce(&mut DeferredWorld) + Send + Sync + 'static) {

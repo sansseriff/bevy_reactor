@@ -1,4 +1,5 @@
 use bevy::{
+    core::Name,
     prelude::{BuildChildren, Entity, EntityWorldMut, World},
     ui::GhostNode,
 };
@@ -35,7 +36,7 @@ impl<'w> EntityEffectBuilder for EntityWorldMut<'w> {
         let owner = self.id();
         self.world_scope(|world| {
             // Spawn a new reaction entity to contain the effect.
-            let effect_owner = world.spawn_empty().set_parent(owner).id();
+            let effect_owner = world.spawn(Name::new("Effect")).set_parent(owner).id();
             reaction.apply(effect_owner, world, &mut scope);
             world
                 .entity_mut(effect_owner)

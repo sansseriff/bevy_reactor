@@ -10,26 +10,14 @@ use bevy::{
         render_resource::{Extent3d, TextureDimension, TextureFormat},
     },
 };
-use bevy_mod_stylebuilder::*;
-use bevy_reactor_builder::*;
 use bevy_reactor_inspect::WorldInspector;
-use bevy_reactor_signals::{Callback, Rcx, RunCallback, SignalsPlugin};
-
-fn style_test(ss: &mut StyleBuilder) {
-    ss.display(Display::Flex)
-        .flex_direction(FlexDirection::Row)
-        .border(3)
-        .border_color(palettes::css::ALICE_BLUE)
-        .padding(3);
-}
 
 fn main() {
     App::new()
-        .init_resource::<Counter>()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(WorldInspector)
-        .add_systems(Startup, (setup, setup_view_root))
-        .add_systems(Update, (close_on_esc, rotate, update_counter))
+        .add_systems(Startup, setup)
+        .add_systems(Update, (close_on_esc, rotate))
         .run();
 }
 
@@ -38,141 +26,6 @@ fn main() {
 struct Shape;
 
 const X_EXTENT: f32 = 14.5;
-
-fn setup_view_root(world: &mut World) {
-    world
-        .spawn(NodeBundle { ..default() })
-        .styles(style_test)
-        .style_dyn(
-            |rcx| {
-                let counter = rcx.read_resource::<Counter>();
-                counter.count & 1 == 0
-            },
-            |even, sb| {
-                sb.border_color(if even {
-                    palettes::css::LIME
-                } else {
-                    palettes::css::MAROON
-                });
-            },
-        )
-        .create_children(|builder| {
-            let on_click = builder.create_callback(|_in: In<()>| {
-                println!("Clicked!");
-            });
-            builder
-                .text("Count: ")
-                .invoke(NestedView)
-                .cond(
-                    |rcx: &Rcx| {
-                        let counter = rcx.read_resource::<Counter>();
-                        counter.count & 1 == 0
-                    },
-                    |builder| {
-                        builder.text("[Even]");
-                    },
-                    |builder| {
-                        builder.text("[Odd]");
-                    },
-                )
-                .invoke(Clickable { on_click });
-        });
-    // commands.spawn(
-    //     Element::<NodeBundle>::new()
-    //         .style(style_test)
-    //         .style_dyn(
-    //             |rcx| {
-    //                 let counter = rcx.read_resource::<Counter>();
-    //                 counter.count & 1 == 0
-    //             },
-    //             |even, sb| {
-    //                 sb.border_color(if even {
-    //                     palettes::css::LIME
-    //                 } else {
-    //                     palettes::css::MAROON
-    //                 });
-    //             },
-    //         )
-    //         .insert(BorderColor(palettes::css::LIME.into()))
-    //         // .insert_computed(|cx| {
-    //         //     let counter = cx.read_resource::<Counter>();
-    //         //     BackgroundColor(if counter.count & 1 == 0 {
-    //         //         palettes::css::DARK_GRAY.into()
-    //         //     } else {
-    //         //         palettes::css::MAROON.into()
-    //         //     })
-    //         // })
-    //         // .create_effect(|cx, ent| {
-    //         //     let count = cx.read_resource::<Counter>().count;
-    //         //     let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-    //         //     border.0 = if count & 1 == 0 {
-    //         //         palettes::css::LIME.into()
-    //         //     } else {
-    //         //         palettes::css::RED.into()
-    //         //     };
-    //         // })
-    //         .observe(|event: Trigger<Pointer<Click>>| {
-    //             println!("Click: {:?}", event);
-    //         })
-    //         .children((
-    //             Element::<NodeBundle>::new(),
-    //             // DynamicKeyed::new(
-    //             //     |cx| cx.read_resource::<Counter>().count,
-    //             //     |count| format!(":{}:", count),
-    //             // ),
-    //             // For::each(
-    //             //     |cx| {
-    //             //         let counter = cx.read_resource::<Counter>();
-    //             //         [counter.count, counter.count + 1, counter.count + 2].into_iter()
-    //             //     },
-    //             //     |item| format!("item: {}", item),
-    //             // ),
-    //         ))
-    //         .to_root(),
-    // );
-}
-
-struct NestedView;
-
-impl UiTemplate for NestedView {
-    fn build(&self, builder: &mut UiBuilder) {
-        builder.text_computed(|rcx| {
-            let counter = rcx.read_resource::<Counter>();
-            format!("{}", counter.count)
-        });
-    }
-}
-
-struct Clickable {
-    on_click: Callback,
-}
-
-impl UiTemplate for Clickable {
-    fn build(&self, builder: &mut UiBuilder) {
-        let on_click = self.on_click;
-        builder
-            .spawn(NodeBundle::default())
-            .observe(
-                move |_event: Trigger<Pointer<Click>>, mut commands: Commands| {
-                    commands.run_callback(on_click, ());
-                },
-            )
-            .create_children(|builder| {
-                builder.text("Click Me!");
-            });
-    }
-}
-
-#[derive(Resource, Default)]
-pub struct Counter {
-    pub count: u32,
-}
-
-fn update_counter(mut counter: ResMut<Counter>, key: Res<ButtonInput<KeyCode>>) {
-    if key.pressed(KeyCode::Space) {
-        counter.count += 1;
-    }
-}
 
 // Setup 3d shapes
 fn setup(
@@ -211,6 +64,7 @@ fn setup(
                 ..default()
             },
             Shape,
+            Name::new("Shape"),
         ));
     }
 

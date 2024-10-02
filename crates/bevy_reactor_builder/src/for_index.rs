@@ -50,7 +50,7 @@ impl<'w> ForIndexBuilder for UiBuilder<'w> {
             state: Vec::new(),
         };
 
-        // Safety: this should be save because we don't use cond_owner any more after this
+        // Safety: this should be safe because we don't use owner any more after this
         // point.
         let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.

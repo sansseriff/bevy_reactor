@@ -99,6 +99,6 @@ fn dispatch_keyboard_input(
             commands.trigger_targets(FocusKeyboardInput(ev.clone()), ent);
         }
     } else if !key_events.is_empty() {
-        warn!("No focus entity and no default keyboard handler: try inserting DefaultKeyHandler on your top-level entity");
+        // warn!("No focus entity and no default keyboard handler: try inserting DefaultKeyHandler on your top-level entity");
     }
 }
