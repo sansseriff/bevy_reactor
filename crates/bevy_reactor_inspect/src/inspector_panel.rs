@@ -1,12 +1,13 @@
 use bevy::{
     core::Name,
-    ecs::world::DeferredWorld,
+    ecs::{component, observer::ObserverState, system::SystemIdMarker, world::DeferredWorld},
     pbr::{DirectionalLight, PointLight},
     prelude::{
-        Camera2d, Camera3d, Children, Click, Component, Entity, In, NodeBundle, Parent, Pointer,
-        Query, ResMut, Resource, Trigger, Without, World,
+        Camera2d, Camera3d, Children, Click, Component, Entity, In, Mesh3d, NodeBundle, Observer,
+        Parent, Pointer, Query, ResMut, Resource, Trigger, Without, World,
     },
     ui::{self, GhostNode, Node},
+    window::{Monitor, Window},
 };
 use bevy_mod_stylebuilder::{
     StyleBuilder, StyleBuilderBackground, StyleBuilderBorderColor, StyleBuilderBorderRadius,
@@ -97,13 +98,22 @@ impl UiTemplate for TopLevelItemList {
 #[derive(Resource, Default)]
 pub(crate) struct TopLevelEntities(Vec<Entity>);
 
+#[allow(clippy::type_complexity)]
 pub fn copy_top_level_entities(
-    q_entities: Query<Entity, (Without<Parent>, Without<InspectorPanelRoot>)>,
+    q_entities: Query<
+        Entity,
+        (
+            Without<Parent>,
+            Without<InspectorPanelRoot>,
+            Without<ObserverState>,
+            Without<SystemIdMarker>,
+        ),
+    >,
     mut r_list: ResMut<TopLevelEntities>,
 ) {
     let mut entities: Vec<Entity> = q_entities.iter().collect();
     // TODO: Sort
-    if entities != r_list.0 && entities.len() < 1000 {
+    if entities != r_list.0 {
         println!("Entity count: {}", entities.len());
         std::mem::swap(&mut entities, &mut r_list.0);
     }
@@ -120,9 +130,7 @@ fn style_tree_node_label(sb: &mut StyleBuilder) {
 }
 
 fn style_tree_node_children(sb: &mut StyleBuilder) {
-    sb.border(1)
-        .border_color(colors::ACCENT)
-        .display(ui::Display::Flex)
+    sb.display(ui::Display::Flex)
         .flex_direction(ui::FlexDirection::Column)
         .padding_left(16);
 }
@@ -173,7 +181,11 @@ impl UiTemplate for EntityTreeNode {
                                 // Note: Should be using read_component here, but not all of
                                 // these component types may be registered, which panics.
                                 let ent = rcx.world().entity(entid);
-                                if ent.get::<Camera2d>().is_some() {
+                                if ent.get::<Window>().is_some() {
+                                    Some("Window".to_string())
+                                } else if ent.get::<Monitor>().is_some() {
+                                    Some("Monitor".to_string())
+                                } else if ent.get::<Camera2d>().is_some() {
                                     Some("Camera2d".to_string())
                                 } else if ent.get::<Camera3d>().is_some() {
                                     Some("Camera3d".to_string())
@@ -181,6 +193,8 @@ impl UiTemplate for EntityTreeNode {
                                     Some("PointLight".to_string())
                                 } else if ent.get::<DirectionalLight>().is_some() {
                                     Some("DirectionalLight".to_string())
+                                } else if ent.get::<Mesh3d>().is_some() {
+                                    Some("Mesh3d".to_string())
                                 } else if ent.get::<Node>().is_some() {
                                     Some("Node".to_string())
                                 } else if ent.get::<GhostNode>().is_some() {
@@ -205,17 +219,23 @@ impl UiTemplate for EntityTreeNode {
                             .spawn(NodeBundle::default())
                             .style(style_tree_node_children)
                             .create_children(|builder| {
-                                let ent = builder.world().entity(entid);
-                                let components = ent.archetype().components();
-                                drop(components);
-                                let child_entities = builder.create_derived(move |rcx| {
-                                    rcx.read_component::<Children>(entid)
-                                        .map(|c| c.to_vec())
-                                        .unwrap_or_default()
-                                });
-                                builder.text_computed(move |rcx| {
-                                    format!("components: {}", child_entities.get_clone(rcx).len())
-                                });
+                                let component_names: Vec<String> = builder
+                                    .world()
+                                    .inspect_entity(entid)
+                                    .map(|c| c.name().to_string())
+                                    .collect();
+                                for comp in component_names {
+                                    match comp.rsplit_once("::") {
+                                        Some((_, suffix)) => {
+                                            builder.text(suffix);
+                                        }
+                                        None => {
+                                            builder.text(comp);
+                                        }
+                                    }
+                                }
+
+                                // drop(components);
                                 builder.for_each(
                                     move |rcx| {
                                         rcx.read_component::<Children>(entid)
