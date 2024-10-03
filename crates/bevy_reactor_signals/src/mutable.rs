@@ -354,7 +354,7 @@ mod tests {
         assert_eq!(reader2.get(&rcx), 0);
 
         // Now commit the changes
-        world.flush_commands();
+        world.flush();
 
         // Signals should have changed
         let rcx = Rcx::new(&world, owner, &mut scope);
@@ -386,7 +386,7 @@ mod tests {
         assert_eq!(reader2.get(&rcx), 0);
 
         // Now commit the changes
-        world.flush_commands();
+        world.flush();
 
         // Signals should have changed
         let rcx = Rcx::new(&world, owner, &mut scope);

@@ -129,7 +129,7 @@ impl ZIndexParam for ZIndex {
 
 impl ZIndexParam for i32 {
     fn to_val(self) -> ZIndex {
-        ZIndex::Local(self)
+        ZIndex(self)
     }
 }
 

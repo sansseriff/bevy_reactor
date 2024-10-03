@@ -4,7 +4,7 @@
 // mod transform_overlay;
 
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_builder::{UiBuilder, UiTemplate};
+use bevy_reactor_builder::{EntityStyleBuilder, UiBuilder, UiTemplate};
 use bevy_reactor_obsidian::{cursor::StyleBuilderCursor, prelude::*};
 // use bevy_reactor_overlays as overlays;
 use bevy_reactor_signals::{Rcx, TrackingScopeTracing};
@@ -241,35 +241,35 @@ impl UiTemplate for DemoUi {
             res.0
         });
 
-        Element::<NodeBundle>::new()
-            .named("Main")
-            .style((typography::text_default, style_main))
+        builder
+            .spawn((NodeBundle::default(), Name::new("Main")))
+            .styles((typography::text_default, style_main))
             .insert((TabGroup::default(), TargetCamera(self.0)))
             .children((
-                Dialog::new()
-                    .width(ui::Val::Px(400.))
-                    .open(checked_1.signal())
-                    .on_close(cx.create_callback(move |mut world: DeferredWorld| {
-                        checked_1.set(&mut world, false);
-                    }))
-                    .children((
-                        // DialogHeader::new().children("Dialog Header"),
-                        // "Dialog Body",
-                        // DialogFooter::new().children((
-                        //     Button::new()
-                        //         .children("Cancel")
-                        //         .on_click(cx.create_callback(move |cx, _| {
-                        //             checked_1.set(cx, false);
-                        //         })),
-                        //     Button::new()
-                        //         .children("Close")
-                        //         .variant(ButtonVariant::Primary)
-                        //         .autofocus(true)
-                        //         .on_click(cx.create_callback(move |cx, _| {
-                        //             checked_1.set(cx, false);
-                        //         })),
-                        // )),
-                    )),
+                // Dialog::new()
+                //     .width(ui::Val::Px(400.))
+                //     .open(checked_1.signal())
+                //     .on_close(cx.create_callback(move |mut world: DeferredWorld| {
+                //         checked_1.set(&mut world, false);
+                //     }))
+                //     .children((
+                //         DialogHeader::new().children("Dialog Header"),
+                //         "Dialog Body",
+                //         DialogFooter::new().children((
+                //             Button::new()
+                //                 .children("Cancel")
+                //                 .on_click(cx.create_callback(move |cx, _| {
+                //                     checked_1.set(cx, false);
+                //                 })),
+                //             Button::new()
+                //                 .children("Close")
+                //                 .variant(ButtonVariant::Primary)
+                //                 .autofocus(true)
+                //                 .on_click(cx.create_callback(move |cx, _| {
+                //                     checked_1.set(cx, false);
+                //                 })),
+                //         )),
+                //     )),
                 Element::<NodeBundle>::new()
                     .named("ControlPalette")
                     .style(style_aside)
@@ -425,18 +425,19 @@ fn graph_view_style(ss: &mut StyleBuilder) {
 
 impl UiTemplate for CenterPanel {
     fn build(&self, builder: &mut UiBuilder) {
-        let panel_height = cx.create_derived(|cx| {
-            let res = cx.read_resource::<PanelHeight>();
+        let panel_height = builder.create_derived(|rcx| {
+            let res = rcx.read_resource::<PanelHeight>();
             res.0
         });
 
-        let drag_call_back = cx.create_callback(|cx: &mut Cx, value: f32| {
+        let drag_call_back = builder.create_callback(|cx: &mut Cx, value: f32| {
             let mut panel_height = cx.world_mut().get_resource_mut::<PanelHeight>().unwrap();
             panel_height.0 = value.max(200.);
         });
 
-        Element::<NodeBundle>::new()
-            .children((Cond::new(
+        builder
+            .spawn(NodeBundle::new())
+            .create_children((Cond::new(
                 |cx: &Rcx| *cx.read_resource::<State<EditorState>>().get() == EditorState::Graph,
                 || NodeGraphDemo {},
                 move || {
@@ -484,28 +485,28 @@ impl UiTemplate for CenterPanel {
 
 struct ReactionsTable;
 
-impl ViewTemplate for ReactionsTable {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        ListView::new()
-            .children(For::each(
-                |cx| {
-                    let tracing = cx.read_resource::<TrackingScopeTracing>();
-                    tracing.0.clone().into_iter()
-                },
-                |ent| {
-                    text_computed({
-                        let e = *ent;
-                        move |cx| {
-                            if let Some(name) = cx.world().get::<Name>(e) {
-                                name.to_string()
-                            } else {
-                                e.to_string()
-                            }
-                        }
-                    })
-                },
-            ))
-            .style(style_scroll_area)
+impl UiTemplate for ReactionsTable {
+    fn build(&self, builder: &mut UiBuilder) {
+        // ListView::new()
+        //     .children(For::each(
+        //         |cx| {
+        //             let tracing = cx.read_resource::<TrackingScopeTracing>();
+        //             tracing.0.clone().into_iter()
+        //         },
+        //         |ent| {
+        //             text_computed({
+        //                 let e = *ent;
+        //                 move |cx| {
+        //                     if let Some(name) = cx.world().get::<Name>(e) {
+        //                         name.to_string()
+        //                     } else {
+        //                         e.to_string()
+        //                     }
+        //                 }
+        //             })
+        //         },
+        //     ))
+        //     .style(style_scroll_area)
     }
 }
 
@@ -609,17 +610,14 @@ fn setup(
     for (i, shape) in shapes.into_iter().enumerate() {
         commands
             .spawn((
-                PbrBundle {
-                    mesh: shape,
-                    material: debug_material.clone(),
-                    transform: Transform::from_xyz(
-                        -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
-                        2.0,
-                        0.0,
-                    )
-                    .with_rotation(Quat::from_rotation_x(-PI / 4.)),
-                    ..default()
-                },
+                Mesh3d(shape),
+                MeshMaterial3d(debug_material.clone()),
+                Transform::from_xyz(
+                    -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
+                    2.0,
+                    0.0,
+                )
+                .with_rotation(Quat::from_rotation_x(-PI / 4.)),
                 Shape,
                 // PickableBundle::default(),
                 // RaycastPickable,
@@ -627,24 +625,22 @@ fn setup(
             .set_parent(shapes_parent);
     }
 
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             // intensity: 9000.0,
             intensity: 10000000.0,
             range: 100.,
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(8.0, 16.0, 8.0),
-        ..default()
-    });
+        Transform::from_xyz(8.0, 16.0, 8.0),
+    ));
 
     // ground plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Plane3d::default().mesh().size(50.0, 50.0)),
-        material: materials.add(Color::from(palettes::css::SILVER)),
-        ..default()
-    });
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
+        MeshMaterial3d(materials.add(Color::from(palettes::css::SILVER))),
+    ));
 }
 
 fn setup_ui(mut commands: Commands) -> Entity {
@@ -671,18 +667,18 @@ fn enter_preview_mode(mut commands: Commands) {
                 ..default()
             },
             // viewport::ViewportCamera,
-            RaycastPickable,
+            // RaycastPickable,
             // BackdropPickable,
         ))
         .id();
 
-    let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
-    commands.insert_resource(PreviewEntities { camera, overlay });
+    // let overlay = commands.spawn(TransformOverlayDemo.to_root()).id();
+    // commands.insert_resource(PreviewEntities { camera, overlay });
 }
 
 fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
     commands.entity(preview.camera).despawn();
-    commands.queue(DespawnViewRoot::new(preview.overlay));
+    // commands.queue(DespawnViewRoot::new(preview.overlay));
     commands.remove_resource::<PreviewEntities>()
 }
 

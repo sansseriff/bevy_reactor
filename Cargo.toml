@@ -43,5 +43,5 @@ bevy_reactor_inspect = { workspace = true }
 bevy-inspector-egui = "0.26.0"
 
 [patch.crates-io]
-bevy = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/15341/head", version = "0.15.0-dev" }
-bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", rev = "refs/pull/15341/head", version = "0.15.0-dev" }
+bevy = { git = "https://github.com/bevyengine/bevy.git", version = "0.15.0-dev" }
+bevy_ecs = { git = "https://github.com/bevyengine/bevy.git", version = "0.15.0-dev" }

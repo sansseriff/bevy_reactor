@@ -6,7 +6,6 @@ use bevy::{
         Camera2d, Camera3d, Children, Click, Component, Entity, In, NodeBundle, Parent, Pointer,
         Query, ResMut, Resource, Trigger, Without, World,
     },
-    sprite::Mesh2d,
     ui::{self, GhostNode, Node},
 };
 use bevy_mod_stylebuilder::{
@@ -182,8 +181,6 @@ impl UiTemplate for EntityTreeNode {
                                     Some("PointLight".to_string())
                                 } else if ent.get::<DirectionalLight>().is_some() {
                                     Some("DirectionalLight".to_string())
-                                } else if ent.get::<Mesh2d>().is_some() {
-                                    Some("Mesh2d".to_string())
                                 } else if ent.get::<Node>().is_some() {
                                     Some("Node".to_string())
                                 } else if ent.get::<GhostNode>().is_some() {
