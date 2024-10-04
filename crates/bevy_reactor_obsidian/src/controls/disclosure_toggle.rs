@@ -115,7 +115,6 @@ impl UiTemplate for DisclosureToggle {
     fn build(&self, builder: &mut UiBuilder) {
         let disabled = self.disabled;
         let checked = self.expanded;
-        let on_change = self.on_change;
         let id = builder
             .spawn((NodeBundle::default(), Name::new("DisclosureToggle")))
             .id();
@@ -138,35 +137,15 @@ impl UiTemplate for DisclosureToggle {
             .entity_mut(id)
             .styles((style_toggle, self.style.clone()))
             .insert((
+                DisclosureState {
+                    on_change: self.on_change,
+                    expanded: self.expanded,
+                },
                 TabIndex(self.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
             ))
-            .observe(
-                move |mut trigger: Trigger<FocusKeyboardInput>, mut world: DeferredWorld| {
-                    let is_checked = checked.get(&world);
-                    let event = &trigger.event().0;
-                    if event.state == ButtonState::Pressed
-                        && !event.repeat
-                        && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
-                    {
-                        if let Some(on_change) = on_change {
-                            trigger.propagate(false);
-                            world.run_callback(on_change, !is_checked);
-                        }
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Click>>, mut world: DeferredWorld| {
-                    let checkbox_id = trigger.entity();
-                    world.set_keyboard_focus(checkbox_id);
-                    let is_checked = checked.get(&world);
-                    trigger.propagate(false);
-                    if let Some(on_change) = on_change {
-                        world.run_callback(on_change, !is_checked);
-                    }
-                },
-            )
+            .observe(on_key_input)
+            .observe(on_pointer_click)
             .style_dyn(
                 move |rcx| focused.get(rcx),
                 |is_focused, sb| {
@@ -207,5 +186,38 @@ impl UiTemplate for DisclosureToggle {
                         }),
                 );
             });
+    }
+}
+
+#[derive(Component)]
+struct DisclosureState {
+    expanded: Signal<bool>,
+    on_change: Option<Callback<bool>>,
+}
+
+fn on_key_input(mut trigger: Trigger<FocusKeyboardInput>, mut world: DeferredWorld) {
+    let event = &trigger.event().0;
+    if event.state == ButtonState::Pressed
+        && !event.repeat
+        && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
+    {
+        let checkbox_id = trigger.entity();
+        let state = world.entity(checkbox_id).get::<DisclosureState>().unwrap();
+        let is_checked = state.expanded.get(&world);
+        if let Some(on_change) = state.on_change {
+            trigger.propagate(false);
+            world.run_callback(on_change, !is_checked);
+        }
+    }
+}
+
+fn on_pointer_click(mut trigger: Trigger<Pointer<Click>>, mut world: DeferredWorld) {
+    let checkbox_id = trigger.entity();
+    world.set_keyboard_focus(checkbox_id);
+    let state = world.entity(checkbox_id).get::<DisclosureState>().unwrap();
+    trigger.propagate(false);
+    if let Some(on_change) = state.on_change {
+        let is_checked = state.expanded.get(&world);
+        world.run_callback(on_change, !is_checked);
     }
 }

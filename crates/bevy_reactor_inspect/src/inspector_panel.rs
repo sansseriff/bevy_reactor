@@ -1,10 +1,10 @@
 use bevy::{
     core::Name,
-    ecs::{component, observer::ObserverState, system::SystemIdMarker, world::DeferredWorld},
+    ecs::{observer::ObserverState, system::SystemIdMarker, world::DeferredWorld},
     pbr::{DirectionalLight, PointLight},
     prelude::{
-        Camera2d, Camera3d, Children, Click, Component, Entity, In, Mesh3d, NodeBundle, Observer,
-        Parent, Pointer, Query, ResMut, Resource, Trigger, Without, World,
+        Camera2d, Camera3d, Children, Click, Component, Entity, In, Mesh3d, NodeBundle, Parent,
+        Pointer, Query, ResMut, Resource, Trigger, Without, World,
     },
     ui::{self, GhostNode, Node},
     window::{Monitor, Window},
