@@ -70,7 +70,12 @@ pub(crate) fn style_button_bg(ss: &mut StyleBuilder) {
 }
 
 #[derive(Component)]
-pub struct Pressed(pub bool);
+pub struct ButtonPressed(pub bool);
+
+#[derive(Component)]
+pub(crate) struct ButtonState {
+    on_click: Option<Callback>,
+}
 
 /// Button widget
 pub struct Button {
@@ -246,87 +251,11 @@ impl UiTemplate for Button {
             .insert_if(self.disabled, || Disabled)
             .insert((
                 TabIndex(self.tab_index),
-                Pressed(false),
+                ButtonPressed(false),
+                ButtonState { on_click },
                 AccessibilityNode::from(NodeBuilder::new(Role::Button)),
             ))
             .insert_if(self.autofocus, || AutoFocus)
-            .observe(
-                move |mut trigger: Trigger<FocusKeyboardInput>,
-                      mut q_state: Query<Has<Disabled>>,
-                      mut commands: Commands| {
-                    let disabled = q_state.get_mut(trigger.entity()).unwrap();
-                    if !disabled {
-                        let event = &trigger.event().0;
-                        if !event.repeat
-                            && (event.key_code == KeyCode::Enter
-                                || event.key_code == KeyCode::Space)
-                        {
-                            if let Some(on_click) = on_click {
-                                trigger.propagate(false);
-                                commands.run_callback(on_click, ());
-                            }
-                        }
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Click>>,
-                      mut q_state: Query<(&mut Pressed, Has<Disabled>)>,
-                      mut commands: Commands| {
-                    let (pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    trigger.propagate(false);
-                    if pressed.0 && !disabled {
-                        // println!("Click: {}", pressed.0);
-                        if let Some(on_click) = on_click {
-                            commands.run_callback(on_click, ());
-                        }
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Down>>,
-                      mut q_state: Query<(&mut Pressed, Has<Disabled>)>,
-                      mut focus: ResMut<KeyboardFocus>,
-                      mut focus_visible: ResMut<KeyboardFocusVisible>| {
-                    trigger.propagate(false);
-                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if !disabled {
-                        pressed.0 = true;
-                        focus.0 = Some(button_id);
-                        focus_visible.0 = false;
-                    }
-                },
-            )
-            .observe(
-                |mut trigger: Trigger<Pointer<Up>>,
-                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
-                    trigger.propagate(false);
-                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if !disabled {
-                        pressed.0 = false;
-                    }
-                },
-            )
-            .observe(
-                |mut trigger: Trigger<Pointer<DragEnd>>,
-                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
-                    trigger.propagate(false);
-                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if !disabled {
-                        pressed.0 = false;
-                    }
-                },
-            )
-            .observe(
-                |mut trigger: Trigger<Pointer<Cancel>>,
-                 mut q_state: Query<(&mut Pressed, Has<Disabled>)>| {
-                    trigger.propagate(false);
-                    let (mut pressed, disabled) = q_state.get_mut(trigger.entity()).unwrap();
-                    if !disabled {
-                        pressed.0 = false;
-                    }
-                },
-            )
             .create_children(|builder| {
                 builder
                     .spawn((NodeBundle::default(), Name::new("Button::Background")))
@@ -337,7 +266,8 @@ impl UiTemplate for Button {
                             if minimal {
                                 colors::TRANSPARENT
                             } else {
-                                let pressed = rcx.read_component::<Pressed>(button_id).unwrap();
+                                let pressed =
+                                    rcx.read_component::<ButtonPressed>(button_id).unwrap();
                                 let disabled = rcx.is_disabled(button_id);
                                 button_bg_color(
                                     variant.get(rcx),
@@ -389,5 +319,93 @@ pub(crate) fn button_bg_color(
         (_, true, true) => base_color.lighter(0.07),
         (_, false, true) => base_color.lighter(0.03),
         _ => base_color,
+    }
+}
+
+pub(crate) fn button_on_key_event(
+    mut trigger: Trigger<FocusKeyboardInput>,
+    q_state: Query<(&ButtonState, Has<Disabled>)>,
+    mut commands: Commands,
+) {
+    if let Ok((bstate, disabled)) = q_state.get(trigger.entity()) {
+        if !disabled {
+            let event = &trigger.event().0;
+            if !event.repeat
+                && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
+            {
+                if let Some(on_click) = bstate.on_click {
+                    trigger.propagate(false);
+                    commands.run_callback(on_click, ());
+                }
+            }
+        }
+    }
+}
+
+pub(crate) fn button_on_pointer_click(
+    mut trigger: Trigger<Pointer<Click>>,
+    mut q_state: Query<(&ButtonState, &mut ButtonPressed, Has<Disabled>)>,
+    mut commands: Commands,
+) {
+    if let Ok((bstate, pressed, disabled)) = q_state.get_mut(trigger.entity()) {
+        trigger.propagate(false);
+        if pressed.0 && !disabled {
+            // println!("Click: {}", pressed.0);
+            if let Some(on_click) = bstate.on_click {
+                commands.run_callback(on_click, ());
+            }
+        }
+    }
+}
+
+pub(crate) fn button_on_pointer_down(
+    mut trigger: Trigger<Pointer<Down>>,
+    mut q_state: Query<(&mut ButtonPressed, Has<Disabled>)>,
+    mut focus: ResMut<KeyboardFocus>,
+    mut focus_visible: ResMut<KeyboardFocusVisible>,
+) {
+    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
+        trigger.propagate(false);
+        if !disabled {
+            pressed.0 = true;
+            focus.0 = Some(trigger.entity());
+            focus_visible.0 = false;
+        }
+    }
+}
+
+pub(crate) fn button_on_pointer_up(
+    mut trigger: Trigger<Pointer<Up>>,
+    mut q_state: Query<(&mut ButtonPressed, Has<Disabled>)>,
+) {
+    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
+        trigger.propagate(false);
+        if !disabled {
+            pressed.0 = false;
+        }
+    }
+}
+
+pub(crate) fn button_on_pointer_drag_end(
+    mut trigger: Trigger<Pointer<DragEnd>>,
+    mut q_state: Query<(&mut ButtonPressed, Has<Disabled>)>,
+) {
+    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
+        trigger.propagate(false);
+        if !disabled {
+            pressed.0 = false;
+        }
+    }
+}
+
+pub(crate) fn button_on_pointer_cancel(
+    mut trigger: Trigger<Pointer<Cancel>>,
+    mut q_state: Query<(&mut ButtonPressed, Has<Disabled>)>,
+) {
+    if let Ok((mut pressed, disabled)) = q_state.get_mut(trigger.entity()) {
+        trigger.propagate(false);
+        if !disabled {
+            pressed.0 = false;
+        }
     }
 }

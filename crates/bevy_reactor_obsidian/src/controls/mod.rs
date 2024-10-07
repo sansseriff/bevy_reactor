@@ -12,8 +12,10 @@ mod spinbox;
 mod splitter;
 mod swatch;
 mod swatch_grid;
+mod toggle_state;
 mod tool_palette;
 
+use bevy::app::Plugin;
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
 pub use disabled::{Disabled, IsDisabled};
@@ -29,3 +31,18 @@ pub use splitter::{Splitter, SplitterDirection};
 pub use swatch::Swatch;
 pub use swatch_grid::SwatchGrid;
 pub use tool_palette::{ToolButton, ToolPalette};
+
+pub(crate) struct ControlEventsPlugin;
+
+impl Plugin for ControlEventsPlugin {
+    fn build(&self, app: &mut bevy::app::App) {
+        app.observe(toggle_state::toggle_on_key_input)
+            .observe(toggle_state::toggle_on_pointer_click)
+            .observe(button::button_on_key_event)
+            .observe(button::button_on_pointer_down)
+            .observe(button::button_on_pointer_up)
+            .observe(button::button_on_pointer_click)
+            .observe(button::button_on_pointer_drag_end)
+            .observe(button::button_on_pointer_cancel);
+    }
+}

@@ -30,15 +30,6 @@ fn style_row(ss: &mut StyleBuilder) {
         .column_gap(4);
 }
 
-fn style_column(ss: &mut StyleBuilder) {
-    ss.display(Display::Flex)
-        .width(300)
-        .flex_direction(FlexDirection::Column)
-        .align_items(ui::AlignItems::Start)
-        .align_items(ui::AlignItems::Center)
-        .row_gap(4);
-}
-
 fn main() {
     App::new()
         .add_plugins((

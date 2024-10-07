@@ -1,10 +1,9 @@
-use super::Icon;
+use super::{toggle_state::ToggleState, Icon};
 use crate::{
     animation::{AnimatedRotation, AnimatedTransition},
     colors,
     cursor::StyleBuilderCursor,
     hover_signal::CreateHoverSignal,
-    input_dispatch::{FocusKeyboardInput, SetKeyboardFocus},
     prelude::{CreateFocusSignal, TabIndex},
     size::Size,
 };
@@ -13,8 +12,6 @@ use bevy::{
         accesskit::{NodeBuilder, Role},
         AccessibilityNode,
     },
-    ecs::world::DeferredWorld,
-    input::ButtonState,
     prelude::*,
     render::view::cursor::CursorIcon,
     ui,
@@ -24,7 +21,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{
     CreateChilden, EntityStyleBuilder, InvokeUiTemplate, UiBuilder, UiTemplate,
 };
-use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
+use bevy_reactor_signals::{Callback, IntoSignal, Signal};
 
 fn style_toggle(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -137,15 +134,13 @@ impl UiTemplate for DisclosureToggle {
             .entity_mut(id)
             .styles((style_toggle, self.style.clone()))
             .insert((
-                DisclosureState {
+                ToggleState {
                     on_change: self.on_change,
-                    expanded: self.expanded,
+                    checked: self.expanded,
                 },
                 TabIndex(self.tab_index),
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
             ))
-            .observe(on_key_input)
-            .observe(on_pointer_click)
             .style_dyn(
                 move |rcx| focused.get(rcx),
                 |is_focused, sb| {
@@ -186,38 +181,5 @@ impl UiTemplate for DisclosureToggle {
                         }),
                 );
             });
-    }
-}
-
-#[derive(Component)]
-struct DisclosureState {
-    expanded: Signal<bool>,
-    on_change: Option<Callback<bool>>,
-}
-
-fn on_key_input(mut trigger: Trigger<FocusKeyboardInput>, mut world: DeferredWorld) {
-    let event = &trigger.event().0;
-    if event.state == ButtonState::Pressed
-        && !event.repeat
-        && (event.key_code == KeyCode::Enter || event.key_code == KeyCode::Space)
-    {
-        let checkbox_id = trigger.entity();
-        let state = world.entity(checkbox_id).get::<DisclosureState>().unwrap();
-        let is_checked = state.expanded.get(&world);
-        if let Some(on_change) = state.on_change {
-            trigger.propagate(false);
-            world.run_callback(on_change, !is_checked);
-        }
-    }
-}
-
-fn on_pointer_click(mut trigger: Trigger<Pointer<Click>>, mut world: DeferredWorld) {
-    let checkbox_id = trigger.entity();
-    world.set_keyboard_focus(checkbox_id);
-    let state = world.entity(checkbox_id).get::<DisclosureState>().unwrap();
-    trigger.propagate(false);
-    if let Some(on_change) = state.on_change {
-        let is_checked = state.expanded.get(&world);
-        world.run_callback(on_change, !is_checked);
     }
 }

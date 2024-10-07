@@ -6,8 +6,6 @@ use bevy::{
         AccessibilityNode,
     },
     color::Luminance,
-    ecs::world::DeferredWorld,
-    input::ButtonState,
     prelude::*,
     render::view::cursor::CursorIcon,
     ui,
@@ -15,18 +13,17 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::*;
-use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
+use bevy_reactor_signals::{Callback, IntoSignal, Signal};
 
 use crate::{
     colors,
     cursor::StyleBuilderCursor,
     hover_signal::CreateHoverSignal,
-    input_dispatch::FocusKeyboardInput,
     prelude::{CreateFocusSignal, TabIndex},
     typography,
 };
 
-use super::Disabled;
+use super::{toggle_state::ToggleState, Disabled};
 
 fn style_checkbox(ss: &mut StyleBuilder) {
     ss.display(ui::Display::Flex)
@@ -157,7 +154,6 @@ impl UiTemplate for Checkbox {
 
         let checked = self.checked;
         let disabled = self.disabled;
-        let on_change = self.on_change;
 
         builder
             .world_mut()
@@ -165,42 +161,13 @@ impl UiTemplate for Checkbox {
             .styles((style_checkbox, self.style.clone()))
             .insert((
                 TabIndex(self.tab_index),
+                ToggleState {
+                    checked,
+                    on_change: self.on_change,
+                },
                 AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
             ))
             .insert_if(self.disabled, || Disabled)
-            .observe(
-                move |mut trigger: Trigger<FocusKeyboardInput>, mut world: DeferredWorld| {
-                    let checkbox_id = trigger.entity();
-                    let disabled = world.entity(checkbox_id).get::<Disabled>().is_some();
-                    let is_checked = checked.get(&world);
-                    if !disabled {
-                        let event = &trigger.event().0;
-                        if event.state == ButtonState::Pressed
-                            && !event.repeat
-                            && (event.key_code == KeyCode::Enter
-                                || event.key_code == KeyCode::Space)
-                        {
-                            if let Some(on_change) = on_change {
-                                trigger.propagate(false);
-                                world.run_callback(on_change, !is_checked);
-                            }
-                        }
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Click>>, mut world: DeferredWorld| {
-                    let checkbox_id = trigger.entity();
-                    let disabled = world.entity(checkbox_id).get::<Disabled>().is_some();
-                    let is_checked = checked.get(&world);
-                    trigger.propagate(false);
-                    if !disabled {
-                        if let Some(on_change) = on_change {
-                            world.run_callback(on_change, !is_checked);
-                        }
-                    }
-                },
-            )
             .create_children(|builder| {
                 builder
                     .spawn((NodeBundle::default(), Name::new("Checkbox::Border")))

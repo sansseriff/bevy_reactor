@@ -65,9 +65,10 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<GradientRectMaterial>::default(),
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
-            InputDispatchPlugin,
             animation::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
+            controls::ControlEventsPlugin,
+            InputDispatchPlugin,
         ))
         // .add_plugins((
         //     EventListenerPlugin::<MenuCloseEvent>::default(),
