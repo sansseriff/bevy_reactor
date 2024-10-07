@@ -76,59 +76,6 @@ fn setup_view_root(world: &mut World) {
                 )
                 .invoke(Clickable { on_click });
         });
-    // commands.spawn(
-    //     Element::<NodeBundle>::new()
-    //         .style(style_test)
-    //         .style_dyn(
-    //             |rcx| {
-    //                 let counter = rcx.read_resource::<Counter>();
-    //                 counter.count & 1 == 0
-    //             },
-    //             |even, sb| {
-    //                 sb.border_color(if even {
-    //                     palettes::css::LIME
-    //                 } else {
-    //                     palettes::css::MAROON
-    //                 });
-    //             },
-    //         )
-    //         .insert(BorderColor(palettes::css::LIME.into()))
-    //         // .insert_computed(|cx| {
-    //         //     let counter = cx.read_resource::<Counter>();
-    //         //     BackgroundColor(if counter.count & 1 == 0 {
-    //         //         palettes::css::DARK_GRAY.into()
-    //         //     } else {
-    //         //         palettes::css::MAROON.into()
-    //         //     })
-    //         // })
-    //         // .create_effect(|cx, ent| {
-    //         //     let count = cx.read_resource::<Counter>().count;
-    //         //     let mut border = cx.world_mut().get_mut::<BorderColor>(ent).unwrap();
-    //         //     border.0 = if count & 1 == 0 {
-    //         //         palettes::css::LIME.into()
-    //         //     } else {
-    //         //         palettes::css::RED.into()
-    //         //     };
-    //         // })
-    //         .observe(|event: Trigger<Pointer<Click>>| {
-    //             println!("Click: {:?}", event);
-    //         })
-    //         .children((
-    //             Element::<NodeBundle>::new(),
-    //             // DynamicKeyed::new(
-    //             //     |cx| cx.read_resource::<Counter>().count,
-    //             //     |count| format!(":{}:", count),
-    //             // ),
-    //             // For::each(
-    //             //     |cx| {
-    //             //         let counter = cx.read_resource::<Counter>();
-    //             //         [counter.count, counter.count + 1, counter.count + 2].into_iter()
-    //             //     },
-    //             //     |item| format!("item: {}", item),
-    //             // ),
-    //         ))
-    //         .to_root(),
-    // );
 }
 
 struct NestedView;

@@ -400,7 +400,7 @@ impl UiTemplate for DemoUi {
                 Splitter::new()
                     .direction(SplitterDirection::Vertical)
                     .value(panel_width)
-                    .on_change(cx.create_callback(|cx: &mut Cx, value: f32| {
+                    .on_change(builder.create_callback(|cx: &mut Cx, value: f32| {
                         let mut panel_width =
                             cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
                         panel_width.0 = value.max(200.);
@@ -425,61 +425,61 @@ fn graph_view_style(ss: &mut StyleBuilder) {
 
 impl UiTemplate for CenterPanel {
     fn build(&self, builder: &mut UiBuilder) {
-        let panel_height = builder.create_derived(|rcx| {
-            let res = rcx.read_resource::<PanelHeight>();
-            res.0
-        });
+        //     let panel_height = builder.create_derived(|rcx| {
+        //         let res = rcx.read_resource::<PanelHeight>();
+        //         res.0
+        //     });
 
-        let drag_call_back = builder.create_callback(|cx: &mut Cx, value: f32| {
-            let mut panel_height = cx.world_mut().get_resource_mut::<PanelHeight>().unwrap();
-            panel_height.0 = value.max(200.);
-        });
+        //     let drag_call_back = builder.create_callback(|cx: &mut Cx, value: f32| {
+        //         let mut panel_height = cx.world_mut().get_resource_mut::<PanelHeight>().unwrap();
+        //         panel_height.0 = value.max(200.);
+        //     });
 
-        builder
-            .spawn(NodeBundle::new())
-            .create_children((Cond::new(
-                |cx: &Rcx| *cx.read_resource::<State<EditorState>>().get() == EditorState::Graph,
-                || NodeGraphDemo {},
-                move || {
-                    Fragment::new((
-                        Element::<NodeBundle>::new()
-                            .named("Preview")
-                            .style(style_viewport)
-                            .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
-                            .children(
-                                Element::<NodeBundle>::new()
-                                    .named("Log")
-                                    .style(style_log)
-                                    .children(Element::<NodeBundle>::new().style(style_log_inner)),
-                            ),
-                        Cond::new(
-                            |cx: &Rcx| {
-                                *cx.read_resource::<State<EditorState>>().get()
-                                    == EditorState::Split
-                            },
-                            move || {
-                                Fragment::new((
-                                    Splitter::new()
-                                        .direction(SplitterDirection::Horizontal)
-                                        .value(panel_height)
-                                        .on_change(drag_call_back),
-                                    Element::<NodeBundle>::new()
-                                        .style(graph_view_style)
-                                        .create_effect(move |cx, ent| {
-                                            let height = panel_height.get(cx);
-                                            let mut style =
-                                                cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
-                                            style.height = ui::Val::Px(height);
-                                        })
-                                        .children(NodeGraphDemo {}),
-                                ))
-                            },
-                            || (),
-                        ),
-                    ))
-                },
-            ),))
-            .style(wrapper_style)
+        //     builder
+        //         .spawn(NodeBundle::new())
+        //         .create_children((Cond::new(
+        //             |cx: &Rcx| *cx.read_resource::<State<EditorState>>().get() == EditorState::Graph,
+        //             || NodeGraphDemo {},
+        //             move || {
+        //                 Fragment::new((
+        //                     Element::<NodeBundle>::new()
+        //                         .named("Preview")
+        //                         .style(style_viewport)
+        //                         .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
+        //                         .children(
+        //                             Element::<NodeBundle>::new()
+        //                                 .named("Log")
+        //                                 .style(style_log)
+        //                                 .children(Element::<NodeBundle>::new().style(style_log_inner)),
+        //                         ),
+        //                     Cond::new(
+        //                         |cx: &Rcx| {
+        //                             *cx.read_resource::<State<EditorState>>().get()
+        //                                 == EditorState::Split
+        //                         },
+        //                         move || {
+        //                             Fragment::new((
+        //                                 Splitter::new()
+        //                                     .direction(SplitterDirection::Horizontal)
+        //                                     .value(panel_height)
+        //                                     .on_change(drag_call_back),
+        //                                 Element::<NodeBundle>::new()
+        //                                     .style(graph_view_style)
+        //                                     .create_effect(move |cx, ent| {
+        //                                         let height = panel_height.get(cx);
+        //                                         let mut style =
+        //                                             cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
+        //                                         style.height = ui::Val::Px(height);
+        //                                     })
+        //                                     .children(NodeGraphDemo {}),
+        //                             ))
+        //                         },
+        //                         || (),
+        //                     ),
+        //                 ))
+        //             },
+        //         ),))
+        //         .style(wrapper_style)
     }
 }
 

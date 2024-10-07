@@ -18,6 +18,7 @@ pub mod prelude {
     pub use crate::colors;
     pub use crate::controls::*;
     pub use crate::focus_signal::CreateFocusSignal;
+    pub use crate::hover_signal::CreateHoverSignal;
     pub use crate::rounded_corners::RoundedCorners;
     pub use crate::size::Size;
     pub use crate::tab_navigation::{handle_tab_navigation, TabGroup, TabIndex};
@@ -65,7 +66,7 @@ impl Plugin for ObsidianUiPlugin {
             UiMaterialPlugin::<SliderRectMaterial>::default(),
             UiMaterialPlugin::<SwatchRectMaterial>::default(),
             InputDispatchPlugin,
-            //     hooks::BistableTransitionPlugin,
+            animation::BistableTransitionPlugin,
             animation::AnimatedTransitionPlugin,
         ))
         // .add_plugins((

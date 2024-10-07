@@ -6,6 +6,10 @@ use bevy::{
     ui::{self, BackgroundColor, BorderColor, Style},
 };
 
+mod bistable_transition;
+
+pub use bistable_transition::*;
+
 /// Trait that represents a property that can be animated, such as background color,
 /// transform, and so on.
 pub trait AnimatableProperty {

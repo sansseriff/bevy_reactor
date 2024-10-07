@@ -1,5 +1,6 @@
-use bevy::prelude::*;
-use bevy_reactor_signals::{Cx, RunContextRead, RunContextSetup, Signal};
+use bevy::{prelude::*, ui::GhostNode};
+use bevy_reactor_builder::UiBuilder;
+use bevy_reactor_signals::Signal;
 
 /// Plugin that runs the timers for bistable transitions.
 pub struct BistableTransitionPlugin;
@@ -80,14 +81,14 @@ pub trait CreateBistableTransition {
     ) -> Signal<BistableTransitionState>;
 }
 
-impl<'w, 'p> CreateBistableTransition for Cx<'w, 'p> {
+impl<'w> CreateBistableTransition for UiBuilder<'w> {
     fn create_bistable_transition(
         &mut self,
         open: Signal<bool>,
         delay: f32,
     ) -> Signal<BistableTransitionState> {
         // Create an entity to hold the state machine.
-        let entity = self.create_owned_entity();
+        let entity = self.spawn(GhostNode).id();
 
         // Effect which updates the state machine when the `open` signal changes.
         self.create_effect(move |ve| {
@@ -112,7 +113,7 @@ impl<'w, 'p> CreateBistableTransition for Cx<'w, 'p> {
 
         // Derived signal which returns the current state.
         self.create_derived(move |cc| {
-            cc.use_component::<BistableTransitionStateMachine>(entity)
+            cc.read_component::<BistableTransitionStateMachine>(entity)
                 .map(|ee| ee.state)
                 .unwrap_or(BistableTransitionState::Exited)
         })
