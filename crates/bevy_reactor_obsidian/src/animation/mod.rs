@@ -177,15 +177,23 @@ where
     /// Start a new animated transition.
     /// If the entity already has an animated transition of the same type, the transition will be
     /// restarted with the new target value.
-    pub fn start(entity: &mut EntityWorldMut, target: T::ValueType, duration: f32) {
-        // If we're already animating to the same target, don't restart the animation.
-        if let Some(anim) = entity.get_mut::<Self>() {
-            if anim.target == target {
-                return;
+    pub fn start(
+        entity: &mut EntityWorldMut,
+        target: T::ValueType,
+        initial: Option<T::ValueType>,
+        duration: f32,
+    ) {
+        if let Some(mut transition) = entity.get_mut::<Self>() {
+            // If we're already animating to the same target, don't restart the animation.
+            if transition.target != target {
+                // Restart the transition with the new target value.
+                transition.target = target;
+                transition.duration = duration;
+                transition.clock = 0.0;
             }
-        }
-        if let Some(mut cmp) = entity.get_mut::<T::ComponentType>() {
-            let origin = T::current(&cmp);
+        } else if let Some(mut cmp) = entity.get_mut::<T::ComponentType>() {
+            let origin = initial.unwrap_or_else(|| T::current(&cmp));
+            // let origin = T::current(&cmp);
             let mut transition = Self::new(origin, target, duration, 0.0);
             transition.advance(&mut cmp, 0.0);
             entity.insert(transition);

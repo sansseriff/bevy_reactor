@@ -176,6 +176,7 @@ impl UiTemplate for Dialog {
                             AnimatedTransition::<AnimatedBackgroundColor>::start(
                                 ent,
                                 color,
+                                None,
                                 TRANSITION_DURATION,
                             );
                         },
@@ -199,18 +200,19 @@ impl UiTemplate for Dialog {
                                 move |rcx| {
                                     let state = state.get(rcx);
                                     match state {
-                                        BistableTransitionState::EnterStart
-                                        | BistableTransitionState::Exiting
-                                        | BistableTransitionState::Exited => Vec3::splat(0.0),
                                         BistableTransitionState::Entering
-                                        | BistableTransitionState::Entered
-                                        | BistableTransitionState::ExitStart => Vec3::splat(1.0),
+                                        | BistableTransitionState::EnterStart => (0.0, 1.0),
+                                        BistableTransitionState::ExitStart
+                                        | BistableTransitionState::Exiting => (1.0, 0.0),
+                                        BistableTransitionState::Entered => (1.0, 1.0),
+                                        BistableTransitionState::Exited => (0.0, 0.0),
                                     }
                                 },
-                                move |scale, ent| {
+                                move |(origin, target), ent| {
                                     AnimatedTransition::<AnimatedScale>::start(
                                         ent,
-                                        scale,
+                                        Vec3::splat(target),
+                                        Some(Vec3::splat(origin)),
                                         TRANSITION_DURATION,
                                     );
                                 },

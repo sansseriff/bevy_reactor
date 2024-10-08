@@ -127,7 +127,7 @@ impl UiTemplate for DisclosureToggle {
                 0.
             };
             let target = Quat::from_rotation_z(angle);
-            AnimatedTransition::<AnimatedRotation>::start(&mut entt, target, 0.3);
+            AnimatedTransition::<AnimatedRotation>::start(&mut entt, target, None, 0.3);
         });
 
         builder
