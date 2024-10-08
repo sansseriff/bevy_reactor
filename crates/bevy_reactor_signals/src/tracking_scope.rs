@@ -226,7 +226,12 @@ pub(crate) fn run_reactions(world: &mut World) {
         // Run reactions
         for scope_entity in changed.iter() {
             // Run the reaction
-            let cell = world.entity(*scope_entity).get::<ReactionCell>().unwrap();
+            if world.get_entity(*scope_entity).is_none() {
+                continue;
+            }
+            let Some(cell) = world.entity(*scope_entity).get::<ReactionCell>() else {
+                continue;
+            };
             let mut next_scope = TrackingScope::new(this_run);
             let inner = cell.0.clone();
             let mut lock = inner.lock().unwrap();

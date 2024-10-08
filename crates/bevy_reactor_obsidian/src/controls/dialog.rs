@@ -1,34 +1,40 @@
+use std::sync::Arc;
+
 use bevy::{
     color::{Alpha, Luminance},
     prelude::*,
     ui,
 };
-use bevy_mod_picking::{
-    events::{Click, Pointer},
-    prelude::{ListenerInput, On},
-};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor::*;
-use bevy_reactor_signals::{Callback, Cx, Rcx, RunContextSetup, RunContextWrite, Signal};
+use bevy_reactor_builder::{
+    CondBuilder, CreateChilden, EntityEffectBuilder, EntityStyleBuilder, UiBuilder, UiTemplate,
+};
+use bevy_reactor_signals::{Callback, RunCallback, Signal};
 
 use crate::{
-    animation::{AnimatedBackgroundColor, AnimatedScale, AnimatedTransition},
+    animation::{
+        AnimatedBackgroundColor, AnimatedScale, AnimatedTransition, BistableTransitionState,
+        CreateBistableTransition,
+    },
     colors,
-    focus::{KeyPressEvent, TabGroup},
-    hooks::{BistableTransitionState, CreateBistableTransition},
+    prelude::TabGroup,
     typography::text_default,
 };
 
+use super::barrier::Barrier;
+
 // Dialog background overlay
-fn style_dialog_overlay(ss: &mut StyleBuilder) {
+fn style_dialog_barrier(ss: &mut StyleBuilder) {
     ss.position(PositionType::Absolute)
         .display(ui::Display::Flex)
         .justify_content(ui::JustifyContent::Center)
         .align_items(ui::AlignItems::Center)
         .left(0)
         .top(0)
-        .right(0)
-        .bottom(0)
+        .width(ui::Val::Vw(100.))
+        .height(ui::Val::Vh(100.))
+        .border(1)
+        .border_color(colors::ANIMATION)
         .z_index(100)
         .background_color(colors::U2.with_alpha(0.0));
 }
@@ -58,7 +64,6 @@ const TRANSITION_DURATION: f32 = 0.3;
 
 /// Displays a modal dialog box. This will display the dialog frame and the backdrop overlay.
 /// Use the dialog header/body/footer controls to get the standard layout.
-#[derive(Default)]
 pub struct Dialog {
     /// The width of the dialog, one of several standard widths.
     pub width: ui::Val,
@@ -68,13 +73,25 @@ pub struct Dialog {
     pub open: Signal<bool>,
 
     /// The content of the dialog.
-    pub children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder) + Send + Sync + 'static>,
 
     /// Callback called when the dialog's close button is clicked.
     pub on_close: Option<Callback>,
 
     /// Callback called when the dialog has completed it's closing animation.
     pub on_exited: Option<Callback>,
+}
+
+impl Default for Dialog {
+    fn default() -> Self {
+        Self {
+            width: ui::Val::Px(400.0),
+            open: Signal::Constant(false),
+            children: Arc::new(|_| {}),
+            on_close: None,
+            on_exited: None,
+        }
+    }
 }
 
 impl Dialog {
@@ -96,8 +113,8 @@ impl Dialog {
     }
 
     /// Sets the content of the dialog.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Send + Sync + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 
@@ -114,15 +131,14 @@ impl Dialog {
     }
 }
 
-impl ViewTemplate for Dialog {
-    fn create(&self, cx: &mut Cx) -> impl IntoView {
+impl UiTemplate for Dialog {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
         let on_close = self.on_close;
         let on_exited = self.on_exited;
-        let state = cx.create_bistable_transition(self.open, TRANSITION_DURATION);
-        let children = self.children.clone();
+        let state = builder.create_bistable_transition(self.open, TRANSITION_DURATION);
         let width = self.width;
 
-        cx.create_effect(move |ve| {
+        builder.create_effect(move |ve| {
             let state = state.get(ve);
             if state == BistableTransitionState::Exited {
                 if let Some(on_exited) = on_exited {
@@ -131,87 +147,83 @@ impl ViewTemplate for Dialog {
             }
         });
 
-        Cond::new(
-            move |cx: &Rcx| state.get(cx) != BistableTransitionState::Exited,
-            move || {
-                Portal::new(
-                    Element::<NodeBundle>::new()
-                        .named("Dialog::Overlay")
-                        .style(style_dialog_overlay)
-                        .insert((
-                            // Click on backdrop sends close signal.
-                            On::<Pointer<Click>>::run(move |world: &mut World| {
-                                if let Some(on_close) = on_close {
-                                    world.run_callback(on_close, ());
-                                }
-                            }),
-                            On::<KeyPressEvent>::run({
-                                move |world: &mut World| {
-                                    let mut event = world
-                                        .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                        .unwrap();
-                                    if !event.repeat && event.key_code == KeyCode::Escape {
-                                        event.stop_propagation();
-                                        if let Some(on_close) = on_close {
-                                            world.run_callback(on_close, ());
-                                        }
-                                    }
-                                }
-                            }),
-                        ))
-                        .create_effect(move |cx, ent| {
-                            let state = state.get(cx);
-                            let mut entt = cx.world_mut().entity_mut(ent);
-                            let target = match state {
+        let is_shown =
+            builder.create_derived(move |rcx| state.get(rcx) != BistableTransitionState::Exited);
+
+        let children = self.children.clone();
+        builder.cond(
+            is_shown,
+            move |builder| {
+                let children = children.clone();
+                // Portal::new(
+                builder
+                    .spawn((NodeBundle::default(), Name::new("Dialog::Overlay")))
+                    .style(style_dialog_barrier)
+                    .insert(Barrier { on_close })
+                    .effect(
+                        move |rcx| {
+                            let state = state.get(rcx);
+                            match state {
                                 BistableTransitionState::Entering
                                 | BistableTransitionState::Entered
                                 | BistableTransitionState::ExitStart => colors::U2.with_alpha(0.7),
                                 BistableTransitionState::EnterStart
                                 | BistableTransitionState::Exiting
                                 | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
-                            };
+                            }
+                        },
+                        move |color, ent| {
                             AnimatedTransition::<AnimatedBackgroundColor>::start(
-                                &mut entt,
-                                target,
+                                ent,
+                                color,
                                 TRANSITION_DURATION,
                             );
-                        })
-                        .children(
-                            Element::<NodeBundle>::new()
-                                .insert(TabGroup {
-                                    order: 0,
-                                    modal: true,
-                                })
-                                .style((
-                                    text_default,
-                                    style_dialog,
-                                    move |ss: &mut StyleBuilder| {
-                                        ss.width(width);
-                                    },
-                                ))
-                                .create_effect(move |cx, ent| {
-                                    let state = state.get(cx);
-                                    let mut entt = cx.world_mut().entity_mut(ent);
-                                    let target = match state {
+                        },
+                    )
+                    .create_children(|builder| {
+                        builder
+                            .spawn((NodeBundle::default(), Name::new("Dialog")))
+                            .insert(TabGroup {
+                                order: 0,
+                                modal: true,
+                            })
+                            .observe(|mut trigger: Trigger<Pointer<Down>>| {
+                                // Prevent clicks from propagating to the barrier and closing
+                                // the dialog.
+                                trigger.propagate(false);
+                            })
+                            .styles((text_default, style_dialog, move |ss: &mut StyleBuilder| {
+                                ss.width(width);
+                            }))
+                            .effect(
+                                move |rcx| {
+                                    let state = state.get(rcx);
+                                    match state {
                                         BistableTransitionState::EnterStart
                                         | BistableTransitionState::Exiting
                                         | BistableTransitionState::Exited => Vec3::splat(0.0),
                                         BistableTransitionState::Entering
                                         | BistableTransitionState::Entered
                                         | BistableTransitionState::ExitStart => Vec3::splat(1.0),
-                                    };
+                                    }
+                                },
+                                move |scale, ent| {
                                     AnimatedTransition::<AnimatedScale>::start(
-                                        &mut entt,
-                                        target,
+                                        ent,
+                                        scale,
                                         TRANSITION_DURATION,
                                     );
-                                })
-                                .children(children.clone()),
-                        ),
-                )
+                                },
+                            )
+                            .create_children(|builder| {
+                                (children.as_ref())(builder);
+                            });
+                        // ;
+                    });
+                // );
             },
-            || (),
-        )
+            |_| {},
+        );
     }
 }
 
@@ -226,10 +238,18 @@ fn style_dialog_header(ss: &mut StyleBuilder) {
 }
 
 /// Displays a standard dialog header.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct DialogHeader {
     /// The content of the dialog header.
-    pub children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
+}
+
+impl Default for DialogHeader {
+    fn default() -> Self {
+        Self {
+            children: Arc::new(|_| {}),
+        }
+    }
 }
 
 impl DialogHeader {
@@ -239,17 +259,20 @@ impl DialogHeader {
     }
 
     /// Set the content of the dialog header.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 }
 
-impl ViewTemplate for DialogHeader {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Element::<NodeBundle>::new()
+impl UiTemplate for DialogHeader {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
+        builder
+            .spawn(NodeBundle::default())
             .style(style_dialog_header)
-            .children(self.children.clone())
+            .create_children(|builder| {
+                (self.children.as_ref())(builder);
+            });
     }
 }
 
@@ -263,10 +286,18 @@ fn style_dialog_body(ss: &mut StyleBuilder) {
 }
 
 /// Displays a standard dialog body.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct DialogBody {
     /// The content of the dialog header.
-    pub children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
+}
+
+impl Default for DialogBody {
+    fn default() -> Self {
+        Self {
+            children: Arc::new(|_| {}),
+        }
+    }
 }
 
 impl DialogBody {
@@ -276,17 +307,20 @@ impl DialogBody {
     }
 
     /// Set the content of the dialog body.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 }
 
-impl ViewTemplate for DialogBody {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Element::<NodeBundle>::new()
+impl UiTemplate for DialogBody {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
+        builder
+            .spawn(NodeBundle::default())
             .style(style_dialog_body)
-            .children(self.children.clone())
+            .create_children(|builder| {
+                (self.children.as_ref())(builder);
+            });
     }
 }
 
@@ -302,10 +336,18 @@ fn style_dialog_footer(ss: &mut StyleBuilder) {
 }
 
 /// Displays a standard dialog footer.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct DialogFooter {
     /// The content of the dialog header.
-    pub children: ChildArray,
+    pub children: Arc<dyn Fn(&mut UiBuilder)>,
+}
+
+impl Default for DialogFooter {
+    fn default() -> Self {
+        Self {
+            children: Arc::new(|_| {}),
+        }
+    }
 }
 
 impl DialogFooter {
@@ -315,16 +357,19 @@ impl DialogFooter {
     }
 
     /// Set the content of the dialog footer.
-    pub fn children<V: ChildViewTuple>(mut self, children: V) -> Self {
-        self.children = children.to_child_array();
+    pub fn children<V: 'static + Fn(&mut UiBuilder)>(mut self, children: V) -> Self {
+        self.children = Arc::new(children);
         self
     }
 }
 
-impl ViewTemplate for DialogFooter {
-    fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Element::<NodeBundle>::new()
+impl UiTemplate for DialogFooter {
+    fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
+        builder
+            .spawn(NodeBundle::default())
             .style(style_dialog_footer)
-            .children(self.children.clone())
+            .create_children(|builder| {
+                (self.children.as_ref())(builder);
+            });
     }
 }

@@ -1,5 +1,7 @@
+mod barrier;
 mod button;
 mod checkbox;
+mod dialog;
 mod disabled;
 mod disclosure_toggle;
 mod gradient_slider;
@@ -18,6 +20,7 @@ mod tool_palette;
 use bevy::app::Plugin;
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
+pub use dialog::{Dialog, DialogBody, DialogFooter, DialogHeader};
 pub use disabled::{Disabled, IsDisabled};
 pub use disclosure_toggle::DisclosureToggle;
 pub use gradient_slider::{ColorGradient, GradientSlider};
@@ -43,6 +46,8 @@ impl Plugin for ControlEventsPlugin {
             .observe(button::button_on_pointer_up)
             .observe(button::button_on_pointer_click)
             .observe(button::button_on_pointer_drag_end)
-            .observe(button::button_on_pointer_cancel);
+            .observe(button::button_on_pointer_cancel)
+            .observe(barrier::barrier_on_key_input)
+            .observe(barrier::barrier_on_pointer_down);
     }
 }

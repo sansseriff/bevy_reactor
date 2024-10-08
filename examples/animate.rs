@@ -5,6 +5,7 @@ use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder};
 use bevy_reactor_obsidian::{
     animation::{BistableTransitionState, CreateBistableTransition},
+    controls::Button,
     input_dispatch::DefaultKeyHandler,
     prelude::*,
 };
@@ -96,6 +97,39 @@ fn setup_view_root(world: &mut World) {
                         DisclosureToggle::new()
                             .expanded(expanded)
                             .on_change(on_change),
+                    );
+                });
+
+            builder.text("Dialog");
+            builder
+                .spawn(NodeBundle::default())
+                .create_children(|builder| {
+                    let open = builder.create_mutable(false);
+                    let on_open =
+                        builder.create_callback(move |_: In<()>, mut world: DeferredWorld| {
+                            open.set(&mut world, true);
+                        });
+                    let on_close =
+                        builder.create_callback(move |_: In<()>, mut world: DeferredWorld| {
+                            open.set(&mut world, false);
+                        });
+                    builder.invoke(Button::new().labeled("Open").on_click(on_open));
+                    builder.invoke(
+                        Dialog::new()
+                            .open(open.signal())
+                            .on_close(on_close)
+                            .children(move |builder| {
+                                builder.invoke(DialogHeader::new().children(|builder| {
+                                    builder.text("Dialog Header");
+                                }));
+                                builder.invoke(DialogBody::new().children(|builder| {
+                                    builder.text("Dialog Body");
+                                }));
+                                builder.invoke(DialogFooter::new().children(move |builder| {
+                                    builder
+                                        .invoke(Button::new().labeled("Close").on_click(on_close));
+                                }));
+                            }),
                     );
                 });
         });
