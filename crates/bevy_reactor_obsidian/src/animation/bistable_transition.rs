@@ -15,18 +15,11 @@ impl Plugin for BistableTransitionPlugin {
 /// menus which have an opening and closing animation.
 #[derive(Default, Clone, Copy, PartialEq, Debug)]
 pub enum BistableTransitionState {
-    /// One-frame delay at start of entering. This is used to initialize the opening
-    /// animation.
-    EnterStart,
-
     /// Opening animation.
     Entering,
 
     /// Fully open.
     Entered,
-
-    /// One frame delay at start of exiting. This is used to initialize the closing animation.
-    ExitStart,
 
     /// Closing animation.
     Exiting,
@@ -40,10 +33,8 @@ impl BistableTransitionState {
     /// Convert the state into a readable string.
     pub fn as_name(&self) -> &str {
         match self {
-            BistableTransitionState::EnterStart => "enter-start",
             BistableTransitionState::Entering => "entering",
             BistableTransitionState::Entered => "entered",
-            BistableTransitionState::ExitStart => "exit-start",
             BistableTransitionState::Exiting => "exiting",
             BistableTransitionState::Exited => "exited",
         }
@@ -126,14 +117,6 @@ pub fn enter_exit_state_machine(
 ) {
     for (mut ee, mut tt) in query.iter_mut() {
         match ee.state {
-            BistableTransitionState::EnterStart => {
-                if ee.open {
-                    ee.state = BistableTransitionState::Entering;
-                    tt.timer = 0.;
-                } else {
-                    ee.state = BistableTransitionState::ExitStart;
-                }
-            }
             BistableTransitionState::Entering => {
                 if ee.open {
                     tt.timer += time.delta_seconds();
@@ -141,25 +124,20 @@ pub fn enter_exit_state_machine(
                         ee.state = BistableTransitionState::Entered;
                     }
                 } else {
-                    ee.state = BistableTransitionState::ExitStart;
+                    ee.state = BistableTransitionState::Exiting;
+                    tt.timer = 0.;
                 }
             }
             BistableTransitionState::Entered => {
                 if !ee.open {
-                    ee.state = BistableTransitionState::ExitStart;
-                }
-            }
-            BistableTransitionState::ExitStart => {
-                if !ee.open {
                     ee.state = BistableTransitionState::Exiting;
                     tt.timer = 0.;
-                } else {
-                    ee.state = BistableTransitionState::EnterStart;
                 }
             }
             BistableTransitionState::Exiting => {
                 if ee.open {
-                    ee.state = BistableTransitionState::EnterStart;
+                    ee.state = BistableTransitionState::Entering;
+                    tt.timer = 0.;
                 } else {
                     tt.timer += time.delta_seconds();
                     if tt.timer > ee.delay {
@@ -169,7 +147,8 @@ pub fn enter_exit_state_machine(
             }
             BistableTransitionState::Exited => {
                 if ee.open {
-                    ee.state = BistableTransitionState::EnterStart;
+                    ee.state = BistableTransitionState::Entering;
+                    tt.timer = 0.;
                 }
             }
         }

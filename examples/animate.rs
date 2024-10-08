@@ -65,13 +65,9 @@ fn setup_view_root(world: &mut World) {
             let is_hover = builder.create_hover_signal(row_id);
             let transition_state = builder.create_bistable_transition(is_hover, 0.3);
             let color = builder.create_derived(move |rcx| match transition_state.get(rcx) {
-                BistableTransitionState::EnterStart | BistableTransitionState::Entering => {
-                    palettes::css::GREEN
-                }
+                BistableTransitionState::Entering => palettes::css::GREEN,
                 BistableTransitionState::Entered => palettes::css::YELLOW,
-                BistableTransitionState::ExitStart | BistableTransitionState::Exiting => {
-                    palettes::css::ORANGE
-                }
+                BistableTransitionState::Exiting => palettes::css::ORANGE,
                 BistableTransitionState::Exited => palettes::css::GRAY,
             });
             builder

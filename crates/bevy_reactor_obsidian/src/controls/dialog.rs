@@ -165,10 +165,8 @@ impl UiTemplate for Dialog {
                             let state = state.get(rcx);
                             match state {
                                 BistableTransitionState::Entering
-                                | BistableTransitionState::Entered
-                                | BistableTransitionState::ExitStart => colors::U2.with_alpha(0.7),
-                                BistableTransitionState::EnterStart
-                                | BistableTransitionState::Exiting
+                                | BistableTransitionState::Entered => colors::U2.with_alpha(0.7),
+                                BistableTransitionState::Exiting
                                 | BistableTransitionState::Exited => colors::U2.with_alpha(0.0),
                             }
                         },
@@ -200,10 +198,8 @@ impl UiTemplate for Dialog {
                                 move |rcx| {
                                     let state = state.get(rcx);
                                     match state {
-                                        BistableTransitionState::Entering
-                                        | BistableTransitionState::EnterStart => (0.0, 1.0),
-                                        BistableTransitionState::ExitStart
-                                        | BistableTransitionState::Exiting => (1.0, 0.0),
+                                        BistableTransitionState::Entering => (0.0, 1.0),
+                                        BistableTransitionState::Exiting => (1.0, 0.0),
                                         BistableTransitionState::Entered => (1.0, 1.0),
                                         BistableTransitionState::Exited => (0.0, 0.0),
                                     }
