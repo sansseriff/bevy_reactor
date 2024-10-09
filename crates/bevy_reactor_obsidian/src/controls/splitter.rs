@@ -1,6 +1,6 @@
 use bevy::{
-    color::Luminance, ecs::world::DeferredWorld, prelude::*, render::view::cursor::CursorIcon, ui,
-    window::SystemCursorIcon,
+    color::Luminance, ecs::world::DeferredWorld, prelude::*, ui, window::SystemCursorIcon,
+    winit::cursor::CursorIcon,
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, UiBuilder, UiTemplate};

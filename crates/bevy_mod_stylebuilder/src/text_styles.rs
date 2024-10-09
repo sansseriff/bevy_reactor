@@ -46,28 +46,17 @@ impl InheritableFontStyles {
 pub struct UseInheritedTextStyles;
 
 pub(crate) fn update_text_styles(
-    mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
+    mut query: Query<(Entity, &mut Text, &mut TextStyle), With<UseInheritedTextStyles>>,
     inherited: Query<Ref<InheritableFontStyles>>,
     parents: Query<&Parent>,
 ) {
     let inherited_changed = inherited.iter().any(|cmp| cmp.is_changed());
-    for (entity, mut text) in query.iter_mut() {
+    for (entity, text, mut text_style) in query.iter_mut() {
         if text.is_changed() || inherited_changed {
-            let style = match compute_inherited_style(entity, &inherited, &parents) {
+            *text_style = match compute_inherited_style(entity, &inherited, &parents) {
                 Some(value) => value,
                 None => continue,
             };
-
-            let styles_changed = text.sections.iter().any(|section| {
-                section.style.font != style.font
-                    || section.style.font_size != style.font_size
-                    || section.style.color != style.color
-            });
-            if styles_changed {
-                for section in text.sections.iter_mut() {
-                    section.style = style.clone();
-                }
-            }
         }
     }
 }
@@ -75,15 +64,12 @@ pub(crate) fn update_text_styles(
 pub(crate) fn set_initial_text_style(
     trigger: Trigger<OnAdd, UseInheritedTextStyles>,
     q_inherited: Query<Ref<InheritableFontStyles>, ()>,
-    mut q_text: Query<&mut Text, ()>,
+    mut q_text: Query<(&Text, &mut TextStyle), ()>,
     q_parents: Query<&Parent, ()>,
 ) {
-    if let Ok(mut text) = q_text.get_mut(trigger.entity()) {
-        let style =
+    if let Ok((_text, mut text_style)) = q_text.get_mut(trigger.entity()) {
+        *text_style =
             compute_inherited_style(trigger.entity(), &q_inherited, &q_parents).unwrap_or_default();
-        for section in text.sections.iter_mut() {
-            section.style = style.clone();
-        }
     }
 }
 
@@ -114,6 +100,7 @@ fn compute_inherited_style(
         font: styles.font.unwrap_or_default(),
         font_size: styles.font_size.unwrap_or(12.),
         color: styles.color.unwrap_or(Color::WHITE),
+        font_smoothing: default(),
     };
     Some(style)
 }

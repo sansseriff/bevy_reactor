@@ -18,9 +18,9 @@ use bevy::{
     },
     color::Luminance,
     prelude::*,
-    render::view::cursor::CursorIcon,
     ui,
     window::SystemCursorIcon,
+    winit::cursor::CursorIcon,
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{

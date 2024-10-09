@@ -226,7 +226,7 @@ pub(crate) fn run_reactions(world: &mut World) {
         // Run reactions
         for scope_entity in changed.iter() {
             // Run the reaction
-            if world.get_entity(*scope_entity).is_none() {
+            if world.get_entity(*scope_entity).is_err() {
                 continue;
             }
             let Some(cell) = world.entity(*scope_entity).get::<ReactionCell>() else {

@@ -108,7 +108,7 @@ impl UiTemplate for Swatch {
 
         builder
             .spawn((MaterialNodeBundle::<SwatchRectMaterial> {
-                material: material.clone(),
+                material: UiMaterialHandle(material.clone()),
                 ..default()
             }, Name::new("Swatch")))
             .styles((style_swatch, self.style.clone()))

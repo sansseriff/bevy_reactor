@@ -139,7 +139,7 @@ struct EntityTreeNode(Entity);
 
 impl UiTemplate for EntityTreeNode {
     fn build(&self, builder: &mut bevy_reactor_builder::UiBuilder) {
-        if builder.world().get_entity(self.0).is_none() {
+        if builder.world().get_entity(self.0).is_err() {
             return;
         }
         builder

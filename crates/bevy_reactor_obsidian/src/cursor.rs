@@ -1,7 +1,7 @@
 use bevy::{
     picking::{focus::HoverMap, pointer::PointerId},
     prelude::*,
-    render::view::cursor::{CursorIcon, CustomCursor},
+    winit::cursor::{CursorIcon, CustomCursor},
 };
 use bevy_mod_stylebuilder::{MaybeHandleOrPath, StyleBuilder};
 

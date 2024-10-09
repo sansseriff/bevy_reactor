@@ -49,13 +49,7 @@ fn main() {
 }
 
 fn setup_view_root(world: &mut World) {
-    let camera = world
-        .spawn((Camera2dBundle {
-            camera: Camera::default(),
-            camera_2d: Camera2d {},
-            ..default()
-        },))
-        .id();
+    let camera = world.spawn((Camera::default(), Camera2d)).id();
 
     world
         .spawn(NodeBundle::default())

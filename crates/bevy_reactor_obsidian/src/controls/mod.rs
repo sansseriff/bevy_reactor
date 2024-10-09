@@ -39,15 +39,15 @@ pub(crate) struct ControlEventsPlugin;
 
 impl Plugin for ControlEventsPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.observe(toggle_state::toggle_on_key_input)
-            .observe(toggle_state::toggle_on_pointer_click)
-            .observe(button::button_on_key_event)
-            .observe(button::button_on_pointer_down)
-            .observe(button::button_on_pointer_up)
-            .observe(button::button_on_pointer_click)
-            .observe(button::button_on_pointer_drag_end)
-            .observe(button::button_on_pointer_cancel)
-            .observe(barrier::barrier_on_key_input)
-            .observe(barrier::barrier_on_pointer_down);
+        app.add_observer(toggle_state::toggle_on_key_input)
+            .add_observer(toggle_state::toggle_on_pointer_click)
+            .add_observer(button::button_on_key_event)
+            .add_observer(button::button_on_pointer_down)
+            .add_observer(button::button_on_pointer_up)
+            .add_observer(button::button_on_pointer_click)
+            .add_observer(button::button_on_pointer_drag_end)
+            .add_observer(button::button_on_pointer_cancel)
+            .add_observer(barrier::barrier_on_key_input)
+            .add_observer(barrier::barrier_on_pointer_down);
     }
 }

@@ -17,10 +17,9 @@ impl<'w> TextBuilder for WorldChildBuilder<'w> {
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
         self.spawn((
             Name::new("TextStatic"),
-            TextBundle {
-                text: Text::from_section(s.into(), TextStyle::default()),
-                ..default()
-            },
+            TextBlock::default(),
+            Text(s.into()),
+            TextStyle::default(),
             UseInheritedTextStyles,
         ));
         self
@@ -43,10 +42,9 @@ impl<'w> TextBuilder for WorldChildBuilder<'w> {
         node.insert((
             tracking,
             Name::new("TextComputed"),
-            TextBundle {
-                text: Text::from_section(text, TextStyle::default()),
-                ..default()
-            },
+            TextBlock::default(),
+            Text(text),
+            TextStyle::default(),
             UseInheritedTextStyles,
             ReactionCell::new(reaction),
         ));
@@ -59,10 +57,9 @@ impl<'w> TextBuilder for UiBuilder<'w> {
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
         self.spawn((
             Name::new("TextStatic"),
-            TextBundle {
-                text: Text::from_section(s.into(), TextStyle::default()),
-                ..default()
-            },
+            TextBlock::default(),
+            Text(s.into()),
+            TextStyle::default(),
             UseInheritedTextStyles,
         ));
         self
@@ -85,10 +82,9 @@ impl<'w> TextBuilder for UiBuilder<'w> {
         node.insert((
             tracking,
             Name::new("TextComputed"),
-            TextBundle {
-                text: Text::from_section(text, TextStyle::default()),
-                ..default()
-            },
+            TextBlock::default(),
+            Text(text),
+            TextStyle::default(),
             UseInheritedTextStyles,
             ReactionCell::new(reaction),
         ));
@@ -109,11 +105,6 @@ impl<F: FnMut(&Rcx) -> String + Send + Sync + 'static> Reaction for TextComputed
     fn react(&mut self, owner: Entity, world: &mut World, tracking: &mut TrackingScope) {
         let re = Rcx::new(world, owner, tracking);
         let text = (self.text_fn)(&re);
-        world
-            .entity_mut(self.node)
-            .get_mut::<Text>()
-            .unwrap()
-            .sections[0]
-            .value = text;
+        world.entity_mut(self.node).get_mut::<Text>().unwrap().0 = text;
     }
 }

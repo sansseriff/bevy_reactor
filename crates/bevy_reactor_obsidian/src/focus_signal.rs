@@ -16,7 +16,7 @@ fn is_descendant(world: &World, e: &Entity, ancestor: &Entity) -> bool {
             return true;
         }
         match world.get_entity(*ha).map(|e| e.get::<Parent>()) {
-            Some(Some(parent)) => ha = parent,
+            Ok(Some(parent)) => ha = parent,
             _ => return false,
         }
     }

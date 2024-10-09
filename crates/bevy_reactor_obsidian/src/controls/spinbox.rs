@@ -1,6 +1,5 @@
 use bevy::{
-    ecs::world::DeferredWorld, prelude::*, render::view::cursor::CursorIcon, ui,
-    window::SystemCursorIcon,
+    ecs::world::DeferredWorld, prelude::*, ui, window::SystemCursorIcon, winit::cursor::CursorIcon,
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{

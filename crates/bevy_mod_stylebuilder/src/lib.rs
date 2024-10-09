@@ -150,7 +150,7 @@ pub struct StyleBuilderPlugin;
 
 impl Plugin for StyleBuilderPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.world_mut().observe(set_initial_text_style);
+        app.world_mut().add_observer(set_initial_text_style);
         app.add_systems(PostUpdate, update_text_styles.in_set(StyleBuilderSystemSet));
     }
 }
