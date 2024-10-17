@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::{ecs::world::World, ui::GhostNode};
+use bevy::{ecs::world::World, ui::experimental::GhostNode};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::UiBuilder;
@@ -55,9 +55,11 @@ impl<'w> ForIndexBuilder for UiBuilder<'w> {
         let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.
         reaction.react(owner_id, world, &mut tracking);
-        world
-            .entity_mut(owner_id)
-            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        world.entity_mut(owner_id).insert((
+            GhostNode::default(),
+            tracking,
+            ReactionCell::new(reaction),
+        ));
         self
     }
 }
@@ -115,7 +117,7 @@ impl<
                 }
             } else {
                 // Append new items.
-                let child_id = world.spawn(GhostNode).id();
+                let child_id = world.spawn(GhostNode::default()).id();
                 world.entity_mut(owner).add_child(child_id);
                 (self.each)(&item, index, &mut UiBuilder::new(world, child_id));
                 self.state.push(ListItem {
@@ -147,7 +149,7 @@ impl<
 
             // If there are no items, render fallback unless already rendered.
             None if item_count == 0 => {
-                let mut fallback_ent = world.spawn(GhostNode);
+                let mut fallback_ent = world.spawn(GhostNode::default());
                 fallback_ent.set_parent(owner);
                 let fallback_id = fallback_ent.id();
                 let mut builder = UiBuilder::new(world, fallback_id);

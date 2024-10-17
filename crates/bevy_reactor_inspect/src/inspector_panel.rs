@@ -6,7 +6,7 @@ use bevy::{
         Camera2d, Camera3d, Children, Click, Component, Entity, In, Mesh3d, NodeBundle, Parent,
         Pointer, Query, ResMut, Resource, Trigger, Without, World,
     },
-    ui::{self, GhostNode, Node},
+    ui::{self, experimental::GhostNode, Node},
     window::{Monitor, Window},
 };
 use bevy_mod_stylebuilder::{

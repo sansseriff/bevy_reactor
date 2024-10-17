@@ -1,7 +1,7 @@
 #![allow(clippy::type_complexity)]
 
 use bevy::prelude::{BuildChildren, DespawnRecursiveExt, Entity};
-use bevy::ui::GhostNode;
+use bevy::ui::experimental::GhostNode;
 use bevy::{core::Name, ecs::world::World};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, Signal, TrackingScope};
 
@@ -73,7 +73,7 @@ impl<'w> SwitchBuilder for UiBuilder<'w> {
         let parent = self.parent();
         let reaction_owner = self
             .world_mut()
-            .spawn((Name::new("Switch"), GhostNode))
+            .spawn((Name::new("Switch"), GhostNode::default()))
             .set_parent(parent)
             .id();
 

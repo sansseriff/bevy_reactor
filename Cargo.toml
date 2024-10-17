@@ -14,7 +14,7 @@ exclude = [
 ]
 
 [workspace.dependencies]
-bevy = "0.15.0-dev"
+bevy = { version = "0.15.0-dev", features = ["ghost_nodes"] }
 bevy_reactor_builder = { path = "crates/bevy_reactor_builder" }
 bevy_reactor_obsidian = { path = "crates/bevy_reactor_obsidian" }
 bevy_reactor_signals = { path = "crates/bevy_reactor_signals" }

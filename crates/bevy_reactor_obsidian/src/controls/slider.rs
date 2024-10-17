@@ -235,7 +235,7 @@ impl UiTemplate for Slider {
         builder
             .entity_mut(slider_id)
             .styles((typography::text_default, style_slider, self.style.clone()))
-            .insert(material.clone())
+            .insert(UiMaterialHandle(material.clone()))
             .observe(
                 move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
                     trigger.propagate(false);

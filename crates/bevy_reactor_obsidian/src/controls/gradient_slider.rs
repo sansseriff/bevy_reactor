@@ -346,7 +346,7 @@ impl UiTemplate for GradientSlider {
             .create_children(|builder| {
                 builder
                     .spawn(MaterialNodeBundle::<GradientRectMaterial>::default())
-                    .insert(gradient_material.clone())
+                    .insert(UiMaterialHandle(gradient_material.clone()))
                     .style(style_gradient);
                 builder
                     .spawn((NodeBundle::default(), Name::new("GradientSlider::Track")))

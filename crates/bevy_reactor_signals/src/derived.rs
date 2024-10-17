@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, sync::Arc};
 
-use bevy::{ecs::world::DeferredWorld, prelude::*, ui::GhostNode};
+use bevy::{ecs::world::DeferredWorld, prelude::*, ui::experimental::GhostNode};
 
 use crate::{Rcx, TrackingScope};
 
@@ -260,7 +260,9 @@ pub fn create_derived<R: 'static, F: Send + Sync + 'static + Fn(&mut Rcx) -> R>(
     world: &mut World,
     compute: F,
 ) -> Derived<R> {
-    let derived = world.spawn((DerivedCell::new(compute), GhostNode)).id();
+    let derived = world
+        .spawn((DerivedCell::new(compute), GhostNode::default()))
+        .id();
     Derived {
         id: derived,
         marker: PhantomData,

@@ -1,4 +1,4 @@
-use bevy::{prelude::*, ui::GhostNode};
+use bevy::{prelude::*, ui::experimental::GhostNode};
 use bevy_reactor_builder::UiBuilder;
 use bevy_reactor_signals::Signal;
 
@@ -79,7 +79,7 @@ impl<'w> CreateBistableTransition for UiBuilder<'w> {
         delay: f32,
     ) -> Signal<BistableTransitionState> {
         // Create an entity to hold the state machine.
-        let entity = self.spawn(GhostNode).id();
+        let entity = self.spawn(GhostNode::default()).id();
 
         // Effect which updates the state machine when the `open` signal changes.
         self.create_effect(move |ve| {
@@ -119,7 +119,7 @@ pub fn enter_exit_state_machine(
         match ee.state {
             BistableTransitionState::Entering => {
                 if ee.open {
-                    tt.timer += time.delta_seconds();
+                    tt.timer += time.delta_secs();
                     if tt.timer > ee.delay {
                         ee.state = BistableTransitionState::Entered;
                     }
@@ -139,7 +139,7 @@ pub fn enter_exit_state_machine(
                     ee.state = BistableTransitionState::Entering;
                     tt.timer = 0.;
                 } else {
-                    tt.timer += time.delta_seconds();
+                    tt.timer += time.delta_secs();
                     if tt.timer > ee.delay {
                         ee.state = BistableTransitionState::Exited;
                     }

@@ -46,17 +46,17 @@ impl InheritableFontStyles {
 pub struct UseInheritedTextStyles;
 
 pub(crate) fn update_text_styles(
-    mut query: Query<(Entity, &mut Text, &mut TextStyle), With<UseInheritedTextStyles>>,
+    mut query: Query<(Entity, &mut Text), With<UseInheritedTextStyles>>,
     inherited: Query<Ref<InheritableFontStyles>>,
     parents: Query<&Parent>,
+    mut commands: Commands,
 ) {
     let inherited_changed = inherited.iter().any(|cmp| cmp.is_changed());
-    for (entity, text, mut text_style) in query.iter_mut() {
+    for (entity, text) in query.iter_mut() {
         if text.is_changed() || inherited_changed {
-            *text_style = match compute_inherited_style(entity, &inherited, &parents) {
-                Some(value) => value,
-                None => continue,
-            };
+            commands
+                .entity(entity)
+                .insert(compute_inherited_style(entity, &inherited, &parents));
         }
     }
 }
@@ -64,20 +64,23 @@ pub(crate) fn update_text_styles(
 pub(crate) fn set_initial_text_style(
     trigger: Trigger<OnAdd, UseInheritedTextStyles>,
     q_inherited: Query<Ref<InheritableFontStyles>, ()>,
-    mut q_text: Query<(&Text, &mut TextStyle), ()>,
     q_parents: Query<&Parent, ()>,
+    mut commands: Commands,
 ) {
-    if let Ok((_text, mut text_style)) = q_text.get_mut(trigger.entity()) {
-        *text_style =
-            compute_inherited_style(trigger.entity(), &q_inherited, &q_parents).unwrap_or_default();
-    }
+    commands
+        .entity(trigger.entity())
+        .insert(compute_inherited_style(
+            trigger.entity(),
+            &q_inherited,
+            &q_parents,
+        ));
 }
 
 fn compute_inherited_style(
     entity: Entity,
     inherited: &Query<Ref<InheritableFontStyles>, ()>,
     parents: &Query<&Parent, ()>,
-) -> Option<TextStyle> {
+) -> (TextFont, TextColor) {
     let mut styles = InheritableFontStyles::default();
     let mut ancestor = entity;
     loop {
@@ -96,11 +99,11 @@ fn compute_inherited_style(
             break;
         }
     }
-    let style = TextStyle {
+    let color = TextColor(styles.color.unwrap_or(Color::WHITE));
+    let style = TextFont {
         font: styles.font.unwrap_or_default(),
         font_size: styles.font_size.unwrap_or(12.),
-        color: styles.color.unwrap_or(Color::WHITE),
         font_smoothing: default(),
     };
-    Some(style)
+    (style, color)
 }

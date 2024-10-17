@@ -125,25 +125,25 @@ fn setup_view_root(world: &mut World) {
 
             builder.text("Text");
             builder
-                .spawn((TextBlock::default(), Text::default()))
+                .spawn((TextLayout::default(), Text::default()))
                 .styles((typography::text_default, |sb: &mut StyleBuilder| {
                     sb.font_size(32).color(palettes::css::GRAY);
                 }))
                 .create_children(|builder| {
                     builder.spawn((
                         Text("The quick brown fox jumps over the ".to_string()),
-                        TextStyle::default(),
+                        TextColor::default(),
                         UseInheritedTextStyles,
                     ));
                     builder.spawn((
                         Text("lazy".to_string()),
-                        TextStyle::default(),
+                        TextColor::default(),
                         UseInheritedTextStyles,
                         AnimateTextColor { hue: 0. },
                     ));
                     builder.spawn((
                         Text(" dog".to_string()),
-                        TextStyle::default(),
+                        TextColor::default(),
                         UseInheritedTextStyles,
                     ));
                 });
@@ -155,10 +155,10 @@ struct AnimateTextColor {
     hue: f32,
 }
 
-fn change_text_color(mut q_text: Query<(&mut TextStyle, &mut AnimateTextColor)>, time: Res<Time>) {
+fn change_text_color(mut q_text: Query<(&mut TextColor, &mut AnimateTextColor)>, time: Res<Time>) {
     for (mut text_style, mut animate) in q_text.iter_mut() {
-        animate.hue = (animate.hue + time.delta_seconds() * 200.).rem_euclid(360.0);
-        text_style.color = Hsla::new(animate.hue, 1., 0.5, 1.).into();
+        animate.hue = (animate.hue + time.delta_secs() * 200.).rem_euclid(360.0);
+        text_style.0 = Hsla::new(animate.hue, 1., 0.5, 1.).into();
     }
 }
 

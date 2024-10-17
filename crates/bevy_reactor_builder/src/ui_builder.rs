@@ -4,7 +4,7 @@ use bevy::{
         BuildChildren, Bundle, Component, DespawnRecursiveExt, Entity, EntityWorldMut, In,
         IntoSystem, Parent, World,
     },
-    ui::GhostNode,
+    ui::experimental::GhostNode,
 };
 use bevy_reactor_signals::{
     create_derived, create_mutable, Callback, CallbackOwner, Ecx, Mutable, Rcx, Reaction,
@@ -147,9 +147,11 @@ impl<'w> UiBuilder<'w> {
         let owner = self.parent;
         let effect_owner = self.world.spawn_empty().set_parent(owner).id();
         reaction.react(effect_owner, self.world, &mut scope);
-        self.world
-            .entity_mut(effect_owner)
-            .insert((scope, ReactionCell::new(reaction), GhostNode));
+        self.world.entity_mut(effect_owner).insert((
+            scope,
+            ReactionCell::new(reaction),
+            GhostNode::default(),
+        ));
         self
     }
 
@@ -200,9 +202,11 @@ impl<'w> UiBuilder<'w> {
         let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.
         reaction.react(owner_id, world, &mut tracking);
-        world
-            .entity_mut(owner_id)
-            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        world.entity_mut(owner_id).insert((
+            GhostNode::default(),
+            tracking,
+            ReactionCell::new(reaction),
+        ));
         self
     }
 }

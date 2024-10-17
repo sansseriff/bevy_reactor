@@ -1,7 +1,8 @@
 use std::ops::Range;
 
+use bevy::ecs::world::World;
 use bevy::prelude::*;
-use bevy::{ecs::world::World, ui::GhostNode};
+use bevy::ui::experimental::GhostNode;
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::lcs::lcs;
@@ -94,9 +95,11 @@ impl<'w> ForEachBuilder for UiBuilder<'w> {
         let world = unsafe { owner.world_mut() };
         // Trigger the initial reaction.
         reaction.react(owner_id, world, &mut tracking);
-        world
-            .entity_mut(owner_id)
-            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        world.entity_mut(owner_id).insert((
+            GhostNode::default(),
+            tracking,
+            ReactionCell::new(reaction),
+        ));
         self
     }
 }
@@ -173,7 +176,7 @@ impl<
             }
             // Build new elements
             for i in next_range {
-                let child_id = world.spawn(GhostNode).id();
+                let child_id = world.spawn(GhostNode::default()).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
                 out.push(ListItem {
                     child: child_id,
@@ -210,7 +213,7 @@ impl<
         } else if next_start > next_range.start {
             // Insertions
             for i in next_range.start..next_start {
-                let child_id = world.spawn(GhostNode).id();
+                let child_id = world.spawn(GhostNode::default()).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
                 out.push(ListItem {
                     child: child_id,
@@ -250,7 +253,7 @@ impl<
         } else if next_end < next_range.end {
             // Insertions
             for i in next_end..next_range.end {
-                let child_id = world.spawn(GhostNode).id();
+                let child_id = world.spawn(GhostNode::default()).id();
                 (self.each)(&next_items[i], &mut UiBuilder::new(world, child_id));
                 out.push(ListItem {
                     child: child_id,
@@ -302,7 +305,7 @@ impl<
 
             // If there are no items, render fallback unless already rendered.
             None if next_len == 0 => {
-                let mut fallback_ent = world.spawn(GhostNode);
+                let mut fallback_ent = world.spawn(GhostNode::default());
                 fallback_ent.set_parent(owner);
                 let fallback_id = fallback_ent.id();
                 let mut builder = UiBuilder::new(world, fallback_id);

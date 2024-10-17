@@ -17,9 +17,10 @@ impl<'w> TextBuilder for WorldChildBuilder<'w> {
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
         self.spawn((
             Name::new("TextStatic"),
-            TextBlock::default(),
+            TextLayout::default(),
             Text(s.into()),
-            TextStyle::default(),
+            TextColor::default(),
+            TextFont::default(),
             UseInheritedTextStyles,
         ));
         self
@@ -42,9 +43,10 @@ impl<'w> TextBuilder for WorldChildBuilder<'w> {
         node.insert((
             tracking,
             Name::new("TextComputed"),
-            TextBlock::default(),
+            TextLayout::default(),
             Text(text),
-            TextStyle::default(),
+            TextFont::default(),
+            TextColor::default(),
             UseInheritedTextStyles,
             ReactionCell::new(reaction),
         ));
@@ -57,9 +59,9 @@ impl<'w> TextBuilder for UiBuilder<'w> {
     fn text(&mut self, s: impl Into<String>) -> &mut Self {
         self.spawn((
             Name::new("TextStatic"),
-            TextBlock::default(),
+            TextLayout::default(),
             Text(s.into()),
-            TextStyle::default(),
+            // TextStyle::default(),
             UseInheritedTextStyles,
         ));
         self
@@ -82,9 +84,9 @@ impl<'w> TextBuilder for UiBuilder<'w> {
         node.insert((
             tracking,
             Name::new("TextComputed"),
-            TextBlock::default(),
+            TextLayout::default(),
             Text(text),
-            TextStyle::default(),
+            // TextStyle::default(),
             UseInheritedTextStyles,
             ReactionCell::new(reaction),
         ));

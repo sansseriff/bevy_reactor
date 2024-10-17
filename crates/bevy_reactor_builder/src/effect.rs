@@ -1,7 +1,7 @@
 use bevy::{
     core::Name,
     prelude::{BuildChildren, Entity, EntityWorldMut, World},
-    ui::GhostNode,
+    ui::experimental::GhostNode,
 };
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
@@ -38,9 +38,11 @@ impl<'w> EntityEffectBuilder for EntityWorldMut<'w> {
             // Spawn a new reaction entity to contain the effect.
             let effect_owner = world.spawn(Name::new("Effect")).set_parent(owner).id();
             reaction.apply(effect_owner, world, &mut scope);
-            world
-                .entity_mut(effect_owner)
-                .insert((scope, ReactionCell::new(reaction), GhostNode));
+            world.entity_mut(effect_owner).insert((
+                scope,
+                ReactionCell::new(reaction),
+                GhostNode::default(),
+            ));
         });
         self
     }

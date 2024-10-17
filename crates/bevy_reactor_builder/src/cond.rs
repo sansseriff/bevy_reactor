@@ -1,5 +1,6 @@
+use bevy::ecs::world::World;
 use bevy::prelude::*;
-use bevy::{ecs::world::World, ui::GhostNode};
+use bevy::ui::experimental::GhostNode;
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
 
 use crate::test_condition::TestCondition;
@@ -67,9 +68,11 @@ impl<'w> CondBuilder for WorldChildBuilder<'w> {
         let world = unsafe { cond_owner.world_mut() };
         // Trigger the initial reaction.
         reaction.react(cond_owner_id, world, &mut tracking);
-        world
-            .entity_mut(cond_owner_id)
-            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        world.entity_mut(cond_owner_id).insert((
+            GhostNode::default(),
+            tracking,
+            ReactionCell::new(reaction),
+        ));
         self
     }
 }
@@ -103,9 +106,11 @@ impl<'w> CondBuilder for UiBuilder<'w> {
         let world = unsafe { cond_owner.world_mut() };
         // Trigger the initial reaction.
         reaction.react(cond_owner_id, world, &mut tracking);
-        world
-            .entity_mut(cond_owner_id)
-            .insert((GhostNode, tracking, ReactionCell::new(reaction)));
+        world.entity_mut(cond_owner_id).insert((
+            GhostNode::default(),
+            tracking,
+            ReactionCell::new(reaction),
+        ));
         self
     }
 }

@@ -1,6 +1,6 @@
 use bevy::{
     prelude::{BuildChildren, Entity, EntityWorldMut, World},
-    ui::{self, GhostNode},
+    ui::{self, experimental::GhostNode},
 };
 use bevy_mod_stylebuilder::{StyleBuilder, StyleTuple};
 use bevy_reactor_signals::{Rcx, Reaction, ReactionCell, TrackingScope};
@@ -62,9 +62,11 @@ impl<'w> EntityStyleBuilder for EntityWorldMut<'w> {
             // Spawn a new reaction entity to contain the effect.
             let effect_owner = world.spawn_empty().set_parent(owner).id();
             reaction.apply(effect_owner, world, &mut scope);
-            world
-                .entity_mut(effect_owner)
-                .insert((scope, ReactionCell::new(reaction), GhostNode));
+            world.entity_mut(effect_owner).insert((
+                scope,
+                ReactionCell::new(reaction),
+                GhostNode::default(),
+            ));
         });
         self
     }

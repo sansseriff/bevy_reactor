@@ -4,7 +4,7 @@ use crate::signal::Signal;
 use bevy::{
     ecs::{component::ComponentId, world::DeferredWorld},
     prelude::*,
-    ui::GhostNode,
+    ui::experimental::GhostNode,
 };
 
 /// Contains a mutable reactive value.
@@ -117,7 +117,7 @@ pub fn create_mutable<T: Send + Sync + 'static>(
     init: T,
 ) -> Mutable<T> {
     let cell = world
-        .spawn((MutableCell::<T>(init), GhostNode))
+        .spawn((MutableCell::<T>(init), GhostNode::default()))
         .set_parent(parent)
         .id();
     let component = world.register_component::<MutableCell<T>>();

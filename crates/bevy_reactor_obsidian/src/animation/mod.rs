@@ -237,7 +237,7 @@ where
         time: Res<Time>,
     ) {
         for (entity, mut transition, mut cmp) in query.iter_mut() {
-            transition.advance(&mut cmp, time.delta_seconds());
+            transition.advance(&mut cmp, time.delta_secs());
             if transition.clock >= transition.delay + transition.duration {
                 commands.entity(entity).remove::<AnimatedTransition<T>>();
             }
