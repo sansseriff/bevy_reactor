@@ -4,8 +4,8 @@ use bevy::{
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{
-    CondBuilder, CreateChilden, EntityStyleBuilder, InvokeUiTemplate, TextBuilder, UiBuilder,
-    UiTemplate,
+    CondBuilder, CreateChilden, EntityEffectBuilder, EntityStyleBuilder, InvokeUiTemplate,
+    TextBuilder, UiBuilder, UiTemplate,
 };
 use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
 
@@ -14,21 +14,10 @@ use crate::{
     typography,
 };
 
-use super::{IconButton, Spacer};
-
-#[derive(Clone, PartialEq, Default, Copy)]
-enum DragType {
-    #[default]
-    None = 0,
-    Dragging,
-}
-
-#[derive(Clone, PartialEq, Default, Copy)]
-struct DragState {
-    dragging: DragType,
-    offset: f32,
-    was_dragged: bool,
-}
+use super::{
+    core_slider::{CoreSlider, ValueChange},
+    IconButton, Spacer,
+};
 
 fn style_slider(ss: &mut StyleBuilder) {
     ss.min_width(64).height(20);
@@ -189,7 +178,7 @@ impl UiTemplate for Slider {
                 Name::new("Slider"),
             ))
             .id();
-        let drag_state = builder.create_mutable::<DragState>(DragState::default());
+        // let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let show_buttons = Signal::Constant(true);
 
         // Pain point: Need to capture all props for closures.
@@ -236,77 +225,23 @@ impl UiTemplate for Slider {
             .entity_mut(slider_id)
             .styles((typography::text_default, style_slider, self.style.clone()))
             .insert(UiMaterialHandle(material.clone()))
-            .observe(
-                move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
-                    trigger.propagate(false);
-                    let offset = value.get(&world);
-                    drag_state.set(
-                        &mut world,
-                        DragState {
-                            dragging: DragType::Dragging,
-                            offset,
-                            was_dragged: false,
-                        },
-                    );
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
-                    trigger.propagate(false);
-                    let offset = value.get(&world);
-                    let ds = drag_state.get(&world);
-                    if ds.dragging == DragType::Dragging {
-                        drag_state.set(
-                            &mut world,
-                            DragState {
-                                dragging: DragType::None,
-                                offset,
-                                was_dragged: false,
-                            },
-                        );
+            .effect(move |rcx| {
+                CoreSlider::new(value.get(rcx), min.get(rcx), max.get(rcx))
+            }, |slider, ent| {
+                ent.insert(slider);
+            })
+            .observe(move |mut trigger: Trigger<ValueChange<f32>>, mut world: DeferredWorld| {
+                trigger.propagate(false);
+                let event = trigger.event();
+                let rounding = f32::powi(10., precision as i32);
+                let value = value.get(&world);
+                let new_value = ((event.0 * rounding).round() / rounding).clamp(min.get(&world), max.get(&world));
+                if value != new_value {
+                    if let Some(on_change) = on_change {
+                        world.run_callback(on_change, new_value);
                     }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Drag>>, mut world: DeferredWorld| {
-                    trigger.propagate(false);
-                    let ds = drag_state.get(&world);
-                    if ds.dragging == DragType::Dragging {
-                        let distance = trigger.event().distance;
-                        let ent = world.entity_mut(slider_id);
-                        let node = ent.get::<Node>();
-                        if let Some(node) = node {
-                            // Measure node width and slider value.
-                            let slider_width = node.size().x;
-                            let min = min.get(&world);
-                            let max = max.get(&world);
-                            let range = max - min;
-                            let new_value = if range > 0. {
-                                ds.offset + (distance.x * range) / slider_width
-                            } else {
-                                min + range * 0.5
-                            };
-                            let rounding = f32::powi(10., precision as i32);
-                            let value = value.get(&world);
-                            let new_value = (new_value * rounding).round() / rounding;
-                            if value != new_value {
-                                if !ds.was_dragged {
-                                    drag_state.set(
-                                        &mut world,
-                                        DragState {
-                                            was_dragged: true,
-                                            ..ds
-                                        },
-                                    );
-                                }
-                                if let Some(on_change) = on_change {
-                                    world.run_callback(on_change, new_value.clamp(min, max));
-                                }
-                            }
-                        }
-                    }
-                },
-            )
+                }
+            })
             .create_children(|builder| {
                 let dec_disabled =
                     builder.create_derived(move |rcx| value.get(rcx) <= min.get(rcx));

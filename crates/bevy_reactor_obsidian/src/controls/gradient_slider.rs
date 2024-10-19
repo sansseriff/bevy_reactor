@@ -1,9 +1,13 @@
 use bevy::{color::Srgba, ecs::world::DeferredWorld, prelude::*, ui};
 use bevy_mod_stylebuilder::*;
-use bevy_reactor_builder::{CreateChilden, EntityStyleBuilder, UiBuilder, UiTemplate};
+use bevy_reactor_builder::{
+    CreateChilden, EntityEffectBuilder, EntityStyleBuilder, UiBuilder, UiTemplate,
+};
 use bevy_reactor_signals::{Callback, IntoSignal, RunCallback, Signal};
 
 use crate::materials::GradientRectMaterial;
+
+use super::{core_slider::ValueChange, CoreSlider};
 
 const THUMB_WIDTH: f32 = 12.;
 
@@ -67,12 +71,6 @@ impl Default for ColorGradient {
             colors: [Srgba::BLACK; 8],
         }
     }
-}
-
-#[derive(Clone, PartialEq, Default, Copy)]
-struct DragState {
-    dragging: bool,
-    offset: f32,
 }
 
 fn style_slider(ss: &mut StyleBuilder) {
@@ -205,7 +203,6 @@ impl UiTemplate for GradientSlider {
         let slider_id = builder
             .spawn((NodeBundle::default(), Name::new("GradientSlider")))
             .id();
-        let drag_state = builder.create_mutable::<DragState>(DragState::default());
 
         // Pain point: Need to capture all props for closures.
         let min = self.min;
@@ -259,6 +256,27 @@ impl UiTemplate for GradientSlider {
         builder
             .entity_mut(slider_id)
             .styles((style_slider, self.style.clone()))
+            .effect(
+                move |rcx| CoreSlider::new(value.get(rcx), min.get(rcx), max.get(rcx)),
+                |slider, ent| {
+                    ent.insert(slider);
+                },
+            )
+            .observe(
+                move |mut trigger: Trigger<ValueChange<f32>>, mut world: DeferredWorld| {
+                    trigger.propagate(false);
+                    let event = trigger.event();
+                    let rounding = f32::powi(10., precision as i32);
+                    let value = value.get(&world);
+                    let new_value = ((event.0 * rounding).round() / rounding)
+                        .clamp(min.get(&world), max.get(&world));
+                    if value != new_value {
+                        if let Some(on_change) = on_change {
+                            world.run_callback(on_change, new_value);
+                        }
+                    }
+                },
+            )
             .observe(
                 move |mut trigger: Trigger<Pointer<Down>>, mut world: DeferredWorld| {
                     trigger.propagate(false);
@@ -283,63 +301,6 @@ impl UiTemplate for GradientSlider {
                                 world.run_callback(on_change, new_value.clamp(min, max));
                             }
                         };
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<DragStart>>, mut world: DeferredWorld| {
-                    trigger.propagate(false);
-                    let offset = value.get(&world);
-                    drag_state.set(
-                        &mut world,
-                        DragState {
-                            dragging: true,
-                            offset,
-                        },
-                    );
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<DragEnd>>, mut world: DeferredWorld| {
-                    trigger.propagate(false);
-                    let ds = drag_state.get(&world);
-                    let offset = value.get(&world);
-                    if ds.dragging {
-                        drag_state.set(
-                            &mut world,
-                            DragState {
-                                dragging: false,
-                                offset,
-                            },
-                        );
-                    }
-                },
-            )
-            .observe(
-                move |mut trigger: Trigger<Pointer<Drag>>, mut world: DeferredWorld| {
-                    let ds = drag_state.get(&world);
-                    if ds.dragging {
-                        trigger.propagate(false);
-                        let ent = world.entity(slider_id);
-                        let node = ent.get::<Node>();
-                        let transform = ent.get::<GlobalTransform>();
-                        if let (Some(node), Some(_transform)) = (node, transform) {
-                            // Measure node width and slider value.
-                            let slider_width = node.size().x;
-                            let min = min.get(&world);
-                            let max = max.get(&world);
-                            let range = max - min;
-                            let new_value = if range > 0. {
-                                ds.offset + (trigger.event().distance.x * range) / slider_width
-                            } else {
-                                min + range * 0.5
-                            };
-                            let rounding = f32::powi(10., precision as i32);
-                            let new_value = (new_value * rounding).round() / rounding;
-                            if let Some(on_change) = on_change {
-                                world.run_callback(on_change, new_value.clamp(min, max));
-                            }
-                        }
                     }
                 },
             )

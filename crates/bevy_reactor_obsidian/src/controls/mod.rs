@@ -1,6 +1,7 @@
 mod barrier;
 mod button;
 mod checkbox;
+mod core_slider;
 mod dialog;
 mod disabled;
 mod disclosure_toggle;
@@ -20,6 +21,7 @@ mod tool_palette;
 use bevy::app::Plugin;
 pub use button::{Button, ButtonVariant};
 pub use checkbox::Checkbox;
+pub use core_slider::CoreSlider;
 pub use dialog::{Dialog, DialogBody, DialogFooter, DialogHeader};
 pub use disabled::{Disabled, IsDisabled};
 pub use disclosure_toggle::DisclosureToggle;
@@ -48,6 +50,9 @@ impl Plugin for ControlEventsPlugin {
             .add_observer(button::button_on_pointer_drag_end)
             .add_observer(button::button_on_pointer_cancel)
             .add_observer(barrier::barrier_on_key_input)
-            .add_observer(barrier::barrier_on_pointer_down);
+            .add_observer(barrier::barrier_on_pointer_down)
+            .add_observer(core_slider::slider_on_drag_start)
+            .add_observer(core_slider::slider_on_drag_end)
+            .add_observer(core_slider::slider_on_drag);
     }
 }
