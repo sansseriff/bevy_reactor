@@ -1,5 +1,6 @@
-use super::builder::{StyleBuilder, ZIndexParam};
 use bevy::ui::ZIndex;
+
+use crate::{builder::StyleBuilder, ZIndexParam};
 
 #[allow(missing_docs)]
 pub trait StyleBuilderZIndex {

@@ -85,33 +85,15 @@
   to do change detection on a query (that is, you can write a query that detects changes to
   components, but there's no way to detect a change to query results).
 
-# Despawning
+# Markdown
 
-- calling despawn_recursive on a tracking scope entity:
+https://crates.io/crates/pulldown-cmark
 
-  - despawns all child scopes.
-  - hook despawns all owned objects (entities)
-    - this includes views
+struct MarkdownStyles {
 
-- despawning:
+}
 
-  - root
-    - despawn_recursive
-    - this despawns all child tracking scopes
-    - and anything they own.
-  - single template
-    - all owned nodes
-  - cond
-    - change
-      - owner despawn descendants, run cleanups
-    - raze
-      - nothing to do
-  - element
-    - raze - nothing to do.
-    - problem: need to spawn an entity for each reactive effect.
-
-- cond - how to get nodes?
-  - attach children is a problem because we don't have an entity for every view level;
-    if we send a message up we don't know how far down to recurse. Because nodes are boxed
-    views, there's no way to locate them individually.
-  - we can't even assume that the message doesn't cross a tracking scope boundary.
+trait MarkdownStyles {
+fn text(self, event, entity: &EntityMut);
+fn paragraph(self, event, entity: &EntityMut);
+}

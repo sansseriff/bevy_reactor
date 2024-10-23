@@ -1,4 +1,5 @@
-use super::builder::{BorderRadiusParam, StyleBuilder};
+use super::builder::StyleBuilder;
+use crate::BorderRadiusParam;
 
 #[allow(missing_docs)]
 pub trait StyleBuilderBorderRadius {

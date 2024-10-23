@@ -1,4 +1,4 @@
-use super::builder::{LengthParam, OptFloatParam, StyleBuilder, UiRectParam};
+use crate::{LengthParam, OptFloatParam, StyleBuilder, UiRectParam};
 use bevy::ui;
 
 #[allow(missing_docs)]

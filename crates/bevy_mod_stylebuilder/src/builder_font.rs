@@ -2,7 +2,7 @@
 
 use crate::{text_styles::InheritableFontStyles, MaybeHandleOrPath};
 
-use super::builder::{ColorParam, OptFloatParam, StyleBuilder};
+use crate::{ColorParam, OptFloatParam, StyleBuilder};
 use bevy::prelude::*;
 
 pub trait StyleBuilderFont {

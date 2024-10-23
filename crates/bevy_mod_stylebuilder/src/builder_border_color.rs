@@ -1,6 +1,7 @@
 use bevy::ui;
 
-use super::builder::{ColorParam, StyleBuilder};
+use super::builder::StyleBuilder;
+use crate::ColorParam;
 
 #[allow(missing_docs)]
 pub trait StyleBuilderBorderColor {

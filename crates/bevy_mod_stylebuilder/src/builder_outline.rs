@@ -1,4 +1,4 @@
-use super::builder::{ColorParam, LengthParam, StyleBuilder};
+use crate::{ColorParam, LengthParam, StyleBuilder};
 use bevy::ui;
 
 #[allow(missing_docs)]

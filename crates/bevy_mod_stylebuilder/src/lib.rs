@@ -8,6 +8,7 @@ mod builder_layout;
 mod builder_outline;
 mod builder_visibility;
 mod builder_z_index;
+mod style_params;
 mod text_styles;
 // mod builder_texture_atlas;
 
@@ -30,6 +31,7 @@ pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
 pub use builder_visibility::StyleBuilderVisibility;
 pub use builder_z_index::StyleBuilderZIndex;
+pub use style_params::*;
 use text_styles::{set_initial_text_style, update_text_styles};
 pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
