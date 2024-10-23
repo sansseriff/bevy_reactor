@@ -185,7 +185,7 @@ impl ViewTemplate for MenuButton {
             open.set(world, false);
         }));
 
-        Element::<NodeBundle>::for_entity(id_anchor)
+        Element::<Node>::for_entity(id_anchor)
             .named("MenuButton")
             .style((
                 typography::text_default,
@@ -244,7 +244,7 @@ impl ViewTemplate for MenuButton {
             })
             .insert_if(self.autofocus, AutoFocus)
             .children((
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .named("MenuButton::Background")
                     .style(style_button_bg)
                     .insert(corners.to_border_radius(self.size.border_radius()))
@@ -291,7 +291,7 @@ impl ViewTemplate for MenuButton {
                     open.signal(),
                     move || {
                         Portal::new(
-                            Element::<NodeBundle>::new()
+                            Element::<Node>::new()
                                 .style(style_menu_barrier)
                                 .insert((
                                     On::<Pointer<Click>>::run(move |world: &mut World| {
@@ -394,7 +394,7 @@ impl ViewTemplate for MenuPopup {
         let context = cx.use_inherited_component::<MenuAnchor>().unwrap();
         let owner_id = cx.owner();
 
-        Element::<NodeBundle>::new()
+        Element::<Node>::new()
             .named("MenuPopup")
             .style((typography::text_default, style_popup, self.style.clone()))
             .insert((
@@ -549,7 +549,7 @@ impl ViewTemplate for MenuItem {
 
         let disabled = self.disabled;
 
-        Element::<NodeBundle>::for_entity(id)
+        Element::<Node>::for_entity(id)
             .named("MenuItem")
             .style((style_menu_item, self.style.clone()))
             .insert((
@@ -645,7 +645,7 @@ pub struct MenuDivider;
 
 impl ViewTemplate for MenuDivider {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
-        Element::<NodeBundle>::new()
+        Element::<Node>::new()
             .named("MenuDivider")
             .style(style_menu_divider)
     }

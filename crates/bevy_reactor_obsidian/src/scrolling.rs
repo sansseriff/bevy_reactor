@@ -80,13 +80,13 @@ pub struct ScrollBarThumb;
 
 #[allow(clippy::type_complexity)]
 pub(crate) fn update_scroll_positions(
-    mut query: Query<(&Node, &mut ScrollArea, &GlobalTransform, &Children)>,
+    mut query: Query<(&ComputedNode, &mut ScrollArea, &GlobalTransform, &Children)>,
     mut query_content: Query<
-        (&Node, &mut Style, &GlobalTransform),
+        (&ComputedNode, &mut Node, &GlobalTransform),
         (With<ScrollContent>, Without<ScrollArea>),
     >,
     query_scrollbar: Query<(&ScrollBar, &Children)>,
-    mut query_scrollbar_thumb: Query<&mut Style, (With<ScrollBarThumb>, Without<ScrollContent>)>,
+    mut query_scrollbar_thumb: Query<&mut Node, (With<ScrollBarThumb>, Without<ScrollContent>)>,
 ) {
     for (node, mut scrolling, _gt, children) in query.iter_mut() {
         // Measure size and update scroll width and height

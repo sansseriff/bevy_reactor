@@ -141,34 +141,32 @@ impl ViewTemplate for ListElementsInspector {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let field = self.field.clone();
         let length = self.length;
-        Element::<NodeBundle>::new()
-            .style(style_list_items)
-            .children(
-                For::index(
-                    move |cx| 0..length.get(cx),
-                    move |_, index| {
-                        let mut path = field.value_path.clone();
-                        path.0.push(OffsetAccess {
-                            access: bevy::reflect::Access::ListIndex(index),
-                            offset: None,
-                        });
-                        let access = Arc::new(Inspectable {
-                            root: field.root.clone(),
-                            name: format!("{}", index),
-                            value_path: path,
-                            field_path: field.value_path.clone(),
-                            can_remove: false,
-                            attributes: field.attributes,
-                        });
-                        ListItemInspector { field: access }.into_view()
-                    },
-                )
-                .with_fallback(
-                    Element::<NodeBundle>::new()
-                        .style(style_empty_list)
-                        .children("(empty list)"),
-                ),
+        Element::<Node>::new().style(style_list_items).children(
+            For::index(
+                move |cx| 0..length.get(cx),
+                move |_, index| {
+                    let mut path = field.value_path.clone();
+                    path.0.push(OffsetAccess {
+                        access: bevy::reflect::Access::ListIndex(index),
+                        offset: None,
+                    });
+                    let access = Arc::new(Inspectable {
+                        root: field.root.clone(),
+                        name: format!("{}", index),
+                        value_path: path,
+                        field_path: field.value_path.clone(),
+                        can_remove: false,
+                        attributes: field.attributes,
+                    });
+                    ListItemInspector { field: access }.into_view()
+                },
             )
+            .with_fallback(
+                Element::<Node>::new()
+                    .style(style_empty_list)
+                    .children("(empty list)"),
+            ),
+        )
     }
 }
 

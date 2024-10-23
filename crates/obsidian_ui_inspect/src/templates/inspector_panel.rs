@@ -104,16 +104,16 @@ impl ViewTemplate for InspectorPanel {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let expanded = self.expanded;
         let body = self.body.clone();
-        Element::<NodeBundle>::new()
+        Element::<Node>::new()
             .style(style_inspector_panel)
             .children((
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .style((typography::text_default, style_inspector_panel_header))
                     .children(self.title.clone()),
                 Cond::new(
                     expanded,
                     move || {
-                        Element::<NodeBundle>::new()
+                        Element::<Node>::new()
                             .style(style_inspector_panel_body)
                             .children(body.clone())
                     },

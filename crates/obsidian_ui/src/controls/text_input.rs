@@ -201,7 +201,7 @@ impl ViewTemplate for TextInput {
             rects
         });
 
-        Element::<NodeBundle>::for_entity(id)
+        Element::<Node>::for_entity(id)
             .named("text_input")
             .style((
                 style_text_input,
@@ -383,7 +383,7 @@ impl ViewTemplate for TextInput {
             .insert_if(self.0.autofocus, AutoFocus)
             .children((
                 // Background
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .style(style_text_input_border)
                     .create_effect(move |cx, ent| {
                         let is_hovering = hovering.get(cx);
@@ -416,92 +416,82 @@ impl ViewTemplate for TextInput {
                 // Prefix adornments
                 self.0.adornments_prefix.clone(),
                 // Scrolling content
-                Element::<NodeBundle>::new()
-                    .style(style_text_scroll)
-                    .children(
-                        Element::<NodeBundle>::new()
-                            .style(style_text_inner)
-                            .children((
-                                // Selection rects
-                                For::index(
-                                    move |cx| selection_rects.get_clone(cx).into_iter(),
-                                    move |rect, _| {
-                                        Element::<NodeBundle>::new().style((
-                                            style_text_selection,
-                                            {
-                                                let rect = *rect;
-                                                move |ss: &mut StyleBuilder| {
-                                                    ss.left(ui::Val::Px(rect.min.x))
-                                                        .top(ui::Val::Px(rect.min.y))
-                                                        .width(ui::Val::Px(rect.width()))
-                                                        .height(ui::Val::Px(rect.height()));
-                                                }
-                                            },
-                                        ))
-                                    },
-                                ),
-                                // Caret
-                                Cond::new(
-                                    move |cx: &Rcx| {
-                                        selection.get(cx).is_empty()
-                                            && focused.get(cx)
-                                            && !disabled.get(cx)
-                                    },
-                                    // React to changes in glyph layout.
-                                    move || {
-                                        Element::<NodeBundle>::new()
-                                            .style(style_text_cursor)
-                                            .create_effect(move |cx, el| {
-                                                let index = selection.get(cx).cursor;
-                                                let text_layout = cx
-                                                    .use_component::<TextLayoutInfo>(text_id)
-                                                    .unwrap();
-                                                let mut pos: Vec2 = Vec2::default();
-                                                let height: f32;
-                                                if index >= text_layout.glyphs.len() {
-                                                    let glyph = text_layout.glyphs.last().unwrap();
-                                                    pos.x = glyph.position.x + glyph.size.x;
-                                                    pos.y = glyph.position.y;
-                                                    height = glyph.size.y;
-                                                } else {
-                                                    let glyph = &text_layout.glyphs[index];
-                                                    pos.x = glyph.position.x;
-                                                    pos.y = glyph.position.y;
-                                                    height = glyph.size.y;
-                                                }
-                                                let mut entt = cx.world_mut().entity_mut(el);
-                                                let mut style = entt.get_mut::<Style>().unwrap();
-                                                style.left = ui::Val::Px(pos.x * 0.5);
-                                                style.top = ui::Val::Px(pos.y - height);
-                                                style.height = ui::Val::Px(height);
-                                            })
-                                    },
-                                    || (),
-                                ),
-                                // Text
-                                Element::<TextBundle>::for_entity(text_id).create_effect(
-                                    move |cx, elem| {
-                                        let sections = value.map(cx, |s| {
-                                            let mut sections: Vec<TextSection> = Vec::new();
-                                            sections.push(TextSection {
-                                                value: s[..].to_string(),
-                                                style: TextStyle {
-                                                    font: font.clone(),
-                                                    font_size: 16.0,
-                                                    color: colors::FOREGROUND.into(),
-                                                },
-                                            });
-                                            sections
-                                        });
-                                        let mut entt = cx.world_mut().entity_mut(elem);
-                                        if let Some(mut text) = entt.get_mut::<Text>() {
-                                            text.linebreak_behavior = BreakLineOn::NoWrap;
-                                            text.sections = sections;
+                Element::<Node>::new().style(style_text_scroll).children(
+                    Element::<Node>::new().style(style_text_inner).children((
+                        // Selection rects
+                        For::index(
+                            move |cx| selection_rects.get_clone(cx).into_iter(),
+                            move |rect, _| {
+                                Element::<Node>::new().style((style_text_selection, {
+                                    let rect = *rect;
+                                    move |ss: &mut StyleBuilder| {
+                                        ss.left(ui::Val::Px(rect.min.x))
+                                            .top(ui::Val::Px(rect.min.y))
+                                            .width(ui::Val::Px(rect.width()))
+                                            .height(ui::Val::Px(rect.height()));
+                                    }
+                                }))
+                            },
+                        ),
+                        // Caret
+                        Cond::new(
+                            move |cx: &Rcx| {
+                                selection.get(cx).is_empty() && focused.get(cx) && !disabled.get(cx)
+                            },
+                            // React to changes in glyph layout.
+                            move || {
+                                Element::<Node>::new()
+                                    .style(style_text_cursor)
+                                    .create_effect(move |cx, el| {
+                                        let index = selection.get(cx).cursor;
+                                        let text_layout =
+                                            cx.use_component::<TextLayoutInfo>(text_id).unwrap();
+                                        let mut pos: Vec2 = Vec2::default();
+                                        let height: f32;
+                                        if index >= text_layout.glyphs.len() {
+                                            let glyph = text_layout.glyphs.last().unwrap();
+                                            pos.x = glyph.position.x + glyph.size.x;
+                                            pos.y = glyph.position.y;
+                                            height = glyph.size.y;
+                                        } else {
+                                            let glyph = &text_layout.glyphs[index];
+                                            pos.x = glyph.position.x;
+                                            pos.y = glyph.position.y;
+                                            height = glyph.size.y;
                                         }
-                                    },
-                                ),
-                            )),
-                    ),
+                                        let mut entt = cx.world_mut().entity_mut(el);
+                                        let mut style = entt.get_mut::<Style>().unwrap();
+                                        style.left = ui::Val::Px(pos.x * 0.5);
+                                        style.top = ui::Val::Px(pos.y - height);
+                                        style.height = ui::Val::Px(height);
+                                    })
+                            },
+                            || (),
+                        ),
+                        // Text
+                        Element::<TextBundle>::for_entity(text_id).create_effect(
+                            move |cx, elem| {
+                                let sections = value.map(cx, |s| {
+                                    let mut sections: Vec<TextSection> = Vec::new();
+                                    sections.push(TextSection {
+                                        value: s[..].to_string(),
+                                        style: TextStyle {
+                                            font: font.clone(),
+                                            font_size: 16.0,
+                                            color: colors::FOREGROUND.into(),
+                                        },
+                                    });
+                                    sections
+                                });
+                                let mut entt = cx.world_mut().entity_mut(elem);
+                                if let Some(mut text) = entt.get_mut::<Text>() {
+                                    text.linebreak_behavior = BreakLineOn::NoWrap;
+                                    text.sections = sections;
+                                }
+                            },
+                        ),
+                    )),
+                ),
                 // Suffix adornments
                 self.0.adornments_suffix.clone(),
             ))

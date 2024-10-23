@@ -7,7 +7,7 @@ use bevy::{
         std_traits::ReflectDefault, DynamicEnum, DynamicTuple, OffsetAccess, ReflectKind,
         ReflectRef, TypeInfo, VariantInfo,
     },
-    ui::{self, node_bundles::NodeBundle},
+    ui::{self, node_bundles::Node},
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor::*;
@@ -66,7 +66,7 @@ impl ViewTemplate for NestedStruct {
                 {
                     let field = self.0.clone();
                     move || {
-                        Element::<NodeBundle>::new()
+                        Element::<Node>::new()
                             .style(style_field_list)
                             .children(StructFieldList(field.clone()))
                     }

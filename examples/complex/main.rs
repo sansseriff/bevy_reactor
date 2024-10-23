@@ -242,7 +242,7 @@ impl UiTemplate for DemoUi {
         });
 
         builder
-            .spawn((NodeBundle::default(), Name::new("Main")))
+            .spawn((Node::default(), Name::new("Main")))
             .styles((typography::text_default, style_main))
             .insert((TabGroup::default(), TargetCamera(self.0)))
             .children((
@@ -270,7 +270,7 @@ impl UiTemplate for DemoUi {
                 //                 })),
                 //         )),
                 //     )),
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .named("ControlPalette")
                     .style(style_aside)
                     .create_effect(move |cx, ent| {
@@ -335,9 +335,7 @@ impl UiTemplate for DemoUi {
                         //             }
                         //         })),
                         // )),
-                        Element::<NodeBundle>::new()
-                            .style(style_button_row)
-                            .children((
+                        Element::<Node>::new().style(style_button_row).children((
                                 // Button::new()
                                 //     .children("Open…")
                                 //     .on_click(clicked_increment)
@@ -347,34 +345,30 @@ impl UiTemplate for DemoUi {
                                 //     .on_click(clicked_decrement)
                                 //     .style(style_button_flex),
                             )),
-                        Element::<NodeBundle>::new()
-                            .style(style_column_group)
-                            .children((
-                                Checkbox::new()
-                                    .style(|ss: &mut StyleBuilder| {
-                                        ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
-                                    })
-                                    .labeled("Include Author Name")
-                                    .checked(checked_1.signal())
-                                    .on_change(cx.create_callback(
-                                        move |mut world: DeferredWorld| {
-                                            println!("Include Author Name: {}", checked);
-                                            checked_1.set(&mut world, checked);
-                                        },
-                                    )),
-                                Checkbox::new()
-                                    .labeled("Include Metadata")
-                                    .checked(checked_2.signal())
-                                    .on_change(cx.create_callback(move |cx, checked| {
-                                        println!("Include Metadata: {}", checked);
-                                        checked_2.set(cx, checked);
-                                    })),
-                            )),
-                        Element::<NodeBundle>::new()
+                        Element::<Node>::new().style(style_column_group).children((
+                            Checkbox::new()
+                                .style(|ss: &mut StyleBuilder| {
+                                    ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
+                                })
+                                .labeled("Include Author Name")
+                                .checked(checked_1.signal())
+                                .on_change(cx.create_callback(move |mut world: DeferredWorld| {
+                                    println!("Include Author Name: {}", checked);
+                                    checked_1.set(&mut world, checked);
+                                })),
+                            Checkbox::new()
+                                .labeled("Include Metadata")
+                                .checked(checked_2.signal())
+                                .on_change(cx.create_callback(move |cx, checked| {
+                                    println!("Include Metadata: {}", checked);
+                                    checked_2.set(cx, checked);
+                                })),
+                        )),
+                        Element::<Node>::new()
                             .style(style_column_group)
                             .children(
                                 Slider::new()
-                                    .min(0.)
+                                  Node
                                     .max(255.)
                                     .value(red.signal())
                                     .style(style_slider)
@@ -436,21 +430,21 @@ impl UiTemplate for CenterPanel {
         //     });
 
         //     builder
-        //         .spawn(NodeBundle::new())
+        //         .spawn(Node::new())
         //         .create_children((Cond::new(
         //             |cx: &Rcx| *cx.read_resource::<State<EditorState>>().get() == EditorState::Graph,
         //             || NodeGraphDemo {},
         //             move || {
         //                 Fragment::new((
-        //                     Element::<NodeBundle>::new()
+        //                     Element::<Node>::new()
         //                         .named("Preview")
         //                         .style(style_viewport)
         //                         .insert((viewport::ViewportInsetElement, Pickable::IGNORE))
         //                         .children(
-        //                             Element::<NodeBundle>::new()
+        //                             Element::<Node>::new()
         //                                 .named("Log")
         //                                 .style(style_log)
-        //                                 .children(Element::<NodeBundle>::new().style(style_log_inner)),
+        //                                 .children(Element::<Node>::new().style(style_log_inner)),
         //                         ),
         //                     Cond::new(
         //                         |cx: &Rcx| {
@@ -463,7 +457,7 @@ impl UiTemplate for CenterPanel {
         //                                     .direction(SplitterDirection::Horizontal)
         //                                     .value(panel_height)
         //                                     .on_change(drag_call_back),
-        //                                 Element::<NodeBundle>::new()
+        //                                 Element::<Node>::new()
         //                                     .style(graph_view_style)
         //                                     .create_effect(move |cx, ent| {
         //                                         let height = panel_height.get(cx);

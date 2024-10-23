@@ -128,8 +128,8 @@ extension traits. These methods include:
 
 ```rust
 element.create_children(|builder| {
-    builder.spawn((NodeBundle::default(), Name::new("Child 1")));
-    builder.spawn((NodeBundle::default(), Name::new("Child 2")));
+    builder.spawn((Node::default(), Name::new("Child 1")));
+    builder.spawn((Node::default(), Name::new("Child 2")));
 });
 ```
 
@@ -443,7 +443,7 @@ fn style_button_size_md(ss: &mut StyleBuilder) {
     ss.min_height(Size::Xxxs.height());
 }
 
-builder.spawn(NodeBundle::default())
+builder.spawn(Node::default())
     .styles((
         style_button,
         style_button_size_md,

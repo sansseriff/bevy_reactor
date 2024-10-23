@@ -52,7 +52,7 @@ impl ViewTemplate for ListView {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         ScrollView::new()
             .children(
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .named("ListView")
                     .style(style_listview_inner)
                     .children(self.children.clone()),

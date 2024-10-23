@@ -70,7 +70,7 @@ impl ViewTemplate for GraphDisplay {
 
         ScrollView::new()
             .children(
-                Element::<MaterialNodeBundle<DotGridMaterial>>::new()
+                Element::<MaterialNode<DotGridMaterial>>::new()
                     .named("NodeGraph::Scroll")
                     .insert(material.clone())
                     .style(style_node_graph_scroll)
@@ -224,7 +224,7 @@ impl ViewTemplate for NodeDisplay {
         let hovering = cx.create_hover_signal(id);
         let drag_state = cx.create_mutable::<DragState>(DragState::default());
 
-        Element::<NodeBundle>::for_entity(id)
+        Element::<Node>::for_entity(id)
             .named("NodeGraph::Node")
             .style(style_node_graph_node)
             .create_effect(move |cx, ent| {
@@ -235,10 +235,10 @@ impl ViewTemplate for NodeDisplay {
                 style.top = ui::Val::Px(pos.y);
             })
             .children((
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .named("NodeGraph::Node::Shadow")
                     .style(style_node_graph_node_shadow),
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .named("NodeGraph::Node::Title")
                     .style(style_node_graph_node_title)
                     .insert((
@@ -276,13 +276,13 @@ impl ViewTemplate for NodeDisplay {
                         }),
                     ))
                     .children(self.title.clone()),
-                Element::<NodeBundle>::new()
+                Element::<Node>::new()
                     .style(style_node_graph_node_content)
                     .children(self.children.clone()),
                 Cond::new(
                     hovering,
                     || {
-                        Element::<NodeBundle>::new()
+                        Element::<Node>::new()
                             .named("NodeGraph::Node::Outline")
                             .style(style_node_graph_node_outline)
                     },
@@ -322,11 +322,11 @@ pub struct InputTerminalDisplay {
 impl ViewTemplate for InputTerminalDisplay {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
-        Element::<NodeBundle>::for_entity(self.id)
+        Element::<Node>::for_entity(self.id)
             .named("InputConnector")
             .style(style_input_connector)
             .children((
-                Element::<NodeBundle>::new().style((
+                Element::<Node>::new().style((
                     style_input_terminal,
                     move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
@@ -370,11 +370,11 @@ pub struct OutputTerminalDisplay {
 impl ViewTemplate for OutputTerminalDisplay {
     fn create(&self, _cx: &mut Cx) -> impl IntoView {
         let color = self.color;
-        Element::<NodeBundle>::for_entity(self.id)
+        Element::<Node>::for_entity(self.id)
             .named("OutputConnector")
             .style(style_output_connector)
             .children((
-                Element::<NodeBundle>::new().style((
+                Element::<Node>::new().style((
                     style_output_terminal,
                     move |sb: &mut StyleBuilder| {
                         sb.background_color(color);
@@ -405,7 +405,7 @@ impl ViewTemplate for EdgeDisplay {
         let src_pos = self.src_pos;
         let dst_pos = self.dst_pos;
 
-        Element::<MaterialNodeBundle<DrawPathMaterial>>::new()
+        Element::<MaterialNode<DrawPathMaterial>>::new()
             .named("NodeGraph::Edge")
             .insert(material)
             .create_effect(move |cx, ent| {

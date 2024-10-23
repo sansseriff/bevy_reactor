@@ -394,7 +394,7 @@ impl ViewTemplate for InputTemplate {
             control: Cond::new(
                 is_connected,
                 move || {
-                    Element::<NodeBundle>::new()
+                    Element::<Node>::new()
                         .style(style_input_label)
                         .children(label.clone())
                 },

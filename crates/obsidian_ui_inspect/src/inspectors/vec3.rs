@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy::{
     math::Vec3,
     reflect::Reflect,
-    ui::{self, node_bundles::NodeBundle},
+    ui::{self, node_bundles::Node},
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor::*;
@@ -63,55 +63,53 @@ impl ViewTemplate for Vec3FieldInspector {
             },
             // Don't need `Cond` here because condition is not reactive; reflection data
             // is constant.
-            Element::<NodeBundle>::new()
-                .style(style_spinbox_group)
-                .children((
-                    // "x",
-                    SpinBox::new()
-                        .style(style_spinbox)
-                        .precision(slider_params.precision)
-                        .step(slider_params.step)
-                        .value(cx.create_derived(move |cx| value.get(cx).x))
-                        .on_change(cx.create_callback({
-                            let field = self.0.clone();
-                            move |cx, x: f32| {
-                                let value = value.get(cx).with_x(x);
-                                field.update(cx, &|reflect| {
-                                    reflect.apply(value.as_reflect());
-                                });
-                            }
-                        })),
-                    // "y",
-                    SpinBox::new()
-                        .style(style_spinbox)
-                        .precision(slider_params.precision)
-                        .step(slider_params.step)
-                        .value(cx.create_derived(move |cx| value.get(cx).y))
-                        .on_change(cx.create_callback({
-                            let field = self.0.clone();
-                            move |cx, y: f32| {
-                                let value = value.get(cx).with_y(y);
-                                field.update(cx, &|reflect| {
-                                    reflect.apply(value.as_reflect());
-                                });
-                            }
-                        })),
-                    // "z",
-                    SpinBox::new()
-                        .style(style_spinbox)
-                        .precision(slider_params.precision)
-                        .step(slider_params.step)
-                        .value(cx.create_derived(move |cx| value.get(cx).z))
-                        .on_change(cx.create_callback({
-                            let field = self.0.clone();
-                            move |cx, z: f32| {
-                                let value = value.get(cx).with_z(z);
-                                field.update(cx, &|reflect| {
-                                    reflect.apply(value.as_reflect());
-                                });
-                            }
-                        })),
-                )),
+            Element::<Node>::new().style(style_spinbox_group).children((
+                // "x",
+                SpinBox::new()
+                    .style(style_spinbox)
+                    .precision(slider_params.precision)
+                    .step(slider_params.step)
+                    .value(cx.create_derived(move |cx| value.get(cx).x))
+                    .on_change(cx.create_callback({
+                        let field = self.0.clone();
+                        move |cx, x: f32| {
+                            let value = value.get(cx).with_x(x);
+                            field.update(cx, &|reflect| {
+                                reflect.apply(value.as_reflect());
+                            });
+                        }
+                    })),
+                // "y",
+                SpinBox::new()
+                    .style(style_spinbox)
+                    .precision(slider_params.precision)
+                    .step(slider_params.step)
+                    .value(cx.create_derived(move |cx| value.get(cx).y))
+                    .on_change(cx.create_callback({
+                        let field = self.0.clone();
+                        move |cx, y: f32| {
+                            let value = value.get(cx).with_y(y);
+                            field.update(cx, &|reflect| {
+                                reflect.apply(value.as_reflect());
+                            });
+                        }
+                    })),
+                // "z",
+                SpinBox::new()
+                    .style(style_spinbox)
+                    .precision(slider_params.precision)
+                    .step(slider_params.step)
+                    .value(cx.create_derived(move |cx| value.get(cx).z))
+                    .on_change(cx.create_callback({
+                        let field = self.0.clone();
+                        move |cx, z: f32| {
+                            let value = value.get(cx).with_z(z);
+                            field.update(cx, &|reflect| {
+                                reflect.apply(value.as_reflect());
+                            });
+                        }
+                    })),
+            )),
         ))
     }
 }

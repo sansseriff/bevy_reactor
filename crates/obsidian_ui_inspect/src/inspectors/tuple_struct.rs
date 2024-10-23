@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::{
     reflect::{OffsetAccess, ReflectRef},
-    ui::{self, node_bundles::NodeBundle},
+    ui::{self, node_bundles::Node},
 };
 use bevy_mod_stylebuilder::*;
 use bevy_reactor::*;
@@ -51,7 +51,7 @@ impl ViewTemplate for NestedTupleStruct {
                 {
                     let field = self.0.clone();
                     move || {
-                        Element::<NodeBundle>::new()
+                        Element::<Node>::new()
                             .style(style_field_list)
                             .children(TupleStructElements(field.clone()))
                     }
@@ -96,7 +96,7 @@ impl ViewTemplate for TupleStructElements {
             }
         }
 
-        Element::<NodeBundle>::new()
+        Element::<Node>::new()
             .style(style_field_list)
             .children(For::index(
                 move |_cx| 0..length,

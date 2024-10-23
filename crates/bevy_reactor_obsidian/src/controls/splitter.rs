@@ -120,9 +120,7 @@ impl Default for Splitter {
 
 impl UiTemplate for Splitter {
     fn build(&self, builder: &mut UiBuilder) {
-        let id = builder
-            .spawn((NodeBundle::default(), Name::new("Splitter")))
-            .id();
+        let id = builder.spawn((Node::default(), Name::new("Splitter"))).id();
         let hovering = builder.create_hover_signal(id);
         let drag_state = builder.create_mutable::<DragState>(DragState::default());
         let on_change = self.on_change;
@@ -212,7 +210,7 @@ impl UiTemplate for Splitter {
             )
             .create_children(|builder| {
                 builder
-                    .spawn(NodeBundle::default())
+                    .spawn(Node::default())
                     .style(style_splitter_inner)
                     .style_dyn(
                         move |rcx| {
