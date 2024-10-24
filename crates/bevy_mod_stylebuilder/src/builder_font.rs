@@ -1,8 +1,9 @@
 #![allow(missing_docs)]
 
-use crate::{text_styles::InheritableFontStyles, MaybeHandleOrPath};
+use crate::text_styles::InheritableFontColor;
+use crate::{InheritableFont, InheritableFontSize, MaybeHandleOrPath};
 
-use crate::{ColorParam, OptFloatParam, StyleBuilder};
+use crate::{ColorParam, OptFloatParam, StyleBuilder, StyleCommands};
 use bevy::prelude::*;
 
 pub trait StyleBuilderFont {
@@ -13,14 +14,9 @@ pub trait StyleBuilderFont {
 
 impl<'a, 'w> StyleBuilderFont for StyleBuilder<'a, 'w> {
     fn color(&mut self, color: impl ColorParam) -> &mut Self {
-        match self.target.get_mut::<InheritableFontStyles>() {
-            Some(mut text_style) => text_style.color = color.to_val(),
-            None => {
-                self.target.insert(InheritableFontStyles {
-                    color: color.to_val(),
-                    ..Default::default()
-                });
-            }
+        match color.to_val() {
+            Some(color) => self.target.insert(InheritableFontColor(color)),
+            None => self.target.remove::<InheritableFontColor>(),
         };
         self
     }
@@ -31,31 +27,48 @@ impl<'a, 'w> StyleBuilderFont for StyleBuilder<'a, 'w> {
             MaybeHandleOrPath::Path(p) => Some(self.load_asset::<Font>(p)),
             MaybeHandleOrPath::None => None,
         };
-        match self.target.get_mut::<InheritableFontStyles>() {
-            Some(mut text_style) => {
-                text_style.font = font;
-            }
-            None => {
-                self.target.insert(InheritableFontStyles {
-                    font,
-                    ..Default::default()
-                });
-            }
+        match font {
+            Some(font) => self.target.insert(InheritableFont(font)),
+            None => self.target.remove::<InheritableFont>(),
         };
         self
     }
 
     fn font_size(&mut self, val: impl OptFloatParam) -> &mut Self {
-        match self.target.get_mut::<InheritableFontStyles>() {
-            Some(mut text_style) => {
-                text_style.font_size = val.to_val();
-            }
-            None => {
-                self.target.insert(InheritableFontStyles {
-                    font_size: val.to_val(),
-                    ..Default::default()
-                });
-            }
+        match val.to_val() {
+            Some(size) => self.target.insert(InheritableFontSize(size)),
+            None => self.target.remove::<InheritableFontSize>(),
+        };
+        self
+    }
+}
+
+impl<'a, 'w> StyleBuilderFont for StyleCommands<'a, 'w> {
+    fn color(&mut self, color: impl ColorParam) -> &mut Self {
+        match color.to_val() {
+            Some(color) => self.target.insert(InheritableFontColor(color)),
+            None => self.target.remove::<InheritableFontColor>(),
+        };
+        self
+    }
+
+    fn font<'p>(&mut self, path: impl Into<MaybeHandleOrPath<'p, Font>>) -> &mut Self {
+        let font = match path.into() {
+            MaybeHandleOrPath::Handle(h) => Some(h),
+            MaybeHandleOrPath::Path(p) => Some(self.load_asset::<Font>(p)),
+            MaybeHandleOrPath::None => None,
+        };
+        match font {
+            Some(font) => self.target.insert(InheritableFont(font)),
+            None => self.target.remove::<InheritableFont>(),
+        };
+        self
+    }
+
+    fn font_size(&mut self, val: impl OptFloatParam) -> &mut Self {
+        match val.to_val() {
+            Some(size) => self.target.insert(InheritableFontSize(size)),
+            None => self.target.remove::<InheritableFontSize>(),
         };
         self
     }

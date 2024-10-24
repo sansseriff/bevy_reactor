@@ -35,7 +35,7 @@ impl RoundedCorners {
         }
     }
 
-    /// Convert the `RoundedCorners` to a `BorderRadius` for use in a `Style`.
+    /// Convert the `RoundedCorners` to a `BorderRadius` for use in a `Node`.
     pub fn to_border_radius(&self, radius: f32) -> BorderRadius {
         let radius = bevy::ui::Val::Px(radius);
         let zero = bevy::ui::Val::Px(0.0);

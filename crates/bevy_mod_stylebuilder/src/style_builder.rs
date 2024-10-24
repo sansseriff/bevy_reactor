@@ -5,7 +5,7 @@ use bevy::{asset::AssetPath, prelude::*, ui};
 
 /// An object that provides a fluent interface for defining styles for bevy_ui nodes.
 /// Most components such as `BackgroundColor` are mutated immediately, however some component types
-/// such as `Style` are cached in the builder and not applied until `finish` is called.
+/// such as `Node` are cached in the builder and not applied until `finish` is called.
 pub struct StyleBuilder<'a, 'w> {
     pub target: &'a mut EntityWorldMut<'w>,
     pub(crate) style: ui::Node,

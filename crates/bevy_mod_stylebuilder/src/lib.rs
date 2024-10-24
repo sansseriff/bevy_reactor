@@ -1,5 +1,4 @@
 // mod atlas_loader;
-mod builder;
 mod builder_background;
 mod builder_border_color;
 mod builder_border_radius;
@@ -8,11 +7,12 @@ mod builder_layout;
 mod builder_outline;
 mod builder_visibility;
 mod builder_z_index;
+mod style_builder;
+mod style_commands;
 mod style_params;
 mod text_styles;
 // mod builder_texture_atlas;
 
-#[cfg(feature = "mod_picking")]
 mod builder_pointer_events;
 
 use std::sync::Arc;
@@ -22,7 +22,6 @@ use bevy::{
     prelude::{IntoSystemConfigs, SystemSet},
 };
 // pub use atlas_loader::TextureAtlasLoader;
-pub use builder::*;
 pub use builder_background::StyleBuilderBackground;
 pub use builder_border_color::StyleBuilderBorderColor;
 pub use builder_border_radius::StyleBuilderBorderRadius;
@@ -31,12 +30,15 @@ pub use builder_layout::StyleBuilderLayout;
 pub use builder_outline::StyleBuilderOutline;
 pub use builder_visibility::StyleBuilderVisibility;
 pub use builder_z_index::StyleBuilderZIndex;
+pub use style_builder::StyleBuilder;
+pub use style_commands::StyleCommands;
 pub use style_params::*;
 use text_styles::{set_initial_text_style, update_text_styles};
-pub use text_styles::{InheritableFontStyles, UseInheritedTextStyles};
+pub use text_styles::{
+    InheritableFont, InheritableFontColor, InheritableFontSize, UseInheritedTextStyles,
+};
 // pub use builder_texture_atlas::StyleBuilderTextureAtlas;
 
-#[cfg(feature = "mod_picking")]
 pub use builder_pointer_events::StyleBuilderPointerEvents;
 
 /// `StyleTuple` - a variable-length tuple of [`StyleHandle`]s.

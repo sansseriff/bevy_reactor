@@ -460,7 +460,7 @@ impl ViewTemplate for TextInput {
                                             height = glyph.size.y;
                                         }
                                         let mut entt = cx.world_mut().entity_mut(el);
-                                        let mut style = entt.get_mut::<Style>().unwrap();
+                                        let mut style = entt.get_mut::<Node>().unwrap();
                                         style.left = ui::Val::Px(pos.x * 0.5);
                                         style.top = ui::Val::Px(pos.y - height);
                                         style.height = ui::Val::Px(height);

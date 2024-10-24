@@ -1,4 +1,6 @@
-use super::builder::StyleBuilder;
+use crate::style_commands::StyleCommands;
+
+use super::style_builder::StyleBuilder;
 use bevy::render::view::Visibility;
 
 #[allow(missing_docs)]
@@ -23,6 +25,18 @@ impl<'a, 'w> StyleBuilderVisibility for StyleBuilder<'a, 'w> {
                 self.target.insert(visibility);
             }
         };
+        self
+    }
+}
+
+impl<'a, 'w> StyleBuilderVisibility for StyleCommands<'a, 'w> {
+    fn visible(&mut self, visible: bool) -> &mut Self {
+        let visibility = if visible {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        };
+        self.target.insert(visibility);
         self
     }
 }

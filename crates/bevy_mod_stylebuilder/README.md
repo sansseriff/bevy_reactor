@@ -2,7 +2,7 @@
 
 This crate provides a set of low-level utilities for configuring `bevy_ui` styles using a fluent
 API. A `StyleBuilder` is an object that understands how to insert, remove, and modify Bevy style
-components such as `Style`, `BackgroundColor` and so on, as well as the `Pickable` component used
+components such as `Node`, `BackgroundColor` and so on, as well as the `Pickable` component used
 by `bevy_mod_picking`.
 
 `StyleBuilder` is extensible by implementing additional traits. In fact, all of the fluent methods

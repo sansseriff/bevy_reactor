@@ -4,7 +4,7 @@ use bevy::{
     ui::{self, UiImage},
 };
 
-use super::builder::StyleBuilder;
+use super::style_builder::StyleBuilder;
 use super::style_params::{ColorParam, MaybeHandleOrPath};
 
 #[allow(missing_docs)]

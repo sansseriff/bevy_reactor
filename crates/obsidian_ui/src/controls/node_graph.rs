@@ -230,7 +230,7 @@ impl ViewTemplate for NodeDisplay {
             .create_effect(move |cx, ent| {
                 // Update node position.
                 let pos = position.get(cx);
-                let mut style = cx.world_mut().get_mut::<Style>(ent).unwrap();
+                let mut style = cx.world_mut().get_mut::<Node>(ent).unwrap();
                 style.left = ui::Val::Px(pos.x);
                 style.top = ui::Val::Px(pos.y);
             })

@@ -275,7 +275,7 @@ impl UiTemplate for DemoUi {
                     .style(style_aside)
                     .create_effect(move |cx, ent| {
                         let width = panel_width.get(cx);
-                        let mut style = cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
+                        let mut style = cx.world_mut().get_mut::<ui::Node>(ent).unwrap();
                         style.width = ui::Val::Px(width);
                     })
                     .children((
@@ -462,7 +462,7 @@ impl UiTemplate for CenterPanel {
         //                                     .create_effect(move |cx, ent| {
         //                                         let height = panel_height.get(cx);
         //                                         let mut style =
-        //                                             cx.world_mut().get_mut::<ui::Style>(ent).unwrap();
+        //                                             cx.world_mut().get_mut::<ui::Node>(ent).unwrap();
         //                                         style.height = ui::Val::Px(height);
         //                                     })
         //                                     .children(NodeGraphDemo {}),

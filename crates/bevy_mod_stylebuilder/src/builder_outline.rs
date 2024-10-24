@@ -1,4 +1,4 @@
-use crate::{ColorParam, LengthParam, StyleBuilder};
+use crate::{ColorParam, LengthParam, StyleBuilder, StyleCommands};
 use bevy::ui;
 
 #[allow(missing_docs)]
@@ -55,6 +55,39 @@ impl<'a, 'w> StyleBuilderOutline for StyleBuilder<'a, 'w> {
                 });
             }
         }
+        self
+    }
+}
+
+impl<'a, 'w> StyleBuilderOutline for StyleCommands<'a, 'w> {
+    fn outline_color(&mut self, color: impl ColorParam) -> &mut Self {
+        match color.to_val() {
+            None => {
+                self.target.remove::<ui::Outline>();
+            }
+            Some(color) => {
+                self.target.insert(ui::Outline {
+                    color,
+                    ..Default::default()
+                });
+            }
+        };
+        self
+    }
+
+    fn outline_width(&mut self, length: impl LengthParam) -> &mut Self {
+        self.target.insert(ui::Outline {
+            width: length.to_val(),
+            ..Default::default()
+        });
+        self
+    }
+
+    fn outline_offset(&mut self, length: impl LengthParam) -> &mut Self {
+        self.target.insert(ui::Outline {
+            offset: length.to_val(),
+            ..Default::default()
+        });
         self
     }
 }
