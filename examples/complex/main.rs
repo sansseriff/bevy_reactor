@@ -213,7 +213,7 @@ struct Shape;
 const X_EXTENT: f32 = 14.5;
 
 fn setup_view_root(camera: In<Entity>, mut commands: Commands) {
-    commands.spawn(DemoUi(*camera).to_root());
+    // commands.spawn(DemoUi(*camera).to_root());
 }
 
 struct DemoUi(Entity);
@@ -335,70 +335,72 @@ impl UiTemplate for DemoUi {
                         //             }
                         //         })),
                         // )),
-                        Element::<Node>::new().style(style_button_row).children((
-                                // Button::new()
-                                //     .children("Open…")
-                                //     .on_click(clicked_increment)
-                                //     .style(style_button_flex),
-                                // Button::new()
-                                //     .children("Save")
-                                //     .on_click(clicked_decrement)
-                                //     .style(style_button_flex),
-                            )),
-                        Element::<Node>::new().style(style_column_group).children((
-                            Checkbox::new()
-                                .style(|ss: &mut StyleBuilder| {
-                                    ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
-                                })
-                                .labeled("Include Author Name")
-                                .checked(checked_1.signal())
-                                .on_change(cx.create_callback(move |mut world: DeferredWorld| {
-                                    println!("Include Author Name: {}", checked);
-                                    checked_1.set(&mut world, checked);
-                                })),
-                            Checkbox::new()
-                                .labeled("Include Metadata")
-                                .checked(checked_2.signal())
-                                .on_change(cx.create_callback(move |cx, checked| {
-                                    println!("Include Metadata: {}", checked);
-                                    checked_2.set(cx, checked);
-                                })),
-                        )),
-                        Element::<Node>::new()
-                            .style(style_column_group)
-                            .children(
-                                Slider::new()
-                                  Node
-                                    .max(255.)
-                                    .value(red.signal())
-                                    .style(style_slider)
-                                    .precision(1)
-                                    .on_change(cx.create_callback(move |cx, value| {
-                                        red.set(cx, value);
-                                    })),
-                            ),
-                        TextInput::new(TextInputProps {
-                            value: name.signal(),
-                            on_change: Some(cx.create_callback(
-                                move |cx: &mut Cx, value: String| {
-                                    name.set_clone(cx, value.clone());
-                                },
-                            )),
-                            ..default()
-                        }),
+                        // Element::<Node>::new().style(style_button_row).children((
+                        //         // Button::new()
+                        //         //     .children("Open…")
+                        //         //     .on_click(clicked_increment)
+                        //         //     .style(style_button_flex),
+                        //         // Button::new()
+                        //         //     .children("Save")
+                        //         //     .on_click(clicked_decrement)
+                        //         //     .style(style_button_flex),
+                        //     )),
+                        // Element::<Node>::new().style(style_column_group).children((
+                        //     Checkbox::new()
+                        //         .style(|ss: &mut StyleBuilder| {
+                        //             ss.cursor_image("demo://unlock.png", Vec2::new(8., 8.));
+                        //         })
+                        //         .labeled("Include Author Name")
+                        //         .checked(checked_1.signal())
+                        //         .on_change(builder.create_callback(
+                        //             move |mut world: DeferredWorld| {
+                        //                 println!("Include Author Name: {}", checked);
+                        //                 checked_1.set(&mut world, checked);
+                        //             },
+                        //         )),
+                        //     Checkbox::new()
+                        //         .labeled("Include Metadata")
+                        //         .checked(checked_2.signal())
+                        //         .on_change(cx.create_callback(move |cx, checked| {
+                        //             println!("Include Metadata: {}", checked);
+                        //             checked_2.set(cx, checked);
+                        //         })),
+                        // )),
+                        // Element::<Node>::new()
+                        //     .style(style_column_group)
+                        //     .children(
+                        //         Slider::new()
+                        //           Node
+                        //             .max(255.)
+                        //             .value(red.signal())
+                        //             .style(style_slider)
+                        //             .precision(1)
+                        //             .on_change(cx.create_callback(move |cx, value| {
+                        //                 red.set(cx, value);
+                        //             })),
+                        //     ),
+                        // TextInput::new(TextInputProps {
+                        //     value: name.signal(),
+                        //     on_change: Some(cx.create_callback(
+                        //         move |cx: &mut Cx, value: String| {
+                        //             name.set_clone(cx, value.clone());
+                        //         },
+                        //     )),
+                        //     ..default()
+                        // }),
                         // ResourcePropertyInspector::<TestStruct>::new(),
                         // ResourcePropertyInspector::<TestStruct2>::new(),
                         // ResourcePropertyInspector::<TestStruct3>::new(),
                         ReactionsTable,
                     )),
-                Splitter::new()
-                    .direction(SplitterDirection::Vertical)
-                    .value(panel_width)
-                    .on_change(builder.create_callback(|cx: &mut Cx, value: f32| {
-                        let mut panel_width =
-                            cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
-                        panel_width.0 = value.max(200.);
-                    })),
+                // Splitter::new()
+                //     .direction(SplitterDirection::Vertical)
+                //     .value(panel_width)
+                //     .on_change(builder.create_callback(|cx: &mut Rcx, value: f32| {
+                //         let mut panel_width =
+                //             cx.world_mut().get_resource_mut::<PanelWidth>().unwrap();
+                //         panel_width.0 = value.max(200.);
+                //     })),
                 CenterPanel,
             ))
     }
@@ -678,7 +680,7 @@ fn exit_preview_mode(mut commands: Commands, preview: Res<PreviewEntities>) {
 
 fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
     for mut transform in &mut query {
-        transform.rotate_y(time.delta_seconds() / 2.);
+        transform.rotate_y(time.delta_secs() / 2.);
     }
 }
 

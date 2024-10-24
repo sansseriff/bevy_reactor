@@ -49,6 +49,11 @@ impl Plugin for ObsidianUiPlugin {
         embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Regular.ttf");
         embedded_asset!(app, "assets/fonts/Fira_Sans/FiraSans-Italic.ttf");
 
+        embedded_asset!(app, "assets/fonts/Inter/static/Inter_18pt-Bold.ttf");
+        embedded_asset!(app, "assets/fonts/Inter/static/Inter_18pt-BoldItalic.ttf");
+        embedded_asset!(app, "assets/fonts/Inter/static/Inter_18pt-Medium.ttf");
+        embedded_asset!(app, "assets/fonts/Inter/static/Inter_18pt-MediumItalic.ttf");
+
         embedded_asset!(app, "assets/icons/add_box.png");
         embedded_asset!(app, "assets/icons/add.png");
         embedded_asset!(app, "assets/icons/checkmark.png");

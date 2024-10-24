@@ -93,7 +93,30 @@ struct MarkdownStyles {
 
 }
 
+```rust
 trait MarkdownStyles {
-fn text(self, event, entity: &EntityMut);
-fn paragraph(self, event, entity: &EntityMut);
+  fn block(self, tag, entity: &EntityWorldMut);
+  fn span(self, tag, entity: &EntityWorldMut);
 }
+```
+
+Markdown::new(text, styles)
+
+```rust
+struct MarkdownTextStyle {
+    font: Handle<Font>,
+    size: f32,
+    color: Color,
+}
+
+struct MarkdownBlockStyle {
+    padding: Vec4,
+}
+
+struct MarkdownStyles {
+  paragraph: MarkdownTextStyle,
+  header_font: Handle<Font>,
+  code: MarkdownTextStyle,
+
+}
+```
