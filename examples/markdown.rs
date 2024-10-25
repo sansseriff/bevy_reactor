@@ -113,9 +113,10 @@ fn process_markdown(builder: &mut UiBuilder, parser: &mut Parser, font: &TextFon
                     let mut elt = builder.spawn((
                         TextLayout::default(),
                         Text::default(),
-                        font.clone(),
                         Node {
                             margin: UiRect::ZERO.with_bottom(ui::Val::Px(8.0)),
+                            display: Display::Block,
+                            // flex_direction: FlexDirection::Row,
                             ..default()
                         },
                     ));
@@ -249,7 +250,7 @@ fn process_markdown(builder: &mut UiBuilder, parser: &mut Parser, font: &TextFon
             }
 
             pulldown_cmark::Event::Text(cow_str) => {
-                builder.spawn((Text(cow_str.into()), font.clone()));
+                builder.spawn((TextSpan(cow_str.into()), font.clone()));
             }
 
             pulldown_cmark::Event::Code(_cow_str) => {
@@ -277,11 +278,11 @@ fn process_markdown(builder: &mut UiBuilder, parser: &mut Parser, font: &TextFon
             }
 
             pulldown_cmark::Event::SoftBreak => {
-                builder.spawn((Text(" ".to_string()), font.clone()));
+                builder.spawn((TextSpan(" ".into()), font.clone()));
             }
 
             pulldown_cmark::Event::HardBreak => {
-                builder.spawn((Text("\n".to_string()), font.clone()));
+                builder.spawn((TextSpan("\n".into()), font.clone()));
             }
 
             pulldown_cmark::Event::Rule => {
