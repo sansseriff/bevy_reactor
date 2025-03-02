@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
+use accesskit::{self, Role};
+
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     color::Luminance,
     prelude::*,
     ui,
@@ -163,7 +162,7 @@ impl UiTemplate for Checkbox {
                     checked,
                     on_change: self.on_change,
                 },
-                AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
+                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .insert_if(self.disabled, || Disabled)
             .create_children(|builder| {

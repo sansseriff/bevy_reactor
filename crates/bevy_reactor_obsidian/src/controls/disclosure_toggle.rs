@@ -7,11 +7,11 @@ use crate::{
     prelude::{CreateFocusSignal, TabIndex},
     size::Size,
 };
+
+use accesskit::{self, Role};
+
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     prelude::*,
     ui,
     window::SystemCursorIcon,
@@ -139,7 +139,7 @@ impl UiTemplate for DisclosureToggle {
                     checked: self.expanded,
                 },
                 TabIndex(self.tab_index),
-                AccessibilityNode::from(NodeBuilder::new(Role::CheckBox)),
+                AccessibilityNode::from(accesskit::Node::new(Role::CheckBox)),
             ))
             .style_dyn(
                 move |rcx| focused.get(rcx),

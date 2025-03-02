@@ -2,13 +2,11 @@ use std::sync::Arc;
 
 use crate::{prelude::RoundedCorners, size::Size};
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
+    a11y::AccessibilityNode,
     prelude::*,
     ui,
 };
+use accesskit::{self, Role};
 use bevy_mod_stylebuilder::*;
 use bevy_reactor_builder::{
     CreateChilden, EntityStyleBuilder, InvokeUiTemplate, UiBuilder, UiTemplate,
@@ -102,7 +100,7 @@ impl UiTemplate for ToolPalette {
                 self.style.clone(),
             ))
             .insert(ToolPaletteContext { size: self.size })
-            .insert(AccessibilityNode::from(NodeBuilder::new(Role::Group)))
+            .insert(AccessibilityNode::from(accesskit::Node::new(Role::Group)))
             .create_children(|builder| {
                 (self.children.as_ref())(builder);
             });
